@@ -1,0 +1,157 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+public class OSMRoadMeshBuilder : MonoBehaviour
+{
+    public static OSMRoadMeshBuilder Instance { get; private set; }
+
+    [Header("Materials")]
+    public Material roadMaterial;
+    public Material pavementMaterial;
+
+    [Header("Settings")]
+    public float roadYOffset = 0.02f;
+    public int roadLayer = 0;
+
+    [Header("State")]
+    public bool roadsBuilt = false;
+    private GameObject roadsParent;
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+    }
+
+    void Start()
+    {
+        // Only run in GameScene
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "GameScene")
+            return;
+        StartCoroutine(WaitForOSMThenBuild());
+    }
+
+    IEnumerator WaitForOSMThenBuild()
+    {
+        // Wait for OSM data
+        while (OSMLoader.Instance == null || !OSMLoader.Instance.dataLoaded)
+            yield return new WaitForSeconds(0.5f);
+
+        Debug.Log("OSM: Building road meshes...");
+        BuildRoads(OSMLoader.Instance.osmData);
+    }
+
+    void BuildRoads(OSMData data)
+    {
+        roadsParent = new GameObject("OSM_Roads");
+        roadsParent.transform.position = Vector3.zero;
+
+        int roadCount = 0;
+
+        foreach (var way in data.ways)
+        {
+            if (!way.IsRoad()) continue;
+
+            List<Vector3> points = new List<Vector3>();
+
+            foreach (long nodeRef in way.nodeRefs)
+            {
+                if (!data.nodeMap.ContainsKey(nodeRef)) continue;
+                var node = data.nodeMap[nodeRef];
+                Vector3 worldPos = GPSManager.Instance.GpsToWorld(node.lat, node.lon);
+                worldPos.y = roadYOffset;
+                points.Add(worldPos);
+            }
+
+            if (points.Count < 2) continue;
+
+            float width = way.GetRoadWidth();
+            Mesh mesh = BuildRoadSegmentMesh(points, width);
+
+            if (mesh == null) continue;
+
+            GameObject roadObj = new GameObject($"Road_{way.id}");
+            roadObj.transform.parent = roadsParent.transform;
+
+            var mf = roadObj.AddComponent<MeshFilter>();
+            var mr = roadObj.AddComponent<MeshRenderer>();
+
+            mf.mesh = mesh;
+            mr.material = roadMaterial != null ? roadMaterial :
+                new Material(Shader.Find("Universal Render Pipeline/Lit"));
+
+            // Add mesh collider for driving on
+            var mc = roadObj.AddComponent<MeshCollider>();
+            mc.sharedMesh = mesh;
+
+            roadCount++;
+        }
+
+        roadsBuilt = true;
+        Debug.Log($"OSM: Built {roadCount} road segments!");
+    }
+
+    Mesh BuildRoadSegmentMesh(List<Vector3> points, float width)
+    {
+        if (points.Count < 2) return null;
+
+        List<Vector3> verts = new List<Vector3>();
+        List<int> tris = new List<int>();
+        List<Vector2> uvs = new List<Vector2>();
+
+        float halfWidth = width * 0.5f;
+        float uvProgress = 0f;
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            Vector3 forward;
+
+            if (i == 0)
+                forward = (points[1] - points[0]).normalized;
+            else if (i == points.Count - 1)
+                forward = (points[i] - points[i - 1]).normalized;
+            else
+                forward = (points[i + 1] - points[i - 1]).normalized;
+
+            Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+
+            Vector3 left3D = points[i] - right * halfWidth;
+            Vector3 right3D = points[i] + right * halfWidth;
+
+            verts.Add(left3D);
+            verts.Add(right3D);
+
+            if (i > 0)
+            {
+                float segLen = Vector3.Distance(points[i], points[i - 1]);
+                uvProgress += segLen / width;
+            }
+
+            uvs.Add(new Vector2(0f, uvProgress));
+            uvs.Add(new Vector2(1f, uvProgress));
+
+            if (i > 0)
+            {
+                int bl = (i - 1) * 2;
+                int br = bl + 1;
+                int tl = i * 2;
+                int tr = tl + 1;
+
+                tris.Add(bl); tris.Add(tl); tris.Add(br);
+                tris.Add(br); tris.Add(tl); tris.Add(tr);
+            }
+        }
+
+        Mesh mesh = new Mesh();
+        mesh.name = "RoadSegment";
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.vertices = verts.ToArray();
+        mesh.triangles = tris.ToArray();
+        mesh.uv = uvs.ToArray();
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        return mesh;
+    }
+}

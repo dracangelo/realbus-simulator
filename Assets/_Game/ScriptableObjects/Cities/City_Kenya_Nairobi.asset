@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Kenya_Nairobi
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Nairobi
+  country: Kenya
+  cityCode: NBO
+  climateZone: 0
+  avgTemperatureCelsius: 22
+  hasMonsoon: 1
+  centreLat: -1.2864
+  centreLon: 36.8172
+  minLat: -1.3164
+  maxLat: -1.2564
+  minLon: 36.7872
+  maxLon: 36.8472
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: -1.2864
+  spawnLon: 36.8172
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 0300000004000000050000000a0000000b0000000c000000
+  snowSeasonMonths: 

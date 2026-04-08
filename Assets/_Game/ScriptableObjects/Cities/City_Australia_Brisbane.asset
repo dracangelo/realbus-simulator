@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Australia_Brisbane
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Brisbane
+  country: Australia
+  cityCode: BNE
+  climateZone: 6
+  avgTemperatureCelsius: 21
+  hasMonsoon: 1
+  centreLat: -27.4698
+  centreLon: 153.0251
+  minLat: -27.4998
+  maxLat: -27.439799999999998
+  minLon: 152.9951
+  maxLon: 153.0551
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: -27.4698
+  spawnLon: 153.0251
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 01000000020000000c000000
+  snowSeasonMonths: 

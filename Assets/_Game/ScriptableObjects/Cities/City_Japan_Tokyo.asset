@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Japan_Tokyo
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Tokyo
+  country: Japan
+  cityCode: TYO
+  climateZone: 2
+  avgTemperatureCelsius: 16
+  hasMonsoon: 1
+  centreLat: 35.6762
+  centreLon: 139.6503
+  minLat: 35.6462
+  maxLat: 35.7062
+  minLon: 139.6203
+  maxLon: 139.6803
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: 35.6762
+  spawnLon: 139.6503
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 0600000007000000090000000a000000
+  snowSeasonMonths: 0c0000000100000002000000

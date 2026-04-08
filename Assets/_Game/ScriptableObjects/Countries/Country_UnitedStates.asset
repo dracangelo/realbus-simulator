@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01b7655b9bd02167681fe56c5aa91450, type: 3}
+  m_Name: Country_UnitedStates
+  m_EditorClassIdentifier: GameScripts::CountryDefinition
+  countryName: United States
+  continent: Americas
+  countryCode: US
+  cities:
+  - {fileID: 11400000, guid: b4f3d86f098b65d8983e700233206b7c, type: 2}
+  - {fileID: 11400000, guid: 0064e059e98ad9f0ca00bcc1a6347ecf, type: 2}
+  - {fileID: 11400000, guid: 41d0fe04cae60b1aba8c5100bacbb4af, type: 2}
+  - {fileID: 11400000, guid: a96a53642c47fec3d95a8fd9e8e724fa, type: 2}

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_UnitedStates_Seattle
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Seattle
+  country: United States
+  cityCode: SEA
+  climateZone: 2
+  avgTemperatureCelsius: 12
+  hasMonsoon: 0
+  centreLat: 47.6062
+  centreLon: -122.3321
+  minLat: 47.5762
+  maxLat: 47.6362
+  minLon: -122.3621
+  maxLon: -122.3021
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: 47.6062
+  spawnLon: -122.3321
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 0100000002000000030000000a0000000b0000000c000000
+  snowSeasonMonths: 0c00000001000000

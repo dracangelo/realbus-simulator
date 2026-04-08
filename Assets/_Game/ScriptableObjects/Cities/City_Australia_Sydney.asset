@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Australia_Sydney
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Sydney
+  country: Australia
+  cityCode: SYD
+  climateZone: 6
+  avgTemperatureCelsius: 19
+  hasMonsoon: 0
+  centreLat: -33.8688
+  centreLon: 151.2093
+  minLat: -33.8988
+  maxLat: -33.8388
+  minLon: 151.1793
+  maxLon: 151.23930000000001
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: -33.8688
+  spawnLon: 151.2093
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 02000000030000000400000006000000
+  snowSeasonMonths: 
