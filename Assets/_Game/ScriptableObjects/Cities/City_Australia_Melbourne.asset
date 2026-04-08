@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Australia_Melbourne
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Melbourne
+  country: Australia
+  cityCode: MEL
+  climateZone: 2
+  avgTemperatureCelsius: 15
+  hasMonsoon: 0
+  centreLat: -37.8136
+  centreLon: 144.9631
+  minLat: -37.8436
+  maxLat: -37.7836
+  minLon: 144.9331
+  maxLon: 144.9931
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: -37.8136
+  spawnLon: 144.9631
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 0300000004000000050000000a000000
+  snowSeasonMonths: 

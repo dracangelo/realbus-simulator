@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_UnitedStates_Chicago
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Chicago
+  country: United States
+  cityCode: CHI
+  climateZone: 3
+  avgTemperatureCelsius: 11
+  hasMonsoon: 0
+  centreLat: 41.8781
+  centreLon: -87.6298
+  minLat: 41.8481
+  maxLat: 41.908100000000005
+  minLon: -87.6598
+  maxLon: -87.5998
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: 41.8781
+  spawnLon: -87.6298
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 0400000005000000060000000700000008000000
+  snowSeasonMonths: 0b0000000c000000010000000200000003000000

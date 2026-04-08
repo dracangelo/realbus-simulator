@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Japan_Osaka
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Osaka
+  country: Japan
+  cityCode: OSA
+  climateZone: 2
+  avgTemperatureCelsius: 17
+  hasMonsoon: 1
+  centreLat: 34.6937
+  centreLon: 135.5023
+  minLat: 34.6637
+  maxLat: 34.7237
+  minLon: 135.4723
+  maxLon: 135.5323
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: 34.6937
+  spawnLon: 135.5023
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 060000000700000009000000
+  snowSeasonMonths: 0c0000000100000002000000
