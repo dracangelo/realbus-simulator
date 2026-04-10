@@ -8,19 +8,17 @@ using UnityEditor;
 public class SceneBootstrap : MonoBehaviour
 {
     [SerializeField] bool redirectIfNoManagers = true;
+    [SerializeField] SceneCatalog sceneCatalog;
 
     void Awake()
     {
-        string scene = SceneManager.GetActiveScene().name;
-
-        // Never redirect from MainMenu or GameScene
-        if (scene == "MainMenu" || scene == "GameScene") return;
-
         if (redirectIfNoManagers && SceneLoader.Instance == null)
         {
-            Debug.LogWarning($"SceneBootstrap: No SceneLoader in {scene} — creating one for direct scene testing.");
+            Debug.LogWarning("SceneBootstrap: No SceneLoader — creating one for direct scene testing.");
             var loader = new GameObject("SceneLoader");
-            loader.AddComponent<SceneLoader>();
+            var sl = loader.AddComponent<SceneLoader>();
+            if (sceneCatalog != null)
+                sl.sceneCatalog = sceneCatalog;
         }
 
         EnsureCoreManagersForDirectPlay();

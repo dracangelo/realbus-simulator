@@ -194,22 +194,31 @@ public class MissionResultUI : MonoBehaviour
 
     void OnPlayAgain()
     {
-        StartCoroutine(TransitionOut("RouteSelect"));
+        StartCoroutine(TransitionToRouteSelect());
     }
 
     void OnMainMenu()
     {
-        StartCoroutine(TransitionOut("MainMenu"));
+        StartCoroutine(TransitionToMainMenu());
     }
 
-    IEnumerator TransitionOut(string scene)
+    IEnumerator TransitionToMainMenu()
     {
         if (resultCanvasGroup)
             yield return StartCoroutine(UIAnimator.FadeOut(resultCanvasGroup, 0.3f));
 
         if (resultPanel) resultPanel.SetActive(false);
 
-        if (scene == "MainMenu") SceneLoader.Instance?.LoadMainMenu();
-        else SceneLoader.Instance?.LoadRouteSelect();
+        SceneLoader.Instance?.LoadMainMenu();
+    }
+
+    IEnumerator TransitionToRouteSelect()
+    {
+        if (resultCanvasGroup)
+            yield return StartCoroutine(UIAnimator.FadeOut(resultCanvasGroup, 0.3f));
+
+        if (resultPanel) resultPanel.SetActive(false);
+
+        SceneLoader.Instance?.LoadRouteSelect();
     }
 }

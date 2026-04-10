@@ -13,6 +13,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     [Header("Settings")]
     public float roadYOffset = 0.02f;
     public int roadLayer = 0;
+    public string roadTag = "Road";
+    public PhysicMaterial roadPhysicMaterial;
 
     [Header("State")]
     public bool roadsBuilt = false;
@@ -26,9 +28,6 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     void Start()
     {
-        // Only run in GameScene
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "GameScene")
-            return;
         StartCoroutine(WaitForOSMThenBuild());
     }
 
@@ -84,6 +83,13 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             // Add mesh collider for driving on
             var mc = roadObj.AddComponent<MeshCollider>();
             mc.sharedMesh = mesh;
+            if (roadPhysicMaterial != null)
+                mc.sharedMaterial = roadPhysicMaterial;
+
+            if (roadLayer > 0)
+                roadObj.layer = roadLayer;
+            if (!string.IsNullOrEmpty(roadTag))
+                roadObj.tag = roadTag;
 
             roadCount++;
         }

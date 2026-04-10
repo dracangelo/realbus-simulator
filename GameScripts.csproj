@@ -48,14 +48,17 @@
     <Analyzer Include="/home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Tools/BuildPipeline/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/_Game/Scripts/Traffic/AmbulanceBehaviour.cs" />
     <Compile Include="Assets/_Game/Scripts/City/CityDefinition.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/WeatherPhysics.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MainMenuUI.cs" />
     <Compile Include="Assets/_Game/Input/BusInputActions.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/StopApproachUI.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/TrafficDebugHUD.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/WheelVisualSync.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingMeshBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/BusRoute.cs" />
+    <Compile Include="Assets/_Game/Scripts/UI/PassengerCountUI.cs" />
     <Compile Include="Assets/_Game/Scripts/City/CountryDefinition.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MissionResult.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/FreeDriveSession.cs" />
@@ -70,8 +73,13 @@
     <Compile Include="Assets/_Game/Scripts/OSM/OSMRoadMeshBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/GPSManager.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/SceneLoader.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/AIBusScheduleSpawner.cs" />
+    <Compile Include="Assets/_Game/Scripts/Passengers/PassengerAgent.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/SplineVehicle.cs" />
+    <Compile Include="Assets/_Game/Scripts/Passengers/PassengerSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DockingZone.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/SkyController.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/TrafficStressTest.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MapTileLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/FogController.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RouteVisualizer.cs" />
@@ -86,6 +94,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/UITheme.cs" />
     <Compile Include="Assets/_Game/Scripts/City/GameState.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/EngineSystem.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/PedestrianSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MobileControlsUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/ScheduleManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/RainController.cs" />
@@ -93,13 +102,16 @@
     <Compile Include="Assets/_Game/Scripts/UI/CityCardUI.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMTypes.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMParser.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/VehiclePool.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/SnowController.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MissionManager.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/AIVehicleController.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/RouteSelectUI.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerManager.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMRouteImporter.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/StopTrigger.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/AIRoadGraph.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MissionBriefingUI.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/CitySelectUI.cs" />

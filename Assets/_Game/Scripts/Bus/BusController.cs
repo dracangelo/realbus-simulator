@@ -43,6 +43,7 @@ public class BusController : MonoBehaviour
     public float throttleInput = 0f;
     public float brakeInput = 0f;
     public float currentSpeedKmh = 0f;
+    public bool kneelingSuspensionActive = false;
 
     private Rigidbody rb;
 
@@ -235,5 +236,10 @@ public class BusController : MonoBehaviour
     public void HonkHorn()
     {
         Debug.Log("HONK!");
+    }
+
+    public void RequestKneelingSuspension(bool active)
+    {
+        kneelingSuspensionActive = active;
     }
 }

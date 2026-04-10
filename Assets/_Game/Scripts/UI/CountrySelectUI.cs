@@ -478,12 +478,12 @@ public class CountrySelectUI : MonoBehaviour
         if (CityManager.Instance != null)
             CityManager.Instance.SetActiveCountry(country);
 
-        StartCoroutine(TransitionOut());
+        StartCoroutine(TransitionToCitySelect());
     }
 
     void OnBack()
     {
-        StartCoroutine(TransitionOut("MainMenu"));
+        StartCoroutine(TransitionToMainMenu());
     }
 
     IEnumerator AnimateIn()
@@ -497,13 +497,20 @@ public class CountrySelectUI : MonoBehaviour
                 UIAnimator.SlideInFromBottom(contentPanel, 0.35f, 30f));
     }
 
-    IEnumerator TransitionOut(string scene = "CitySelect")
+    IEnumerator TransitionToMainMenu()
     {
         if (canvasGroup)
             yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
 
-        if (scene == "MainMenu") SceneLoader.Instance?.LoadMainMenu();
-        else SceneLoader.Instance?.LoadCitySelect();
+        SceneLoader.Instance?.LoadMainMenu();
+    }
+
+    IEnumerator TransitionToCitySelect()
+    {
+        if (canvasGroup)
+            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
+
+        SceneLoader.Instance?.LoadCitySelect();
     }
 
     void RefreshListLayout()

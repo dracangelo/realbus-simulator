@@ -31,9 +31,6 @@ public class MapTileLoader : MonoBehaviour
 
     void Start()
     {
-        if (UnityEngine.SceneManagement.SceneManager
-            .GetActiveScene().name != "GameScene")
-            return;
         StartCoroutine(InitNextFrame());
     }
 

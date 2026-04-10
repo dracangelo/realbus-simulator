@@ -27,9 +27,6 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
     void Start()
     {
-        // Only run in GameScene
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "GameScene")
-            return;
         StartCoroutine(WaitForDataThenBuild());
     }
 

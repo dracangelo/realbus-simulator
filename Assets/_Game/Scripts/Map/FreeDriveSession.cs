@@ -25,9 +25,6 @@ public class FreeDriveSession : MonoBehaviour
 
     void Start()
     {
-        if (UnityEngine.SceneManagement.SceneManager
-            .GetActiveScene().name != "GameScene")
-            return;
         busController = FindFirstObjectByType<BusController>();
         fuelLitres = fuelCapacityLitres;
         StartSession();

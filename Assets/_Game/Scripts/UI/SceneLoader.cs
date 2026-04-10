@@ -5,6 +5,9 @@ public class SceneLoader : MonoBehaviour
 {
     public static SceneLoader Instance { get; private set; }
 
+    [Header("Scene Catalog")]
+    public SceneCatalog sceneCatalog;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -24,11 +27,11 @@ public class SceneLoader : MonoBehaviour
 #endif
     }
 
-    public void LoadMainMenu() => SceneManager.LoadScene("MainMenu");
-    public void LoadCountrySelect() => SceneManager.LoadScene("CountrySelect");
-    public void LoadCitySelect() => SceneManager.LoadScene("CitySelect");
-    public void LoadRouteSelect() => SceneManager.LoadScene("RouteSelect");
-    public void LoadGame() => SceneManager.LoadScene("GameScene");
+    public void LoadMainMenu() => LoadByIndex(sceneCatalog != null ? sceneCatalog.mainMenuBuildIndex : 0);
+    public void LoadCountrySelect() => LoadByIndex(sceneCatalog != null ? sceneCatalog.countrySelectBuildIndex : 1);
+    public void LoadCitySelect() => LoadByIndex(sceneCatalog != null ? sceneCatalog.citySelectBuildIndex : 2);
+    public void LoadRouteSelect() => LoadByIndex(sceneCatalog != null ? sceneCatalog.routeSelectBuildIndex : 3);
+    public void LoadGame() => LoadByIndex(sceneCatalog != null ? sceneCatalog.gameplayBuildIndex : 4);
 
     public void LoadCitySelectChecked()
     {
@@ -78,6 +81,16 @@ public class SceneLoader : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
         SceneManager.LoadScene(sceneName);
+    }
+
+    void LoadByIndex(int buildIndex)
+    {
+        if (buildIndex < 0)
+        {
+            Debug.LogError("SceneLoader: Invalid build index.");
+            return;
+        }
+        SceneManager.LoadScene(buildIndex);
     }
 
     bool HasCountrySelection()

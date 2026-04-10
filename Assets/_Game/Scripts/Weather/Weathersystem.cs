@@ -49,9 +49,6 @@ public class WeatherSystem : MonoBehaviour
 
     void Start()
     {
-        if (UnityEngine.SceneManagement.SceneManager
-            .GetActiveScene().name != "GameScene") return;
-
         activeCity = CityManager.Instance?.activeCity;
         StartCoroutine(InitialiseWeather());
     }

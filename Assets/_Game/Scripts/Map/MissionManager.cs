@@ -90,7 +90,7 @@ public class MissionManager : MonoBehaviour
         currentStopIndex = 0;
         if (PassengerManager.Instance != null)
             PassengerManager.Instance.HandleStopArrival(
-                currentRoute.stops[0], currentRoute.baseFare);
+                currentRoute.stops[0], currentRoute.baseFare, 0, currentRoute.stops.Length);
 
         // Record departure stop punctuality
         if (ScheduleManager.Instance != null)
@@ -158,12 +158,16 @@ public class MissionManager : MonoBehaviour
 
         // Handle passengers
         if (PassengerManager.Instance != null)
-            PassengerManager.Instance.HandleStopArrival(stop, currentRoute.baseFare);
+            PassengerManager.Instance.HandleStopArrival(
+                stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length);
 
         currentStopIndex++;
         SetNextStop();
 
-        yield return new WaitForSeconds(2f);
+        float dwell = PassengerManager.Instance != null
+            ? PassengerManager.Instance.GetRequiredDwellTimeSeconds()
+            : 2f;
+        yield return new WaitForSeconds(Mathf.Max(2f, dwell));
         isProcessingStop = false;
     }
 
