@@ -656,6 +656,35 @@ curl -X POST "https://overpass-api.de/api/interpreter" \
   -o Assets/StreamingAssets/Cities/NBO/buildings.xml
 ```
 
+**Local JSON workflow for route generation:**
+```bash
+chmod +x scripts/fetch_osm_city_json.sh
+scripts/fetch_osm_city_json.sh NBO -1.2900 36.8000 -1.2630 36.8280
+```
+
+This saves:
+- `Assets/StreamingAssets/Cities/NBO/roads.json`
+- `Assets/StreamingAssets/Cities/NBO/stops.json`
+
+The helper script automatically:
+- splits the city bounding box into smaller tiles
+- downloads each tile separately from Overpass
+- merges the JSON back into one `roads.json` and one `stops.json`
+
+This is meant to avoid the `504 Gateway Timeout` errors that can happen when one large Overpass query tries to fetch the whole city at once.
+
+Then in Unity:
+1. Open **Tools → RealBus → OSM → Auto-Generate Bus Routes (Overpass)**
+2. Use `1b) Load local roads + stops`
+3. Point `Roads JSON` to `Assets/StreamingAssets/Cities/NBO/roads.json`
+4. Point `Stops JSON` to `Assets/StreamingAssets/Cities/NBO/stops.json`
+5. Continue with cluster, path generation, and save
+
+Notes:
+- `roads.json` must come from an Overpass `way ...; out geom;` query
+- `stops.json` should contain bus stop or platform nodes
+- this avoids live Overpass timeouts during route generation in the editor
+
 **To add a new city:**
 1. Create `CityDefinition` ScriptableObject with correct GPS bounds
 2. Create `StreamingAssets/Cities/CITYCODE/` folder

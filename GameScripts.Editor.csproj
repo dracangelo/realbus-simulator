@@ -49,11 +49,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets/_Game/Scripts/Editor/TrafficStressTestSceneBuilder.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/OSMRouteImporterEditorTool.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CountryImporter.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/RouteEditorWindow.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CitySelectBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/SampleWorldGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CountrySelectBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/Mainmenubuiler.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/RouteDebugVisualiser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/_Game/Scripts/Editor/GameScripts.Editor.asmdef" />

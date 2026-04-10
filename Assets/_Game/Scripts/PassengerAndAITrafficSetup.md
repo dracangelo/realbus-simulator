@@ -1,647 +1,747 @@
-# Passenger Agent System + AI Traffic System Setup (Unity) — step-by-step
+# Passenger Agent System + AI Traffic System Setup (Unity)
 
-This guide explains exactly how to set up both systems in Unity with **no skipped steps**:
-- Passenger Agent System
-- AI Traffic System (Full AI + Spline tiers)
+This guide is the cleaned-up, scene-accurate version of the setup for your gameplay scene.
 
-Follow the steps in order, and **do not proceed** until each verification step passes.
+It is written around the hierarchy shown in your screenshots:
+- `Bus_Root`
+- `Map`
+- `Canvas`
+- `PassengerManager`
+- `PassengerSpawner`
 
----
-
-## 1) Prerequisites
-
-Before setup, confirm these scripts exist in your project:
-
-- Passenger:
-  - `PassengerManager.cs`
-  - `PassengerAgent.cs`
-  - `PassengerSpawner.cs`
-  - `PassengerCountUI.cs`
-- Bus/mission integration:
-  - `MissionManager.cs` (calls passenger stop handling)
-  - `BusController.cs` (kneeling support)
-  - `ScheduleManager.cs`
-- Traffic:
-  - `AIRoadGraph.cs`
-  - `AIVehicleController.cs`
-  - `SplineVehicle.cs`
-  - `VehiclePool.cs`
-  - `PedestrianSpawner.cs`
-  - `AmbulanceBehaviour.cs`
-  - `AIBusScheduleSpawner.cs`
-  - `TrafficDebugHUD.cs`
-  - `TrafficStressTest.cs`
-
-Also recommended for gameplay stability:
-- `SceneBootstrap.cs` (auto-seeds managers when testing scenes directly)
+The goal is to make the scene work without skipped inspector wiring, hidden assumptions, or vague "add the script" steps.
 
 ---
 
-## 2) Which scene do I add this to?
+## 1) What scene should use this?
 
-Add these runtime systems to your **gameplay scene**:
-- **`Pysicstesttrack`** (your driving scene)
+Use this setup in your driving/gameplay scene:
+- `Pysicstesttrack`
 
-Do **not** add passenger/traffic simulation to these UI scenes:
+Do not place the passenger runtime or AI traffic runtime in menu-only scenes such as:
+- `MainMenu`
 - `CountrySelect`
 - `CitySelect`
 - `RouteSelect`
-- `MainMenu`
-
-If you ever decide to have simulation persist across scenes, we can convert selected managers to `DontDestroyOnLoad` (but keep it simple for now).
 
 ---
 
-## 3) Scene Hierarchy (recommended)
+## 2) Scripts that should already exist
 
-Create this structure in your gameplay scene:
+Passenger system:
+- `PassengerManager.cs`
+- `PassengerAgent.cs`
+- `PassengerSpawner.cs`
+- `PassengerCountUI.cs`
+
+Bus + mission integration:
+- `BusController.cs`
+- `MissionManager.cs`
+- `ScheduleManager.cs`
+- `GPSManager.cs`
+- `ScoreTracker.cs`
+
+Traffic system:
+- `AIRoadGraph.cs`
+- `AIVehicleController.cs`
+- `SplineVehicle.cs`
+- `VehiclePool.cs`
+- `PedestrianSpawner.cs`
+- `AmbulanceBehaviour.cs`
+- `AIBusScheduleSpawner.cs`
+- `TrafficDebugHUD.cs`
+- `TrafficStressTest.cs`
+
+Map/world loading:
+- `MapTileLoader.cs`
+- `OSMLoader.cs`
+- `OSMBuildingLoader.cs`
+- `OSMRoadMeshBuilder.cs`
+- `OSMBuildingMeshBuilder.cs`
+- `OSMRouteImporter.cs`
+
+Recommended:
+- `SceneBootstrap.cs`
+
+---
+
+## 3) Recommended gameplay hierarchy
+
+Your current scene is already close. A good runtime hierarchy for this project is:
 
 ```text
-Scene
-├── Managers
-│   ├── GameState
-│   ├── CityManager
-│   ├── ScheduleManager
-│   ├── MissionManager
-│   ├── PassengerManager
-│   ├── PassengerSpawner
-│   └── GPSManager
-├── Player
-│   └── PlayerBus (BusController + Rigidbody + colliders)
-├── TrafficSystem
-│   ├── AIRoadGraph
-│   ├── VehiclePool
-│   ├── PedestrianSpawner
-│   ├── AIBusScheduleSpawner
-│   ├── EmergencyAmbulance (optional prefab instance)
-│   └── TrafficDebugHUD
-├── World
-│   ├── BusStops
-│   ├── ZebraCrossings
-│   └── TrafficLights
-└── UI
-    ├── PassengerPanel
-    │   ├── CountText (TMP)
-    │   ├── EmojiText (TMP)
-    │   └── MoodTint (Image)
-    └── (other UI)
+Pysicstesttrack
+├── Main Camera
+├── Directional Light
+├── Bus_Root
+│   ├── WheelCollider_FL
+│   ├── WheelCollider_FR
+│   ├── WheelCollider_ML
+│   ├── WheelCollider_MR
+│   ├── WheelCollider_RL
+│   ├── WheelCollider_RR
+│   ├── WheelMesh_FL
+│   ├── WheelMesh_FR
+│   ├── WheelMesh_ML
+│   ├── WheelMesh_MR
+│   ├── WheelMesh_RL
+│   └── WheelMesh_RR
+├── Plane
+├── EventSystem
+├── Map
+├── Canvas
+│   ├── Btn_Accelerate
+│   ├── Btn_Brake
+│   ├── Btn_SteerLeft
+│   ├── Btn_SteerRight
+│   ├── Btn_Retarder
+│   ├── Btn_Horn
+│   ├── Btn_ShiftUp
+│   └── Btn_ShiftDown
+├── PassengerManager
+└── PassengerSpawner
 ```
 
----
-
-## 4) Passenger Agent System Setup
-
-### Step 1: Create `PassengerManager`
-
-1. Add empty GameObject: `PassengerManager`.
-2. Add component: `PassengerManager`.
-3. Assign any required references used by your script (stop points, bus transforms, capacities, etc.).
-
-**Verify**
-- In Play Mode, `PassengerManager.Instance` exists (no console errors).
-
-### Step 2: Configure `PassengerSpawner`
-
-1. Add empty GameObject: `PassengerSpawner`.
-2. Add component: `PassengerSpawner`.
-3. Configure:
-   - `baselineSpawnMin` / `baselineSpawnMax`
-   - `rushHourMultiplier`
-   - `morningPeakMinutes` (default around `450` = 7:30 AM)
-   - `eveningPeakMinutes` (default around `1050` = 5:30 PM)
-   - `peakWidthMinutes`
-4. Ensure `ScheduleManager` exists so density changes by time-of-day.
-
-**Verify**
-- In Play Mode, `ScheduleManager.currentTimeMinutes` increases.
-- Passenger spawns differ between peak and off-peak times.
-
-### Step 3: Bus stop data sanity check
-
-1. Ensure route stops are valid and in order (`BusRoute.stops`).
-2. Ensure each stop has world position mapping (via GPS/route systems already in your project).
-3. Make sure stop arrival calls happen in `MissionManager`:
-   - `PassengerManager.Instance.HandleStopArrival(...)`
-
-**Verify**
-- When you reach a stop, you see boarding/alighting and the dwell time changes.
-
-### Step 4: Player bus integration
-
-1. Select `PlayerBus` object.
-2. Ensure `BusController` exists.
-3. Confirm kneeling support is available:
-   - `RequestKneelingSuspension(bool active)` should be callable by passenger flow.
-
-**Verify**
-- No `NullReferenceException` in passenger boarding at stops.
-
-### Step 5: Passenger UI
-
-1. Create UI object (e.g. `PassengerPanel`).
-2. Add component: `PassengerCountUI`.
-3. Assign fields:
-   - `countText` -> TMP text for passenger count
-   - `emojiText` -> TMP text for mood emoji
-   - `moodTint` -> Image for color mood feedback
-4. Enter Play Mode and confirm values update while driving.
-
-**Verify**
-- Count changes when passengers board/alight.
-- Mood emoji/tint changes as satisfaction changes.
-
-### Step 6: Validation checklist
-
-- Passenger count increases at busy stops.
-- Boarding is limited by bus capacity.
-- Alighting happens at destination stops.
-- Dwell time changes with boarding/alighting volume.
-- Satisfaction updates over time and is visible in UI.
+Important note:
+- In your current scene, `Map` is acting as the main manager host.
+- That is fine.
+- You do not need to create a separate `Managers` parent unless you want cleaner organization.
 
 ---
 
-## 5) AI Traffic System Setup (Tiered)
+## 4) Exact setup for `Bus_Root`
 
-### Important performance rule (non-negotiable)
+Select `Bus_Root`.
 
-- `VehiclePool.maxFullAiVehicles` is the hard budget for the A54 target.
-- Keep this **15–20** (default **18**).
-- Full AI runs physics + higher-cost logic near the player; spline tier is used beyond that.
+It should have:
+- `Transform`
+- `Rigidbody`
+- `BusController`
 
-### Step 1: Build the road graph (`AIRoadGraph`)
+### `Rigidbody`
 
-1. Add empty GameObject: `AIRoadGraph`.
-2. Add component: `AIRoadGraph`.
-3. Create waypoint transforms under `World` (or a dedicated `RoadNodes` object).
-4. In `AIRoadGraph.nodes`, add one element per waypoint and assign:
-   - `id`
-   - `point` (Transform)
-   - `laneCount` and `laneWidth`
-   - `speedLimitKmh`
-   - `trafficLight` (optional but recommended at intersections)
-   - `nextNodeIndices` (graph connectivity)
+Recommended checks:
+- `Use Gravity` enabled
+- not `Is Kinematic`
+- mass appropriate for a bus
+- center of mass handled by `BusController`
 
-**Verify**
-- Select `AIRoadGraph` and confirm there are no missing node `Transform` refs.
-- In Play Mode, vehicles move (if they don’t, the graph connectivity is incomplete).
+### `BusController` inspector wiring
 
-### Step 2: Prepare AI vehicle prefabs
+Assign all wheel arrays properly. This is one of the easiest places to make a silent mistake.
 
-For each prefab (car/truck/motorcycle/bus):
+- `steerWheels`
+  - `WheelCollider_FL`
+  - `WheelCollider_FR`
+- `driveWheels`
+  - `WheelCollider_ML`
+  - `WheelCollider_MR`
+  - `WheelCollider_RL`
+  - `WheelCollider_RR`
+- `allWheels`
+  - all six wheel colliders
+- `rearWheels`
+  - `WheelCollider_ML`
+  - `WheelCollider_MR`
+  - `WheelCollider_RL`
+  - `WheelCollider_RR`
+- `engineData`
+  - assign your `EngineSystem` asset/component
+- `transmissionData`
+  - assign your `TransmissionSystem` asset/component
 
-1. Add:
-   - `Rigidbody`
-   - collider(s)
-   - `AIVehicleController`
-   - `SplineVehicle`
-2. Keep both scripts on prefab; `VehiclePool` enables one tier at runtime.
-3. Set `AIVehicleController.vehicleType` correctly.
+### Wheel collider child objects
 
-**Prefab sanity checklist**
-- `Rigidbody` mass is reasonable (cars ~1200–1800, trucks higher).
-- Vehicle forward axis points in the driving direction (Z+ forward).
-- Colliders roughly match vehicle bounds.
+Each wheel collider object should have:
+- `Transform`
+- `WheelCollider`
+- `WheelVisualSync`
 
-### Step 3: Configure `VehiclePool`
+For every `WheelVisualSync`, assign:
+- `wheelCollider` -> the wheel collider on that same wheel object
+- `wheelMesh` -> the matching visible mesh transform
 
-1. Add empty GameObject: `VehiclePool`.
-2. Add component: `VehiclePool`.
-3. Assign:
-   - `roadGraph` -> `AIRoadGraph`
-   - `prefabs` -> weighted list of car/truck/motorcycle prefabs
-4. Recommended values:
-   - `poolSizePerScene = 50` (or higher for stress scene)
-   - `fullAiRadiusMeters = 200`
-   - `splineRadiusMeters = 400`
-   - `maxFullAiVehicles = 18` (hard cap in 15-20 window)
-   - `transitionHysteresisMeters = 25`
-5. Confirm `PlayerBus` has `BusController`; pool uses this as distance center.
+Examples:
+- `WheelCollider_FL` -> `wheelMesh = WheelMesh_FL`
+- `WheelCollider_FR` -> `wheelMesh = WheelMesh_FR`
+- `WheelCollider_ML` -> `wheelMesh = WheelMesh_ML`
+- `WheelCollider_MR` -> `wheelMesh = WheelMesh_MR`
+- `WheelCollider_RL` -> `wheelMesh = WheelMesh_RL`
+- `WheelCollider_RR` -> `wheelMesh = WheelMesh_RR`
 
-**Verify**
-- Press Play, open Scene view.
-- You see tier rings and gizmos if enabled (green full AI near bus, cyan spline mid-range).
-- Full AI count never exceeds `maxFullAiVehicles` (check `TrafficDebugHUD`).
+### Bus verification
 
-### Step 4: Pedestrians at zebra crossings
+Before touching passengers or traffic, confirm:
+- the bus moves with throttle/brake
+- steering affects only the front axle
+- wheel meshes visually follow the colliders
+- no `NullReferenceException` appears from `BusController` or `WheelVisualSync`
 
-1. Add empty GameObject: `PedestrianSpawner`.
-2. Add component: `PedestrianSpawner`.
-3. Create zebra crossing pairs:
-   - `spawnA` transform
-   - `spawnB` transform
-   - optional `controllingTrafficLight`
-4. Assign `pedestrianPrefab`.
-5. Configure `maxActivePedestrians`, `spawnCheckInterval`, and spawn chance.
+### Passenger-specific bus requirement
 
-**Verify**
-- Pedestrians only cross when the controlling light is red for vehicles.
+`PassengerManager` will call:
+- `BusController.RequestKneelingSuspension(bool active)`
 
-### Step 5: Emergency vehicle behavior
-
-1. Use ambulance prefab (or create one).
-2. Add:
-   - `AIVehicleController` (`vehicleType = Emergency`)
-   - `AmbulanceBehaviour`
-3. Optional:
-   - Assign `sirenSource`
-   - Assign flashing `Light[] emergencyLights`
-4. Tune:
-   - `influenceRadius`
-   - `notifyInterval`
-   - `pullOverDuration`
-
-**Verify**
-- When ambulance siren is active, nearby traffic slows and shifts over.
-
-### Step 6: AI buses with schedule
-
-1. Add empty GameObject: `AIBusScheduleSpawner`.
-2. Add component: `AIBusScheduleSpawner`.
-3. Assign:
-   - `aiBusPrefab` (has Rigidbody + AIVehicleController + SplineVehicle)
-   - route entries (`graph`, `nodeSequence`, `headwayMinutes`, `maxConcurrentBuses`)
-4. Ensure `ScheduleManager` is active for time-based departures.
-
-**Verify**
-- Buses spawn on headway and follow node sequences.
-
-### Step 7: Debug + visualization
-
-1. Add `TrafficDebugHUD` to an object in scene (or `TrafficSystem` root).
-2. Assign `vehiclePool`.
-3. Use `F8` to toggle HUD.
-4. In `VehiclePool`, enable:
-   - `drawTierGizmos`
-   - `drawTierRings`
-5. Validate:
-   - Green markers: full AI near bus
-   - Cyan markers: spline vehicles mid-range
-   - Gray markers: dormant far vehicles
+That already exists in your `BusController`, so no extra code is required. The important part is making sure `PassengerManager` can find the player bus at runtime.
 
 ---
 
-## 6) Stress Test Scene (A54)
+## 5) Exact setup for `Map`
 
-### Step 1: Build scene automatically
+In your screenshots, `Map` is carrying the main runtime managers. That is a good approach for now.
 
-Use menu:
+Select `Map`.
 
-- `Tools/RealBus/Build Traffic Stress Test Scene (A54)`
+It should contain these components:
+- `MapTileLoader`
+- `GPSManager`
+- `PassengerManager`
+- `MissionManager`
+- `FreeDriveSession`
+- `ScheduleManager`
+- `ScoreTracker`
+- `OSMLoader`
+- `OSMBuildingLoader`
+- `OSMRoadMeshBuilder`
+- `OSMBuildingMeshBuilder`
+- `OSMRouteImporter`
 
-This creates:
-- `Assets/_Game/Scenes/TrafficStressTest_A54.unity`
+### Why this matters
 
-### Step 2: Wire scene contents
+Several systems auto-find each other:
+- `GPSManager` searches for `MapTileLoader`
+- `MissionManager` depends on `GPSManager`, `BusController`, and `BusRoute`
+- `PassengerSpawner` depends on `ScheduleManager`
+- `PassengerManager` tries to find `BusController`
+- traffic systems often depend on the player bus and road graph
 
-1. Open the created scene.
-2. Populate `AIRoadGraph.nodes` for A54 path.
-3. Assign `VehiclePool.prefabs`.
-4. Confirm `TrafficStressTest.vehiclePool` is assigned.
+If one of these core components is missing, the scene may still enter Play Mode but large parts of gameplay will quietly fail.
 
-### Step 3: Run benchmark
+### Minimum `Map` verification
 
-1. Enter Play Mode.
-2. `TrafficStressTest` increments active vehicle count.
-3. It logs average FPS per step and detects the cliff point.
-4. Use that cliff as your global traffic budget ceiling.
+Before moving on:
+- `GPSManager.Instance` exists
+- `ScheduleManager.Instance` exists
+- `PassengerManager.Instance` exists
+- `MissionManager.Instance` exists
+- no startup error says a required reference is missing
+
+Important:
+- `MissionManager` logs `Missing references — check Inspector!` if `currentRoute`, `GPSManager`, or `busController` are not assigned/found
+
+### `MissionManager` required inspector fields
+
+On `MissionManager`, assign:
+- `currentRoute`
+- `busController` -> `Bus_Root`
+- `missionData`
+
+Behavior to expect:
+- it moves the bus to the first stop using `GPSManager`
+- it starts route timing and schedule setup
+- it calls `PassengerManager.HandleStopArrival(...)` at stops
+
+### `ScheduleManager` important fields
+
+Useful defaults:
+- `gameStartTimeMinutes = 480`
+- `secondsPerGameMinute = 1`
+
+This drives:
+- rush-hour passenger density
+- AI bus departures
+- route punctuality tracking
+
+### `ScoreTracker`
+
+`ScoreTracker` auto-finds the bus rigidbody, but you should still verify it is updating in Play Mode.
+
+It tracks:
+- punctuality
+- passenger comfort
+- safety
+- efficiency
 
 ---
 
-## 7) Common mistakes to avoid
+## 6) Exact setup for `PassengerManager`
 
-- Missing `BusController` on player bus (tier distance center not found).
-- Empty `AIRoadGraph.nodes` (vehicles cannot route).
-- Prefabs missing `Rigidbody` or missing AI scripts.
-- No `ScheduleManager` in scene (density falls back to default midday behavior).
-- Setting `maxFullAiVehicles` above 20 (breaks performance target).
+You currently have both:
+- a `PassengerManager` component on `Map`
+- a separate `PassengerManager` GameObject in the hierarchy
+
+Pick one runtime owner and keep only one active `PassengerManager` instance.
+
+Reason:
+- `PassengerManager` is a singleton
+- if two copies exist, one destroys itself in `Awake()`
+- that can create confusing setup bugs
+
+Recommended approach:
+- keep the `PassengerManager` component on `Map`
+- use the separate `PassengerManager` GameObject only if you want to move the component there and remove it from `Map`
+
+### `PassengerManager` inspector fields
+
+Important fields to review:
+
+- `passengerData`
+  - assign if you have a `PassengerData` asset
+  - otherwise fallback timings are used
+- `maxBusCapacity`
+  - default example: `80`
+- `doorOpenCapacityLimit`
+  - usually same as max capacity unless you want stricter boarding rules
+- `fuelCostPerKm`
+  - economy tuning
+- `passengerSpawner`
+  - assign your `PassengerSpawner` object here
+- `useAdvancedPassengerSimulation`
+  - keep enabled
+- `wheelchairChance`
+  - default around `0.05`
+- `extraWheelchairDwellSeconds`
+  - default around `10`
+- `seatedCapacity`
+  - default around `40`
+
+### What `PassengerManager` actually does
+
+At each stop it:
+- unloads passengers first
+- decides whether doors may open
+- spawns waiting passengers through `PassengerSpawner`
+- boards up to available capacity
+- adds fare income
+- recalculates satisfaction
+- recalculates required dwell time
+- requests kneeling suspension if wheelchair boarding happens
+
+### PassengerManager verification
+
+In Play Mode, after arriving at a stop, confirm:
+- `lastAlightingCount` changes
+- `lastBoardingCount` changes
+- `waitingAtCurrentStop` changes
+- `currentPassengers` updates
+- `latestRequiredDwellSeconds` increases when many people board
+- `hadWheelchairBoarding` occasionally becomes true
+
+If all values stay at zero after a stop arrival, the likely issue is:
+- `MissionManager` is not reaching stops
+- `currentRoute` is not valid
+- `PassengerManager` is not the active singleton
 
 ---
 
-## 8) Recommended first playable defaults
+## 7) Exact setup for `PassengerSpawner`
 
+Select the `PassengerSpawner` GameObject.
+
+It should have:
+- `Transform`
+- `PassengerSpawner`
+
+### Recommended values
+
+- `baselineSpawnMin = 2`
+- `baselineSpawnMax = 6`
+- `rushHourMultiplier = 5`
+- `morningPeakMinutes = 450`
+- `eveningPeakMinutes = 1050`
+- `peakWidthMinutes = 90`
+- `terminalMultiplier = 1.6`
+- `normalStopMultiplier = 1`
+
+### How it works
+
+`PassengerSpawner` does not place visible crowd prefabs by itself.
+
+It currently acts as a simulation density calculator:
+- reads current time from `ScheduleManager.Instance`
+- boosts demand near morning/evening peaks
+- boosts likely terminal stops based on stop names such as:
+  - `terminal`
+  - `depot`
+  - `station`
+
+### Required wiring
+
+Make sure the active `PassengerManager.passengerSpawner` field points to this object.
+
+### Verification
+
+Check in Play Mode:
+- off-peak stops produce fewer passengers
+- peak-hour stops produce more passengers
+- terminal-style stops tend to spawn more passengers than normal stops
+
+---
+
+## 8) Bus stop and route requirements
+
+The passenger system only works properly if stop data is valid.
+
+### Required route data
+
+Your active `BusRoute` should have:
+- a non-empty `stops` array
+- valid latitude/longitude for each stop
+- stops in correct travel order
+- a usable `baseFare`
+
+### Stop arrival integration
+
+Your current integration already exists in `MissionManager`:
+- first stop boarding happens in `MissionStartSequence()`
+- later boarding/alighting happens in `ProcessStopArrival()`
+
+The core call is:
+- `PassengerManager.Instance.HandleStopArrival(stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length)`
+
+### Verification
+
+If the bus reaches a stop and nothing happens:
+- check `distanceToNextStop`
+- check that `currentStopIndex` is valid
+- check that GPS conversion places the stop where expected
+- confirm the bus gets within `15f` meters of the target stop
+
+---
+
+## 9) Exact setup for `Canvas` and mobile controls
+
+Select `Canvas`.
+
+It should have:
+- `RectTransform`
+- `Canvas`
+- `CanvasScaler`
+- `GraphicRaycaster`
+- `MobileControlsUI`
+
+### `MobileControlsUI` required assignments
+
+Assign:
+- `busController` -> `Bus_Root`
+- `accelerateButton` -> `Btn_Accelerate`
+- `brakeButton` -> `Btn_Brake`
+- `steerLeftButton` -> `Btn_SteerLeft`
+- `steerRightButton` -> `Btn_SteerRight`
+- `retarderButton` -> `Btn_Retarder`
+- `hornButton` -> `Btn_Horn`
+- `shiftUpButton` -> `Btn_ShiftUp`
+- `shiftDownButton` -> `Btn_ShiftDown`
+
+### Button requirements
+
+Each button should:
+- use a `Button` component
+- be interactable
+- be inside the active canvas
+- not be blocked by another full-screen UI element
+
+`MobileControlsUI` adds `EventTrigger` handlers at runtime for hold behavior, so the buttons do not need manual pointer event setup in the inspector.
+
+### Verification
+
+In Simulator or on device:
+- holding accelerate keeps throttle applied
+- holding brake keeps brake applied
+- holding left/right steers while pressed
+- tap `RET` toggles retarder
+- tap `HORN` calls horn
+- tap shift buttons changes gear
+
+---
+
+## 10) Passenger UI setup
+
+If you want passenger feedback on-screen, create a small HUD panel under `Canvas`.
+
+Recommended hierarchy:
+
+```text
+Canvas
+└── PassengerPanel
+    ├── CountText
+    ├── EmojiText
+    └── MoodTint
+```
+
+Add:
+- `PassengerCountUI` to `PassengerPanel`
+
+Assign:
+- `countText` -> a `TextMeshProUGUI`
+- `emojiText` -> a `TextMeshProUGUI`
+- `moodTint` -> a `UnityEngine.UI.Image`
+
+### What it displays
+
+`PassengerCountUI` reads from `PassengerManager.Instance` and shows:
+- current passengers / bus capacity
+- mood emoji
+- satisfaction color tint
+
+### Suggested thresholds
+
+Defaults already in the script:
+- `happyThreshold = 0.8`
+- `neutralThreshold = 0.55`
+- `unhappyThreshold = 0.35`
+
+### Verification
+
+When stops are processed:
+- count text updates
+- emoji changes with satisfaction
+- tint color shifts from green to yellow/orange/red
+
+---
+
+## 11) AI traffic system setup
+
+This project uses a tiered traffic approach:
+- `FullAI` near the player bus
+- `Spline` in the mid-distance
+- `Dormant` far away
+
+The performance-critical rule is:
+- keep `VehiclePool.maxFullAiVehicles` in the `15-20` range
+- recommended default is `18`
+
+---
+
+## 12) `AIRoadGraph` setup
+
+Create a GameObject named `AIRoadGraph` if you do not already have one.
+
+Add:
+- `AIRoadGraph`
+
+Populate `nodes` with waypoint data.
+
+Each node should define:
+- `id`
+- `point`
+- `laneCount`
+- `laneWidth`
+- `speedLimitKmh`
+- `trafficLight` if applicable
+- `nextNodeIndices`
+
+### Critical detail often missed
+
+`nextNodeIndices` must point to valid node indices.
+
+If this is incomplete:
+- AI vehicles spawn
+- but cannot route correctly
+- or freeze immediately
+
+### Verification
+
+Confirm:
+- every used node has a `point` transform
+- no required node has an empty `nextNodeIndices`
+- intersections using signals have a `TrafficLight` assigned
+
+---
+
+## 13) AI vehicle prefab setup
+
+Each AI vehicle prefab should contain:
+- `Rigidbody`
+- collider(s)
+- `AIVehicleController`
+- `SplineVehicle`
+
+Recommended checks:
+- forward direction is positive Z
+- collider bounds match the mesh reasonably well
+- mass is sensible for the vehicle type
+
+Set `AIVehicleController.vehicleType` correctly:
+- `Car`
+- `Truck`
+- `Motorcycle`
+- `Bus`
+- `Emergency`
+
+---
+
+## 14) `VehiclePool` setup
+
+Create `VehiclePool` and assign:
+- `roadGraph` -> your `AIRoadGraph`
+- `prefabs` -> weighted vehicle prefab list
+
+Recommended values:
+- `poolSizePerScene = 50`
+- `fullAiRadiusMeters = 200`
+- `splineRadiusMeters = 400`
+- `transitionHysteresisMeters = 25`
+- `maxFullAiVehicles = 18`
+- `tierUpdateIntervalSeconds = 0.2`
+- `minActiveFraction = 0.25`
+- `maxActiveFraction = 0.9`
+- `updateDensityEverySeconds = 4`
+- `morningPeakMinutes = 450`
+- `eveningPeakMinutes = 1050`
+- `peakWidthMinutes = 80`
+- `rushMultiplier = 3.5`
+
+Important:
+- the pool auto-finds the player `BusController`
+- if there is no player bus in scene, distance-based tiering becomes meaningless
+
+### Debug recommendations
+
+Enable:
+- `drawTierGizmos`
+- `drawTierRings`
+
+Expected colors:
+- green = `FullAI`
+- cyan = `Spline`
+- gray = `Dormant`
+
+---
+
+## 15) Pedestrians, ambulance, and AI buses
+
+### `PedestrianSpawner`
+
+Add:
+- `PedestrianSpawner`
+
+Assign:
+- zebra crossing endpoints
+- optional controlling traffic light
+- pedestrian prefab
+
+Verify:
+- pedestrians only cross when vehicle traffic should yield
+
+### `AmbulanceBehaviour`
+
+Emergency prefab should have:
+- `AIVehicleController` with `vehicleType = Emergency`
+- `AmbulanceBehaviour`
+
+Optional:
+- siren audio source
+- flashing light references
+
+Verify:
+- nearby AI traffic yields when ambulance behavior is active
+
+### `AIBusScheduleSpawner`
+
+Add:
+- `AIBusScheduleSpawner`
+
+Assign:
+- `aiBusPrefab`
+- route entries with:
+  - `graph`
+  - `nodeSequence`
+  - `headwayMinutes`
+  - `maxConcurrentBuses`
+
+It depends on:
+- valid `ScheduleManager` time
+- valid graph nodes
+- node sequences with at least 2 entries
+
+---
+
+## 16) First playable validation checklist
+
+Use this checklist in order.
+
+### Core scene
+
+- exactly one active `PassengerManager` singleton
+- exactly one active `ScheduleManager` singleton
+- `MissionManager.busController` points to `Bus_Root`
+- `MissionManager.currentRoute` is assigned
+- `GPSManager` finds `MapTileLoader`
+
+### Bus
+
+- bus moves, steers, brakes
+- wheel meshes follow colliders
+- no missing engine/transmission references
+
+### Mobile UI
+
+- every canvas button is assigned into `MobileControlsUI`
+- hold buttons behave continuously
+- tap buttons fire once
+
+### Passengers
+
+- first stop can board passengers
+- later stops unload then reload passengers
+- capacity limits are respected
+- dwell time changes with boarding/alighting volume
+- wheelchair boarding can trigger kneeling
+
+### Traffic
+
+- `AIRoadGraph` nodes are valid
+- `VehiclePool` has prefabs
+- full AI count does not exceed budget
+- spline tier activates outside the near-player radius
+
+---
+
+## 17) Common mistakes in this specific scene
+
+- Keeping two active `PassengerManager` components in the scene
+- Forgetting to assign `PassengerManager.passengerSpawner`
+- Leaving `MissionManager.busController` empty
+- Leaving `MissionManager.currentRoute` empty
+- Missing `engineData` or `transmissionData` on `BusController`
+- Forgetting to wire one or more wheel colliders into the bus arrays
+- Forgetting to assign one of the `MobileControlsUI` buttons
+- Having an `AIRoadGraph` with nodes but no valid `nextNodeIndices`
+- Setting `maxFullAiVehicles` above `20`
+
+---
+
+## 18) Good default values to start with
+
+Passenger side:
+- `PassengerSpawner.baselineSpawnMin = 2`
+- `PassengerSpawner.baselineSpawnMax = 6`
+- `PassengerSpawner.rushHourMultiplier = 5`
+- `PassengerManager.maxBusCapacity = 80`
+- `PassengerManager.seatedCapacity = 40`
+- `PassengerManager.wheelchairChance = 0.05`
+- `PassengerManager.extraWheelchairDwellSeconds = 10`
+
+Traffic side:
 - `VehiclePool.poolSizePerScene = 50`
 - `VehiclePool.maxFullAiVehicles = 18`
 - `VehiclePool.fullAiRadiusMeters = 200`
 - `VehiclePool.splineRadiusMeters = 400`
 - `VehiclePool.minActiveFraction = 0.25`
 - `VehiclePool.maxActiveFraction = 0.9`
-- `PedestrianSpawner.maxActivePedestrians = 40`
-
-These values are a stable starting point for A54-class performance.
 
 ---
 
-## 9) Map/Streaming/Road Physics (next systems you requested)
+## 19) If you want the cleanest final organization
 
-This project currently uses:
-- `MapTileLoader` for raster tiles + GPS/world conversion
-- OSM meshes for roads (`OSMRoadMeshBuilder`) with `MeshCollider`
+Your current scene is functional, but the cleanest version would be:
 
-The improvements below add:
-- A single **CoordinateConverter** wrapper
-- A persistent **MapOrigin** asset
-- GPS tracking for the bus
-- Tile streaming (2km load / 3km unload) with priority and UI spinner
-- Offline cache + city predownload flow
-- Road surface friction (asphalt/cobble/dirt + wetness)
+- keep `Bus_Root` as the player vehicle only
+- keep `Canvas` for UI only
+- keep `Map` as world/map/route runtime host
+- keep only one `PassengerManager`
+- keep only one `PassengerSpawner`
+- add a dedicated `TrafficSystem` root later if traffic grows
 
-These steps are intentionally strict so nothing is missed.
-
----
-
-## 10) Coordinate Conversion (CoordinateConverter + MapOrigin)
-
-### Goal
-
-All systems use one API:
-- `CoordinateConverter.GeoToWorldPosition(lat, lon)`
-- `CoordinateConverter.WorldToGeoPosition(worldPos)`
-
-### Step 1: Create the MapOrigin asset (persistent)
-
-1. In Project window, create:
-   - **Create → RealBus → Map → Map Origin**
-2. Name it: `MapOrigin_ActiveCity` (or similar).
-3. Set:
-   - `originLat` = your city/session origin
-   - `originLon` = your city/session origin
-   - `originLabel` = city name
-
-**Verify**
-- The values match your chosen city (`CityDefinition.centreLat/centreLon`).
-
-### Step 2: Add CoordinateConverter to gameplay scene
-
-1. In `Pysicstesttrack`, create GameObject: `CoordinateConverter`
-2. Add component: `CoordinateConverter`
-3. Assign:
-   - `mapOrigin` → your `MapOrigin_ActiveCity` asset
-   - `mapTileLoader` → optional (auto-finds)
-
-**Verify**
-- In Play Mode, no console errors.
-- Call sites can use `CoordinateConverter.Instance`.
-
-### Step 3: Unit test verification (round trip)
-
-1. Run EditMode tests.
-2. Ensure `CoordinateConverterTests` passes.
-
-**Pass criteria**
-- Round-trip accuracy is within **0.1m** for local points.
-
----
-
-## 11) GPS Tracker (feeds minimap + streaming)
-
-### Step 1: Add GpsTracker
-
-1. Create GameObject: `GpsTracker`
-2. Add component: `GpsTracker`
-3. Assign:
-   - `busTransform` → your player bus transform
-   - `converter` → `CoordinateConverter` (optional; auto-finds)
-
-**Verify**
-- In Play Mode, `GpsTracker.currentLat/currentLon` changes as bus moves.
-
----
-
-## 12) Road Colliders + Physics Material + Surface Grip
-
-### Goal
-
-- MeshColliders exist for drivable roads
-- PhysicsMaterial applied: **static friction 0.7**, **dynamic friction 0.6**
-- WheelCollider stiffness is adjusted by road type and wetness:
-  - Asphalt = **1.0×**
-  - Cobblestone = **0.85×**
-  - Dirt = **0.65×**
-  - Wet (rain) = **0.7×** multiplier (applied on top)
-
-### Step 1: Create the road PhysicMaterial asset
-
-1. Project window → Create → Physic Material
-2. Name: `PM_Road_Asphalt`
-3. Set:
-   - `Static Friction = 0.7`
-   - `Dynamic Friction = 0.6`
-   - `Friction Combine = Average` (recommended)
-   - `Bounce Combine = Minimum`
-
-### Step 2: Apply to OSM road meshes
-
-1. Select the GameObject with `OSMRoadMeshBuilder`
-2. Assign:
-   - `roadPhysicMaterial` → `PM_Road_Asphalt`
-   - `roadLayer` → a layer you dedicate to roads (e.g. `Road`)
-   - `roadTag` → `Road` (or keep default)
-
-**Verify**
-- In Play Mode, generated road segments have:
-  - `MeshCollider` enabled
-  - correct PhysicMaterial
-  - correct layer/tag
-
-### Step 3: Set up road type layers
-
-Create layers (Project Settings → Tags and Layers):
-- `Road` (asphalt)
-- `Cobblestone`
-- `Dirt`
-
-Assign these layers to the corresponding road mesh objects in your world (or generate them per type if you split roads).
-
-### Step 4: Add RoadSurfaceDetector + RoadSurfaceFrictionController
-
-1. On a `RoadPhysics` GameObject (or on the bus), add:
-   - `RoadSurfaceDetector`
-   - `RoadSurfaceFrictionController`
-2. Assign:
-   - `busController` references (or let them auto-find)
-3. In `RoadSurfaceDetector`, set:
-   - `surfaceLayers` to include your road layers
-   - verify layer mappings:
-     - `Road` → Asphalt
-     - `Cobblestone` → Cobblestone
-     - `Dirt` → Dirt
-
-**Verify**
-- In Play Mode, changing the road layer under a wheel changes grip feel.
-- During rain, grip is reduced further (wet multiplier).
-
----
-
-## 13) Tile Streaming (2km load / 3km unload) + Loading Spinner
-
-### Step 1: Add OfflineCacheManager
-
-1. Create GameObject: `OfflineCacheManager`
-2. Add component: `OfflineCacheManager`
-
-**Verify**
-- On start, it logs online/offline status.
-
-### Step 2: Add TileStreamManager
-
-1. Create GameObject: `TileStreamManager`
-2. Add component: `TileStreamManager`
-3. Assign:
-   - `mapboxToken` (required)
-   - `mapStyle`
-   - `zoomLevel`
-   - `busTransform` → player bus (optional; auto-finds)
-   - `converter` → CoordinateConverter (optional; auto-finds)
-   - `cache` → OfflineCacheManager (optional; auto-finds)
-4. Set radii:
-   - `loadRadiusMeters = 2000`
-   - `unloadRadiusMeters = 3000`
-5. Set performance:
-   - `maxConcurrentDownloads = 6`
-   - `refreshEverySeconds = 0.5`
-
-### Step 3: Add loading indicator UI
-
-1. In your gameplay UI canvas, create:
-   - `TileStreamingLoadingUI` panel
-   - `CanvasGroup` on the panel root
-   - an `Image` as spinner (child)
-2. Add component: `TileStreamingLoadingUI`
-3. Assign:
-   - `canvasGroup`
-   - `spinner` RectTransform
-4. Assign `TileStreamManager.loadingUI` to the `TileStreamingLoadingUI` instance.
-
-**Verify**
-- Spinner is visible while tiles are downloading.
-- Spinner hides when streaming settles.
-
----
-
-## 14) Offline Maps: cache + predownload UI flow
-
-### Step 1: Add CityPredownloader
-
-1. Create GameObject: `CityPredownloader`
-2. Add component: `CityPredownloader`
-3. Assign:
-   - `mapboxToken`
-   - `mapStyle`
-   - `zoomLevel`
-   - `radiusMeters` (start with 2000)
-
-### Step 2: Create Settings UI (Offline Maps)
-
-Add a panel in your Settings menu:
-
-- Dropdown (TMP): City selection
-- Button: Download
-- Slider: Progress bar
-- Text (TMP): Progress percent
-- Text (TMP): Estimated size
-
-Add component: `OfflineMapsUI` and assign:
-- `cityDropdown`
-- `downloadButton`
-- `progressBar`
-- `progressLabel`
-- `sizeLabel`
-- `predownloader`
-
-**Verify**
-- Clicking Download starts progress updates.
-- Cached tiles are written to `Application.persistentDataPath/TileCache/...`
-- If device is offline, tile requests come from cache (missing tiles fail gracefully).
-
----
-
-## 15) Scene navigation (no hardcoded scene names)
-
-This project now uses a **scene build-index catalog** (no scene-name strings in code).
-
-### Step 1: Create the catalog asset
-
-1. Project window → **Create → RealBus → Scenes → Scene Catalog**
-2. Name it: `SceneCatalog_Default`
-3. Set build indices to match your Build Settings order:
-   - `mainMenuBuildIndex`
-   - `countrySelectBuildIndex`
-   - `citySelectBuildIndex`
-   - `routeSelectBuildIndex`
-   - `gameplayBuildIndex` (your `Pysicstesttrack`)
-
-### Step 2: Assign it to SceneLoader (once)
-
-1. In your persistent bootstrap scene (or in `MainMenu`), select `SceneLoader`
-2. Assign `sceneCatalog` → `SceneCatalog_Default`
-
-**Verify**
-- Buttons that call `SceneLoader.Load*()` navigate correctly.
-
----
-
-## 16) Automatic route generation (Overpass → RoadGraph → BusRoute assets)
-
-### What this gives you
-
-- Overpass download for **roads** + **bus stops**
-- Stop snap to road centerlines
-- Corridor clustering into draft routes
-- A* pathfinding on the road graph between ordered stops
-- Filtering into **10–20 usable routes**
-- Return routes (reverse stops + re-pathfind)
-- Saved `BusRoute` ScriptableObjects in `Assets/_Game/Routes/`
-
-### Step 1: Open the importer tool
-
-Menu:
-- `Tools/RealBus/OSM/Auto-Generate Bus Routes (Overpass)`
-
-### Step 2: Set bounding box and run
-
-1. Fill Min/Max lat/lon for your target city area.
-2. Click in order:
-   - **1) Download roads + stops**
-   - **2) Cluster stops → draft routes**
-   - **3) Generate paths (A*) + filter**
-   - **4) Save BusRoute assets (+ return routes)**
-
-**Verify**
-- New assets appear in `Assets/_Game/Routes/`
-- Each saved route has:
-  - `busStops[]`
-  - `pathPoints[]`
-  - `distanceKm`, `estimatedTimeMinutes`, `difficulty`
-
-### Step 3: Visualize a route in Scene view (optional)
-
-Option A (gizmo component):
-- Add `RouteDebugVisualiser` to a GameObject in scene and assign a `BusRoute`.
-
-Option B (editor window):
-- Open `Tools/RealBus/Routes/Route Editor Window`
-
----
-
-## 17) Route Editor Window (edit stops in-scene)
-
-Open:
-- `Tools/RealBus/Routes/Route Editor Window`
-
-### Features
-
-- **Move stop**: drag stop marker in Scene view (updates GPS)
-- **Delete stop**
-- **Reorder stops**: Up/Down
-- **Reverse stops**: quick return-variant helper
-- **Add stop (scene click)**:
-  - Enter add-stop mode → click in Scene view to place stop
-  - Inserts after selected stop (or at end)
-- **Split route**:
-  - Choose split point → creates 2 new `BusRoute` assets
-- **Merge routes**:
-  - Assign “Merge with” route → creates merged `BusRoute` asset
-  - Optional junction de-duplication
-
-**Verify**
-- After edits, the `BusRoute` asset is marked dirty and saves correctly.
+That keeps the scene easy to debug without forcing a full restructure right now.

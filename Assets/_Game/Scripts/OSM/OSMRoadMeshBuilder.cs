@@ -14,7 +14,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     public float roadYOffset = 0.02f;
     public int roadLayer = 0;
     public string roadTag = "Road";
-    public PhysicMaterial roadPhysicMaterial;
+    public PhysicsMaterial roadPhysicMaterial;
 
     [Header("State")]
     public bool roadsBuilt = false;

@@ -6,8 +6,8 @@ public static class OverpassQueryBuilder
     {
         // Sample: [out:json]; way[highway~'motorway|primary|secondary|residential'](<bbox>); out geom;
         string bbox = $"{minLat},{minLon},{maxLat},{maxLon}";
-        return "[out:json][timeout:60];" +
-               "way[highway~\"motorway|trunk|primary|secondary|tertiary|residential|unclassified|service\"]" +
+        return "[out:json][timeout:120];" +
+               "way[highway~\"motorway|trunk|primary|secondary|tertiary|residential|unclassified\"]" +
                $"({bbox});" +
                "out geom;";
     }
@@ -16,7 +16,7 @@ public static class OverpassQueryBuilder
     {
         // Sample: [out:json]; relation[route=bus](<bbox>); out geom;
         string bbox = $"{minLat},{minLon},{maxLat},{maxLon}";
-        return "[out:json][timeout:60];" +
+        return "[out:json][timeout:120];" +
                "relation[route=bus]" +
                $"({bbox});" +
                "out geom;";
@@ -36,4 +36,3 @@ public static class OverpassQueryBuilder
         maxLon = centerLon + dLon;
     }
 }
-
