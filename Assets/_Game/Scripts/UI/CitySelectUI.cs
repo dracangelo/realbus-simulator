@@ -234,12 +234,12 @@ public class CitySelectUI : MonoBehaviour
         Debug.Log($"City selected: {city.cityName}");
         if (GameState.Instance != null) GameState.Instance.SelectCity(city);
         if (CityManager.Instance != null) CityManager.Instance.SetActiveCity(city);
-        StartCoroutine(TransitionOut("RouteSelect"));
+        StartCoroutine(TransitionToRouteSelect());
     }
 
     void OnBack()
     {
-        StartCoroutine(TransitionOut("CountrySelect"));
+        StartCoroutine(TransitionToCountrySelect());
     }
 
     IEnumerator AnimateIn()
@@ -254,14 +254,20 @@ public class CitySelectUI : MonoBehaviour
     }
 
         
-    IEnumerator TransitionOut(string scene)
+    IEnumerator TransitionToCountrySelect()
     {
         if (canvasGroup)
             yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
 
-        if (scene == "CountrySelect") SceneLoader.Instance?.LoadCountrySelect();
-        else if (scene == "RouteSelect") SceneLoader.Instance?.LoadRouteSelect();
-        else SceneLoader.Instance?.LoadMainMenu();
+        SceneLoader.Instance?.LoadCountrySelect();
+    }
+
+    IEnumerator TransitionToRouteSelect()
+    {
+        if (canvasGroup)
+            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
+
+        SceneLoader.Instance?.LoadRouteSelect();
     }
 
     void RefreshListLayout()

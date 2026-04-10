@@ -46,9 +46,6 @@ public class WeatherPhysics : MonoBehaviour
 
     void Start()
     {
-        if (UnityEngine.SceneManagement.SceneManager
-            .GetActiveScene().name != "GameScene") return;
-
         if (busController == null)
             busController = FindFirstObjectByType<BusController>();
 

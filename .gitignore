@@ -1,0 +1,64 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Asset meta files generated for folders (keep file metas)
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity cache / auto-generated project files
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+*.opendb.meta
+*.VC.db.meta
+
+# Visual Studio / Rider / VSCode
+.vs/
+.idea/
+.vscode/
+*.sln.docstates
+
+# Crash / debug
+sysinfo.txt
+*.stacktrace
+
+# Package manager lock and cache exceptions
+# Keep manifest and lock files versioned
+!/[Pp]ackages/manifest.json
+!/[Pp]ackages/packages-lock.json
+
+# Addressables / bundles / generated data
+/[Aa]ssets/[Aa]ssetStoreTools*
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/
+
+# Build outputs and archives
+*.apk
+*.aab
+*.ipa
+*.app
+*.unitypackage
+
+# OS files
+.DS_Store
+Thumbs.db

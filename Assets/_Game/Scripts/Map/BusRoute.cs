@@ -10,6 +10,26 @@ public class BusRoute : ScriptableObject
 
     [Header("Stops (in order)")]
     public BusStopData[] stops;
+
+    [Header("Stops (new)")]
+    public BusStop[] busStops;
+
+    [Header("Route Geometry (optional)")]
+    public double[] geometryLatLonFlat;
+
+    [Header("Generated Path (world)")]
+    public Vector3[] pathPoints;
+
+    [Header("Generated Metrics")]
+    public float distanceKm;
+    public float estimatedTimeMinutes;
+    [Range(1, 5)] public int difficulty = 3;
+
+    public int GetStopCount()
+    {
+        if (busStops != null && busStops.Length > 0) return busStops.Length;
+        return stops != null ? stops.Length : 0;
+    }
 }
 
 [System.Serializable]

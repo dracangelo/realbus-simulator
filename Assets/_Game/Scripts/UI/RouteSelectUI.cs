@@ -200,13 +200,13 @@ public class RouteSelectUI : MonoBehaviour
     {
         Debug.Log($"Route selected: {route.routeName}");
         if (GameState.Instance != null) GameState.Instance.SelectRoute(route);
-        StartCoroutine(TransitionOut());
+        StartCoroutine(TransitionToGame());
     }
 
     void OnBack()
     {
         Debug.Log($"Back pressed — SceneLoader: {SceneLoader.Instance != null}");
-        StartCoroutine(TransitionOut("CitySelect"));
+        StartCoroutine(TransitionToCitySelect());
     }
 
     IEnumerator AnimateIn()
@@ -220,12 +220,19 @@ public class RouteSelectUI : MonoBehaviour
                 UIAnimator.SlideInFromBottom(contentPanel, 0.35f, 30f));
     }
 
-    IEnumerator TransitionOut(string scene = "Game")
+    IEnumerator TransitionToCitySelect()
     {
         if (canvasGroup)
             yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
 
-        if (scene == "CitySelect") SceneLoader.Instance?.LoadCitySelect();
-        else SceneLoader.Instance?.LoadGame();
+        SceneLoader.Instance?.LoadCitySelect();
+    }
+
+    IEnumerator TransitionToGame()
+    {
+        if (canvasGroup)
+            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
+
+        SceneLoader.Instance?.LoadGame();
     }
 }
