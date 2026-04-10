@@ -10,12 +10,80 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a85fb766e3686375bf4c12677d1c015, type: 3}
-  m_Name: Draft_0
+  m_Name: 3rd_Parklands_Avenue_Aga_Kan_Hospital_Junction_-_Trufi_Stop
   m_EditorClassIdentifier: GameScripts::BusRoute
-  routeNumber: 
-  routeName: Draft_0
+  routeNumber: R0
+  routeName: 3rd Parklands Avenue/Aga Kan Hospital Junction - Trufi Stop
   baseFare: 50
-  stops: []
+  stops:
+  - stopName: 3rd Parklands Avenue/Aga Kan Hospital Junction
+    latitude: -1.263228899863569
+    longitude: 36.82507660093114
+    waitTimeSeconds: 10
+  - stopName: Oilibya/2nd Parklands Avenue
+    latitude: -1.2641835835738187
+    longitude: 36.82465328735924
+    waitTimeSeconds: 10
+  - stopName: OiLibya/2nd Parklands Avenue
+    latitude: -1.264698464352837
+    longitude: 36.82434037766282
+    waitTimeSeconds: 10
+  - stopName: Aga Khan Academy
+    latitude: -1.266432775137624
+    longitude: 36.8232348000367
+    waitTimeSeconds: 10
+  - stopName: Wambugu Road Bus stop
+    latitude: -1.2680061887630747
+    longitude: 36.82128209839671
+    waitTimeSeconds: 10
+  - stopName: Stima Plaza Stage
+    latitude: -1.2695997858791097
+    longitude: 36.82040983966648
+    waitTimeSeconds: 10
+  - stopName: Stima Plaza
+    latitude: -1.2699972501940493
+    longitude: 36.82053822629051
+    waitTimeSeconds: 10
+  - stopName: Stima Plaza
+    latitude: -1.2704247161503366
+    longitude: 36.82048997998559
+    waitTimeSeconds: 10
+  - stopName: Stima Plaza
+    latitude: -1.272600828093331
+    longitude: 36.82098627148878
+    waitTimeSeconds: 10
+  - stopName: JamhurI High
+    latitude: -1.2721623594151783
+    longitude: 36.822253714691904
+    waitTimeSeconds: 10
+  - stopName: Jamhuri High School
+    latitude: -1.2733405734194811
+    longitude: 36.82298678234158
+    waitTimeSeconds: 10
+  - stopName: Ngara
+    latitude: -1.274082096561784
+    longitude: 36.823821821882625
+    waitTimeSeconds: 10
+  - stopName: Fig Tree
+    latitude: -1.275653518128472
+    longitude: 36.82299472074613
+    waitTimeSeconds: 10
+  - stopName: Globe
+    latitude: -1.277394202596628
+    longitude: 36.821087414166485
+    waitTimeSeconds: 10
+  - stopName: Koja
+    latitude: -1.2803985145121994
+    longitude: 36.82168301442512
+    waitTimeSeconds: 10
+  - stopName: Koja
+    latitude: -1.2803988596580032
+    longitude: 36.82168336651187
+    waitTimeSeconds: 10
+  - stopName: Trufi Stop
+    latitude: -1.2816710034890266
+    longitude: 36.822674039913785
+    waitTimeSeconds: 10
   busStops:
   - stopId: 10832093292
     stopName: 3rd Parklands Avenue/Aga Kan Hospital Junction

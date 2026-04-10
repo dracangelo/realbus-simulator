@@ -530,9 +530,16 @@ public class OSMRouteImporterEditorTool : EditorWindow
     int SaveOne(string folder, RouteDraft d, bool isReturn)
     {
         var asset = ScriptableObject.CreateInstance<BusRoute>();
-        asset.routeName   = isReturn ? $"{d.name} (Return)" : d.name;
-        asset.routeNumber = d.routeRef ?? "";
+        asset.routeName   = GenerateRouteName(d, isReturn);
+        asset.routeNumber = GenerateRouteNumber(d, isReturn);
         asset.busStops    = d.stops.Select(s => s.stop).ToArray();
+        asset.stops       = d.stops.Select(s => new BusStopData
+        {
+            stopName = s.stop.stopName,
+            latitude = s.stop.latitude,
+            longitude = s.stop.longitude,
+            waitTimeSeconds = 10f
+        }).ToArray();
         asset.pathPoints  = d.pathWorld.ToArray();
         asset.distanceKm          = d.distanceKm;
         asset.estimatedTimeMinutes = d.estimatedTimeMinutes;
@@ -551,6 +558,73 @@ public class OSMRouteImporterEditorTool : EditorWindow
         string path = AssetDatabase.GenerateUniqueAssetPath($"{folder}/{safe}.asset");
         AssetDatabase.CreateAsset(asset, path);
         return 1;
+    }
+
+    string GenerateRouteName(RouteDraft d, bool isReturn)
+    {
+        string startName = GetMeaningfulStopName(d, fromStart: true);
+        string endName = GetMeaningfulStopName(d, fromStart: false);
+
+        string baseName;
+        if (!string.IsNullOrWhiteSpace(startName) && !string.IsNullOrWhiteSpace(endName))
+        {
+            baseName = string.Equals(startName, endName, System.StringComparison.OrdinalIgnoreCase)
+                ? $"{startName} Loop"
+                : $"{startName} - {endName}";
+        }
+        else if (!string.IsNullOrWhiteSpace(d.routeRef))
+        {
+            baseName = $"Route {d.routeRef}";
+        }
+        else
+        {
+            baseName = d.name;
+        }
+
+        return isReturn && !baseName.EndsWith("(Return)")
+            ? $"{baseName} (Return)"
+            : baseName;
+    }
+
+    string GenerateRouteNumber(RouteDraft d, bool isReturn)
+    {
+        string number = string.IsNullOrWhiteSpace(d.routeRef) ? d.name.Replace("Draft_", "R").Replace("_part", "P") : d.routeRef;
+        return isReturn ? $"{number}R" : number;
+    }
+
+    string GetMeaningfulStopName(RouteDraft d, bool fromStart)
+    {
+        if (d?.stops == null || d.stops.Count == 0)
+            return "";
+
+        int index = fromStart ? 0 : d.stops.Count - 1;
+        int step = fromStart ? 1 : -1;
+        string candidate = CleanStopName(d.stops[index].stop.stopName);
+
+        for (int i = index + step; i >= 0 && i < d.stops.Count; i += step)
+        {
+            string next = CleanStopName(d.stops[i].stop.stopName);
+            if (!string.IsNullOrWhiteSpace(next) &&
+                !string.Equals(next, candidate, System.StringComparison.OrdinalIgnoreCase))
+                return candidate;
+        }
+
+        return candidate;
+    }
+
+    static string CleanStopName(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return "Unnamed Stop";
+
+        string value = raw.Trim();
+        value = value.Replace("Bus Stop", "").Replace("bus stop", "").Trim();
+        value = value.Replace("Stage", "").Trim();
+
+        while (value.Contains("  "))
+            value = value.Replace("  ", " ");
+
+        return string.IsNullOrWhiteSpace(value) ? "Unnamed Stop" : value;
     }
 
     // ── coordinate converter ──────────────────────────────────────────────────
