@@ -55,6 +55,7 @@
     <Compile Include="Assets/_Game/Scripts/Editor/RouteEditorWindow.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CityJsonBulkDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CitySelectBuilder.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/RouteSelectBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/SampleWorldGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CountrySelectBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/StreamingAssetsCityFolderGenerator.cs" />
