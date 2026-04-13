@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3915895825421258845}
   - component: {fileID: 5963855155956369519}
   - component: {fileID: 7526483912051387862}
+  - component: {fileID: 3820779184742480762}
   m_Layer: 0
   m_Name: AI_Emergency
   m_TagString: Untagged
@@ -115,6 +116,24 @@ MonoBehaviour:
   minHeadway: 10
   redLightStopDistance: 18
   lookaheadNodes: 8
+--- !u!114 &3820779184742480762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7536025273544103433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc94eccc7383d8e61ad411430f05b659, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameScripts::AmbulanceBehaviour
+  sirenActive: 1
+  influenceRadius: 45
+  notifyInterval: 0.4
+  pullOverDuration: 2.2
+  sirenSource: {fileID: 0}
+  emergencyLights: []
 --- !u!1 &8924102952211233510
 GameObject:
   m_ObjectHideFlags: 0

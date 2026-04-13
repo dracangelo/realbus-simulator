@@ -30517,7 +30517,7 @@ MonoBehaviour:
   doorOpenCapacityLimit: 80
   fuelCostPerKm: 12
   totalDistanceKm: 0
-  passengerSpawner: {fileID: 467837182}
+  passengerSpawner: {fileID: 0}
   useAdvancedPassengerSimulation: 1
   wheelchairChance: 0.05
   extraWheelchairDwellSeconds: 10
@@ -39744,7 +39744,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 467837183}
-  - component: {fileID: 467837182}
+  - component: {fileID: 467837184}
   m_Layer: 0
   m_Name: PassengerSpawner
   m_TagString: Untagged
@@ -39752,7 +39752,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &467837182
+--- !u!4 &467837183
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 467837181}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 47.52568, y: 9.25085, z: -1.28341}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &467837184
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -39772,21 +39787,11 @@ MonoBehaviour:
   peakWidthMinutes: 90
   terminalMultiplier: 1.6
   normalStopMultiplier: 1
---- !u!4 &467837183
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 467837181}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 47.52568, y: 9.25085, z: -1.28341}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  roadGraph: {fileID: 1259155905}
+  coordinateConverter: {fileID: 608923702}
+  generatedStopCount: 12
+  generatedStopWaitTimeSeconds: 10
+  generatedStopNamePrefix: Generated Stop
 --- !u!1 &467909832
 GameObject:
   m_ObjectHideFlags: 0

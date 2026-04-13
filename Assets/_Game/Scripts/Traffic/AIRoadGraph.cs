@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class AIRoadGraph : MonoBehaviour
 {
@@ -50,6 +51,105 @@ public class AIRoadGraph : MonoBehaviour
 
         int candidate = next[Random.Range(0, next.Length)];
         return IsValidNode(candidate) ? candidate : -1;
+    }
+
+    public int GetRandomNodeIndex(bool requireOutgoingConnection = true, int maxAttempts = 64)
+    {
+        if (nodes == null || nodes.Length == 0)
+            return -1;
+
+        int attempts = Mathf.Max(1, maxAttempts);
+        for (int i = 0; i < attempts; i++)
+        {
+            int candidate = Random.Range(0, nodes.Length);
+            if (!IsValidNode(candidate))
+                continue;
+            if (requireOutgoingConnection && !HasOutgoingConnection(candidate))
+                continue;
+            return candidate;
+        }
+
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            if (!IsValidNode(i))
+                continue;
+            if (requireOutgoingConnection && !HasOutgoingConnection(i))
+                continue;
+            return i;
+        }
+
+        return -1;
+    }
+
+    public bool HasOutgoingConnection(int index)
+    {
+        if (!IsValidNode(index))
+            return false;
+
+        var next = nodes[index].nextNodeIndices;
+        if (next == null || next.Length == 0)
+            return false;
+
+        for (int i = 0; i < next.Length; i++)
+            if (IsValidNode(next[i]))
+                return true;
+
+        return false;
+    }
+
+    public int[] BuildRandomNodeSequence(int desiredLength, int startNodeIndex = -1)
+    {
+        if (nodes == null || nodes.Length == 0)
+            return System.Array.Empty<int>();
+
+        int length = Mathf.Max(2, desiredLength);
+        int start = IsValidNode(startNodeIndex) && HasOutgoingConnection(startNodeIndex)
+            ? startNodeIndex
+            : GetRandomNodeIndex(requireOutgoingConnection: true);
+
+        if (!IsValidNode(start))
+            return System.Array.Empty<int>();
+
+        var sequence = new List<int>(length) { start };
+        int cursor = start;
+
+        for (int i = 1; i < length; i++)
+        {
+            int next = GetRandomConnectedNode(cursor, sequence.Count > 1 ? sequence[sequence.Count - 2] : -1);
+            if (!IsValidNode(next))
+                break;
+
+            sequence.Add(next);
+            cursor = next;
+        }
+
+        return sequence.Count >= 2 ? sequence.ToArray() : System.Array.Empty<int>();
+    }
+
+    int GetRandomConnectedNode(int currentIndex, int avoidNode = -1)
+    {
+        if (!IsValidNode(currentIndex))
+            return -1;
+
+        var next = nodes[currentIndex].nextNodeIndices;
+        if (next == null || next.Length == 0)
+            return -1;
+
+        var valid = new List<int>(next.Length);
+        for (int i = 0; i < next.Length; i++)
+        {
+            int candidate = next[i];
+            if (!IsValidNode(candidate))
+                continue;
+            if (candidate == avoidNode && next.Length > 1)
+                continue;
+            valid.Add(candidate);
+        }
+
+        if (valid.Count == 0)
+            return IsValidNode(avoidNode) ? avoidNode : -1;
+
+        return valid[Random.Range(0, valid.Count)];
     }
 
     public float GetLaneOffset(int nodeIndex, int laneIndex)

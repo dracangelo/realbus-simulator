@@ -415,6 +415,88 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void AIRoadGraph_GetRandomNodeIndex_SkipsDeadEnds_WhenOutgoingConnectionRequired()
+    {
+        var graph = CreateLinearAirRoadGraph();
+        graph.nodes[2].nextNodeIndices = new int[0];
+
+        int picked = graph.GetRandomNodeIndex(requireOutgoingConnection: true, maxAttempts: 32);
+
+        Assert.That(picked, Is.EqualTo(0).Or.EqualTo(1));
+        Assert.That(graph.HasOutgoingConnection(picked), Is.True);
+    }
+
+    [Test]
+    public void AIRoadGraph_BuildRandomNodeSequence_ReturnsConnectedValidNodes()
+    {
+        var graph = CreateLinearAirRoadGraph();
+
+        int[] sequence = graph.BuildRandomNodeSequence(4, 0);
+
+        Assert.That(sequence, Has.Length.EqualTo(4));
+        Assert.That(sequence[0], Is.EqualTo(0));
+        for (int i = 0; i < sequence.Length; i++)
+            Assert.That(graph.IsValidNode(sequence[i]), Is.True);
+        for (int i = 0; i < sequence.Length - 1; i++)
+            Assert.That(graph.nodes[sequence[i]].nextNodeIndices, Does.Contain(sequence[i + 1]));
+    }
+
+    [Test]
+    public void PassengerSpawner_BuildRandomStopsFromRoadGraph_CreatesSyntheticStopsFromGraphNodes()
+    {
+        var graph = CreateLinearAirRoadGraph();
+        var converter = CreateComponent<CoordinateConverter>("CoordinateConverter");
+        converter.mapOrigin = ScriptableObject.CreateInstance<MapOrigin>();
+        converter.mapOrigin.originLat = -1.2864;
+        converter.mapOrigin.originLon = 36.8172;
+
+        var passengerSpawner = CreateComponent<PassengerSpawner>("PassengerSpawner");
+        passengerSpawner.roadGraph = graph;
+        passengerSpawner.coordinateConverter = converter;
+        passengerSpawner.generatedStopNamePrefix = "Synthetic";
+        passengerSpawner.generatedStopWaitTimeSeconds = 12f;
+
+        BusStopData[] stops = passengerSpawner.BuildRandomStopsFromRoadGraph(3, 0);
+
+        Assert.That(stops, Has.Length.EqualTo(3));
+        Assert.That(stops[0].stopName, Is.EqualTo("Synthetic 0000"));
+        Assert.That(stops[0].waitTimeSeconds, Is.EqualTo(12f));
+        for (int i = 0; i < stops.Length; i++)
+        {
+            Assert.That(stops[i].stopName, Does.StartWith("Synthetic "));
+            Assert.That(stops[i].latitude, Is.Not.EqualTo(0d));
+            Assert.That(stops[i].longitude, Is.Not.EqualTo(0d));
+        }
+    }
+
+    [Test]
+    public void PedestrianSpawner_BuildRandomCrossingsFromRoadGraph_GeneratesRuntimeCrossings()
+    {
+        var graph = CreateLinearAirRoadGraph();
+        var trafficLight = CreateComponent<TrafficLight>("TrafficLight");
+        graph.nodes[1].trafficLight = trafficLight;
+
+        var pedestrianSpawner = CreateComponent<PedestrianSpawner>("PedestrianSpawner");
+        pedestrianSpawner.roadGraph = graph;
+        pedestrianSpawner.generatedCrossingCount = 2;
+        pedestrianSpawner.crossingHalfWidth = 3f;
+        pedestrianSpawner.useRandomGeneratedCrossings = true;
+
+        var generated = (PedestrianSpawner.ZebraCrossing[])InvokePrivateMethodWithResult(
+            pedestrianSpawner, "BuildRandomCrossingsFromRoadGraph");
+
+        Assert.That(generated, Has.Length.EqualTo(2));
+        for (int i = 0; i < generated.Length; i++)
+        {
+            Assert.That(generated[i].crossingId, Does.StartWith("RGX_"));
+            Assert.That(generated[i].spawnA, Is.Not.Null);
+            Assert.That(generated[i].spawnB, Is.Not.Null);
+            Assert.That(Vector3.Distance(generated[i].spawnA.position, generated[i].spawnB.position), Is.GreaterThan(0.1f));
+        }
+        Assert.That(generated[0].controllingTrafficLight, Is.SameAs(trafficLight));
+    }
+
+    [Test]
     public void MissionData_DefaultValues_AreInitializedAsExpected()
     {
         var missionData = ScriptableObject.CreateInstance<MissionData>();
@@ -950,6 +1032,30 @@ public class GameScriptsTests
     {
         var gameObject = new GameObject(name);
         return gameObject.AddComponent<T>();
+    }
+
+    private static AIRoadGraph CreateLinearAirRoadGraph()
+    {
+        var graph = CreateComponent<AIRoadGraph>("AIRoadGraph");
+        graph.nodes = new AIRoadGraph.RoadNode[4];
+
+        for (int i = 0; i < graph.nodes.Length; i++)
+        {
+            var point = new GameObject($"Node_{i}").transform;
+            point.position = new Vector3(i * 10f, 0f, 0f);
+
+            graph.nodes[i] = new AIRoadGraph.RoadNode
+            {
+                id = $"N{i}",
+                point = point,
+                laneCount = 2,
+                laneWidth = 3.3f,
+                speedLimitKmh = 40f,
+                nextNodeIndices = i < graph.nodes.Length - 1 ? new[] { i + 1 } : new[] { i - 1 }
+            };
+        }
+
+        return graph;
     }
 
     private static ParticleSystem CreateParticleSystem(string name)
