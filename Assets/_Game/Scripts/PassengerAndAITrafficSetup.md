@@ -1055,12 +1055,34 @@ Add:
 - `PedestrianSpawner`
 
 Assign:
-- zebra crossing endpoints
-- optional controlling traffic light
-- pedestrian prefab
+- `crossings`
+  - for each crossing, assign:
+    - `crossingId`
+    - `spawnA`
+    - `spawnB`
+    - optional `controllingTrafficLight`
+- `pedestrianPrefab`
+
+Good starting values:
+- `maxActivePedestrians = 40`
+- `spawnCheckInterval = 1.25`
+- `walkSpeed = 1.4`
+- `baselineSpawnChance = 0.2`
+- `rushMultiplier = 2.0`
+
+Behavior to expect:
+- pedestrians spawn from either side of the crossing
+- pedestrians only spawn when:
+  - a prefab is assigned
+  - both crossing endpoints are assigned
+  - the crossing is currently free
+  - the controlling traffic light is red for road traffic, if one is assigned
+- spawn density increases around morning and evening rush periods using `ScheduleManager.currentTimeMinutes`
 
 Verify:
 - pedestrians only cross when vehicle traffic should yield
+- one crossing does not keep stacking multiple pedestrians at the same time
+- if a pedestrian object is destroyed early, that crossing becomes available again
 
 ### `AmbulanceBehaviour`
 
@@ -1072,8 +1094,22 @@ Optional:
 - siren audio source
 - flashing light references
 
+Good starting values:
+- `sirenActive = On`
+- `influenceRadius = 45`
+- `notifyInterval = 0.4`
+- `pullOverDuration = 2.2`
+
+Behavior to expect:
+- on `Awake`, the script forces the AI vehicle type to `Emergency`
+- while siren is active, nearby AI traffic is notified repeatedly and asked to yield
+- if emergency lights are assigned, they flash while active
+- when the object is disabled, the notify routine stops and audio/lights are turned off cleanly
+
 Verify:
 - nearby AI traffic yields when ambulance behavior is active
+- the ambulance does not keep notifying traffic after it is disabled
+- siren and lights stop correctly when the prefab is disabled or despawned
 
 ### `AIBusScheduleSpawner`
 
@@ -1092,6 +1128,23 @@ It depends on:
 - valid `ScheduleManager` time
 - valid graph nodes
 - node sequences with at least 2 entries
+- node sequences where each node links to the next node in the graph
+
+Good starting values:
+- `headwayMinutes = 12`
+- `maxConcurrentBuses = 3`
+
+Behavior to expect:
+- each configured route gets its own active-bus counter and next spawn time
+- newly spawned AI buses start at `nodeSequence[0]` and immediately target `nodeSequence[1]`
+- invalid node sequences are skipped and log a warning instead of failing silently
+- when an AI bus finishes its route, or is destroyed before completion, the active count is released so another bus can spawn later
+
+Verify:
+- buses spawn only on valid routes
+- buses follow the configured node sequence in order
+- active buses do not exceed `maxConcurrentBuses`
+- destroying a spawned AI bus does not permanently block future spawns for that route
 
 ---
 
@@ -1103,36 +1156,71 @@ Use this checklist in order.
 
 - exactly one active `PassengerManager` singleton
 - exactly one active `ScheduleManager` singleton
+- exactly one active `MissionManager` singleton
 - `MissionManager.busController` points to `Bus_Root`
 - `MissionManager.currentRoute` is assigned
+- `MissionManager.missionData` is assigned
 - `GPSManager` finds `MapTileLoader`
+- `PassengerManager.passengerSpawner` points to the intended `PassengerSpawner`
+- `ScoreTracker` finds the player bus rigidbody in Play Mode
 
 ### Bus
 
 - bus moves, steers, brakes
 - wheel meshes follow colliders
 - no missing engine/transmission references
+- `BusController.RequestKneelingSuspension(bool)` can be triggered without errors
+- the bus is moved to the first stop when `MissionManager` initializes
 
 ### Mobile UI
 
+- `MobileControlsUI.busController` points to `Bus_Root`
 - every canvas button is assigned into `MobileControlsUI`
 - hold buttons behave continuously
 - tap buttons fire once
+- pressing accelerate/brake does not leave throttle or brake stuck on after release
 
 ### Passengers
 
 - first stop can board passengers
 - later stops unload then reload passengers
 - capacity limits are respected
+- doors stay closed for boarding when bus capacity policy blocks opening
 - dwell time changes with boarding/alighting volume
 - wheelchair boarding can trigger kneeling
+- `waitingAtCurrentStop`, `lastBoardingCount`, and `lastAlightingCount` update sensibly in the Inspector
+- `totalFareCollected` and `sessionIncome` increase when boarding occurs
 
 ### Traffic
 
 - `AIRoadGraph` nodes are valid
+- each used node has valid `nextNodeIndices`
 - `VehiclePool` has prefabs
+- `VehiclePool.roadGraph` points to `AIRoadGraph`
 - full AI count does not exceed budget
 - spline tier activates outside the near-player radius
+- no warning appears saying `VehiclePool: Missing AIRoadGraph.`
+- if using random graph features:
+  - `AIBusScheduleSpawner` route entries generate valid connected node sequences
+  - `PedestrianSpawner` can generate crossings or fall back to manual crossings without errors
+
+### Mission flow
+
+- route countdown starts and completes
+- the first stop is processed once the route begins
+- each later stop advances `currentStopIndex`
+- `distanceToNextStop` decreases as the bus approaches the next stop
+- route completion shows mission results instead of stalling on the final stop
+
+### Logging
+
+- no `NullReferenceException` appears from:
+  - `MissionManager`
+  - `PassengerManager`
+  - `MobileControlsUI`
+  - `VehiclePool`
+  - `AIBusScheduleSpawner`
+  - `PedestrianSpawner`
 
 ---
 

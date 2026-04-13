@@ -17,6 +17,7 @@ public class AmbulanceBehaviour : MonoBehaviour
     AIVehicleController ai;
     float t;
     bool flashState;
+    Coroutine notifyRoutine;
 
     void Awake()
     {
@@ -49,7 +50,22 @@ public class AmbulanceBehaviour : MonoBehaviour
 
     void OnEnable()
     {
-        StartCoroutine(NotifyRoutine());
+        if (notifyRoutine == null)
+            notifyRoutine = StartCoroutine(NotifyRoutine());
+    }
+
+    void OnDisable()
+    {
+        if (notifyRoutine != null)
+        {
+            StopCoroutine(notifyRoutine);
+            notifyRoutine = null;
+        }
+
+        if (sirenSource != null && sirenSource.isPlaying)
+            sirenSource.Stop();
+
+        SetEmergencyLights(false);
     }
 
     IEnumerator NotifyRoutine()
@@ -60,5 +76,15 @@ public class AmbulanceBehaviour : MonoBehaviour
                 AIVehicleController.NotifyEmergencyVehicle(transform.position, influenceRadius, pullOverDuration);
             yield return new WaitForSeconds(notifyInterval);
         }
+
+        notifyRoutine = null;
+    }
+
+    void SetEmergencyLights(bool enabledState)
+    {
+        if (emergencyLights == null) return;
+        for (int i = 0; i < emergencyLights.Length; i++)
+            if (emergencyLights[i] != null)
+                emergencyLights[i].enabled = enabledState;
     }
 }

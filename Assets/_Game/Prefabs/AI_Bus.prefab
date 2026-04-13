@@ -65,6 +65,7 @@ GameObject:
   - component: {fileID: 7486918557459402164}
   - component: {fileID: 4648529663697872045}
   - component: {fileID: 8368778880859921232}
+  - component: {fileID: -5326159124019520646}
   m_Layer: 0
   m_Name: AI_Bus
   m_TagString: Untagged
@@ -168,6 +169,36 @@ MonoBehaviour:
   minHeadway: 10
   redLightStopDistance: 18
   lookaheadNodes: 8
+--- !u!114 &-5326159124019520646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7101926012883202616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61f557107de6dd531b610257a3f24dc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameScripts::AIBusScheduleSpawner
+  aiBusPrefab: {fileID: 7101926012883202616}
+  routes:
+  - routeName: 
+    graph: {fileID: 0}
+    nodeSequence: 
+    useRandomGeneratedNodes: 0
+    randomNodeCount: 0
+    startNodeIndex: 0
+    headwayMinutes: 0
+    maxConcurrentBuses: 0
+  - routeName: 
+    graph: {fileID: 0}
+    nodeSequence: 
+    useRandomGeneratedNodes: 0
+    randomNodeCount: 0
+    startNodeIndex: 0
+    headwayMinutes: 0
+    maxConcurrentBuses: 0
 --- !u!1 &9215278864678003389
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &9188759970846619981
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 947486136549546595}
+  - component: {fileID: 5886841525972329991}
+  m_Layer: 0
+  m_Name: PedestrianSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &947486136549546595
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9188759970846619981}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.54939, y: 0.01524, z: -0.62233}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5886841525972329991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9188759970846619981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b3e55b2c6a2e1c2b861cd290783ffd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameScripts::PedestrianSpawner
+  crossings:
+  - crossingId: 
+    spawnA: {fileID: 0}
+    spawnB: {fileID: 0}
+    controllingTrafficLight: {fileID: 0}
+  useRandomGeneratedCrossings: 1
+  roadGraph: {fileID: 0}
+  generatedCrossingCount: 12
+  crossingHalfWidth: 4.5
+  crossingPointHeight: 0.05
+  pedestrianPrefab: {fileID: 0}
+  maxActivePedestrians: 40
+  spawnCheckInterval: 1.25
+  walkSpeed: 1.4
+  baselineSpawnChance: 0.2
+  rushMultiplier: 2
