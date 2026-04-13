@@ -562,24 +562,36 @@ public class OSMRouteImporterEditorTool : EditorWindow
 
     string GenerateRouteName(RouteDraft d, bool isReturn)
     {
+        string cityCode = ResolveRouteCityCode();
+        string routeRef = string.IsNullOrWhiteSpace(d.routeRef) ? "" : d.routeRef.Trim();
         string startName = GetMeaningfulStopName(d, fromStart: true);
         string endName = GetMeaningfulStopName(d, fromStart: false);
+        string viaName = GetIntermediateStopName(d, startName, endName);
+        bool isLoop = IsLoopRoute(d, startName, endName);
 
         string baseName;
-        if (!string.IsNullOrWhiteSpace(startName) && !string.IsNullOrWhiteSpace(endName))
+        if (!string.IsNullOrWhiteSpace(routeRef))
         {
-            baseName = string.Equals(startName, endName, System.StringComparison.OrdinalIgnoreCase)
+            baseName = isLoop
+                ? $"Route {routeRef} {startName} Loop"
+                : $"Route {routeRef} {startName} - {endName}";
+        }
+        else if (!string.IsNullOrWhiteSpace(startName) && !string.IsNullOrWhiteSpace(endName))
+        {
+            baseName = isLoop
                 ? $"{startName} Loop"
                 : $"{startName} - {endName}";
-        }
-        else if (!string.IsNullOrWhiteSpace(d.routeRef))
-        {
-            baseName = $"Route {d.routeRef}";
         }
         else
         {
             baseName = d.name;
         }
+
+        if (!string.IsNullOrWhiteSpace(viaName))
+            baseName += $" via {viaName}";
+
+        if (!string.IsNullOrWhiteSpace(cityCode))
+            baseName = $"{cityCode} {baseName}";
 
         return isReturn && !baseName.EndsWith("(Return)")
             ? $"{baseName} (Return)"
@@ -588,8 +600,74 @@ public class OSMRouteImporterEditorTool : EditorWindow
 
     string GenerateRouteNumber(RouteDraft d, bool isReturn)
     {
-        string number = string.IsNullOrWhiteSpace(d.routeRef) ? d.name.Replace("Draft_", "R").Replace("_part", "P") : d.routeRef;
+        string cityCode = ResolveRouteCityCode();
+        string number = string.IsNullOrWhiteSpace(d.routeRef)
+            ? $"{(string.IsNullOrWhiteSpace(cityCode) ? "R" : cityCode)}-{d.name.Replace("Draft_", "").Replace("_part", "P")}"
+            : d.routeRef;
         return isReturn ? $"{number}R" : number;
+    }
+
+    string ResolveRouteCityCode()
+    {
+        if (TryFindMatchingCity(out var city))
+            return city.cityCode;
+
+        string codeFromLocalPath = ExtractCityCodeFromPath(localRoadsPath);
+        if (!string.IsNullOrWhiteSpace(codeFromLocalPath))
+            return codeFromLocalPath;
+
+        codeFromLocalPath = ExtractCityCodeFromPath(localStopsPath);
+        if (!string.IsNullOrWhiteSpace(codeFromLocalPath))
+            return codeFromLocalPath;
+
+        return "";
+    }
+
+    bool TryFindMatchingCity(out CityDefinition city)
+    {
+        city = null;
+        string[] guids = AssetDatabase.FindAssets("t:CityDefinition");
+        double centerLat = (minLat + maxLat) * 0.5;
+        double centerLon = (minLon + maxLon) * 0.5;
+
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            var candidate = AssetDatabase.LoadAssetAtPath<CityDefinition>(path);
+            if (candidate == null)
+                continue;
+
+            bool containsCenter =
+                centerLat >= candidate.minLat && centerLat <= candidate.maxLat &&
+                centerLon >= candidate.minLon && centerLon <= candidate.maxLon;
+
+            if (!containsCenter)
+                continue;
+
+            city = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
+    static string ExtractCityCodeFromPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return "";
+
+        string normalized = path.Replace('\\', '/');
+        const string marker = "/Cities/";
+        int start = normalized.IndexOf(marker, System.StringComparison.OrdinalIgnoreCase);
+        if (start < 0)
+            return "";
+
+        start += marker.Length;
+        int end = normalized.IndexOf('/', start);
+        if (end <= start)
+            return "";
+
+        return normalized.Substring(start, end - start).Trim();
     }
 
     string GetMeaningfulStopName(RouteDraft d, bool fromStart)
@@ -610,6 +688,49 @@ public class OSMRouteImporterEditorTool : EditorWindow
         }
 
         return candidate;
+    }
+
+    string GetIntermediateStopName(RouteDraft d, string startName, string endName)
+    {
+        if (d?.stops == null || d.stops.Count < 3)
+            return "";
+
+        int[] preferredIndices =
+        {
+            d.stops.Count / 2,
+            d.stops.Count / 3,
+            (d.stops.Count * 2) / 3
+        };
+
+        for (int i = 0; i < preferredIndices.Length; i++)
+        {
+            int idx = Mathf.Clamp(preferredIndices[i], 1, d.stops.Count - 2);
+            string name = CleanStopName(d.stops[idx].stop.stopName);
+            if (string.IsNullOrWhiteSpace(name))
+                continue;
+            if (string.Equals(name, startName, System.StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (string.Equals(name, endName, System.StringComparison.OrdinalIgnoreCase))
+                continue;
+            return name;
+        }
+
+        return "";
+    }
+
+    bool IsLoopRoute(RouteDraft d, string startName, string endName)
+    {
+        if (!string.IsNullOrWhiteSpace(startName) &&
+            !string.IsNullOrWhiteSpace(endName) &&
+            string.Equals(startName, endName, System.StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (d?.stops == null || d.stops.Count < 3)
+            return false;
+
+        Vector3 start = d.stops[0].snappedWorld;
+        Vector3 end = d.stops[d.stops.Count - 1].snappedWorld;
+        return Vector3.Distance(start, end) <= 350f;
     }
 
     static string CleanStopName(string raw)

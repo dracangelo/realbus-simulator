@@ -688,6 +688,9 @@ Notes:
 **To add a new city:**
 1. Create `CityDefinition` ScriptableObject with correct GPS bounds
 2. Create `StreamingAssets/Cities/CITYCODE/` folder
+   Or use **Tools → RealBus → Cities → Create StreamingAssets Folders** to auto-create folders for every existing `CityDefinition`
+   To also download local `roads.json` and `stops.json` for selected cities, use
+   **Tools → RealBus → Cities → Bulk Download Roads + Stops JSON**
 3. Run curl commands with that city's bounding box
 4. Run **Tools → RealBus → Generate Countries from Cities**
 5. Add city to `CityManager.allCities` in MainMenu scene

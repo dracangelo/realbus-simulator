@@ -32,23 +32,18 @@ roads_file="${out_dir}/roads.json"
 stops_file="${out_dir}/stops.json"
 bbox="${min_lat},${min_lon},${max_lat},${max_lon}"
 overpass_url="https://overpass-api.de/api/interpreter"
-roads_tiles=3
-stops_tiles=2
+fallback_overpass_urls=(
+  "https://overpass-api.de/api/interpreter"
+  "https://overpass.kumi.systems/api/interpreter"
+  "https://lz4.overpass-api.de/api/interpreter"
+)
+roads_tiles="${ROADS_TILES:-5}"
+stops_tiles="${STOPS_TILES:-3}"
 retry_delay_seconds=2
 
 mkdir -p "${out_dir}"
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
-
-post_query() {
-  local query="$1"
-  local output_file="$2"
-
-  curl --fail --silent --show-error \
-    -X POST "${overpass_url}" \
-    --data-urlencode "data=${query}" \
-    -o "${output_file}"
-}
 
 fetch_tiled_query() {
   local kind="$1"
@@ -59,9 +54,8 @@ fetch_tiled_query() {
   local tile_dir="${tmp_dir}/${kind}"
   mkdir -p "${tile_dir}"
 
-  python3 - "$min_lat" "$min_lon" "$max_lat" "$max_lon" "$tiles_per_axis" "$query_template" "$tile_dir" "$overpass_url" "$retry_delay_seconds" <<'PY'
+  python3 - "$min_lat" "$min_lon" "$max_lat" "$max_lon" "$tiles_per_axis" "$query_template" "$tile_dir" "$retry_delay_seconds" "${fallback_overpass_urls[@]}" <<'PY'
 import json
-import math
 import pathlib
 import subprocess
 import sys
@@ -74,8 +68,8 @@ max_lon = float(sys.argv[4])
 tiles = int(sys.argv[5])
 query_template = sys.argv[6]
 tile_dir = pathlib.Path(sys.argv[7])
-overpass_url = sys.argv[8]
-retry_delay_seconds = float(sys.argv[9])
+retry_delay_seconds = float(sys.argv[8])
+endpoints = sys.argv[9:]
 
 lat_step = (max_lat - min_lat) / tiles
 lon_step = (max_lon - min_lon) / tiles
@@ -91,36 +85,48 @@ for y in range(tiles):
         output_path = tile_dir / f"tile_{y}_{x}.json"
 
         print(f"Fetching {output_path.name} bbox={bbox}", flush=True)
-        attempts = 3
-        for attempt in range(1, attempts + 1):
-            result = subprocess.run(
-                [
-                    "curl",
-                    "--fail",
-                    "--silent",
-                    "--show-error",
-                    "-X",
-                    "POST",
-                    overpass_url,
-                    "--data-urlencode",
-                    f"data={query}",
-                    "-o",
-                    str(output_path),
-                ],
-                capture_output=True,
-                text=True,
-            )
+        attempts = 2
+        success = False
+        last_stderr = ""
 
-            if result.returncode == 0:
+        for endpoint_index, endpoint in enumerate(endpoints):
+            for attempt in range(1, attempts + 1):
+                result = subprocess.run(
+                    [
+                        "curl",
+                        "--fail",
+                        "--silent",
+                        "--show-error",
+                        "-X",
+                        "POST",
+                        endpoint,
+                        "--data-urlencode",
+                        f"data={query}",
+                        "-o",
+                        str(output_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
+
+                if result.returncode == 0:
+                    success = True
+                    break
+
+                last_stderr = result.stderr
+                wait_seconds = retry_delay_seconds * (attempt + endpoint_index)
+                print(
+                    f"Retrying {output_path.name} via {endpoint} in {wait_seconds:.0f}s...",
+                    flush=True,
+                )
+                time.sleep(wait_seconds)
+
+            if success:
                 break
 
-            if attempt == attempts:
-                sys.stderr.write(result.stderr)
-                sys.exit(result.returncode)
-
-            wait_seconds = retry_delay_seconds * attempt
-            print(f"Retrying {output_path.name} in {wait_seconds:.0f}s...", flush=True)
-            time.sleep(wait_seconds)
+        if not success:
+            sys.stderr.write(last_stderr)
+            sys.exit(22)
 PY
 
   python3 - "$tile_dir" "$output_file" <<'PY'
