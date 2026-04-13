@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Egypt_Cairo
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Cairo
+  country: Egypt
+  cityCode: CAI
+  climateZone: 1
+  avgTemperatureCelsius: 23
+  hasMonsoon: 0
+  centreLat: 30.0444
+  centreLon: 31.2357
+  minLat: 30.0044
+  maxLat: 30.0844
+  minLon: 31.195700000000002
+  maxLon: 31.2757
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: 30.0444
+  spawnLon: 31.2357
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 
+  snowSeasonMonths: 

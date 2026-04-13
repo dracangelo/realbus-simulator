@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Brazil_SaoPaulo
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Sao Paulo
+  country: Brazil
+  cityCode: SAO
+  climateZone: 6
+  avgTemperatureCelsius: 20
+  hasMonsoon: 1
+  centreLat: -23.5505
+  centreLon: -46.6333
+  minLat: -23.5905
+  maxLat: -23.5105
+  minLon: -46.6733
+  maxLon: -46.5933
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: -23.5505
+  spawnLon: -46.6333
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 0b0000000c000000010000000200000003000000
+  snowSeasonMonths: 

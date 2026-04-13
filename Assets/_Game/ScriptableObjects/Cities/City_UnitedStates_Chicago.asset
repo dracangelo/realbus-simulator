@@ -20,10 +20,10 @@ MonoBehaviour:
   hasMonsoon: 0
   centreLat: 41.8781
   centreLon: -87.6298
-  minLat: 41.8481
-  maxLat: 41.908100000000005
-  minLon: -87.6598
-  maxLon: -87.5998
+  minLat: 41.84310000000001
+  maxLat: 41.9131
+  minLon: -87.6648
+  maxLon: -87.5948
   roadsFileName: roads.xml
   buildingsFileName: buildings.xml
   availableRoutes: []

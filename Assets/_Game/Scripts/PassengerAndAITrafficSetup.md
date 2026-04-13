@@ -522,6 +522,18 @@ Add:
 
 Populate `nodes` with waypoint data.
 
+Fastest workflow:
+- generate your local `roads.json`
+- open `Tools -> RealBus -> Traffic -> Generate AIRoadGraph From Roads JSON`
+- select `Assets/StreamingAssets/Cities/<CITYCODE>/roads.json`
+- click `Generate / Replace AIRoadGraph`
+
+This creates:
+- an `AIRoadGraph` GameObject
+- child waypoint transforms under `GeneratedNodes`
+- populated `nextNodeIndices`
+- default lane/speed data inferred from OSM where possible
+
 Each node should define:
 - `id`
 - `point`
@@ -557,10 +569,94 @@ Each AI vehicle prefab should contain:
 - `AIVehicleController`
 - `SplineVehicle`
 
+Recommended prefab structure:
+
+```text
+AI_Car_01
+├── MeshRoot
+├── BodyCollider
+└── optional visual children
+```
+
+You do not need wheel colliders for this traffic system.
+
+`AIVehicleController` handles the near-player, full simulation tier.
+`SplineVehicle` handles the cheaper far-distance traffic tier.
+Both should live on the same prefab so `VehiclePool` can switch behavior cleanly.
+
 Recommended checks:
 - forward direction is positive Z
 - collider bounds match the mesh reasonably well
 - mass is sensible for the vehicle type
+
+### Root object and transform
+
+The prefab root should represent the whole vehicle.
+Place the mesh so that:
+- the vehicle faces forward on local positive Z
+- the pivot is near the center of the vehicle footprint
+- the body sits at the correct ride height above the road
+
+If the mesh faces +X instead of +Z, the traffic car will appear to drive sideways because both traffic scripts rotate the object to face its travel direction.
+
+### `Rigidbody` setup
+
+`AIVehicleController` has a `RequireComponent(typeof(Rigidbody))` attribute, so the prefab must have a real `Rigidbody` on the root.
+
+Recommended checks:
+- `Use Gravity` enabled
+- not `Is Kinematic`
+- `Interpolation = Interpolate`
+- freeze X and Z rotation if vehicles wobble or tip on uneven map geometry
+
+Suggested starting mass ranges:
+- car: `1200-1800`
+- truck: `4000-9000`
+- motorcycle: `180-350`
+- bus: `7000-14000`
+- emergency vehicle: similar to a car or van, depending on model size
+
+### Collider setup
+
+Start simple:
+- use `BoxCollider` for most cars, vans, trucks, and buses
+- use multiple simple colliders only if the body shape needs it
+- avoid detailed mesh colliders unless there is a proven need
+
+Collider goals:
+- front and rear bounds roughly match the visible body
+- width is close to the actual vehicle width
+- collider is centered on the lane
+- collider does not extend too far below the wheels and scrape the road
+
+If the collider is much larger than the visible mesh, AI spacing will look wrong even if the logic is working correctly.
+
+### `AIVehicleController` details
+
+`AIVehicleController` is the script that follows the road graph, obeys red lights, follows other traffic, and handles emergency yielding.
+
+Fields worth reviewing per prefab:
+- `vehicleType`
+- `maxAccel`
+- `maxBrake`
+- `turnRate`
+- `stopDistance`
+- `safeFollowingDistance`
+- `overtakingLaneShift`
+- `vehicleLength`
+- `obeyTrafficSignals`
+- `obeySpeedLimits`
+
+Useful tuning guidance:
+- cars should use balanced acceleration and medium following distance
+- trucks and buses should use lower acceleration, longer `vehicleLength`, and more following distance
+- motorcycles can use shorter `vehicleLength` and quicker acceleration
+- emergency vehicles still need the correct `vehicleType` so nearby AI can react properly
+
+Important:
+- `vehicleLength` affects when the vehicle considers itself close enough to advance to the next graph node
+- values that are too small can make long vehicles cut corners or transition too early
+- values that are too large can make vehicles stop or retarget too soon
 
 Set `AIVehicleController.vehicleType` correctly:
 - `Car`
@@ -568,6 +664,43 @@ Set `AIVehicleController.vehicleType` correctly:
 - `Motorcycle`
 - `Bus`
 - `Emergency`
+
+### `SplineVehicle` details
+
+`SplineVehicle` is used when the prefab is outside the expensive full-AI radius.
+
+Useful fields:
+- `accelKmhPerSec`
+- `brakeKmhPerSec`
+- `turnRate`
+- `minHeadway`
+- `redLightStopDistance`
+- `lookaheadNodes`
+
+In most cases, the script defaults are good enough.
+The main setup requirement is simply that the component exists on every pooled traffic prefab.
+
+### Play Mode verification
+
+Before adding the prefab to `VehiclePool`, drag one instance into the scene and confirm:
+- it sits correctly on the road surface
+- it points in the expected forward direction
+- its scale fits the lane width and nearby vehicles
+- no missing-component errors appear in the Console
+
+Then test it through the pool and confirm:
+- it follows graph directions instead of drifting sideways
+- it stops for red lights when applicable
+- it slows behind other vehicles instead of clipping through them
+- buses and trucks do not pivot unrealistically through corners
+
+### Common mistakes
+
+- mesh forward axis is wrong, so the prefab drives sideways
+- `vehicleType` left as `Car` on bus, truck, or ambulance prefabs
+- prefab has `AIVehicleController` but is missing `SplineVehicle`
+- pivot is placed at the bumper instead of near the center
+- collider is far larger or smaller than the visible body
 
 ---
 

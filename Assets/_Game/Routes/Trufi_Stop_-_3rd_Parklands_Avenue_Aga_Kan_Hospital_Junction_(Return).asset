@@ -95,11 +95,6 @@ MonoBehaviour:
     latitude: -1.2803988596580032
     longitude: 36.82168336651187
     headingDegrees: 0
-  - stopId: 12075903087
-    stopName: Koja
-    latitude: -1.2803985145121994
-    longitude: 36.82168301442512
-    headingDegrees: 0
   - stopId: 10832093286
     stopName: Globe
     latitude: -1.277394202596628
@@ -115,30 +110,10 @@ MonoBehaviour:
     latitude: -1.274082096561784
     longitude: 36.823821821882625
     headingDegrees: 0
-  - stopId: 10844057376
-    stopName: Jamhuri High School
-    latitude: -1.2733405734194811
-    longitude: 36.82298678234158
-    headingDegrees: 0
   - stopId: 10832093304
     stopName: JamhurI High
     latitude: -1.2721623594151783
     longitude: 36.822253714691904
-    headingDegrees: 0
-  - stopId: 10832093294
-    stopName: Stima Plaza
-    latitude: -1.272600828093331
-    longitude: 36.82098627148878
-    headingDegrees: 0
-  - stopId: 10844057357
-    stopName: Stima Plaza
-    latitude: -1.2704247161503366
-    longitude: 36.82048997998559
-    headingDegrees: 0
-  - stopId: 10832093299
-    stopName: Stima Plaza
-    latitude: -1.2699972501940493
-    longitude: 36.82053822629051
     headingDegrees: 0
   - stopId: 10844057336
     stopName: Stima Plaza Stage
@@ -154,11 +129,6 @@ MonoBehaviour:
     stopName: Aga Khan Academy
     latitude: -1.266432775137624
     longitude: 36.8232348000367
-    headingDegrees: 0
-  - stopId: 10844057342
-    stopName: OiLibya/2nd Parklands Avenue
-    latitude: -1.264698464352837
-    longitude: 36.82434037766282
     headingDegrees: 0
   - stopId: 10832126009
     stopName: Oilibya/2nd Parklands Avenue

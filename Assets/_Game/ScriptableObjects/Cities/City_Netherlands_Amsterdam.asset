@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05261bc9fed44379b036a7f9c14aee8, type: 3}
+  m_Name: City_Netherlands_Amsterdam
+  m_EditorClassIdentifier: GameScripts::CityDefinition
+  cityName: Amsterdam
+  country: Netherlands
+  cityCode: AMS
+  climateZone: 2
+  avgTemperatureCelsius: 11
+  hasMonsoon: 0
+  centreLat: 52.3676
+  centreLon: 4.9041
+  minLat: 52.3376
+  maxLat: 52.397600000000004
+  minLon: 4.874099999999999
+  maxLon: 4.9341
+  roadsFileName: roads.xml
+  buildingsFileName: buildings.xml
+  availableRoutes: []
+  spawnLat: 52.3676
+  spawnLon: 4.9041
+  isDownloaded: 1
+  previewImagePath: 
+  rainySeasonMonths: 0a0000000b0000000c00000001000000
+  snowSeasonMonths: 

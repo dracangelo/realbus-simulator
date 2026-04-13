@@ -51,11 +51,15 @@
     <Compile Include="Assets/_Game/Scripts/Editor/TrafficStressTestSceneBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/OSMRouteImporterEditorTool.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CountryImporter.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/AIRoadGraphGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/RouteEditorWindow.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/CityJsonBulkDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CitySelectBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/SampleWorldGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CountrySelectBuilder.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/StreamingAssetsCityFolderGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/Mainmenubuiler.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/CityCatalogGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/RouteDebugVisualiser.cs" />
   </ItemGroup>
   <ItemGroup>
