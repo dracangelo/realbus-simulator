@@ -206514,6 +206514,85 @@ Transform:
   m_Children: []
   m_Father: {fileID: 846310015}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1945349009
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1945349011}
+  - component: {fileID: 1945349010}
+  m_Layer: 0
+  m_Name: VehiclePool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1945349010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1945349009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3b67f453557afde1b374a7f593754a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameScripts::VehiclePool
+  roadGraph: {fileID: 1259155905}
+  poolSizePerScene: 50
+  prefabs:
+  - type: 0
+    prefab: {fileID: 5593306252256761971, guid: f75664aba0ac2c522af6a66726f97814, type: 3}
+    weight: 1
+  - type: 3
+    prefab: {fileID: 7101926012883202616, guid: 4b0f32907b337b57f839c3a609601df7, type: 3}
+    weight: 0.3
+  - type: 1
+    prefab: {fileID: 688944337357875380, guid: 091f796837a8b60eb85b888d9a50e5b3, type: 3}
+    weight: 0.5
+  - type: 4
+    prefab: {fileID: 7536025273544103433, guid: 1b1a6de82b1378e82baf44b1744dc1cc, type: 3}
+    weight: 0.1
+  fullAiRadiusMeters: 200
+  splineRadiusMeters: 400
+  transitionHysteresisMeters: 25
+  maxFullAiVehicles: 18
+  tierUpdateIntervalSeconds: 0.2
+  minActiveFraction: 0.25
+  maxActiveFraction: 0.9
+  updateDensityEverySeconds: 4
+  morningPeakMinutes: 450
+  eveningPeakMinutes: 1050
+  peakWidthMinutes: 80
+  rushMultiplier: 3.5
+  drawTierGizmos: 1
+  drawTierRings: 1
+  vehicleGizmoRadius: 1.2
+  fullAiGizmoColor: {r: 0.2, g: 1, b: 0.2, a: 0.9}
+  splineGizmoColor: {r: 0.2, g: 0.9, b: 1, a: 0.9}
+  dormantGizmoColor: {r: 0.55, g: 0.55, b: 0.55, a: 0.8}
+  fullRingColor: {r: 0.2, g: 1, b: 0.2, a: 0.35}
+  splineRingColor: {r: 0.2, g: 0.9, b: 1, a: 0.3}
+--- !u!4 &1945349011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1945349009}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.54939, y: 1.5, z: -0.62233}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1945545168
 GameObject:
   m_ObjectHideFlags: 0
@@ -223818,3 +223897,4 @@ SceneRoots:
   - {fileID: 467837183}
   - {fileID: 608923703}
   - {fileID: 1259155906}
+  - {fileID: 1945349011}

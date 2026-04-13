@@ -563,154 +563,472 @@ Confirm:
 
 ## 13) AI vehicle prefab setup
 
-Each AI vehicle prefab should contain:
+Follow these steps for each AI vehicle prefab.
+
+### Target hierarchy
+
+Create the prefab with this hierarchy:
+
+```text
+AI_Small_Car
+├── Visual
+└── Collider
+```
+
+Use this component layout:
+
+- `AI_Small_Car`
+  - `Transform`
+  - `Rigidbody`
+  - `AIVehicleController`
+  - `SplineVehicle`
+- `Visual`
+  - `Transform`
+  - `MeshFilter`
+  - `MeshRenderer`
+- `Collider`
+  - `Transform`
+  - `BoxCollider`
+
+Important:
+- `AI_Small_Car` is an empty GameObject
+- `Collider` is an empty GameObject
+- `Visual` must be visible in the Scene view
+- if `Visual` is only an empty GameObject, you will not see anything
+
+### Step 1: Create the root object
+
+Create an empty GameObject.
+Name it something clear:
+- `AI_Small_Car`
+- `AI_Truck_01`
+- `AI_Bus_01`
+
+Reset the root transform:
+- Position = `0, 0, 0`
+- Rotation = `0, 0, 0`
+- Scale = `1, 1, 1`
+
+### Step 2: Create the child objects
+
+Under the root object, create exactly these two children:
+- `Visual`
+- `Collider`
+
+Your hierarchy should now look like this:
+
+```text
+AI_Small_Car
+├── Visual
+└── Collider
+```
+
+Right after creating them:
+- leave `Collider` as an empty GameObject
+- do not leave `Visual` empty
+- make `Visual` visible in the next step
+
+### Step 3: Set up the `Visual` child
+
+Select `Visual`.
+
+Make `Visual` visible now.
+
+Use this method for the current stage:
+
+1. Delete the empty `Visual` GameObject.
+2. Create `GameObject > 3D Object > Cube`.
+3. Rename the Cube to `Visual`.
+4. Drag `Visual` under `AI_Small_Car`.
+5. Reset `Visual` transform:
+   - Position = `0, 0, 0`
+   - Rotation = `0, 0, 0`
+   - Scale = `1, 1, 2`
+
+`Visual` should contain:
+- `Transform`
+- `MeshFilter`
+- `MeshRenderer`
+
+This works because a Cube already has:
+- a visible mesh
+- a `MeshFilter`
+- a `MeshRenderer`
+
+Set it up so the front of the vehicle points in local positive Z.
+
+Check this carefully:
+- the front bumper must face the blue arrow
+- the car must not face left or right
+- the mesh must sit above the ground
+
+For this placeholder Cube:
+- use the long side as the front-to-back length of the vehicle
+- make the Cube wide enough to look like a car body
+- make the Cube tall enough to be easy to see
+
+Example starting scale for `Visual`:
+- small car: `1.2, 1.0, 2.4`
+- truck: `1.4, 1.5, 4.5`
+- bus: `1.5, 2.0, 7.0`
+
+If the mesh points the wrong way, the AI vehicle will drive sideways.
+
+If you are using a custom placeholder mesh instead of a Cube:
+- keep `Visual` as a GameObject
+- add `MeshFilter`
+- add `MeshRenderer`
+- assign a mesh in `MeshFilter`
+- assign a visible material in `MeshRenderer`
+
+### Step 4: Set up the `Collider` child
+
+Select `Collider`.
+
+Add:
+- `BoxCollider`
+
+Resize the `BoxCollider` so it matches the body of the vehicle.
+
+Match these parts:
+- front of collider to front bumper
+- rear of collider to rear bumper
+- width of collider to the body width
+- height of collider to the visible body
+
+Do not make the collider much larger than the mesh.
+
+For `BoxCollider > Material`, leave it as:
+- `None (Physics Material)`
+
+### Step 5: Add components to the root object
+
+Select `AI_Small_Car`.
+
+Add these components to the root:
 - `Rigidbody`
-- collider(s)
+- `AI Vehicle Controller`
+- `Spline Vehicle`
+
+The root object should not use wheel colliders.
+
+### Step 6: Configure the `Rigidbody`
+
+On the root `Rigidbody`, set:
+- `Mass = 1200` for a small car
+- `Linear Damping = 0`
+- `Angular Damping = 0.05`
+- `Use Gravity = On`
+- `Is Kinematic = Off`
+- `Interpolate = Interpolate`
+- `Collision Detection = Continuous Dynamic`
+
+If the vehicle tips over during testing, enable:
+- `Constraints > Freeze Rotation X`
+- `Constraints > Freeze Rotation Z`
+
+Starting mass values:
+- small car = `1200`
+- truck = `5000`
+- bus = `9000`
+- motorcycle = `250`
+- ambulance = `1800`
+
+### Step 7: Configure `AIVehicleController`
+
+On the root `AIVehicleController`, set `vehicleType` correctly:
+- car prefab = `Car`
+- truck prefab = `Truck`
+- motorcycle prefab = `Motorcycle`
+- bus prefab = `Bus`
+- ambulance prefab = `Emergency`
+
+Start with these values for a small car:
+- `maxAccel = 6`
+- `maxBrake = 9`
+- `turnRate = 4`
+- `stopDistance = 4`
+- `safeFollowingDistance = 9`
+- `overtakingLaneShift = 3`
+- `vehicleLength = 4.2`
+- `obeyTrafficSignals = On`
+- `obeySpeedLimits = On`
+
+Use these changes for larger vehicles:
+- truck: increase `safeFollowingDistance` and `vehicleLength`
+- bus: increase `safeFollowingDistance` and `vehicleLength`
+- motorcycle: reduce `vehicleLength`
+
+Important:
+- use a longer `vehicleLength` for buses and trucks
+- use a shorter `vehicleLength` for motorcycles and small cars
+
+### Step 8: Configure `SplineVehicle`
+
+On the root `SplineVehicle`, use these starting values:
+- `speedKmh = 0`
+- `accelKmhPerSec = 16`
+- `brakeKmhPerSec = 25`
+- `turnRate = 7`
+- `minHeadway = 10`
+- `redLightStopDistance = 18`
+- `lookaheadNodes = 8`
+
+Leave `roadGraph`, `currentNodeIndex`, `targetNodeIndex`, and `laneIndex` for runtime.
+`VehiclePool` will assign those values.
+
+### Step 9: Check the final prefab before saving
+
+Before making the prefab, confirm:
+- the root is centered on the vehicle
+- the mesh faces positive Z
+- the collider matches the body
+- the root has `Rigidbody`
+- the root has `AIVehicleController`
+- the root has `SplineVehicle`
+- the child `Collider` has `BoxCollider`
+
+### Step 10: Save as a prefab
+
+Drag the root object from the Hierarchy into your prefab folder.
+
+Save it as:
+- `AI_Small_Car.prefab`
+- `AI_Truck_01.prefab`
+- `AI_Bus_01.prefab`
+
+### Step 11: Test one prefab in the scene
+
+Place one AI prefab in the scene and check:
+- it stands upright
+- it is not floating
+- it is not buried in the road
+- the front faces forward
+- there are no missing script errors in the Console
+
+### Step 12: Final rule for all AI traffic prefabs
+
+Every AI traffic prefab must use the same setup pattern:
+
+```text
+Prefab Root
+├── Visual
+└── Collider
+```
+
+Root components:
+- `Rigidbody`
 - `AIVehicleController`
 - `SplineVehicle`
 
-Recommended prefab structure:
-
-```text
-AI_Car_01
-├── MeshRoot
-├── BodyCollider
-└── optional visual children
-```
-
-You do not need wheel colliders for this traffic system.
-
-`AIVehicleController` handles the near-player, full simulation tier.
-`SplineVehicle` handles the cheaper far-distance traffic tier.
-Both should live on the same prefab so `VehiclePool` can switch behavior cleanly.
-
-Recommended checks:
-- forward direction is positive Z
-- collider bounds match the mesh reasonably well
-- mass is sensible for the vehicle type
-
-### Root object and transform
-
-The prefab root should represent the whole vehicle.
-Place the mesh so that:
-- the vehicle faces forward on local positive Z
-- the pivot is near the center of the vehicle footprint
-- the body sits at the correct ride height above the road
-
-If the mesh faces +X instead of +Z, the traffic car will appear to drive sideways because both traffic scripts rotate the object to face its travel direction.
-
-### `Rigidbody` setup
-
-`AIVehicleController` has a `RequireComponent(typeof(Rigidbody))` attribute, so the prefab must have a real `Rigidbody` on the root.
-
-Recommended checks:
-- `Use Gravity` enabled
-- not `Is Kinematic`
-- `Interpolation = Interpolate`
-- freeze X and Z rotation if vehicles wobble or tip on uneven map geometry
-
-Suggested starting mass ranges:
-- car: `1200-1800`
-- truck: `4000-9000`
-- motorcycle: `180-350`
-- bus: `7000-14000`
-- emergency vehicle: similar to a car or van, depending on model size
-
-### Collider setup
-
-Start simple:
-- use `BoxCollider` for most cars, vans, trucks, and buses
-- use multiple simple colliders only if the body shape needs it
-- avoid detailed mesh colliders unless there is a proven need
-
-Collider goals:
-- front and rear bounds roughly match the visible body
-- width is close to the actual vehicle width
-- collider is centered on the lane
-- collider does not extend too far below the wheels and scrape the road
-
-If the collider is much larger than the visible mesh, AI spacing will look wrong even if the logic is working correctly.
-
-### `AIVehicleController` details
-
-`AIVehicleController` is the script that follows the road graph, obeys red lights, follows other traffic, and handles emergency yielding.
-
-Fields worth reviewing per prefab:
-- `vehicleType`
-- `maxAccel`
-- `maxBrake`
-- `turnRate`
-- `stopDistance`
-- `safeFollowingDistance`
-- `overtakingLaneShift`
-- `vehicleLength`
-- `obeyTrafficSignals`
-- `obeySpeedLimits`
-
-Useful tuning guidance:
-- cars should use balanced acceleration and medium following distance
-- trucks and buses should use lower acceleration, longer `vehicleLength`, and more following distance
-- motorcycles can use shorter `vehicleLength` and quicker acceleration
-- emergency vehicles still need the correct `vehicleType` so nearby AI can react properly
-
-Important:
-- `vehicleLength` affects when the vehicle considers itself close enough to advance to the next graph node
-- values that are too small can make long vehicles cut corners or transition too early
-- values that are too large can make vehicles stop or retarget too soon
-
-Set `AIVehicleController.vehicleType` correctly:
-- `Car`
-- `Truck`
-- `Motorcycle`
-- `Bus`
-- `Emergency`
-
-### `SplineVehicle` details
-
-`SplineVehicle` is used when the prefab is outside the expensive full-AI radius.
-
-Useful fields:
-- `accelKmhPerSec`
-- `brakeKmhPerSec`
-- `turnRate`
-- `minHeadway`
-- `redLightStopDistance`
-- `lookaheadNodes`
-
-In most cases, the script defaults are good enough.
-The main setup requirement is simply that the component exists on every pooled traffic prefab.
-
-### Play Mode verification
-
-Before adding the prefab to `VehiclePool`, drag one instance into the scene and confirm:
-- it sits correctly on the road surface
-- it points in the expected forward direction
-- its scale fits the lane width and nearby vehicles
-- no missing-component errors appear in the Console
-
-Then test it through the pool and confirm:
-- it follows graph directions instead of drifting sideways
-- it stops for red lights when applicable
-- it slows behind other vehicles instead of clipping through them
-- buses and trucks do not pivot unrealistically through corners
-
-### Common mistakes
-
-- mesh forward axis is wrong, so the prefab drives sideways
-- `vehicleType` left as `Car` on bus, truck, or ambulance prefabs
-- prefab has `AIVehicleController` but is missing `SplineVehicle`
-- pivot is placed at the bumper instead of near the center
-- collider is far larger or smaller than the visible body
+Child components:
+- `Visual` -> mesh components
+- `Collider` -> `BoxCollider`
 
 ---
 
 ## 14) `VehiclePool` setup
 
-Create `VehiclePool` and assign:
-- `roadGraph` -> your `AIRoadGraph`
-- `prefabs` -> weighted vehicle prefab list
+Follow these steps to add and configure the traffic pool.
 
-Recommended values:
+### What `VehiclePool` does
+
+`VehiclePool` creates AI traffic vehicles from your prefabs and switches them between these three runtime states:
+- `FullAI`
+- `Spline`
+- `Dormant`
+
+It also:
+- uses the player bus distance to decide which vehicles need full simulation
+- uses time of day to decide how many pooled vehicles should be active
+
+### Step 1: Create the `VehiclePool` object
+
+Create an empty GameObject in the scene.
+Name it:
+- `VehiclePool`
+
+Your traffic-related hierarchy should now look like this:
+
+```text
+Pysicstesttrack
+├── Map
+├── AIRoadGraph
+├── VehiclePool
+└── AI_Small_Car
+```
+
+If your AI prefabs are already saved in the Project window, they do not need to stay in the scene.
+Only `VehiclePool` must stay in the scene.
+
+### Step 2: Add the script
+
+Select `VehiclePool`.
+
+Add:
+- `VehiclePool`
+
+### Step 3: Assign the road graph
+
+In the `VehiclePool` inspector, assign:
+- `roadGraph` -> `AIRoadGraph`
+
+This must point to the road graph object that contains your AI traffic nodes.
+
+If `roadGraph` is empty:
+- the pool will log `VehiclePool: Missing AIRoadGraph.`
+- no AI traffic will be created
+
+### Step 4: Set the pool size
+
+In the `Pool` section, set:
+- `poolSizePerScene = 50`
+
+This means the pool will prepare 50 vehicles in total.
+
+### Step 5: Fill the prefab list
+
+In the `Pool` section, open `prefabs`.
+
+Add one element for each traffic prefab you want the pool to spawn.
+
+Example:
+
+- `Element 0`
+  - `type = Car`
+  - `prefab = AI_Small_Car`
+  - `weight = 1`
+- `Element 1`
+  - `type = Truck`
+  - `prefab = AI_Truck_01`
+  - `weight = 0.4`
+- `Element 2`
+  - `type = Bus`
+  - `prefab = AI_Bus_01`
+  - `weight = 0.2`
+
+Rules for the prefab list:
+- use the same `type` here as the prefab's `AIVehicleController.vehicleType`
+- every prefab must already contain `Rigidbody`, `AIVehicleController`, and `SplineVehicle`
+- do not leave `prefab` empty
+- do not leave the `prefabs` list empty
+
+How `weight` works:
+- larger weight = that prefab appears more often
+- smaller weight = that prefab appears less often
+
+Simple starting setup:
+- car weight = `1`
+- truck weight = `0.4`
+- bus weight = `0.2`
+- motorcycle weight = `0.3`
+
+### Step 6: Configure distance-based simulation
+
+In `Tier Split (distance from player bus)`, set:
+- `fullAiRadiusMeters = 200`
+- `splineRadiusMeters = 400`
+- `transitionHysteresisMeters = 25`
+- `maxFullAiVehicles = 18`
+- `tierUpdateIntervalSeconds = 0.2`
+
+What these values mean:
+- vehicles near the player bus use `FullAI`
+- vehicles farther away use `Spline`
+- vehicles very far away use `Dormant`
+
+Use this mental model:
+- `0 to 200` meters = `FullAI`
+- `200 to 400` meters = `Spline`
+- beyond that = `Dormant`
+
+Keep `maxFullAiVehicles` between `15` and `20`.
+The script clamps this range anyway, and `18` is a good default.
+
+### Step 7: Configure traffic density
+
+In `Density`, set:
+- `minActiveFraction = 0.25`
+- `maxActiveFraction = 0.9`
+- `updateDensityEverySeconds = 4`
+
+What these values mean:
+- low traffic times activate about 25% of the pool
+- busy traffic times activate up to 90% of the pool
+
+With a pool size of `50`:
+- 25% means about `12` active vehicles
+- 90% means about `45` active vehicles
+
+### Step 8: Configure rush hour
+
+In `Rush Hour`, set:
+- `morningPeakMinutes = 450`
+- `eveningPeakMinutes = 1050`
+- `peakWidthMinutes = 80`
+- `rushMultiplier = 3.5`
+
+These values mean:
+- `450` minutes = `7:30 AM`
+- `1050` minutes = `5:30 PM`
+
+`VehiclePool` reads time from `ScheduleManager.Instance.currentTimeMinutes`.
+If `ScheduleManager` is missing, the pool falls back to midday behavior.
+
+### Step 9: Turn on debug drawing
+
+In `Debug Gizmos`, enable:
+- `drawTierGizmos`
+- `drawTierRings`
+
+Keep these values:
+- `vehicleGizmoRadius = 1.2`
+
+Expected colors:
+- green = `FullAI`
+- cyan = `Spline`
+- gray = `Dormant`
+
+### Step 10: Confirm the player bus exists
+
+`VehiclePool` automatically searches for `BusController` in the scene.
+
+Make sure the gameplay scene contains:
+- one active player bus
+- `BusController` on that bus
+
+If there is no player bus:
+- the pool still exists
+- tier distance logic becomes meaningless
+- vehicles will not switch around the player correctly
+
+### Step 11: Enter Play Mode and verify the pool
+
+Press Play and check these things in order:
+
+1. No warning appears saying `VehiclePool: Missing AIRoadGraph.`
+2. AI vehicles appear in the scene.
+3. Vehicles near the player bus move with full simulation.
+4. Vehicles farther away stay active with cheaper simulation.
+5. Some pooled vehicles stay inactive when outside the active range.
+
+### Step 12: If traffic does not appear
+
+Check these fields first:
+- `roadGraph` is assigned
+- `prefabs` list has entries
+- each prefab slot has a real prefab assigned
+- each prefab root has `Rigidbody`
+- each prefab root has `AIVehicleController`
+- each prefab root has `SplineVehicle`
+- `AIRoadGraph` contains valid nodes
+- the scene contains a player bus with `BusController`
+
+### Step 13: Good starting inspector values
+
+Use these exact values to begin:
+
+- `roadGraph = AIRoadGraph`
 - `poolSizePerScene = 50`
 - `fullAiRadiusMeters = 200`
 - `splineRadiusMeters = 400`
@@ -724,21 +1042,8 @@ Recommended values:
 - `eveningPeakMinutes = 1050`
 - `peakWidthMinutes = 80`
 - `rushMultiplier = 3.5`
-
-Important:
-- the pool auto-finds the player `BusController`
-- if there is no player bus in scene, distance-based tiering becomes meaningless
-
-### Debug recommendations
-
-Enable:
-- `drawTierGizmos`
-- `drawTierRings`
-
-Expected colors:
-- green = `FullAI`
-- cyan = `Spline`
-- gray = `Dormant`
+- `drawTierGizmos = On`
+- `drawTierRings = On`
 
 ---
 
