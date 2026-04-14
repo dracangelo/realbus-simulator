@@ -15,6 +15,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     public int roadLayer = 0;
     public string roadTag = "Road";
     public PhysicsMaterial roadPhysicMaterial;
+    public bool drawCenterLines = true;
+    public float centerLineWidth = 0.12f;
+    public Color centerLineColor = new Color(1f, 0.85f, 0.2f, 1f);
 
     [Header("State")]
     public bool roadsBuilt = false;
@@ -90,11 +93,40 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (!string.IsNullOrEmpty(roadTag) && IsValidTag(roadTag))
                 roadObj.tag = roadTag;
 
+            if (drawCenterLines)
+                BuildCenterLine(roadObj.transform, points);
+
             roadCount++;
         }
 
         roadsBuilt = true;
         Debug.Log($"OSM: Built {roadCount} road segments!");
+    }
+
+    void BuildCenterLine(Transform parent, List<Vector3> points)
+    {
+        if (points == null || points.Count < 2) return;
+        var go = new GameObject("CenterLine");
+        go.transform.SetParent(parent, false);
+        var lr = go.AddComponent<LineRenderer>();
+        lr.positionCount = points.Count;
+        lr.useWorldSpace = false;
+        lr.startWidth = centerLineWidth;
+        lr.endWidth = centerLineWidth;
+        lr.material = new Material(ResolveDefaultRoadShader());
+        lr.material.color = centerLineColor;
+        lr.startColor = centerLineColor;
+        lr.endColor = centerLineColor;
+        lr.numCapVertices = 2;
+
+        var local = new Vector3[points.Count];
+        for (int i = 0; i < points.Count; i++)
+        {
+            var p = points[i];
+            p.y = roadYOffset + 0.02f;
+            local[i] = parent.InverseTransformPoint(p);
+        }
+        lr.SetPositions(local);
     }
 
     bool IsValidTag(string tag)
