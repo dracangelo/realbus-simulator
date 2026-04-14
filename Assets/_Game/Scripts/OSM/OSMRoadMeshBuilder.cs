@@ -77,8 +77,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             var mr = roadObj.AddComponent<MeshRenderer>();
 
             mf.mesh = mesh;
-            mr.material = roadMaterial != null ? roadMaterial :
-                new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            mr.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
 
             // Add mesh collider for driving on
             var mc = roadObj.AddComponent<MeshCollider>();
@@ -88,7 +87,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
             if (roadLayer > 0)
                 roadObj.layer = roadLayer;
-            if (!string.IsNullOrEmpty(roadTag))
+            if (!string.IsNullOrEmpty(roadTag) && IsValidTag(roadTag))
                 roadObj.tag = roadTag;
 
             roadCount++;
@@ -96,6 +95,40 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
         roadsBuilt = true;
         Debug.Log($"OSM: Built {roadCount} road segments!");
+    }
+
+    bool IsValidTag(string tag)
+    {
+        if (string.IsNullOrEmpty(tag)) return false;
+        try
+        {
+            GameObject.FindWithTag(tag);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    Shader ResolveDefaultRoadShader()
+    {
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader == null) shader = Shader.Find("Standard");
+        if (shader == null) shader = Shader.Find("Unlit/Color");
+        return shader;
+    }
+
+    Material CreateDefaultRoadMaterial()
+    {
+        var shader = ResolveDefaultRoadShader();
+        var mat = new Material(shader);
+        mat.color = new Color(0.1f, 0.1f, 0.1f, 1f);
+        if (mat.HasProperty("_Glossiness"))
+            mat.SetFloat("_Glossiness", 0.0f);
+        if (mat.HasProperty("_Metallic"))
+            mat.SetFloat("_Metallic", 0.0f);
+        return mat;
     }
 
     Mesh BuildRoadSegmentMesh(List<Vector3> points, float width)

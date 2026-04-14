@@ -104,12 +104,20 @@ public class MapTileLoader : MonoBehaviour
         quad.transform.localScale = new Vector3(tileWorldSize, tileWorldSize, 1f);
 
         var renderer = quad.GetComponent<Renderer>();
-        renderer.material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        renderer.material = new Material(ResolveTileShader());
         renderer.material.mainTexture = tex;
 
         Destroy(quad.GetComponent<Collider>());
         if (tileLayer > 0) quad.layer = tileLayer;
         activeTiles.Add(quad);
+    }
+
+    Shader ResolveTileShader()
+    {
+        Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+        if (shader == null) shader = Shader.Find("Unlit/Texture");
+        if (shader == null) shader = Shader.Find("Standard");
+        return shader;
     }
 
     void ClearTiles()

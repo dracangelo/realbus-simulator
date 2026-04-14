@@ -1,0 +1,766 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-04-14T10:07:00Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 344969170,
+  "lat": -4.0673685,
+  "lon": 39.6704190,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyerere Road",
+    "amenity": "fuel",
+    "name": "OLA Energy"
+  }
+},
+{
+  "type": "node",
+  "id": 344969183,
+  "lat": -4.0642445,
+  "lon": 39.6712407,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyerere Road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "name": "Shell"
+  }
+},
+{
+  "type": "node",
+  "id": 344969489,
+  "lat": -4.0599950,
+  "lon": 39.6720390,
+  "tags": {
+    "amenity": "fuel",
+    "name": "National Oil"
+  }
+},
+{
+  "type": "node",
+  "id": 344969776,
+  "lat": -4.0576261,
+  "lon": 39.6729368,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Abdel Nasser Road",
+    "amenity": "fuel",
+    "name": "National Oil"
+  }
+},
+{
+  "type": "node",
+  "id": 344969924,
+  "lat": -4.0556912,
+  "lon": 39.6724819,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Abdel Nasser Road",
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:TotalEnergies",
+    "name": "Total energies- Bondeni",
+    "name:en": "Total - Bondeni"
+  }
+},
+{
+  "type": "node",
+  "id": 344970201,
+  "lat": -4.0537673,
+  "lon": 39.6730287,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Maalim Juma Mohamed Road",
+    "amenity": "fuel",
+    "name": "OLA Energy"
+  }
+},
+{
+  "type": "node",
+  "id": 344970238,
+  "lat": -4.0513522,
+  "lon": 39.6740295,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Sheikh Abdullas F.Road",
+    "amenity": "fuel",
+    "name": "National Oil"
+  }
+},
+{
+  "type": "node",
+  "id": 344970358,
+  "lat": -4.0480270,
+  "lon": 39.6703478,
+  "tags": {
+    "addr:street": "Sheikh Abdullas F.Road",
+    "amenity": "fuel",
+    "name": "Petro"
+  }
+},
+{
+  "type": "node",
+  "id": 344970475,
+  "lat": -4.0460685,
+  "lon": 39.6695071,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Sheikh Abdullas F.Road",
+    "amenity": "fuel",
+    "name": "Petro"
+  }
+},
+{
+  "type": "node",
+  "id": 344970554,
+  "lat": -4.0404498,
+  "lon": 39.6782659,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyali road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "brand:wikipedia": "en:Engen Petroleum",
+    "fuel:diesel": "yes",
+    "fuel:octane_95": "yes",
+    "name": "Shell",
+    "self_service": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 344971084,
+  "lat": -4.0351984,
+  "lon": 39.6849524,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyali Road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "brand:wikipedia": "en:Royal Dutch Shell",
+    "name": "Shell"
+  }
+},
+{
+  "type": "node",
+  "id": 344971195,
+  "lat": -4.0349120,
+  "lon": 39.6854424,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyali Road",
+    "amenity": "fuel",
+    "name": "Makaburin National Oil"
+  }
+},
+{
+  "type": "node",
+  "id": 344971199,
+  "lat": -4.0301786,
+  "lon": 39.6910821,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyali Road",
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:Total (entreprise)",
+    "name": "TotalEnergies"
+  }
+},
+{
+  "type": "node",
+  "id": 344971215,
+  "lat": -4.0295694,
+  "lon": 39.6922831,
+  "tags": {
+    "amenity": "fuel",
+    "created_by": "Potlatch 0.10f",
+    "name": "Petro"
+  }
+},
+{
+  "type": "node",
+  "id": 346562706,
+  "lat": -4.0518571,
+  "lon": 39.6882224,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyali Road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "name": "Shell Links Road Filling Station",
+    "self_service": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 612947282,
+  "lat": -4.0413920,
+  "lon": 39.6568266,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mwangeka road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "brand:wikipedia": "en:Royal Dutch Shell",
+    "name": "Shell Makupa",
+    "operator": "Shell"
+  }
+},
+{
+  "type": "node",
+  "id": 965178138,
+  "lat": -4.0494537,
+  "lon": 39.6662936,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Total",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:Total (entreprise)",
+    "name": "Total"
+  }
+},
+{
+  "type": "node",
+  "id": 1315220560,
+  "lat": -4.0532232,
+  "lon": 39.6672747,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Rubis",
+    "brand:wikidata": "Q3446514",
+    "brand:wikipedia": "en:Rubis (company)",
+    "name": "Rubis",
+    "operator": "Kenol"
+  }
+},
+{
+  "type": "node",
+  "id": 1447388465,
+  "lat": -4.0726002,
+  "lon": 39.6671369,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyerere Avenue",
+    "amenity": "fuel",
+    "name": "Petro Premier Ferry"
+  }
+},
+{
+  "type": "node",
+  "id": 1447402338,
+  "lat": -4.0575726,
+  "lon": 39.6635540,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mwembe Tayari Road",
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:Total (entreprise)",
+    "name": "Total"
+  }
+},
+{
+  "type": "node",
+  "id": 2249917826,
+  "lat": -4.0484578,
+  "lon": 39.6825314,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Total",
+    "brand:wikidata": "Q154037",
+    "name": "Mkomani Total"
+  }
+},
+{
+  "type": "node",
+  "id": 2377333431,
+  "lat": -4.0519080,
+  "lon": 39.6655823,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mombasa road",
+    "amenity": "fuel",
+    "name": "National Oil"
+  }
+},
+{
+  "type": "node",
+  "id": 2377336397,
+  "lat": -4.0479373,
+  "lon": 39.6627365,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mombasa road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "brand:wikipedia": "en:Royal Dutch Shell",
+    "name": "Shell"
+  }
+},
+{
+  "type": "node",
+  "id": 2380397565,
+  "lat": -4.0556212,
+  "lon": 39.6679695,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Total",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:Total (entreprise)",
+    "name": "Total"
+  }
+},
+{
+  "type": "node",
+  "id": 2380417132,
+  "lat": -4.0427880,
+  "lon": 39.6583899,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mombasa road",
+    "amenity": "fuel",
+    "name": "Oilcom"
+  }
+},
+{
+  "type": "node",
+  "id": 2380417133,
+  "lat": -4.0440135,
+  "lon": 39.6595331,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Petrocity",
+    "brand:wikidata": "Q134958497",
+    "name": "Petrocity"
+  }
+},
+{
+  "type": "node",
+  "id": 4230329591,
+  "lat": -4.0609445,
+  "lon": 39.6600260,
+  "tags": {
+    "amenity": "fuel",
+    "name": "Petro petrol station"
+  }
+},
+{
+  "type": "node",
+  "id": 5826717987,
+  "lat": -4.0595281,
+  "lon": 39.6685675,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:postcode": "80100",
+    "addr:street": "Haile Selassie Road",
+    "amenity": "fuel",
+    "name": "OLA Energy"
+  }
+},
+{
+  "type": "node",
+  "id": 5993019652,
+  "lat": -4.0430982,
+  "lon": 39.6610068,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Swalenguru road",
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:Total (entreprise)",
+    "name": "Total"
+  }
+},
+{
+  "type": "node",
+  "id": 5995166166,
+  "lat": -4.0463214,
+  "lon": 39.6574744,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Lumumba Road",
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "name": "Total Petrol Station"
+  }
+},
+{
+  "type": "node",
+  "id": 6038770496,
+  "lat": -4.0571624,
+  "lon": 39.6924245,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Jomo Kenyatta Road",
+    "amenity": "fuel",
+    "name": "JOHARI FASHIONS"
+  }
+},
+{
+  "type": "node",
+  "id": 6039167983,
+  "lat": -4.0396462,
+  "lon": 39.6795695,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyali road",
+    "amenity": "fuel",
+    "brand": "Oilibya",
+    "brand:wikidata": "Q7081491",
+    "name": "Oil Libya Lights",
+    "name:ar": "أويليبيا"
+  }
+},
+{
+  "type": "node",
+  "id": 6039167984,
+  "lat": -4.0387107,
+  "lon": 39.6800570,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Kengelani road",
+    "amenity": "fuel",
+    "brand": "Oilibya",
+    "brand:wikidata": "Q7081491",
+    "name": "OLA Energy",
+    "name:ar": "أويليبيا",
+    "name:en": "Oilibya",
+    "self_service": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 6041085046,
+  "lat": -4.0352779,
+  "lon": 39.6856224,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Nyali Road",
+    "amenity": "fuel",
+    "name": "National Oil Nyali Road"
+  }
+},
+{
+  "type": "node",
+  "id": 6041193308,
+  "lat": -4.0327447,
+  "lon": 39.6831462,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Old Malindi Road",
+    "amenity": "fuel",
+    "name": "Check Point Filling Station"
+  }
+},
+{
+  "type": "node",
+  "id": 6045649316,
+  "lat": -4.0452926,
+  "lon": 39.6613037,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Ronald Ngala Road",
+    "amenity": "fuel",
+    "brand": "Oilibya",
+    "brand:wikidata": "Q7081491",
+    "name": "OLA Energy",
+    "name:ar": "أويليبيا",
+    "name:en": "Oilibya"
+  }
+},
+{
+  "type": "node",
+  "id": 6045649317,
+  "lat": -4.0457926,
+  "lon": 39.6607988,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Ronald Ngala road",
+    "amenity": "fuel",
+    "brand": "Oilibya",
+    "brand:wikidata": "Q7081491",
+    "name": "OLA Energy",
+    "name:ar": "أويليبيا",
+    "name:en": "Oilibya"
+  }
+},
+{
+  "type": "node",
+  "id": 6048411436,
+  "lat": -4.0421309,
+  "lon": 39.6447479,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Kismayu Road",
+    "amenity": "fuel",
+    "name": "OLA"
+  }
+},
+{
+  "type": "node",
+  "id": 6048411438,
+  "lat": -4.0409485,
+  "lon": 39.6465895,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Kismayu Road",
+    "amenity": "fuel",
+    "brand": "Oilibya",
+    "brand:wikidata": "Q7081491",
+    "name": "Oilibya Mombasa Lpg",
+    "name:ar": "أويليبيا",
+    "name:en": "Oilibya"
+  }
+},
+{
+  "type": "node",
+  "id": 6048461265,
+  "lat": -4.0465949,
+  "lon": 39.6495160,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Shimanzi Rd",
+    "amenity": "fuel",
+    "name": "Vivo Energy Kenya"
+  }
+},
+{
+  "type": "node",
+  "id": 6048586679,
+  "lat": -4.0619393,
+  "lon": 39.6582916,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Sauti ya Kenya Road",
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:Total (entreprise)",
+    "name": "Total"
+  }
+},
+{
+  "type": "node",
+  "id": 6048913155,
+  "lat": -4.0637252,
+  "lon": 39.6611115,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Archbishop Makarios Road",
+    "amenity": "fuel",
+    "name": "National Oil Corporation-Mackinon"
+  }
+},
+{
+  "type": "node",
+  "id": 6054282205,
+  "lat": -4.0608922,
+  "lon": 39.6627127,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Moi Avenue",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "brand:wikipedia": "en:Royal Dutch Shell",
+    "name": "Shell"
+  }
+},
+{
+  "type": "node",
+  "id": 6054284408,
+  "lat": -4.0613404,
+  "lon": 39.6624505,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Tangana Road",
+    "amenity": "fuel",
+    "brand": "Rubis",
+    "brand:wikidata": "Q3446514",
+    "brand:wikipedia": "en:Rubis (company)",
+    "name": "Rubis"
+  }
+},
+{
+  "type": "node",
+  "id": 6054858991,
+  "lat": -4.0432090,
+  "lon": 39.6639836,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Ronald Ngala Road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "brand:wikipedia": "en:Royal Dutch Shell",
+    "name": "Shell"
+  }
+},
+{
+  "type": "node",
+  "id": 6054858992,
+  "lat": -4.0430478,
+  "lon": 39.6639506,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "koinage road",
+    "amenity": "fuel",
+    "brand": "Rubis",
+    "brand:wikidata": "Q3446514",
+    "brand:wikipedia": "en:Rubis (company)",
+    "name": "Rubis"
+  }
+},
+{
+  "type": "node",
+  "id": 7156492107,
+  "lat": -4.0563325,
+  "lon": 39.6684351,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mwembe Tayari Road",
+    "amenity": "fuel",
+    "brand": "Rubis",
+    "brand:wikidata": "Q3446514",
+    "brand:wikipedia": "en:Rubis (company)",
+    "name": "Rubis"
+  }
+},
+{
+  "type": "node",
+  "id": 7156492108,
+  "lat": -4.0449650,
+  "lon": 39.6686003,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Sheikh Abdullas F.Road",
+    "amenity": "fuel",
+    "name": "Buxton Petrol Station"
+  }
+},
+{
+  "type": "node",
+  "id": 7172031316,
+  "lat": -4.0408247,
+  "lon": 39.6568566,
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mombasa Road",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "name": "shell makupa service station"
+  }
+},
+{
+  "type": "node",
+  "id": 7838189487,
+  "lat": -4.0242146,
+  "lon": 39.6797007,
+  "tags": {
+    "amenity": "fuel",
+    "name": "Safari Petrol Station."
+  }
+},
+{
+  "type": "node",
+  "id": 11500364389,
+  "lat": -4.0256331,
+  "lon": 39.6973770,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "name": "Shell -Bombolulu"
+  }
+},
+{
+  "type": "node",
+  "id": 12512395594,
+  "lat": -4.0435371,
+  "lon": 39.6598052,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:Total (entreprise)",
+    "name": "TotalEnergies -sparki",
+    "self_service": "no",
+    "survey:date": "2025-01-18"
+  }
+},
+{
+  "type": "node",
+  "id": 12563406291,
+  "lat": -4.0637447,
+  "lon": 39.6746928,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "name": "total",
+    "survey:date": "2025-02-06"
+  }
+},
+{
+  "type": "way",
+  "id": 635298371,
+  "nodes": [
+    5993019054,
+    5993019055,
+    5993019056,
+    5993019057,
+    5993019054
+  ],
+  "tags": {
+    "addr:city": "Mombasa",
+    "addr:street": "Mombasa road",
+    "amenity": "fuel",
+    "name": "OLA Energy"
+  }
+},
+{
+  "type": "node",
+  "id": 5993019054,
+  "lat": -4.0436068,
+  "lon": 39.6605918
+},
+{
+  "type": "node",
+  "id": 5993019055,
+  "lat": -4.0439353,
+  "lon": 39.6609292
+},
+{
+  "type": "node",
+  "id": 5993019056,
+  "lat": -4.0444016,
+  "lon": 39.6602990
+},
+{
+  "type": "node",
+  "id": 5993019057,
+  "lat": -4.0440650,
+  "lon": 39.6601161
+}
+
+  ]
+}

@@ -58,6 +58,7 @@
     <Compile Include="Assets/_Game/Scripts/OSM/BusRouteParser.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficDebugHUD.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OverpassResponse.cs" />
+    <Compile Include="Assets/_Game/Scripts/Debug/RuntimeSpawnLogger.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/WheelVisualSync.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingMeshBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/BusRoute.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="Assets/_Game/Scripts/Map/MissionData.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/ScoreTracker.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/SignalViolationDetector.cs" />
+    <Compile Include="Assets/_Game/Scripts/Debug/RuntimeGasStationSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusController.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CoordinateConverter.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMRoadMeshBuilder.cs" />
@@ -109,6 +111,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/MobileControlsUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/ScheduleManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/RainController.cs" />
+    <Compile Include="Assets/_Game/Scripts/Debug/StopPropSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/BusStop.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/CityCardUI.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMTypes.cs" />
@@ -125,6 +128,7 @@
     <Compile Include="Assets/_Game/Scripts/Bus/RoadSurfaceDetector.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CityPredownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMRouteImporter.cs" />
+    <Compile Include="Assets/_Game/Scripts/Debug/RuntimeEnvironmentSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/StopTrigger.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AIRoadGraph.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs" />

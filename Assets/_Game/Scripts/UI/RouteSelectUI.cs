@@ -43,8 +43,7 @@ public class RouteSelectUI : MonoBehaviour
             accentLine.color = UITheme.Accent;
 
         // City name from selection
-        var city = GameState.Instance?.selectedCity
-                ?? CityManager.Instance?.activeCity;
+        var city = ResolveActiveCity();
 
         if (cityNameText)
         {
@@ -77,14 +76,9 @@ public class RouteSelectUI : MonoBehaviour
         foreach (Transform child in routeListContainer)
             Destroy(child.gameObject);
 
-        var city = GameState.Instance?.selectedCity
-                ?? CityManager.Instance?.activeCity;
+        var city = ResolveActiveCity();
 
         Debug.Log($"RouteSelect: city={city?.cityName}, routes={city?.availableRoutes?.Length ?? 0}");
-
-        // Fallback for testing — use first available city
-        if (city == null && CityManager.Instance?.allCities?.Length > 0)
-            city = CityManager.Instance.allCities[0];
 
         if (city == null)
         {
@@ -106,13 +100,65 @@ public class RouteSelectUI : MonoBehaviour
                 CreateRouteCard(route);
     }
 
+    CityDefinition ResolveActiveCity()
+    {
+        var cityManager = CityManager.Instance;
+        var gameState = GameState.Instance;
+
+        var city = gameState?.selectedCity ?? cityManager?.activeCity;
+        if (HasRoutes(city))
+            return city;
+
+        if (cityManager?.activeCountry?.cities != null)
+        {
+            for (int i = 0; i < cityManager.activeCountry.cities.Length; i++)
+            {
+                var candidate = cityManager.activeCountry.cities[i];
+                if (!HasRoutes(candidate)) continue;
+                ApplyResolvedCity(candidate);
+                return candidate;
+            }
+        }
+
+        if (cityManager?.allCities != null)
+        {
+            for (int i = 0; i < cityManager.allCities.Length; i++)
+            {
+                var candidate = cityManager.allCities[i];
+                if (!HasRoutes(candidate)) continue;
+                ApplyResolvedCity(candidate);
+                return candidate;
+            }
+        }
+
+        return city;
+    }
+
+    bool HasRoutes(CityDefinition city)
+    {
+        return city != null && city.availableRoutes != null && city.availableRoutes.Length > 0;
+    }
+
+    void ApplyResolvedCity(CityDefinition city)
+    {
+        if (city == null) return;
+
+        activeCity = city;
+
+        if (CityManager.Instance != null)
+            CityManager.Instance.activeCity = city;
+
+        if (GameState.Instance != null && GameState.Instance.selectedCity == null)
+            GameState.Instance.selectedCity = city;
+    }
+
     void CreateRouteCard(BusRoute route)
     {
         GameObject card = new GameObject($"Card_{route.name}");
         card.transform.SetParent(routeListContainer, false);
 
         var rect = card.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(0, 140);
+        rect.sizeDelta = new Vector2(400, 170);
 
         var img = card.AddComponent<Image>();
         img.color = UITheme.SurfaceContainer;
