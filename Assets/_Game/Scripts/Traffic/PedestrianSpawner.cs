@@ -27,6 +27,7 @@ public class PedestrianSpawner : MonoBehaviour
     public int maxActivePedestrians = 40;
     public float spawnCheckInterval = 1.25f;
     public float walkSpeed = 1.4f;
+    public bool logSpawnEvents = true;
 
     [Header("Density")]
     public float baselineSpawnChance = 0.2f;
@@ -36,9 +37,11 @@ public class PedestrianSpawner : MonoBehaviour
     readonly Dictionary<int, int> activeByCrossing = new Dictionary<int, int>();
     ZebraCrossing[] runtimeCrossings;
     float timer;
+    bool loggedCrossings;
 
     void Start()
     {
+        EnsurePedestrianPrefab();
         EnsureRuntimeCrossings();
     }
 
@@ -99,6 +102,9 @@ public class PedestrianSpawner : MonoBehaviour
             ped.Init(to, () => DecrementCrossing(i));
             active.Add(ped);
 
+            if (logSpawnEvents)
+                Debug.Log($"[PedestrianSpawner] Spawned pedestrian at crossing {x.crossingId} (active={active.Count}/{maxActivePedestrians}).");
+
             if (active.Count >= maxActivePedestrians)
                 break;
         }
@@ -114,6 +120,28 @@ public class PedestrianSpawner : MonoBehaviour
 
         if (runtimeCrossings == null || runtimeCrossings.Length == 0)
             runtimeCrossings = BuildRandomCrossingsFromRoadGraph();
+
+        if (logSpawnEvents && runtimeCrossings != null && !loggedCrossings)
+        {
+            Debug.Log($"[PedestrianSpawner] Runtime crossings ready: {runtimeCrossings.Length} (random={useRandomGeneratedCrossings}).");
+            loggedCrossings = true;
+        }
+    }
+
+    void EnsurePedestrianPrefab()
+    {
+        if (pedestrianPrefab != null) return;
+
+        var fallback = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        fallback.name = "Pedestrian_Fallback";
+        fallback.transform.localScale = new Vector3(0.4f, 0.9f, 0.4f);
+        if (fallback.TryGetComponent<Collider>(out var col))
+            Destroy(col);
+        fallback.SetActive(false);
+        pedestrianPrefab = fallback;
+
+        if (logSpawnEvents)
+            Debug.Log("[PedestrianSpawner] Using fallback capsule pedestrian prefab.");
     }
 
     ZebraCrossing[] BuildRandomCrossingsFromRoadGraph()

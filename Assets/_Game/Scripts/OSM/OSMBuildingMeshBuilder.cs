@@ -98,7 +98,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             var mr = buildingObj.AddComponent<MeshRenderer>();
             mf.mesh = mesh;
             mr.material = buildingMaterial != null ? buildingMaterial :
-                new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                new Material(ResolveDefaultBuildingShader());
 
             buildingCount++;
             frameCount++;
@@ -113,6 +113,14 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
         buildingsBuilt = true;
         Debug.Log($"Buildings: Built {buildingCount} buildings!");
+    }
+
+    Shader ResolveDefaultBuildingShader()
+    {
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader == null) shader = Shader.Find("Standard");
+        if (shader == null) shader = Shader.Find("Unlit/Color");
+        return shader;
     }
 
     Mesh BuildExtrudedMesh(List<Vector3> footprint, float height)

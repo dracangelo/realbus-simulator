@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.IO;
 using UnityEngine.Networking;
 
 public class OSMLoader : MonoBehaviour
@@ -23,19 +24,18 @@ public class OSMLoader : MonoBehaviour
 
     IEnumerator LoadFromStreamingAssets()
     {
-        string path = CityManager.Instance != null
+        string xmlPath = CityManager.Instance != null
             ? CityManager.Instance.activeCity.GetRoadsPath()
-            : System.IO.Path.Combine(Application.streamingAssetsPath, "Cities/NBO/roads.xml");
+            : Path.Combine(Application.streamingAssetsPath, "Cities/NBO/roads.xml");
+        string jsonPath = Path.ChangeExtension(xmlPath, ".json");
 
-        string url = "file://" + path;
+        string preferredPath = File.Exists(jsonPath) ? jsonPath : xmlPath;
+        Debug.Log($"OSM: Loading from {preferredPath}");
 
-        // On Android use UnityWebRequest, on desktop file:// works
-        #if UNITY_ANDROID
-        url = path; // Android uses direct path
-        #endif
+        string raw = null;
 
-        Debug.Log($"OSM: Loading from {path}");
-
+#if UNITY_ANDROID && !UNITY_EDITOR
+        string url = preferredPath;
         using (var request = UnityWebRequest.Get(url))
         {
             yield return request.SendWebRequest();
@@ -43,17 +43,36 @@ public class OSMLoader : MonoBehaviour
             if (request.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"OSM load failed: {request.error}");
-                Debug.LogError($"Path tried: {path}");
+                Debug.LogError($"Path tried: {preferredPath}");
                 yield break;
             }
 
-            string xml = request.downloadHandler.text;
-            Debug.Log($"OSM: Loaded {xml.Length} bytes from disk");
-
-            osmData = OSMParser.Parse(xml);
-            dataLoaded = true;
-
-            Debug.Log("OSM: Data ready!");
+            raw = request.downloadHandler.text;
         }
+#else
+        if (!File.Exists(preferredPath))
+        {
+            Debug.LogError($"OSM load failed: File not found");
+            Debug.LogError($"Path tried: {preferredPath}");
+            yield break;
+        }
+
+        raw = File.ReadAllText(preferredPath);
+#endif
+
+        Debug.Log($"OSM: Loaded {raw.Length} bytes from disk");
+
+        osmData = preferredPath.EndsWith(".json")
+            ? OSMParser.ParseOverpassJson(raw)
+            : OSMParser.Parse(raw);
+        dataLoaded = osmData != null && osmData.ways != null && osmData.ways.Count > 0;
+
+        if (!dataLoaded)
+        {
+            Debug.LogError($"OSM: Parsed data was empty from {preferredPath}");
+            yield break;
+        }
+
+        Debug.Log("OSM: Data ready!");
     }
 }

@@ -45,11 +45,11 @@ public class MissionManager : MonoBehaviour
             yield break;
         }
 
-        Vector3 startPos = GPSManager.Instance.GpsToWorld(
-            currentRoute.stops[0].latitude,
-            currentRoute.stops[0].longitude);
-        startPos.y = 1f;
-        busController.transform.position = startPos;
+        if (currentRoute.stops == null || currentRoute.stops.Length == 0)
+        {
+            Debug.LogError($"MissionManager: Route '{currentRoute.routeName}' has no stops. Assign route stops or enable SceneBootstrap fallback generation.");
+            yield break;
+        }
 
         missionState = MissionState.Briefing;
         Debug.Log("MissionManager: Ready — waiting for mission start.");
@@ -66,6 +66,12 @@ public class MissionManager : MonoBehaviour
         missionState = MissionState.Briefing;
         busController.throttleInput = 0f;
         busController.brakeInput = 1f;
+
+        Vector3 startPos = GPSManager.Instance.GpsToWorld(
+            currentRoute.stops[0].latitude,
+            currentRoute.stops[0].longitude);
+        startPos.y = 1f;
+        busController.transform.position = startPos;
 
         Debug.Log("Mission starting...");
 

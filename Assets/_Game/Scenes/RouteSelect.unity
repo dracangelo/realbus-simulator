@@ -1920,6 +1920,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: GameScripts::SceneBootstrap
   redirectIfNoManagers: 1
   sceneCatalog: {fileID: 0}
+  fallbackRoute: {fileID: 11400000, guid: 3c1767dba5a64a7cdad1b06e46115547, type: 2}
+  fallbackMissionData: {fileID: 11400000, guid: a2d5c859de0085d52a24aea3beff675c, type: 2}
+  knownMissionData: []
 --- !u!114 &709461907
 MonoBehaviour:
   m_ObjectHideFlags: 0

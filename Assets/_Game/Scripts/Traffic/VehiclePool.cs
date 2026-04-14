@@ -34,6 +34,14 @@ public class VehiclePool : MonoBehaviour
     public AIRoadGraph roadGraph;
     public int poolSizePerScene = 50;
     public VehiclePrefabEntry[] prefabs;
+    public bool logSpawnEvents = true;
+
+    [Header("Debug")]
+    public int debugForceActiveCount = 6;
+    public bool logBusDistance = true;
+    public bool logBusDistanceOnce = true;
+    public float logBusDistanceIntervalSeconds = 5f;
+    public bool logFirstActivationOnly = true;
 
     [Header("Tier Split (distance from player bus)")]
     public float fullAiRadiusMeters = 200f;
@@ -66,13 +74,19 @@ public class VehiclePool : MonoBehaviour
     readonly List<PooledVehicle> pooled = new List<PooledVehicle>();
     float densityTick;
     float tierTick;
+    float distanceLogTick;
     Transform playerBus;
     int forcedActiveCount = -1;
+    bool loggedBusDistance;
+    bool loggedFirstActivation;
 
     void Start()
     {
         WarmPool();
         ApplyDensityNow();
+
+        if (debugForceActiveCount > 0)
+            SetForcedActiveCount(debugForceActiveCount);
     }
 
     void Update()
@@ -97,6 +111,24 @@ public class VehiclePool : MonoBehaviour
             tierTick = 0f;
             UpdateSimulationTiers();
         }
+
+        if (logBusDistance)
+        {
+            distanceLogTick += Time.deltaTime;
+            if (logBusDistanceOnce)
+            {
+                if (!loggedBusDistance && distanceLogTick >= Mathf.Max(0.5f, logBusDistanceIntervalSeconds))
+                {
+                    distanceLogTick = 0f;
+                    loggedBusDistance = LogBusDistance();
+                }
+            }
+            else if (distanceLogTick >= logBusDistanceIntervalSeconds)
+            {
+                distanceLogTick = 0f;
+                LogBusDistance();
+            }
+        }
     }
 
     void WarmPool()
@@ -107,6 +139,7 @@ public class VehiclePool : MonoBehaviour
             return;
         }
 
+        int created = 0;
         for (int i = 0; i < poolSizePerScene; i++)
         {
             var picked = PickWeightedPrefab();
@@ -146,7 +179,11 @@ public class VehiclePool : MonoBehaviour
                 enabledByDensity = false,
                 tier = SimulationTier.Dormant
             });
+            created++;
         }
+
+        if (logSpawnEvents)
+            Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}).");
     }
 
     void ApplyDensityNow()
@@ -269,6 +306,7 @@ public class VehiclePool : MonoBehaviour
             return;
         }
 
+        bool wasDormant = pv.tier == SimulationTier.Dormant;
         pv.go.SetActive(true);
 
         if (desired == SimulationTier.FullAI)
@@ -329,7 +367,37 @@ public class VehiclePool : MonoBehaviour
             pv.go.SetActive(false);
         }
 
+        if (logSpawnEvents && wasDormant && desired != SimulationTier.Dormant)
+        {
+            if (!logFirstActivationOnly || !loggedFirstActivation)
+            {
+                Debug.Log($"[VehiclePool] Activated vehicle '{pv.go.name}' tier={desired} type={pv.type} lane={pv.laneIndex}.");
+                loggedFirstActivation = true;
+            }
+        }
+
         pv.tier = desired;
+    }
+
+    bool LogBusDistance()
+    {
+        if (playerBus == null) return false;
+        if (roadGraph == null || roadGraph.NodeCount == 0)
+        {
+            Debug.LogWarning("[VehiclePool] Bus distance check skipped: roadGraph missing.");
+            return false;
+        }
+
+        int nearest = roadGraph.GetNearestNodeIndex(playerBus.position);
+        if (!roadGraph.IsValidNode(nearest))
+        {
+            Debug.LogWarning("[VehiclePool] Bus distance check skipped: no valid road node found.");
+            return false;
+        }
+
+        float dist = Vector3.Distance(playerBus.position, roadGraph.GetNodePosition(nearest));
+        Debug.Log($"[VehiclePool] Bus distance to nearest road node: {dist:0.0}m (node={nearest}).");
+        return true;
     }
 
     void SetTier(GameObject go, AIVehicleController full, SplineVehicle spline, Rigidbody rb, SimulationTier tier, bool initial = false)
