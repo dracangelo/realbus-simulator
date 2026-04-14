@@ -96,6 +96,7 @@ public class SceneBootstrap : MonoBehaviour
         EnsureEnvironmentSpawner();
         EnsureStopPropSpawner();
         EnsureGasStationSpawner();
+        EnsureTarmacApplier();
 
         var selectedRoute = GameState.Instance?.selectedRoute;
         var routeToUse = selectedRoute != null ? selectedRoute : fallbackRoute;
@@ -272,6 +273,15 @@ public class SceneBootstrap : MonoBehaviour
 
         var go = new GameObject("RuntimeGasStationSpawner");
         go.AddComponent<RuntimeGasStationSpawner>();
+    }
+
+    void EnsureTarmacApplier()
+    {
+        if (FindObjectOfType<RuntimeTarmacApplier>() != null)
+            return;
+
+        var go = new GameObject("RuntimeTarmacApplier");
+        go.AddComponent<RuntimeTarmacApplier>();
     }
 
     void ApplyBusScaleFromMap()

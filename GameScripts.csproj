@@ -108,6 +108,7 @@
     <Compile Include="Assets/_Game/Scripts/City/GameState.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/EngineSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/PedestrianSpawner.cs" />
+    <Compile Include="Assets/_Game/Scripts/Debug/RuntimeTarmacApplier.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MobileControlsUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/ScheduleManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/RainController.cs" />
