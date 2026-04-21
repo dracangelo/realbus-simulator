@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
+using System.IO;
 
 public class OSMBuildingLoader : MonoBehaviour
 {
@@ -23,13 +24,15 @@ public class OSMBuildingLoader : MonoBehaviour
 
     IEnumerator LoadFromStreamingAssets()
     {
-        string path = CityManager.Instance != null
+        string xmlPath = CityManager.Instance != null
             ? CityManager.Instance.activeCity.GetBuildingsPath()
             : System.IO.Path.Combine(Application.streamingAssetsPath, "Cities/NBO/buildings.xml");
+        string jsonPath = Path.ChangeExtension(xmlPath, ".json");
+        string preferredPath = SelectPreferredBuildingsPath(xmlPath, jsonPath);
 
-        string url = "file://" + path;
+        string url = "file://" + preferredPath;
 
-        Debug.Log($"Buildings: Loading from {path}");
+        Debug.Log($"Buildings: Loading from {preferredPath}");
 
         using (var request = UnityWebRequest.Get(url))
         {
@@ -38,16 +41,38 @@ public class OSMBuildingLoader : MonoBehaviour
             if (request.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"Buildings load failed: {request.error}");
+                Debug.LogError($"Path tried: {preferredPath}");
                 yield break;
             }
 
-            string xml = request.downloadHandler.text;
-            Debug.Log($"Buildings: Loaded {xml.Length} bytes from disk");
+            string raw = request.downloadHandler.text;
+            Debug.Log($"Buildings: Loaded {raw.Length} bytes from disk");
 
-            osmData = OSMParser.Parse(xml);
-            dataLoaded = true;
+            osmData = preferredPath.EndsWith(".json")
+                ? OSMParser.ParseOverpassJson(raw)
+                : OSMParser.Parse(raw);
+            dataLoaded = osmData != null && osmData.ways != null && osmData.ways.Count > 0;
+
+            if (!dataLoaded)
+            {
+                Debug.LogWarning($"Buildings: No building ways were found in {preferredPath}. Check whether the file is still an empty stub.");
+                yield break;
+            }
 
             Debug.Log($"Buildings: Data ready — {osmData.ways.Count} ways");
         }
+    }
+
+    string SelectPreferredBuildingsPath(string xmlPath, string jsonPath)
+    {
+        bool hasJson = File.Exists(jsonPath) && new FileInfo(jsonPath).Length > 32;
+        bool hasUsefulXml = File.Exists(xmlPath) && new FileInfo(xmlPath).Length > 64;
+
+        if (hasJson)
+            return jsonPath;
+        if (hasUsefulXml)
+            return xmlPath;
+
+        return File.Exists(jsonPath) ? jsonPath : xmlPath;
     }
 }

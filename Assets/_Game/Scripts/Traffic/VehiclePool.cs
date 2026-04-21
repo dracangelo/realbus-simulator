@@ -35,6 +35,7 @@ public class VehiclePool : MonoBehaviour
     public int poolSizePerScene = 50;
     public VehiclePrefabEntry[] prefabs;
     public bool logSpawnEvents = true;
+    public bool allowAutoResolveRoadGraph = true;
 
     [Header("Debug")]
     public int debugForceActiveCount = 6;
@@ -42,6 +43,8 @@ public class VehiclePool : MonoBehaviour
     public bool logBusDistanceOnce = true;
     public float logBusDistanceIntervalSeconds = 5f;
     public bool logFirstActivationOnly = true;
+    public float roadGraphRetryIntervalSeconds = 1.5f;
+    public float maxAutoBindDistanceMeters = 1200f;
 
     [Header("Tier Split (distance from player bus)")]
     public float fullAiRadiusMeters = 200f;
@@ -79,9 +82,23 @@ public class VehiclePool : MonoBehaviour
     int forcedActiveCount = -1;
     bool loggedBusDistance;
     bool loggedFirstActivation;
+    bool loggedMissingRoadGraph;
+    bool loggedTrafficDisabled;
+    float roadGraphRetryTick;
 
     void Start()
     {
+        if (IsTrafficGraphDisabledByConfig())
+        {
+            if (!loggedTrafficDisabled)
+            {
+                Debug.Log("[VehiclePool] Traffic disabled for this run (no aligned AIRoadGraph configured).");
+                loggedTrafficDisabled = true;
+            }
+            return;
+        }
+
+        TryResolveRoadGraph();
         WarmPool();
         ApplyDensityNow();
 
@@ -91,6 +108,33 @@ public class VehiclePool : MonoBehaviour
 
     void Update()
     {
+        if (IsTrafficGraphDisabledByConfig())
+            return;
+
+        if (roadGraph == null || roadGraph.NodeCount == 0)
+        {
+            roadGraphRetryTick += Time.deltaTime;
+            if (roadGraphRetryTick >= Mathf.Max(0.25f, roadGraphRetryIntervalSeconds))
+            {
+                roadGraphRetryTick = 0f;
+                if (TryResolveRoadGraph())
+                {
+                    if (pooled.Count == 0)
+                    {
+                        WarmPool();
+                        ApplyDensityNow();
+                    }
+                }
+            }
+
+            if (logBusDistance && !loggedMissingRoadGraph)
+            {
+                Debug.LogWarning("[VehiclePool] Bus distance check skipped: roadGraph missing.");
+                loggedMissingRoadGraph = true;
+            }
+            return;
+        }
+
         densityTick += Time.deltaTime;
         tierTick += Time.deltaTime;
 
@@ -133,9 +177,16 @@ public class VehiclePool : MonoBehaviour
 
     void WarmPool()
     {
+        if (IsTrafficGraphDisabledByConfig())
+            return;
+
+        if (roadGraph == null || roadGraph.NodeCount == 0)
+            TryResolveRoadGraph();
+
         if (roadGraph == null || roadGraph.NodeCount == 0)
         {
             Debug.LogWarning("VehiclePool: Missing AIRoadGraph.");
+            loggedMissingRoadGraph = true;
             return;
         }
 
@@ -184,6 +235,69 @@ public class VehiclePool : MonoBehaviour
 
         if (logSpawnEvents)
             Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}).");
+    }
+
+    bool IsTrafficGraphDisabledByConfig()
+    {
+        return roadGraph == null && !allowAutoResolveRoadGraph;
+    }
+
+    bool TryResolveRoadGraph()
+    {
+        if (!allowAutoResolveRoadGraph)
+            return false;
+
+        if (roadGraph != null && roadGraph.NodeCount > 0)
+            return true;
+
+        var graphs = FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        if (graphs == null || graphs.Length == 0)
+            return false;
+
+        AIRoadGraph best = null;
+        int bestNearestNode = -1;
+        float bestSqr = float.MaxValue;
+        Vector3 origin = playerBus != null ? playerBus.position : transform.position;
+
+        for (int i = 0; i < graphs.Length; i++)
+        {
+            var g = graphs[i];
+            if (g == null || g.NodeCount <= 0)
+                continue;
+
+            int nearest = g.GetNearestNodeIndex(origin);
+            if (!g.IsValidNode(nearest))
+                continue;
+
+            float sqr = (g.GetNodePosition(nearest) - origin).sqrMagnitude;
+            if (best == null || sqr < bestSqr)
+            {
+                best = g;
+                bestNearestNode = nearest;
+                bestSqr = sqr;
+            }
+        }
+
+        if (best == null)
+            return false;
+
+        float bindDistance = Mathf.Sqrt(bestSqr);
+        if (bindDistance > Mathf.Max(50f, maxAutoBindDistanceMeters))
+        {
+            if (!loggedMissingRoadGraph)
+            {
+                Debug.LogWarning(
+                    $"[VehiclePool] Found AIRoadGraph '{best.name}' but nearest node is {bindDistance:0.0}m away. " +
+                    "Skipping auto-bind to avoid misaligned traffic graph.");
+            }
+            loggedMissingRoadGraph = true;
+            return false;
+        }
+
+        roadGraph = best;
+        loggedMissingRoadGraph = false;
+        Debug.Log($"[VehiclePool] Auto-bound AIRoadGraph '{best.name}' ({best.NodeCount} nodes, nearestNode={bestNearestNode}, distance={bindDistance:0.0}m).");
+        return true;
     }
 
     void ApplyDensityNow()
@@ -384,7 +498,6 @@ public class VehiclePool : MonoBehaviour
         if (playerBus == null) return false;
         if (roadGraph == null || roadGraph.NodeCount == 0)
         {
-            Debug.LogWarning("[VehiclePool] Bus distance check skipped: roadGraph missing.");
             return false;
         }
 

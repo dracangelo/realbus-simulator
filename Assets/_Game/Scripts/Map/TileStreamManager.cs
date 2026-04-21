@@ -16,11 +16,12 @@ public class TileStreamManager : MonoBehaviour
     [Header("Tile Settings")]
     public float tileWorldSize = 200f;
     public int tileLayer = 0;
-    public bool createMeshCollider = false;
+    public bool createMeshCollider = true;
 
     [Header("Performance")]
     public int maxConcurrentDownloads = 6;
     public float refreshEverySeconds = 0.5f;
+    public int httpTimeoutSeconds = 12;
 
     [Header("References")]
     public Transform busTransform;
@@ -134,6 +135,7 @@ public class TileStreamManager : MonoBehaviour
         string url = $"https://api.mapbox.com/styles/v1/{mapStyle}/tiles/512/{key.zoom}/{key.x}/{key.y}@2x?access_token={mapboxToken}";
         using (var request = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url))
         {
+            request.timeout = Mathf.Max(1, httpTimeoutSeconds);
             yield return request.SendWebRequest();
             if (request.result != UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
@@ -149,12 +151,38 @@ public class TileStreamManager : MonoBehaviour
         GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
         quad.name = $"StreamTile_{key.zoom}_{key.x}_{key.y}";
         quad.transform.SetParent(transform, false);
-        quad.transform.position = new Vector3(offsetX * tileWorldSize, 0.01f, -offsetY * tileWorldSize);
+
+        double centerLon = MapTileLoader.TileXToLon(key.x + 0.5, key.zoom);
+        double centerLat = MapTileLoader.TileYToLat(key.y + 0.5, key.zoom);
+        
+        double leftLon = MapTileLoader.TileXToLon(key.x, key.zoom);
+        double rightLon = MapTileLoader.TileXToLon(key.x + 1.0, key.zoom);
+        double topLat = MapTileLoader.TileYToLat(key.y, key.zoom);
+        double bottomLat = MapTileLoader.TileYToLat(key.y + 1.0, key.zoom);
+
+        // Assume MapTileLoader is available or use CoordinateConverter mapTileLoader/geoToWorld
+        Vector3 centerPos = converter.GeoToWorldPosition(centerLat, centerLon);
+        centerPos.y = 0.01f;
+
+        Vector3 leftPos = converter.GeoToWorldPosition(centerLat, leftLon);
+        Vector3 rightPos = converter.GeoToWorldPosition(centerLat, rightLon);
+        Vector3 topPos = converter.GeoToWorldPosition(topLat, centerLon);
+        Vector3 bottomPos = converter.GeoToWorldPosition(bottomLat, centerLon);
+
+        float width = Vector3.Distance(leftPos, rightPos);
+        float height = Vector3.Distance(topPos, bottomPos);
+
+        quad.transform.position = centerPos;
         quad.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        quad.transform.localScale = new Vector3(tileWorldSize, tileWorldSize, 1f);
+        quad.transform.localScale = new Vector3(width, height, 1f);
 
         var renderer = quad.GetComponent<Renderer>();
-        renderer.material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+
+        Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+        if (shader == null) shader = Shader.Find("Unlit/Texture");
+        if (shader == null) shader = Shader.Find("Standard");
+
+        renderer.material = new Material(shader);
         renderer.material.mainTexture = tex;
 
         if (!createMeshCollider)
@@ -195,4 +223,3 @@ public class TileStreamManager : MonoBehaviour
         }
     }
 }
-

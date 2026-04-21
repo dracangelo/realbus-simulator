@@ -41,6 +41,10 @@ public class PassengerManager : MonoBehaviour
     public bool doorsOpen = true;
     public float latestRequiredDwellSeconds = 2f;
 
+    [Header("Debug Logs")]
+    public bool logBoardingSummary = true;
+    public bool logEachPassengerBoarding = false;
+
     private BusController busController;
     private readonly List<PassengerAgent> onboardPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> waitingPassengers = new List<PassengerAgent>();
@@ -168,7 +172,16 @@ public class PassengerManager : MonoBehaviour
         RecalculateSatisfaction();
         RecalculateDwellTime();
 
-        Debug.Log($"Stop: {stop.stopName} | -{alighting} +{boarding} | PAX: {currentPassengers}/{GetMaxCapacity()} | Wheelchair: {hadWheelchairBoarding} | Dwell: {latestRequiredDwellSeconds:F1}s");
+        if (logBoardingSummary)
+        {
+            int leftBehind = Mathf.Max(0, waitingAtCurrentStop - boarding);
+            string stopLabel = stopIndex >= 0 && totalStops > 0
+                ? $"Stop {stopIndex + 1}/{totalStops}"
+                : "Stop";
+            Debug.Log(
+                $"[PassengerBoarding] {stopLabel}: {stop.stopName} | Boarded={boarding}, Alighted={alighting}, LeftBehind={leftBehind}, " +
+                $"Onboard={currentPassengers}/{GetMaxCapacity()}, Fare+={fareCollected:F0}, Dwell={latestRequiredDwellSeconds:F1}s, WheelchairBoarding={hadWheelchairBoarding}");
+        }
     }
 
     public float GetProfit()
@@ -244,6 +257,13 @@ public class PassengerManager : MonoBehaviour
 
             if (p.isWheelchairPassenger)
                 hadWheelchairBoarding = true;
+
+            if (logEachPassengerBoarding)
+            {
+                Debug.Log(
+                    $"[PassengerBoarding] Passenger boarded | DestStopIndex={p.destinationStopIndex}, " +
+                    $"Wheelchair={p.isWheelchairPassenger}, Seated={p.isSeated}, Slot={p.assignedSlotIndex}");
+            }
         }
     }
 

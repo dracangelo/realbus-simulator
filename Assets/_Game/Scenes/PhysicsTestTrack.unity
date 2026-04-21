@@ -14299,6 +14299,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SceneBootstrap
   redirectIfNoManagers: 1
   sceneCatalog: {fileID: 0}
+  spawnSupplementalWorldProps: 0
+  spawnOnlyFirstStopPropsAtMissionStart: 0
+  attachMainCameraToBusForDirectPlay: 1
+  disableCinemachineVirtualCamerasForDirectPlay: 1
+  disableCinemachineBrainForDirectPlay: 1
+  directPlayCameraLocalPosition: {x: 0, y: 3.2, z: -7.5}
+  directPlayCameraLocalEuler: {x: 14, y: 0, z: 0}
   fallbackRoute: {fileID: 11400000, guid: 7bb01e91afb80af7498525d0c495a81f, type: 2}
   fallbackMissionData: {fileID: 11400000, guid: a2d5c859de0085d52a24aea3beff675c, type: 2}
   knownMissionData:
@@ -28132,8 +28139,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 326863656}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.58471036, y: 0.00000003354002, z: -0.000000024174282, w: 0.81124216}
+  m_LocalPosition: {x: 0, y: 31, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -30387,7 +30394,12 @@ MonoBehaviour:
   tilesX: 20
   tilesY: 20
   tileWorldSize: 500
+  tileSurfaceY: 0.15
   tileLayer: 0
+  loadOnAwake: 1
+  preferOfflineCache: 1
+  hideFallbackPlaneWhenTilesLoad: 1
+  fallbackPlaneObjectName: Plane
 --- !u!114 &352455642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30415,8 +30427,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d93bae729ac39709c9a314a39ad3e46d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OSMBuildingMeshBuilder
-  buildingMaterial: {fileID: 0}
-  roofMaterial: {fileID: 0}
+  buildingMaterial: {fileID: 2100000, guid: 5cc6a7dc3df7cc84693bdde07669ab5b, type: 2}
+  roofMaterial: {fileID: 2100000, guid: 0f9e3de68a3085e469bd62c8b40e9487, type: 2}
   defaultBuildingHeight: 10
   floorHeight: 3
   maxBuildingsPerFrame: 50
@@ -30433,12 +30445,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2db2819f53c45e17a9cba319b97be01c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OSMRoadMeshBuilder
-  roadMaterial: {fileID: 0}
-  pavementMaterial: {fileID: 0}
+  roadMaterial: {fileID: 2100000, guid: 5ac0ac96d738c0845b30185d2838f299, type: 2}
+  pavementMaterial: {fileID: -8766427492991512163, guid: 1c02b8bbe4b787b5f9ed2e3d29eb2e30, type: 3}
   roadYOffset: 0.02
   roadLayer: 0
   roadTag: Road
-  roadPhysicMaterial: {fileID: 0}
+  roadPhysicMaterial: {fileID: 13400000, guid: d47eba05ca1413c41a1553bbdedd4ab1, type: 2}
+  maxColliderSegmentLength: 100
+  renderRoadSurface: 0
+  drawCenterLines: 1
+  centerLineWidth: 0.12
+  centerLineColor: {r: 1, g: 0.85, b: 0.2, a: 1}
   roadsBuilt: 0
 --- !u!114 &352455645
 MonoBehaviour:
@@ -45860,63 +45877,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 846310015}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &537211182
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 537211184}
-  - component: {fileID: 537211183}
-  m_Layer: 0
-  m_Name: PedestrianSpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &537211183
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 537211182}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b3e55b2c6a2e1c2b861cd290783ffd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: GameScripts::PedestrianSpawner
-  crossings: []
-  useRandomGeneratedCrossings: 1
-  roadGraph: {fileID: 1259155905}
-  generatedCrossingCount: 6
-  crossingHalfWidth: 4.5
-  crossingPointHeight: 0.05
-  pedestrianPrefab: {fileID: 9188759970846619981, guid: d702b2c49e3759364baa4c5ab8fce0d5, type: 3}
-  maxActivePedestrians: 40
-  spawnCheckInterval: 1.25
-  walkSpeed: 1.4
-  logSpawnEvents: 1
-  baselineSpawnChance: 0.2
-  rushMultiplier: 2
---- !u!4 &537211184
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 537211182}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.54939, y: 0.01524, z: -0.62233}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &537418383
 GameObject:
   m_ObjectHideFlags: 0
@@ -52012,7 +51972,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: GameScripts::CoordinateConverter
   mapOrigin: {fileID: 1771130036}
-  mapTileLoader: {fileID: 0}
+  mapTileLoader: {fileID: 352455641}
 --- !u!4 &608923703
 Transform:
   m_ObjectHideFlags: 0
@@ -150699,8 +150659,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1289552885}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.5847103, y: 0.00000003354001, z: -0.000000024174273, w: 0.8112422}
+  m_LocalPosition: {x: 0, y: 31, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -198105,7 +198065,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineTransposer
   m_BindingMode: 1
-  m_FollowOffset: {x: 0, y: 0, z: -10}
+  m_FollowOffset: {x: 0, y: 30, z: -10}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -206842,6 +206802,11 @@ MonoBehaviour:
     prefab: {fileID: 7536025273544103433, guid: 1b1a6de82b1378e82baf44b1744dc1cc, type: 3}
     weight: 0.1
   logSpawnEvents: 1
+  debugForceActiveCount: 6
+  logBusDistance: 1
+  logBusDistanceOnce: 1
+  logBusDistanceIntervalSeconds: 5
+  logFirstActivationOnly: 1
   fullAiRadiusMeters: 200
   splineRadiusMeters: 400
   transitionHysteresisMeters: 25
@@ -224183,4 +224148,3 @@ SceneRoots:
   - {fileID: 1259155906}
   - {fileID: 1945349011}
   - {fileID: 1289552887}
-  - {fileID: 537211184}

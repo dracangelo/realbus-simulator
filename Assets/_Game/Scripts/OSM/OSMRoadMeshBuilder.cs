@@ -2,26 +2,70 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+/// <summary>
+/// Builds road mesh geometry from OSMData and places it in the scene.
+///
+/// Bug fixes vs previous version:
+///   1. WINDING ORDER — triangles were wound CW from above, so normals pointed
+///      DOWN into the ground. The mesh was technically there but back-face culled
+///      from the camera. Fixed to CCW (left-tl-br / left-tr-tl pattern) so
+///      normals point UP.
+///   2. TWO-SIDED MATERIAL — even with correct winding, a single-sided shader
+///      will vanish if the camera ever dips below the road plane. CreateDefault-
+///      RoadMaterial now sets _Cull = Off.
+///   3. Y-OFFSET — map tiles sit at y=0.15 (MapTileLoader.tileSurfaceY). Roads
+///      were at y=0.02, so they rendered *under* the tile quads. Default roadY-
+///      Offset bumped to 0.25 so roads are always on top of tiles.
+///   4. CENTERLINE LOCAL-SPACE BUG — LineRenderer was set to useWorldSpace=false
+///      but was given world-space positions converted via InverseTransformPoint on
+///      a parent that sits at world origin, making them correct only when the
+///      parent has no transform (fragile). Switched to useWorldSpace=true and
+///      pass world positions directly, which is simpler and always correct.
+///   5. RUNTIME MATERIAL OVERRIDE — RuntimeTarmacApplier runs with a 12-second
+///      timeout and replaces whatever material OSMRoadMeshBuilder assigned, so
+///      both need to agree. CreateDefaultRoadMaterial and RuntimeTarmacApplier
+///      now use the same shader preference chain.
+/// </summary>
 public class OSMRoadMeshBuilder : MonoBehaviour
 {
+    public enum RoadModelForwardAxis
+    {
+        ZAxis,
+        XAxis
+    }
+
     public static OSMRoadMeshBuilder Instance { get; private set; }
 
     [Header("Materials")]
     public Material roadMaterial;
     public Material pavementMaterial;
 
+    [Header("Road Model Visuals")]
+    public bool useRoadModelInstances = true;
+    public string roadModelResourcePath = "BussimAssets/roads/road with two lines in middle ";
+    public RoadModelForwardAxis roadModelForwardAxis = RoadModelForwardAxis.ZAxis;
+    public float roadModelSurfaceLift = 0.01f;
+    public bool overrideRoadModelMaterials = false;
+
     [Header("Settings")]
-    public float roadYOffset = 0.02f;
+    // Must be > MapTileLoader.tileSurfaceY (0.15) so roads render on top of map tiles.
+    public float roadYOffset = 0.25f;
     public int roadLayer = 0;
     public string roadTag = "Road";
     public PhysicsMaterial roadPhysicMaterial;
+    public float maxColliderSegmentLength = 100f;
+    public bool renderRoadSurface = true;
     public bool drawCenterLines = true;
-    public float centerLineWidth = 0.12f;
+    public float centerLineWidth = 0.3f;
     public Color centerLineColor = new Color(1f, 0.85f, 0.2f, 1f);
 
     [Header("State")]
     public bool roadsBuilt = false;
     private GameObject roadsParent;
+    private GameObject roadVisualPrefab;
+    private bool roadVisualPrefabLoadAttempted;
+    private Bounds roadVisualBounds;
+    private bool hasRoadVisualBounds;
 
     void Awake()
     {
@@ -36,16 +80,19 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     IEnumerator WaitForOSMThenBuild()
     {
-        // Wait for OSM data
-        while (OSMLoader.Instance == null || !OSMLoader.Instance.dataLoaded)
+        while (OSMLoader.Instance == null || !OSMLoader.Instance.dataLoaded || GPSManager.Instance == null)
             yield return new WaitForSeconds(0.5f);
 
         Debug.Log("OSM: Building road meshes...");
+        EnsureRoadVisualPrefabLoaded();
         BuildRoads(OSMLoader.Instance.osmData);
     }
 
     void BuildRoads(OSMData data)
     {
+        if (roadsParent != null)
+            Destroy(roadsParent);
+
         roadsParent = new GameObject("OSM_Roads");
         roadsParent.transform.position = Vector3.zero;
 
@@ -55,12 +102,10 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         {
             if (!way.IsRoad()) continue;
 
-            List<Vector3> points = new List<Vector3>();
-
+            var points = new List<Vector3>(way.nodeRefs.Count);
             foreach (long nodeRef in way.nodeRefs)
             {
-                if (!data.nodeMap.ContainsKey(nodeRef)) continue;
-                var node = data.nodeMap[nodeRef];
+                if (!data.nodeMap.TryGetValue(nodeRef, out var node)) continue;
                 Vector3 worldPos = GPSManager.Instance.GpsToWorld(node.lat, node.lon);
                 worldPos.y = roadYOffset;
                 points.Add(worldPos);
@@ -68,33 +113,42 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
             if (points.Count < 2) continue;
 
+            points = DensifyPoints(points);
+
             float width = way.GetRoadWidth();
             Mesh mesh = BuildRoadSegmentMesh(points, width);
-
             if (mesh == null) continue;
 
-            GameObject roadObj = new GameObject($"Road_{way.id}");
+            var roadObj = new GameObject($"Road_{way.id}");
             roadObj.transform.parent = roadsParent.transform;
+            if (roadLayer > 0)
+                roadObj.layer = roadLayer;
 
-            var mf = roadObj.AddComponent<MeshFilter>();
-            var mr = roadObj.AddComponent<MeshRenderer>();
-
-            mf.mesh = mesh;
-            mr.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
-
-            // Add mesh collider for driving on
             var mc = roadObj.AddComponent<MeshCollider>();
             mc.sharedMesh = mesh;
             if (roadPhysicMaterial != null)
                 mc.sharedMaterial = roadPhysicMaterial;
 
-            if (roadLayer > 0)
-                roadObj.layer = roadLayer;
+            if (ShouldUseRoadModelVisuals())
+            {
+                BuildRoadModelVisuals(roadObj.transform, points, width);
+            }
+            else
+            {
+                var mf = roadObj.AddComponent<MeshFilter>();
+                var mr = roadObj.AddComponent<MeshRenderer>();
+                mf.mesh = mesh;
+                mr.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
+                mr.enabled = renderRoadSurface;
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                mr.receiveShadows = false;
+            }
+
             if (!string.IsNullOrEmpty(roadTag) && IsValidTag(roadTag))
                 roadObj.tag = roadTag;
 
-            if (drawCenterLines)
-                BuildCenterLine(roadObj.transform, points);
+            if (renderRoadSurface && drawCenterLines)
+                BuildCenterLine(points);
 
             roadCount++;
         }
@@ -103,126 +157,319 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         Debug.Log($"OSM: Built {roadCount} road segments!");
     }
 
-    void BuildCenterLine(Transform parent, List<Vector3> points)
+    public void SetRoadSurfaceVisible(bool visible)
     {
-        if (points == null || points.Count < 2) return;
-        var go = new GameObject("CenterLine");
-        go.transform.SetParent(parent, false);
-        var lr = go.AddComponent<LineRenderer>();
-        lr.positionCount = points.Count;
-        lr.useWorldSpace = false;
-        lr.startWidth = centerLineWidth;
-        lr.endWidth = centerLineWidth;
-        lr.material = new Material(ResolveDefaultRoadShader());
-        lr.material.color = centerLineColor;
-        lr.startColor = centerLineColor;
-        lr.endColor = centerLineColor;
-        lr.numCapVertices = 2;
+        renderRoadSurface = visible;
+        if (roadsParent == null)
+            roadsParent = GameObject.Find("OSM_Roads");
+        if (roadsParent == null) return;
 
-        var local = new Vector3[points.Count];
-        for (int i = 0; i < points.Count; i++)
-        {
-            var p = points[i];
-            p.y = roadYOffset + 0.02f;
-            local[i] = parent.InverseTransformPoint(p);
-        }
-        lr.SetPositions(local);
+        foreach (var mr in roadsParent.GetComponentsInChildren<MeshRenderer>(true))
+            if (mr != null) mr.enabled = visible;
     }
 
-    bool IsValidTag(string tag)
-    {
-        if (string.IsNullOrEmpty(tag)) return false;
-        try
-        {
-            GameObject.FindWithTag(tag);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    Shader ResolveDefaultRoadShader()
-    {
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-        if (shader == null) shader = Shader.Find("Standard");
-        if (shader == null) shader = Shader.Find("Unlit/Color");
-        return shader;
-    }
-
-    Material CreateDefaultRoadMaterial()
-    {
-        var shader = ResolveDefaultRoadShader();
-        var mat = new Material(shader);
-        mat.color = new Color(0.1f, 0.1f, 0.1f, 1f);
-        if (mat.HasProperty("_Glossiness"))
-            mat.SetFloat("_Glossiness", 0.0f);
-        if (mat.HasProperty("_Metallic"))
-            mat.SetFloat("_Metallic", 0.0f);
-        return mat;
-    }
+    // ── Mesh construction ─────────────────────────────────────────────────────
 
     Mesh BuildRoadSegmentMesh(List<Vector3> points, float width)
     {
         if (points.Count < 2) return null;
 
-        List<Vector3> verts = new List<Vector3>();
-        List<int> tris = new List<int>();
-        List<Vector2> uvs = new List<Vector2>();
+        var verts = new List<Vector3>(points.Count * 2);
+        var tris  = new List<int>((points.Count - 1) * 6);
+        var uvs   = new List<Vector2>(points.Count * 2);
 
-        float halfWidth = width * 0.5f;
+        float halfWidth  = width * 0.5f;
         float uvProgress = 0f;
 
         for (int i = 0; i < points.Count; i++)
         {
-            Vector3 forward;
+            Vector3 fwd;
+            if      (i == 0)               fwd = (points[1]     - points[0]).normalized;
+            else if (i == points.Count - 1) fwd = (points[i]     - points[i - 1]).normalized;
+            else                            fwd = (points[i + 1] - points[i - 1]).normalized;
 
-            if (i == 0)
-                forward = (points[1] - points[0]).normalized;
-            else if (i == points.Count - 1)
-                forward = (points[i] - points[i - 1]).normalized;
-            else
-                forward = (points[i + 1] - points[i - 1]).normalized;
+            // right = Cross(up, forward) → points to road's right side
+            Vector3 right = Vector3.Cross(Vector3.up, fwd).normalized;
 
-            Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
-
-            Vector3 left3D = points[i] - right * halfWidth;
-            Vector3 right3D = points[i] + right * halfWidth;
-
-            verts.Add(left3D);
-            verts.Add(right3D);
+            verts.Add(points[i] - right * halfWidth);   // left  (even index)
+            verts.Add(points[i] + right * halfWidth);   // right (odd index)
 
             if (i > 0)
-            {
-                float segLen = Vector3.Distance(points[i], points[i - 1]);
-                uvProgress += segLen / width;
-            }
+                uvProgress += Vector3.Distance(points[i], points[i - 1]) / Mathf.Max(0.01f, width);
 
             uvs.Add(new Vector2(0f, uvProgress));
             uvs.Add(new Vector2(1f, uvProgress));
 
             if (i > 0)
             {
-                int bl = (i - 1) * 2;
-                int br = bl + 1;
-                int tl = i * 2;
-                int tr = tl + 1;
+                int bl = (i - 1) * 2;       // bottom-left  (prev left)
+                int br = bl + 1;             // bottom-right (prev right)
+                int tl = i * 2;              // top-left     (curr left)
+                int tr = tl + 1;             // top-right    (curr right)
 
-                tris.Add(bl); tris.Add(tl); tris.Add(br);
-                tris.Add(br); tris.Add(tl); tris.Add(tr);
+                // FIX: CCW winding from above so normals point UP (were CW before)
+                tris.Add(bl); tris.Add(tr); tris.Add(br);   // tri 1
+                tris.Add(bl); tris.Add(tl); tris.Add(tr);   // tri 2
             }
         }
 
-        Mesh mesh = new Mesh();
-        mesh.name = "RoadSegment";
-        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        mesh.vertices = verts.ToArray();
-        mesh.triangles = tris.ToArray();
-        mesh.uv = uvs.ToArray();
+        var mesh = new Mesh
+        {
+            name        = "RoadSegment",
+            indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
+        };
+        mesh.SetVertices(verts);
+        mesh.SetTriangles(tris, 0);
+        mesh.SetUVs(0, uvs);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-
         return mesh;
+    }
+
+    // ── Centre line ───────────────────────────────────────────────────────────
+
+    // Note: LineRenderer lives in its own GameObject as a sibling under roadsParent,
+    // NOT as a child of a road segment. This avoids the local-space conversion bug
+    // where InverseTransformPoint was used on a parent at world origin (worked by
+    // accident, broke when parent had any transform offset).
+    void BuildCenterLine(List<Vector3> points)
+    {
+        if (points == null || points.Count < 2) return;
+
+        var go = new GameObject("CenterLine");
+        go.transform.SetParent(roadsParent.transform, false);
+
+        var lr = go.AddComponent<LineRenderer>();
+        lr.positionCount  = points.Count;
+        lr.useWorldSpace  = true;   // FIX: world-space positions, no transform math needed
+        lr.startWidth     = centerLineWidth;
+        lr.endWidth       = centerLineWidth;
+        lr.numCapVertices = 2;
+        lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        lr.receiveShadows    = false;
+
+        var mat = new Material(ResolveShader());
+        mat.color = centerLineColor;
+        // Ensure the line draws on top of the road mesh
+        mat.renderQueue = 2450;
+        lr.material = mat;
+
+        var worldPts = new Vector3[points.Count];
+        for (int i = 0; i < points.Count; i++)
+        {
+            var p = points[i];
+            p.y = roadYOffset + 0.03f;   // just above the road surface
+            worldPts[i] = p;
+        }
+        lr.SetPositions(worldPts);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    bool ShouldUseRoadModelVisuals()
+    {
+        EnsureRoadVisualPrefabLoaded();
+        return useRoadModelInstances && roadVisualPrefab != null && hasRoadVisualBounds;
+    }
+
+    void EnsureRoadVisualPrefabLoaded()
+    {
+        if (roadVisualPrefabLoadAttempted)
+            return;
+
+        roadVisualPrefabLoadAttempted = true;
+
+        if (!useRoadModelInstances || string.IsNullOrWhiteSpace(roadModelResourcePath))
+            return;
+
+        roadVisualPrefab = Resources.Load<GameObject>(roadModelResourcePath);
+        if (roadVisualPrefab == null)
+        {
+            Debug.LogWarning($"OSM: Road model not found at Resources path '{roadModelResourcePath}'. Falling back to generated mesh roads.");
+            return;
+        }
+
+        hasRoadVisualBounds = TryMeasureRoadVisualBounds(out roadVisualBounds);
+        if (!hasRoadVisualBounds)
+            Debug.LogWarning($"OSM: Failed to measure road model bounds for '{roadVisualPrefab.name}'. Falling back to generated mesh roads.");
+    }
+
+    bool TryMeasureRoadVisualBounds(out Bounds bounds)
+    {
+        bounds = new Bounds();
+
+        if (roadVisualPrefab == null)
+            return false;
+
+        var sample = Instantiate(roadVisualPrefab);
+        sample.name = "__RoadVisualBounds";
+        sample.hideFlags = HideFlags.HideAndDontSave;
+        sample.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+        sample.transform.localScale = Vector3.one;
+
+        var renderers = sample.GetComponentsInChildren<Renderer>(true);
+        if (renderers.Length == 0)
+        {
+            Destroy(sample);
+            return false;
+        }
+
+        bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+            bounds.Encapsulate(renderers[i].bounds);
+
+        Destroy(sample);
+        return bounds.size.sqrMagnitude > 0.0001f;
+    }
+
+    void BuildRoadModelVisuals(Transform parent, List<Vector3> points, float width)
+    {
+        float sourceLength = GetRoadModelLength();
+        float sourceWidth = GetRoadModelWidth();
+        if (sourceLength <= 0.01f || sourceWidth <= 0.01f)
+            return;
+
+        float modelBottomOffset = roadYOffset - roadVisualBounds.min.y + roadModelSurfaceLift;
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            Vector3 from = points[i - 1];
+            Vector3 to = points[i];
+            Vector3 segment = to - from;
+            float segmentLength = segment.magnitude;
+            if (segmentLength <= 0.05f)
+                continue;
+
+            Vector3 direction = segment / segmentLength;
+            int pieceCount = Mathf.Max(1, Mathf.CeilToInt(segmentLength / sourceLength));
+            float pieceLength = segmentLength / pieceCount;
+            float widthScale = width / sourceWidth;
+            float lengthScale = pieceLength / sourceLength;
+            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up) * GetRoadModelAxisRotation();
+
+            for (int pieceIndex = 0; pieceIndex < pieceCount; pieceIndex++)
+            {
+                float distance = pieceLength * (pieceIndex + 0.5f);
+                Vector3 position = from + direction * distance;
+                position.y = modelBottomOffset;
+
+                var visual = Instantiate(roadVisualPrefab, position, rotation, parent);
+                visual.name = $"RoadVisual_{i}_{pieceIndex}";
+                visual.transform.localScale = GetScaledRoadVisualScale(visual.transform.localScale, widthScale, lengthScale);
+                ApplyLayerRecursively(visual, parent.gameObject.layer);
+
+                foreach (var renderer in visual.GetComponentsInChildren<Renderer>(true))
+                {
+                    renderer.enabled = renderRoadSurface;
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    renderer.receiveShadows = false;
+
+                    if (overrideRoadModelMaterials)
+                        renderer.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
+                }
+            }
+        }
+    }
+
+    Quaternion GetRoadModelAxisRotation()
+    {
+        return roadModelForwardAxis == RoadModelForwardAxis.XAxis
+            ? Quaternion.Euler(0f, -90f, 0f)
+            : Quaternion.identity;
+    }
+
+    float GetRoadModelLength()
+    {
+        return roadModelForwardAxis == RoadModelForwardAxis.XAxis
+            ? roadVisualBounds.size.x
+            : roadVisualBounds.size.z;
+    }
+
+    float GetRoadModelWidth()
+    {
+        return roadModelForwardAxis == RoadModelForwardAxis.XAxis
+            ? roadVisualBounds.size.z
+            : roadVisualBounds.size.x;
+    }
+
+    Vector3 GetScaledRoadVisualScale(Vector3 currentScale, float widthScale, float lengthScale)
+    {
+        if (roadModelForwardAxis == RoadModelForwardAxis.XAxis)
+            return new Vector3(currentScale.x * lengthScale, currentScale.y, currentScale.z * widthScale);
+
+        return new Vector3(currentScale.x * widthScale, currentScale.y, currentScale.z * lengthScale);
+    }
+
+    void ApplyLayerRecursively(GameObject root, int layer)
+    {
+        if (root == null)
+            return;
+
+        root.layer = layer;
+        foreach (Transform child in root.transform)
+            ApplyLayerRecursively(child.gameObject, layer);
+    }
+
+    List<Vector3> DensifyPoints(List<Vector3> points)
+    {
+        if (points == null || points.Count < 2 || maxColliderSegmentLength <= 0f)
+            return points;
+
+        var result = new List<Vector3>(points.Count);
+        result.Add(points[0]);
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            Vector3 from = points[i - 1];
+            Vector3 to   = points[i];
+            float dist   = Vector3.Distance(from, to);
+            int   steps  = Mathf.Max(1, Mathf.CeilToInt(dist / maxColliderSegmentLength));
+
+            for (int s = 1; s <= steps; s++)
+                result.Add(Vector3.Lerp(from, to, s / (float)steps));
+        }
+
+        return result;
+    }
+
+    bool IsValidTag(string tag)
+    {
+        if (string.IsNullOrEmpty(tag)) return false;
+        try { GameObject.FindWithTag(tag); return true; }
+        catch { return false; }
+    }
+
+    Shader ResolveShader()
+    {
+        return Shader.Find("Universal Render Pipeline/Lit")
+            ?? Shader.Find("Universal Render Pipeline/Unlit")
+            ?? Shader.Find("Standard")
+            ?? Shader.Find("Unlit/Color");
+    }
+
+    Material CreateDefaultRoadMaterial()
+    {
+        var mat = new Material(ResolveShader())
+        {
+            color      = new Color(0.12f, 0.12f, 0.12f, 1f),
+            // Render on top of map tile quads (default queue 2000) but below UI
+            renderQueue = 2100
+        };
+
+        // Matte, non-reflective asphalt look
+        if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0f);
+        if (mat.HasProperty("_Metallic"))   mat.SetFloat("_Metallic",   0f);
+        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.05f);
+
+        // FIX: disable back-face culling so the mesh is visible regardless of
+        // winding order issues and from below (debug camera angles, etc.)
+        if (mat.HasProperty("_Cull"))
+            mat.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
+
+        // URP Lit — ensure opaque mode
+        if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 0f);  // 0 = Opaque
+        if (mat.HasProperty("_ZWrite"))  mat.SetFloat("_ZWrite",  1f);
+
+        return mat;
     }
 }

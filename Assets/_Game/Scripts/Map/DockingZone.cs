@@ -6,6 +6,7 @@ public class DockingZone : MonoBehaviour
     [Header("Settings")]
     public float dockingRadius = 12f;
     public string stopName;
+    public int stopIndex = -1;
 
     private BusController busController;
     public bool isDocked = false;
@@ -25,6 +26,15 @@ public class DockingZone : MonoBehaviour
     void Update()
     {
         if (busController == null) return;
+        if (!IsRelevantStop())
+        {
+            if (isDocked)
+            {
+                isDocked = false;
+                OnUndocked();
+            }
+            return;
+        }
 
         float distance = Vector3.Distance(
             transform.position, busController.transform.position);
@@ -55,5 +65,21 @@ public class DockingZone : MonoBehaviour
     {
         Gizmos.color = new Color(0f, 1f, 0f, 0.4f);
         Gizmos.DrawWireSphere(transform.position, dockingRadius);
+    }
+
+    bool IsRelevantStop()
+    {
+        var mission = MissionManager.Instance;
+        if (mission != null && mission.routeActive && mission.currentRoute != null)
+        {
+            int currentIndex = Mathf.Clamp(mission.currentStopIndex, 0, mission.currentRoute.stops.Length - 1);
+            return stopIndex >= 0 ? stopIndex == currentIndex : stopName == mission.currentRoute.stops[currentIndex].stopName;
+        }
+
+        var freeDrive = FreeDriveSession.Instance;
+        if (freeDrive != null && freeDrive.sessionActive)
+            return true;
+
+        return false;
     }
 }
