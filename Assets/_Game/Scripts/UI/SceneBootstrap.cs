@@ -16,6 +16,7 @@ public class SceneBootstrap : MonoBehaviour
     [SerializeField] bool attachMainCameraToBusForDirectPlay = true;
     [SerializeField] bool disableCinemachineVirtualCamerasForDirectPlay = true;
     [SerializeField] bool disableCinemachineBrainForDirectPlay = true;
+    [SerializeField] bool forceClearVisibilityForDirectPlay = true;
     [SerializeField] Vector3 directPlayCameraLocalPosition = new Vector3(0f, 3.2f, -7.5f);
     [SerializeField] Vector3 directPlayCameraLocalEuler = new Vector3(14f, 0f, 0f);
     [Header("Gameplay Fallbacks")]
@@ -54,11 +55,22 @@ public class SceneBootstrap : MonoBehaviour
             go.AddComponent<CityManager>();
         }
 
+        EnsureDriverShiftSystem();
+
 #if UNITY_EDITOR
         SeedCityManagerFromAssetsInEditor();
 #endif
 
         SyncSelectionStateFromManagers();
+    }
+
+    void EnsureDriverShiftSystem()
+    {
+        if (GameState.Instance == null)
+            return;
+
+        if (GameState.Instance.GetComponent<DriverShiftSystem>() == null)
+            GameState.Instance.gameObject.AddComponent<DriverShiftSystem>();
     }
 
     void SyncSelectionStateFromManagers()
@@ -123,6 +135,8 @@ public class SceneBootstrap : MonoBehaviour
         if (missionManager.busController == null)
             missionManager.busController = FindObjectOfType<BusController>();
 
+        EnsureVehicleSupportSystems(missionManager.busController);
+
         EnsureGpsManager();
         DisableCinemachineVirtualCamerasForDirectPlay();
         EnsureMainCameraForDirectPlay(missionManager.busController);
@@ -133,6 +147,7 @@ public class SceneBootstrap : MonoBehaviour
         EnsureRuntimeRoadSystems();
         EnsureBuildingSystems();
         EnsurePoiVisualizer();
+        EnsureTrafficViolationSystem();
 
         if (spawnSupplementalWorldProps)
         {
@@ -140,7 +155,20 @@ public class SceneBootstrap : MonoBehaviour
             EnsureGasStationSpawner();
         }
 
+        EnsureClearVisibility();
         ApplyBusScaleFromMap();
+    }
+
+    void EnsureVehicleSupportSystems(BusController busController)
+    {
+        if (busController == null)
+            return;
+
+        if (busController.GetComponent<FuelSystem>() == null)
+            busController.gameObject.AddComponent<FuelSystem>();
+
+        if (busController.GetComponent<MaintenanceSystem>() == null)
+            busController.gameObject.AddComponent<MaintenanceSystem>();
     }
 
     void EnsureGpsManager()
@@ -183,7 +211,27 @@ public class SceneBootstrap : MonoBehaviour
 
         var mapLoader = FindObjectOfType<MapTileLoader>();
         if (mapLoader != null)
+        {
             roadBuilder.roadYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.02f);
+            mapLoader.zoomLevel = Mathf.Max(mapLoader.zoomLevel, 17);
+            mapLoader.forceSharpTileFiltering = true;
+            mapLoader.tileAnisoLevel = 16;
+            mapLoader.tileMipMapBias = -0.75f;
+            mapLoader.preferLabelFreeSatellite = true;
+        }
+    }
+
+    void EnsureTrafficViolationSystem()
+    {
+        if (FindObjectOfType<ExtendedTrafficViolationSystem>() != null)
+            return;
+
+        var bus = FindObjectOfType<BusController>();
+        if (bus == null)
+            return;
+
+        var violationSystem = bus.gameObject.AddComponent<ExtendedTrafficViolationSystem>();
+        violationSystem.roadGraph = FindUsableRoadGraph();
     }
 
 #if UNITY_EDITOR
@@ -384,6 +432,33 @@ public class SceneBootstrap : MonoBehaviour
 
         var go = new GameObject("RuntimeOsmPoiVisualizer");
         go.AddComponent<RuntimeOsmPoiVisualizer>();
+    }
+
+    void EnsureClearVisibility()
+    {
+        if (!forceClearVisibilityForDirectPlay)
+            return;
+
+        RenderSettings.fog = false;
+        RenderSettings.fogStartDistance = 5000f;
+        RenderSettings.fogEndDistance = 10000f;
+
+        var fogController = FindObjectOfType<FogController>();
+        if (fogController != null)
+            fogController.enabled = false;
+
+        var weatherSystem = FindObjectOfType<WeatherSystem>();
+        if (weatherSystem != null)
+        {
+            weatherSystem.forceWeather = true;
+            weatherSystem.forcedWeatherState = WeatherState.Clear;
+            weatherSystem.ApplyWeather(WeatherState.Clear, 0f, weatherSystem.temperature);
+            weatherSystem.enabled = false;
+        }
+
+        var skyController = FindObjectOfType<SkyController>();
+        if (skyController != null)
+            skyController.SetSky(WeatherState.Clear, 0f, 24f);
     }
 
     void ApplyBusScaleFromMap()

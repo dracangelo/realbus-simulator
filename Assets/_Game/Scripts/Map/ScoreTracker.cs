@@ -33,6 +33,9 @@ public class ScoreTracker : MonoBehaviour
     private Rigidbody busRigidbody;
     private Vector3 lastVelocity;
 
+    public int CollisionCount => collisionCount;
+    public int RedLightViolationCount => redLightViolations;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -118,6 +121,27 @@ public class ScoreTracker : MonoBehaviour
     {
         float ratio = targetL100km / Mathf.Max(actualL100km, 0.1f);
         efficiencyScore = Mathf.Clamp(ratio * 100f, 0f, 100f);
+    }
+
+    public void ApplyShiftBreakPenalty(float penalty = 8f)
+    {
+        punctualityScore = Mathf.Max(0f, punctualityScore - penalty);
+        UpdateTotalScore();
+    }
+
+    public void ApplyTrafficPenalty(float safetyPenalty, float efficiencyPenalty = 0f, float punctualityPenalty = 0f)
+    {
+        safetyScore = Mathf.Max(0f, safetyScore - Mathf.Max(0f, safetyPenalty));
+        efficiencyScore = Mathf.Max(0f, efficiencyScore - Mathf.Max(0f, efficiencyPenalty));
+        punctualityScore = Mathf.Max(0f, punctualityScore - Mathf.Max(0f, punctualityPenalty));
+        UpdateTotalScore();
+    }
+
+    public void ApplyPassengerServicePenalty(float satisfactionPenalty, float punctualityPenalty = 0f)
+    {
+        satisfactionScore = Mathf.Max(0f, satisfactionScore - Mathf.Max(0f, satisfactionPenalty));
+        punctualityScore = Mathf.Max(0f, punctualityScore - Mathf.Max(0f, punctualityPenalty));
+        UpdateTotalScore();
     }
 
     void UpdateTotalScore()

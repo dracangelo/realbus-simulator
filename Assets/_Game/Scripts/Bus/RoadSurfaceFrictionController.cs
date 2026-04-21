@@ -10,6 +10,7 @@ public class RoadSurfaceFrictionController : MonoBehaviour
     [Header("References")]
     public BusController busController;
     public RoadSurfaceDetector surfaceDetector;
+    MaintenanceSystem maintenanceSystem;
 
     [Header("Base stiffness")]
     public float baseForwardStiffness = 1.5f;
@@ -26,6 +27,8 @@ public class RoadSurfaceFrictionController : MonoBehaviour
             busController = FindFirstObjectByType<BusController>();
         if (surfaceDetector == null)
             surfaceDetector = FindFirstObjectByType<RoadSurfaceDetector>();
+        if (maintenanceSystem == null)
+            maintenanceSystem = FindFirstObjectByType<MaintenanceSystem>();
     }
 
     void Update()
@@ -53,6 +56,8 @@ public class RoadSurfaceFrictionController : MonoBehaviour
             }
 
             float grip = Mathf.Clamp(surfaceMult * currentGrip, 0.05f, 2.0f);
+            if (maintenanceSystem != null)
+                grip *= maintenanceSystem.GetWheelGripMultiplier(i);
 
             var fwd = wc.forwardFriction;
             fwd.stiffness = baseForwardStiffness * grip;
@@ -63,5 +68,5 @@ public class RoadSurfaceFrictionController : MonoBehaviour
             wc.sidewaysFriction = side;
         }
     }
-}
 
+}

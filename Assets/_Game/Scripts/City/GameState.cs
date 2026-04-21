@@ -1,5 +1,38 @@
 using UnityEngine;
 
+[System.Serializable]
+public class PlayerEconomyData
+{
+    public float balanceKES = 254000f;
+    public float driverReputationRating = 100f;
+}
+
+[System.Serializable]
+public class VehiclePersistentState
+{
+    public float fuelCapacityLitres = 300f;
+    public float fuelLitres = 300f;
+    public float totalFuelConsumedLitres = 0f;
+    public bool lowFuelWarningTriggered = false;
+    public bool criticalFuelWarningTriggered = false;
+
+    public float brakeWearNormalized = 0.08f;
+    public float[] axleTyreWearNormalized = new float[] { 0.06f, 0.08f, 0.08f };
+    public float engineHours = 12f;
+    public bool doorFunctionOperational = true;
+    public bool exteriorLightsOperational = true;
+}
+
+[System.Serializable]
+public class MissionSettlementData
+{
+    public float grossEarningsKES = 0f;
+    public float fuelRefuelCostKES = 0f;
+    public float maintenanceCostKES = 0f;
+    public float netEarningsKES = 0f;
+    public bool autoRefuelApplied = false;
+}
+
 public class GameState : MonoBehaviour
 {
     public static GameState Instance { get; private set; }
@@ -9,11 +42,25 @@ public class GameState : MonoBehaviour
     public CityDefinition selectedCity;
     public BusRoute selectedRoute;
 
+    [Header("Persistent Progress")]
+    public PlayerEconomyData economy = new PlayerEconomyData();
+    public VehiclePersistentState vehicleState = new VehiclePersistentState();
+    public MissionSettlementData lastMissionSettlement = new MissionSettlementData();
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        if (economy == null)
+            economy = new PlayerEconomyData();
+        if (vehicleState == null)
+            vehicleState = new VehiclePersistentState();
+        if (vehicleState.axleTyreWearNormalized == null || vehicleState.axleTyreWearNormalized.Length != 3)
+            vehicleState.axleTyreWearNormalized = new float[] { 0.06f, 0.08f, 0.08f };
+        if (lastMissionSettlement == null)
+            lastMissionSettlement = new MissionSettlementData();
     }
 
     public void SelectCountry(CountryDefinition country)
@@ -35,5 +82,12 @@ public class GameState : MonoBehaviour
     {
         selectedRoute = route;
         Debug.Log($"GameState: Route selected — {route.routeName}");
+    }
+
+    public float GetFuelPercent()
+    {
+        float capacity = Mathf.Max(1f, vehicleState != null ? vehicleState.fuelCapacityLitres : 300f);
+        float litres = vehicleState != null ? vehicleState.fuelLitres : capacity;
+        return Mathf.Clamp01(litres / capacity) * 100f;
     }
 }

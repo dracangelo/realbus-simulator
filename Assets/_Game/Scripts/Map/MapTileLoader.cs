@@ -12,6 +12,7 @@ public class MapTileLoader : MonoBehaviour
     [Header("Mapbox Settings")]
     public string mapboxToken = "";
     public string mapStyle = "mapbox/satellite-streets-v12";
+    public bool preferLabelFreeSatellite = true;
 
     [Header("Map Centre — set automatically from CityDefinition")]
     public double centreLat = -1.2864;
@@ -38,6 +39,11 @@ public class MapTileLoader : MonoBehaviour
     public float deferredTileStartDelay = 0.03f;
     public int maxTileFailureLogs = 8;
     public bool haltDownloadsAfterAuthFailure = true;
+
+    [Header("Tile Visual Quality")]
+    public bool forceSharpTileFiltering = true;
+    [Range(-2f, 2f)] public float tileMipMapBias = -0.75f;
+    [Range(1, 16)] public int tileAnisoLevel = 16;
 
     private List<GameObject> activeTiles = new List<GameObject>();
     private OfflineCacheManager cacheManager;
@@ -88,6 +94,9 @@ public class MapTileLoader : MonoBehaviour
         centreLat = city.centreLat;
         centreLon = city.centreLon;
         Debug.Log($"MapTileLoader: Loading map for {city.cityName}");
+
+        if (preferLabelFreeSatellite && mapStyle == "mapbox/satellite-streets-v12")
+            mapStyle = "mapbox/satellite-v9";
         
         mapboxToken = string.IsNullOrWhiteSpace(mapboxToken) ? "" : mapboxToken.Trim();
         if (string.IsNullOrEmpty(mapboxToken))
@@ -202,6 +211,8 @@ public class MapTileLoader : MonoBehaviour
 
     void CreateTileQuad(Texture2D tex, int offsetX, int offsetY, int tileX, int tileY)
     {
+        ApplyTileTextureSettings(tex);
+
         GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
         quad.name = $"Tile_{tileX}_{tileY}";
         quad.transform.SetParent(transform, false);
@@ -261,6 +272,17 @@ public class MapTileLoader : MonoBehaviour
             loggedFirstTile = true;
             Debug.Log($"MapTileLoader: First tile created ({tileX},{tileY}) at local {quad.transform.localPosition} world {quad.transform.position}.");
         }
+    }
+
+    void ApplyTileTextureSettings(Texture2D tex)
+    {
+        if (tex == null || !forceSharpTileFiltering)
+            return;
+
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Trilinear;
+        tex.anisoLevel = Mathf.Clamp(tileAnisoLevel, 1, 16);
+        tex.mipMapBias = tileMipMapBias;
     }
 
     Shader ResolveTileShader()

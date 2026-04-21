@@ -112,9 +112,11 @@ public class MissionResultUI : MonoBehaviour
         if (cityRouteText)
         {
             var city = GameState.Instance?.selectedCity ?? CityManager.Instance?.activeCity;
-            cityRouteText.text = city != null
-                ? $"{city.cityName.ToUpper()} — {result.routeName}"
-                : result.routeName;
+            cityRouteText.text = result.isShiftSummary
+                ? $"SHIFT SUMMARY — {result.routeName}"
+                : city != null
+                    ? $"{city.cityName.ToUpper()} — {result.routeName}"
+                    : result.routeName;
             cityRouteText.color = UITheme.TextSecondary;
             cityRouteText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
         }
@@ -151,25 +153,33 @@ public class MissionResultUI : MonoBehaviour
         // Trip summary
         if (passengersText)
         {
-            passengersText.text = $"{result.totalPassengers}";
+            passengersText.text = result.isShiftSummary
+                ? $"{result.shiftRoutesCompleted}/{result.shiftPlannedRoutes}"
+                : $"{result.totalPassengers}";
             passengersText.color = UITheme.TextPrimary;
             passengersText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
         if (fareText)
         {
-            fareText.text = $"KES {result.totalFareKES:N0}";
+            fareText.text = result.isShiftSummary
+                ? $"REP {result.driverReputationRating:F0}"
+                : $"KES {result.netEarningsKES:N0}";
             fareText.color = UITheme.Success;
             fareText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
         if (distanceText)
         {
-            distanceText.text = $"{result.totalDistanceKm:F1} km";
+            distanceText.text = result.isShiftSummary
+                ? $"{result.shiftFuelConsumedLitres:F1} L"
+                : $"{result.totalDistanceKm:F1} km • V{result.totalViolations}";
             distanceText.color = UITheme.TextPrimary;
             distanceText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
         if (xpText)
         {
-            xpText.text = $"+{result.xpEarned} XP";
+            xpText.text = result.isShiftSummary
+                ? $"Incidents {result.shiftIncidentCount}  •  Bay {(result.returnedToCorrectBay ? "OK" : "MISSED")}"
+                : $"+{result.xpEarned} XP  •  {result.violationSummary}  •  Rep {result.driverReputationRating:F0}";
             xpText.color = UITheme.TertiaryDim;
             xpText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }

@@ -8,6 +8,7 @@ public class FreeDriveUI : MonoBehaviour
     public FreeDriveSession session;
     public BusController busController;
     public TransmissionSystem transmissionData;
+    public FuelSystem fuelSystem;
 
     [Header("Speed Display")]
     public TextMeshProUGUI speedText;
@@ -109,16 +110,26 @@ public class FreeDriveUI : MonoBehaviour
 
         if (fuelText)
         {
-            fuelText.text = $"{session.fuelLevel:F0}%";
-            fuelText.color = session.fuelLevel < 20f
+            string suffix = "";
+            if (fuelSystem != null)
+            {
+                if (fuelSystem.IsCriticalActive) suffix = " CRITICAL";
+                else if (fuelSystem.IsWarningActive) suffix = " LOW";
+            }
+
+            fuelText.text = $"{session.fuelLevel:F0}%{suffix}";
+            fuelText.color = fuelSystem != null && fuelSystem.IsWarningActive
                 ? UITheme.Error : UITheme.TextSecondary;
         }
 
         if (fuelBar != null)
         {
             fuelBar.fillAmount = session.fuelLevel / 100f;
-            fuelBar.color = session.fuelLevel < 20f
-                ? UITheme.Error : UITheme.Success;
+            fuelBar.color = fuelSystem != null && fuelSystem.IsCriticalActive
+                ? UITheme.Error
+                : fuelSystem != null && fuelSystem.IsWarningActive
+                    ? UITheme.Tertiary
+                    : UITheme.Success;
         }
 
         if (distanceText)
@@ -131,13 +142,29 @@ public class FreeDriveUI : MonoBehaviour
             gpsText.text = session.GetCurrentGPSString();
 
         if (passengerText && PassengerManager.Instance != null)
+        {
+            string stopRequestSuffix = PassengerManager.Instance.stopRequestActive
+                ? PassengerManager.Instance.stopRequestAcknowledged ? " • STOP ACK" : " • STOP REQ"
+                : "";
             passengerText.text =
-                $"{PassengerManager.Instance.currentPassengers} PAX";
+                $"{PassengerManager.Instance.currentPassengers} PAX{stopRequestSuffix}";
+        }
 
         if (clockText && ScheduleManager.Instance != null)
             clockText.text = ScheduleManager.Instance.currentTimeString;
 
         if (scoreText && ScoreTracker.Instance != null)
-            scoreText.text = $"{ScoreTracker.Instance.totalScore:F0}%";
+        {
+            string violationSuffix = ExtendedTrafficViolationSystem.Instance != null && ExtendedTrafficViolationSystem.Instance.TotalViolationCount > 0
+                ? $" • V{ExtendedTrafficViolationSystem.Instance.TotalViolationCount}"
+                : "";
+            scoreText.text = $"{ScoreTracker.Instance.totalScore:F0}%{violationSuffix}";
+        }
+    }
+
+    void OnEnable()
+    {
+        if (fuelSystem == null)
+            fuelSystem = FindFirstObjectByType<FuelSystem>();
     }
 }

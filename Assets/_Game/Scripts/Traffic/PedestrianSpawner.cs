@@ -41,6 +41,8 @@ public class PedestrianSpawner : MonoBehaviour
     float timer;
     bool loggedCrossings;
 
+    public IReadOnlyList<SimplePedestrian> GetActivePedestrians() => active;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -119,7 +121,7 @@ public class PedestrianSpawner : MonoBehaviour
             var ped = go.GetComponent<SimplePedestrian>();
             if (ped == null) ped = go.AddComponent<SimplePedestrian>();
             IncrementCrossing(i);
-            ped.Init(to, () => DecrementCrossing(i));
+            ped.Init(to, () => DecrementCrossing(i), true);
             active.Add(ped);
 
             if (logSpawnEvents)
@@ -299,13 +301,15 @@ public class SimplePedestrian : MonoBehaviour
     System.Action onFinished;
     bool released;
     public bool IsDone { get; private set; }
+    public bool IsInsideCrossingZone { get; private set; }
 
-    public void Init(Transform destination, System.Action finished = null)
+    public void Init(Transform destination, System.Action finished = null, bool insideCrossingZone = false)
     {
         target = destination;
         onFinished = finished;
         released = false;
         IsDone = false;
+        IsInsideCrossingZone = insideCrossingZone;
     }
 
     public void Tick(float dt, float speed)
@@ -323,6 +327,7 @@ public class SimplePedestrian : MonoBehaviour
     void Finish()
     {
         IsDone = true;
+        IsInsideCrossingZone = false;
         Release();
     }
 

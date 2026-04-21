@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 public class PassengerManager : MonoBehaviour
 {
@@ -40,6 +41,10 @@ public class PassengerManager : MonoBehaviour
     public bool hadWheelchairBoarding = false;
     public bool doorsOpen = true;
     public float latestRequiredDwellSeconds = 2f;
+    public bool stopRequestActive = false;
+    public bool stopRequestAcknowledged = false;
+    public int upcomingStopIndex = -1;
+    public int missedRequestedStops = 0;
 
     [Header("Debug Logs")]
     public bool logBoardingSummary = true;
@@ -50,6 +55,8 @@ public class PassengerManager : MonoBehaviour
     private readonly List<PassengerAgent> waitingPassengers = new List<PassengerAgent>();
     private float lastSpeedKmh = 0f;
     private float longitudinalAcceleration = 0f;
+    private float currentLongitudinalG = 0f;
+    private bool hadElderlyBoarding = false;
 
     void Awake()
     {
@@ -68,6 +75,7 @@ public class PassengerManager : MonoBehaviour
         TrackBusAcceleration();
         UpdateOnboardPassengerDynamics();
         UpdatePatience();
+        HandleStopRequestAcknowledgeInput();
     }
 
     void TrackDistance()
@@ -84,6 +92,7 @@ public class PassengerManager : MonoBehaviour
         float lastSpeedMs = lastSpeedKmh / 3.6f;
         if (Time.deltaTime > 0f)
             longitudinalAcceleration = (speedMs - lastSpeedMs) / Time.deltaTime;
+        currentLongitudinalG = Mathf.Abs(longitudinalAcceleration) / 9.81f;
         lastSpeedKmh = busController.currentSpeedKmh;
     }
 
@@ -94,8 +103,17 @@ public class PassengerManager : MonoBehaviour
         // Standing passengers sway opposite bus acceleration/deceleration.
         foreach (var passenger in onboardPassengers)
         {
-            if (passenger == null || passenger.isSeated) continue;
-            passenger.UpdateStandingSway(-longitudinalAcceleration);
+            if (passenger == null) continue;
+            if (!passenger.isSeated)
+                passenger.UpdateStandingSway(-longitudinalAcceleration);
+
+            if (currentLongitudinalG > 0.5f)
+            {
+                bool alreadyComplained = passenger.hasComplainedAboutBraking;
+                passenger.RegisterHarshBrakingComplaint();
+                if (!alreadyComplained)
+                    Debug.Log("[Passenger] Audible complaint after harsh braking.");
+            }
         }
     }
 
@@ -136,6 +154,16 @@ public class PassengerManager : MonoBehaviour
     public void HandleStopArrival(BusStopData stop, float fare, int stopIndex, int totalStops)
     {
         if (stop == null) return;
+        if (stopRequestActive && !stopRequestAcknowledged)
+        {
+            missedRequestedStops++;
+            ScoreTracker.Instance?.ApplyPassengerServicePenalty(6f, 2f);
+            for (int i = 0; i < onboardPassengers.Count; i++)
+            {
+                if (onboardPassengers[i] != null && onboardPassengers[i].stopRequested)
+                    onboardPassengers[i].satisfaction = Mathf.Clamp01(onboardPassengers[i].satisfaction - 0.12f);
+            }
+        }
 
         // Alighting first.
         int alighting = ProcessAlighting(stopIndex);
@@ -161,6 +189,7 @@ public class PassengerManager : MonoBehaviour
 
         lastBoardingCount = boarding;
         currentPassengers = onboardPassengers.Count;
+        ClearStopRequestsAtStop(stopIndex);
 
         // Collect fares from boarding passengers.
         float fareCollected = boarding * fare;
@@ -188,6 +217,32 @@ public class PassengerManager : MonoBehaviour
     {
         float fuelCost = totalDistanceKm * fuelCostPerKm;
         return sessionIncome - fuelCost;
+    }
+
+    public void SetUpcomingStopIndex(int stopIndex)
+    {
+        upcomingStopIndex = stopIndex;
+        for (int i = 0; i < onboardPassengers.Count; i++)
+        {
+            var passenger = onboardPassengers[i];
+            if (passenger == null)
+                continue;
+
+            if (passenger.destinationStopIndex == stopIndex)
+            {
+                passenger.PrepareForUpcomingStop();
+                if (!passenger.stopRequested)
+                    RegisterStopRequest(passenger);
+            }
+        }
+    }
+
+    public void AcknowledgeStopRequest()
+    {
+        if (!stopRequestActive)
+            return;
+
+        stopRequestAcknowledged = true;
     }
 
     int ProcessAlighting(int stopIndex)
@@ -236,9 +291,27 @@ public class PassengerManager : MonoBehaviour
                 originStop: Mathf.Max(0, stopIndex),
                 destinationStop: destination,
                 initialPatience: Random.Range(45f, 120f),
-                wheelchair: wheelchair
+                wheelchair: wheelchair,
+                passengerArchetype: ResolveArchetype()
             );
+            ApplyArchetypeTuning(p);
             waitingPassengers.Add(p);
+
+            if (p.archetype == PassengerArchetype.Student && Random.value < 0.45f)
+            {
+                int extraStudents = Random.Range(1, 3);
+                for (int groupIndex = 0; groupIndex < extraStudents; groupIndex++)
+                {
+                    var student = new PassengerAgent(
+                        Mathf.Max(0, stopIndex),
+                        destination,
+                        Random.Range(45f, 110f),
+                        false,
+                        PassengerArchetype.Student);
+                    ApplyArchetypeTuning(student);
+                    waitingPassengers.Add(student);
+                }
+            }
         }
     }
 
@@ -257,6 +330,14 @@ public class PassengerManager : MonoBehaviour
 
             if (p.isWheelchairPassenger)
                 hadWheelchairBoarding = true;
+            if (p.archetype == PassengerArchetype.Elderly)
+            {
+                hadElderlyBoarding = true;
+                if (busController != null && !busController.kneelingSuspensionActive)
+                    p.satisfaction = Mathf.Clamp01(p.satisfaction - 0.08f);
+            }
+            if (p.archetype == PassengerArchetype.Tourist && logBoardingSummary)
+                Debug.Log($"[PassengerBoarding] Tourist asking for stop names near stop index {p.destinationStopIndex}.");
 
             if (logEachPassengerBoarding)
             {
@@ -304,8 +385,18 @@ public class PassengerManager : MonoBehaviour
 
     void RecalculateDwellTime()
     {
-        float boardingTime = (passengerData != null ? passengerData.boardingTimePerPassenger : 1.5f) * lastBoardingCount;
-        float alightingTime = (passengerData != null ? passengerData.alightingTimePerPassenger : 1.2f) * lastAlightingCount;
+        float boardingTimePerPassenger = passengerData != null ? passengerData.boardingTimePerPassenger : 1.5f;
+        float alightingTimePerPassenger = passengerData != null ? passengerData.alightingTimePerPassenger : 1.2f;
+
+        float boardingTime = 0f;
+        for (int i = Mathf.Max(0, onboardPassengers.Count - lastBoardingCount); i < onboardPassengers.Count; i++)
+        {
+            var passenger = onboardPassengers[i];
+            if (passenger == null) continue;
+            boardingTime += boardingTimePerPassenger * passenger.GetBoardingTimeMultiplier();
+        }
+
+        float alightingTime = alightingTimePerPassenger * lastAlightingCount;
         latestRequiredDwellSeconds = Mathf.Max(2f, boardingTime + alightingTime);
 
         if (hadWheelchairBoarding)
@@ -314,9 +405,86 @@ public class PassengerManager : MonoBehaviour
             if (busController != null)
                 busController.RequestKneelingSuspension(true);
         }
+        if (hadElderlyBoarding)
+        {
+            latestRequiredDwellSeconds = Mathf.Max(latestRequiredDwellSeconds, 10f);
+            if (busController != null)
+                busController.RequestKneelingSuspension(true);
+        }
         else if (busController != null)
         {
             busController.RequestKneelingSuspension(false);
         }
+
+        hadElderlyBoarding = false;
+    }
+
+    PassengerArchetype ResolveArchetype()
+    {
+        float roll = Random.value;
+        if (roll < 0.38f) return PassengerArchetype.Commuter;
+        if (roll < 0.56f) return PassengerArchetype.Student;
+        if (roll < 0.78f) return PassengerArchetype.Tourist;
+        return PassengerArchetype.Elderly;
+    }
+
+    void ApplyArchetypeTuning(PassengerAgent passenger)
+    {
+        if (passenger == null)
+            return;
+
+        switch (passenger.archetype)
+        {
+            case PassengerArchetype.Commuter:
+                passenger.patienceSeconds *= 0.75f;
+                break;
+            case PassengerArchetype.Tourist:
+                passenger.patienceSeconds *= 1.1f;
+                break;
+            case PassengerArchetype.Elderly:
+                passenger.patienceSeconds *= 1.25f;
+                break;
+        }
+    }
+
+    void RegisterStopRequest(PassengerAgent passenger)
+    {
+        if (passenger == null)
+            return;
+
+        passenger.PressStopRequest();
+        stopRequestActive = true;
+        stopRequestAcknowledged = false;
+        Debug.Log("[Passenger] Stop request bell pressed.");
+    }
+
+    void ClearStopRequestsAtStop(int stopIndex)
+    {
+        bool fulfilled = false;
+        for (int i = 0; i < onboardPassengers.Count; i++)
+        {
+            var passenger = onboardPassengers[i];
+            if (passenger == null)
+                continue;
+
+            if (passenger.destinationStopIndex == stopIndex)
+            {
+                passenger.ClearStopRequest();
+                fulfilled = true;
+            }
+        }
+
+        if (fulfilled || currentPassengers == 0)
+        {
+            stopRequestActive = false;
+            stopRequestAcknowledged = false;
+        }
+    }
+
+    void HandleStopRequestAcknowledgeInput()
+    {
+        var keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.bKey.wasPressedThisFrame)
+            AcknowledgeStopRequest();
     }
 }

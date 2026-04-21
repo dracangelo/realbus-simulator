@@ -14,12 +14,24 @@ public class MissionResult
 
     public int totalPassengers;
     public int totalFareKES;
+    public int fuelRefuelCostKES;
+    public int maintenanceCostKES;
+    public int netEarningsKES;
     public float totalDistanceKm;
     public float totalTimeMinutes;
 
     public int xpEarned;
     public int collisions;
     public int redLightViolations;
+    public int totalViolations;
+    public string violationSummary;
+    public float driverReputationRating;
+    public bool isShiftSummary;
+    public int shiftRoutesCompleted;
+    public int shiftPlannedRoutes;
+    public float shiftFuelConsumedLitres;
+    public int shiftIncidentCount;
+    public bool returnedToCorrectBay;
 
     public static MissionResult Generate(BusRoute route)
     {
@@ -38,12 +50,47 @@ public class MissionResult
         result.totalFareKES = PassengerManager.Instance != null ?
             Mathf.RoundToInt(PassengerManager.Instance.totalFareCollected) : 0;
 
+        if (GameState.Instance != null && GameState.Instance.lastMissionSettlement != null)
+        {
+            var settlement = GameState.Instance.lastMissionSettlement;
+            result.fuelRefuelCostKES = Mathf.RoundToInt(settlement.fuelRefuelCostKES);
+            result.maintenanceCostKES = Mathf.RoundToInt(settlement.maintenanceCostKES);
+            result.netEarningsKES = Mathf.RoundToInt(settlement.netEarningsKES);
+        }
+        else
+        {
+            result.netEarningsKES = result.totalFareKES;
+        }
+
         result.totalDistanceKm = FreeDriveSession.Instance?.distanceDrivenKm ?? 0f;
         result.totalTimeMinutes = FreeDriveSession.Instance?.sessionTimeSeconds / 60f ?? 0f;
+
+        result.collisions = ScoreTracker.Instance?.CollisionCount ?? 0;
+        result.redLightViolations = ScoreTracker.Instance?.RedLightViolationCount ?? 0;
+
+        var violationSystem = ExtendedTrafficViolationSystem.Instance;
+        result.totalViolations = violationSystem != null ? violationSystem.TotalViolationCount : result.redLightViolations;
+        result.violationSummary = violationSystem != null ? violationSystem.GetViolationSummary() : $"SIG {result.redLightViolations}";
         
+        if (result.satisfactionScore < 60f)
+            result.starRating = Mathf.Min(result.starRating, 2);
+
         // XP formula: base 100 + score bonus + star bonus
         result.xpEarned = Mathf.RoundToInt(
             100f + (result.totalScore * 2f) + (result.starRating * 50f));
+
+        result.xpEarned = Mathf.Max(0, result.xpEarned - (result.totalViolations * 15));
+
+        if (GameState.Instance != null && GameState.Instance.economy != null)
+        {
+            float reputation = Mathf.Clamp(
+                GameState.Instance.economy.driverReputationRating - (result.totalViolations * 1.5f) + ((result.satisfactionScore - 60f) * 0.05f),
+                0f, 100f);
+            GameState.Instance.economy.driverReputationRating = reputation;
+            result.driverReputationRating = reputation;
+        }
+
+        DriverShiftSystem.Instance?.TryApplyShiftSummary(result);
 
         return result;
     }
