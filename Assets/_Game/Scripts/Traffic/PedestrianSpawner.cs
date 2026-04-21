@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class PedestrianSpawner : MonoBehaviour
 {
+    public static PedestrianSpawner Instance { get; private set; }
+
     [System.Serializable]
     public class ZebraCrossing
     {
@@ -39,14 +41,32 @@ public class PedestrianSpawner : MonoBehaviour
     float timer;
     bool loggedCrossings;
 
+    void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("[PedestrianSpawner] Duplicate spawner detected. Destroying extra instance.");
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
+
     void Start()
     {
+        if (Instance != this)
+            return;
+
         EnsurePedestrianPrefab();
         EnsureRuntimeCrossings();
     }
 
     void Update()
     {
+        if (Instance != this)
+            return;
+
         EnsureRuntimeCrossings();
 
         timer += Time.deltaTime;
@@ -126,6 +146,12 @@ public class PedestrianSpawner : MonoBehaviour
             Debug.Log($"[PedestrianSpawner] Runtime crossings ready: {runtimeCrossings.Length} (random={useRandomGeneratedCrossings}).");
             loggedCrossings = true;
         }
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     void EnsurePedestrianPrefab()

@@ -8,18 +8,18 @@ Kernel version:          6.17.10+kali-amd64
 Architecture:            x86_64
 Window Protocol:         Wayland (XWayland)
 Available memory:        15856 MB
-Date:                    2026-04-14T09:19:55Z
+Date:                    2026-04-21T07:04:29Z
 [Licensing::Module] Trying to connect to existing licensing client channel...
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-vng370" at "2026-04-14T09:19:55.967177Z"
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-vng370" at "2026-04-21T07:04:29.513352Z"
 [SignatureVerifier] Application signature verification not supported on this platform.
 [Licensing::Client] Handshaking with LicensingClient:
   Version:                 1.17.4+4293ba1
-  Session Id:              ccfa9b6ac8594f289158bca21a0a7289
-  Correlation Id:          552c8720070c3fd5a6368be212c68a15
-  External correlation Id: 746486450476216054
+  Session Id:              1fe739c6532240cb8126879fb695f54b
+  Correlation Id:          9f82b4c87525ee93559bd58d0e5cc1e9
+  External correlation Id: 3752779428015633571
   Machine Id:              Qt5V2UIfifa28FgjlZOwRB56H6E=
 [Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-vng370" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-vng370-notifications" at "2026-04-14T09:19:55.971743Z"
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-vng370-notifications" at "2026-04-21T07:04:29.516084Z"
 [Licensing::Module] Licensing Background thread has ended after 0.00s
 Selected window backend: (null) 
 Desktop is 1366 x 768 @ 60 Hz
@@ -37,7 +37,7 @@ AssetImportWorker1
 -logFile
 Logs/AssetImportWorker1.log
 -srvPort
-38721
+41083
 -licensingIpc
 LicenseClient-vng370
 -job-worker-count
@@ -83,16 +83,16 @@ Successfully changed project path to: /home/vng370/Documents/coding/python/My-pr
     "memorysetup-job-temp-allocator-block-size-background=1048576"
     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
     "memorysetup-temp-allocator-size-gfx=262144"
-Player connection [140461440482624]  Target information:
+Player connection [140234823425344]  Target information:
 
-Player connection [140461440482624]  * "[IP] 192.168.100.4 [Port] 0 [Flags] 2 [Guid] 3331788747 [EditorId] 3331788747 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.4) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+Player connection [140234823425344]  * "[IP] 192.168.100.7 [Port] 0 [Flags] 2 [Guid] 1634920760 [EditorId] 1634920760 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.7) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
 
-Player connection [140461440482624]  * "[IP] 10.0.3.1 [Port] 0 [Flags] 2 [Guid] 3331788747 [EditorId] 3331788747 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.4) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+Player connection [140234823425344]  * "[IP] 10.0.3.1 [Port] 0 [Flags] 2 [Guid] 1634920760 [EditorId] 1634920760 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.7) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
 
-Player connection [140461440482624]  * "[IP] 172.17.0.1 [Port] 0 [Flags] 2 [Guid] 3331788747 [EditorId] 3331788747 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.4) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+Player connection [140234823425344]  * "[IP] 172.17.0.1 [Port] 0 [Flags] 2 [Guid] 1634920760 [EditorId] 1634920760 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.7) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
 
-Player connection [140461440482624] Host joined multi-casting on [225.0.0.222:54997]...
-Player connection [140461440482624] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [140234823425344] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [140234823425344] Host joined alternative multi-casting on [225.0.0.222:34997]...
 JobSystem: Creating JobQueue using job-worker-count value 3
 Input System module state changed to: Initialized.
 [Physics::Module] Initialized fallback backend.
@@ -119,7 +119,7 @@ Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
   Expiration: Unlimited
 Got setting from build profile YAML, name `m_BuildTarget`, value `13`
 Got setting from build profile YAML, name `m_Subtarget`, value `0`
-Refreshing native plugins compatible for Editor in 27.09 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 23.58 ms, found 0 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Initialize engine version: 6000.3.10f1 (e35f0c77bd8e)
 [Subsystems] Discovering subsystems at path /home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Resources/UnitySubsystems
@@ -138,7 +138,7 @@ L_ARB_texture_border_clamp GL_ARB_texture_buffer_object GL_ARB_texture_buffer_ob
 _10_10_10_rev GL_ARB_viewport_array GL_ATI_blend_equation_separate GL_ATI_texture_float GL_EXT_EGL_image_storage GL_EXT_EGL_image_storage_compression GL_EXT_EGL_sync GL_EXT_abgr GL_EXT_blend_equation_separate GL_EXT_debug_label GL_EXT_demote_to_helper_invocation GL_EXT_draw_buffers2 GL_EXT_draw_instanced GL_EXT_framebuffer_blit GL_EXT_framebuffer_multisample GL_EXT_framebuffer_multisample_blit_scaled GL_EXT_framebuffer_object GL_EXT_framebuffer_sRGB GL_EXT_memory_object GL_EXT_memory_object_fd GL_EXT_packed_depth_stencil GL_EXT_packed_float GL_EXT_pixel_buffer_object GL_EXT_polygon_offset_clamp GL_EXT_provoking_vertex GL_EXT_semaphore GL_EXT_semaphore_fd GL_EXT_shader_clock GL_EXT_shader_framebuffer_fetch GL_EXT_shader_framebuffer_fetch_non_coherent GL_EXT_shader_integer_mix GL_EXT_shader_samples_identical GL_EXT_texture_array GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_compression_s3tc GL_EXT_texture_filter_anisotropic GL_EXT_texture_integer GL_EXT_texture_sRGB GL_EXT_text
 ure_sRGB_R8 GL_EXT_texture_sRGB_decode GL_EXT_texture_shadow_lod GL_EXT_texture_shared_exponent GL_EXT_texture_snorm GL_EXT_texture_storage GL_EXT_texture_swizzle GL_EXT_timer_query GL_EXT_transform_feedback GL_EXT_vertex_array_bgra GL_EXT_vertex_attrib_64bit GL_IBM_multimode_draw_arrays GL_INTEL_blackhole_render GL_INTEL_conservative_rasterization GL_INTEL_performance_query GL_INTEL_shader_atomic_float_minmax GL_INTEL_shader_integer_functions2 GL_KHR_blend_equation_advanced GL_KHR_blend_equation_advanced_coherent GL_KHR_context_flush_control GL_KHR_debug GL_KHR_no_error GL_KHR_parallel_shader_compile GL_KHR_robust_buffer_access_behavior GL_KHR_robustness GL_KHR_texture_compression_astc_ldr GL_KHR_texture_compression_astc_sliced_3d GL_MESA_framebuffer_flip_y GL_MESA_pack_invert GL_MESA_shader_integer_functions GL_MESA_texture_const_bandwidth GL_MESA_texture_signed_rgba GL_NV_alpha_to_coverage_dither_control GL_NV_compute_shader_derivatives GL_NV_conditional_render GL_NV_copy_image GL_NV_depth_clamp GL_NV_fra
 gment_shader_interlock GL_NV_packed_depth_stencil GL_NV_texture_barrier GL_OES_EGL_image GL_S3_s3tc
-OPENGL LOG: Creating OpenGL 4.6 graphics device ; Context level  <OpenGL 4.5> ; Context handle -1660505424
+OPENGL LOG: Creating OpenGL 4.6 graphics device ; Context level  <OpenGL 4.5> ; Context handle 1983693664
 Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
 Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
 Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
@@ -146,7 +146,7 @@ Initialize mono
 Mono path[0] = '/home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Managed'
 Mono path[1] = '/home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-linux'
 Mono config path = '/home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56112
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56357
 Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
 Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
 Begin MonoManager ReloadAssembly
@@ -154,13 +154,13 @@ Registering precompiled unity dll's ...
 Register platform support module: /home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
 Register platform support module: /home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll
 Register platform support module: /home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
-Registered in 0.009733 seconds.
+Registered in 0.012441 seconds.
 Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
 Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
-- Loaded All Assemblies, in  1.617 seconds
+- Loaded All Assemblies, in  1.870 seconds
 Native extension for LinuxStandalone target not found
 Native extension for Android target not found
-Android Extension - Scanning For ADB Devices 785 ms
+Android Extension - Scanning For ADB Devices 609 ms
 Native extension for WebGL target not found
 Package Manager log level set to [2]
 [Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
@@ -168,35 +168,35 @@ Package Manager log level set to [2]
 [Package Manager] Cannot connect to Unity Package Manager local server
 ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  2.974 seconds
-Domain Reload Profiling: 4590ms
-	BeginReloadAssembly (347ms)
+- Finished resetting the current domain, in  2.474 seconds
+Domain Reload Profiling: 4343ms
+	BeginReloadAssembly (486ms)
 		ExecutionOrderSort (0ms)
 		DisableScriptedObjects (0ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (2ms)
-	RebuildCommonClasses (232ms)
-	RebuildNativeTypeToScriptingClass (40ms)
-	initialDomainReloadingComplete (227ms)
-	LoadAllAssembliesAndSetupDomain (771ms)
-		LoadAssemblies (346ms)
+		CreateAndSetChildDomain (4ms)
+	RebuildCommonClasses (288ms)
+	RebuildNativeTypeToScriptingClass (77ms)
+	initialDomainReloadingComplete (293ms)
+	LoadAllAssembliesAndSetupDomain (724ms)
+		LoadAssemblies (482ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (759ms)
-			TypeCache.Refresh (756ms)
-				TypeCache.ScanAssembly (711ms)
+		AnalyzeDomain (710ms)
+			TypeCache.Refresh (706ms)
+				TypeCache.ScanAssembly (659ms)
 			BuildScriptInfoCaches (0ms)
 			ResolveRequiredComponents (1ms)
-	FinalizeReload (2975ms)
+	FinalizeReload (2475ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (2775ms)
+		SetupLoadedEditorAssemblies (2300ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (1143ms)
-			SetLoadedEditorAssemblies (19ms)
-			BeforeProcessingInitializeOnLoad (535ms)
-			ProcessInitializeOnLoadAttributes (785ms)
-			ProcessInitializeOnLoadMethodAttributes (292ms)
+			InitializePlatformSupportModulesInManaged (942ms)
+			SetLoadedEditorAssemblies (13ms)
+			BeforeProcessingInitializeOnLoad (434ms)
+			ProcessInitializeOnLoadAttributes (656ms)
+			ProcessInitializeOnLoadMethodAttributes (255ms)
 			AfterProcessingInitializeOnLoad (0ms)
 			EditorAssembliesLoaded (0ms)
 		ExecutionOrderSort2 (0ms)
@@ -229,338 +229,116 @@ Got setting from build profile YAML, name `m_BuildSubtarget`, value `0`
 Symbol file LoadedFromMemory is not a mono symbol file
 Symbol file LoadedFromMemory is not a mono symbol file
 Symbol file LoadedFromMemory is not a mono symbol file
-- Loaded All Assemblies, in  3.013 seconds
-Refreshing native plugins compatible for Editor in 14.59 ms, found 0 plugins.
+- Loaded All Assemblies, in  2.218 seconds
+Refreshing native plugins compatible for Editor in 12.09 ms, found 0 plugins.
 Native extension for LinuxStandalone target not found
 Native extension for Android target not found
 Native extension for WebGL target not found
 [Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
 [Package Manager] Unable to send message (not connected to server process).
 [Package Manager] Cannot connect to Unity Package Manager local server
-Refreshing native plugins compatible for Editor in 19.77 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 11.38 ms, found 0 plugins.
 ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  3.184 seconds
-Domain Reload Profiling: 6187ms
-	BeginReloadAssembly (668ms)
+- Finished resetting the current domain, in  2.492 seconds
+Domain Reload Profiling: 4704ms
+	BeginReloadAssembly (493ms)
 		ExecutionOrderSort (0ms)
-		DisableScriptedObjects (64ms)
+		DisableScriptedObjects (45ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (116ms)
-	RebuildCommonClasses (149ms)
-	RebuildNativeTypeToScriptingClass (44ms)
-	initialDomainReloadingComplete (170ms)
-	LoadAllAssembliesAndSetupDomain (1971ms)
-		LoadAssemblies (1041ms)
+		CreateAndSetChildDomain (92ms)
+	RebuildCommonClasses (103ms)
+	RebuildNativeTypeToScriptingClass (27ms)
+	initialDomainReloadingComplete (120ms)
+	LoadAllAssembliesAndSetupDomain (1468ms)
+		LoadAssemblies (746ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (1124ms)
-			TypeCache.Refresh (892ms)
-				TypeCache.ScanAssembly (827ms)
-			BuildScriptInfoCaches (197ms)
-			ResolveRequiredComponents (26ms)
-	FinalizeReload (3185ms)
+		AnalyzeDomain (877ms)
+			TypeCache.Refresh (666ms)
+				TypeCache.ScanAssembly (607ms)
+			BuildScriptInfoCaches (175ms)
+			ResolveRequiredComponents (29ms)
+	FinalizeReload (2493ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (2529ms)
+		SetupLoadedEditorAssemblies (1981ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (46ms)
-			SetLoadedEditorAssemblies (27ms)
-			BeforeProcessingInitializeOnLoad (713ms)
-			ProcessInitializeOnLoadAttributes (1478ms)
-			ProcessInitializeOnLoadMethodAttributes (247ms)
-			AfterProcessingInitializeOnLoad (17ms)
+			InitializePlatformSupportModulesInManaged (41ms)
+			SetLoadedEditorAssemblies (23ms)
+			BeforeProcessingInitializeOnLoad (540ms)
+			ProcessInitializeOnLoadAttributes (1195ms)
+			ProcessInitializeOnLoadMethodAttributes (166ms)
+			AfterProcessingInitializeOnLoad (16ms)
 			EditorAssembliesLoaded (1ms)
 		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (53ms)
+		AwakeInstancesAfterBackupRestoration (51ms)
 Launched and connected shader compiler UnityShaderCompiler after 0.02 seconds
-Refreshing native plugins compatible for Editor in 20.82 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 11.36 ms, found 0 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 5774 unused Assets / (2.7 MB). Loaded Objects now: 6303.
-Memory consumption went from 106.5 MB to 103.9 MB.
-Total: 44.312814 ms (FindLiveObjects: 1.405943 ms CreateObjectMapping: 2.410784 ms MarkObjects: 31.952791 ms  DeleteObjects: 8.540385 ms)
+Unloading 5780 unused Assets / (2.5 MB). Loaded Objects now: 6313.
+Memory consumption went from 106.7 MB to 104.2 MB.
+Total: 29.873464 ms (FindLiveObjects: 0.881292 ms CreateObjectMapping: 1.443397 ms MarkObjects: 20.115742 ms  DeleteObjects: 7.430776 ms)
 
 ========================================================================
 Received Import Request.
-  Time since last request: 11235.207201 seconds.
-  path: Assets/_Game/Scripts/Traffic/VehiclePool.cs
-  artifactKey: Guid(f3b67f453557afde1b374a7f593754a3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/Traffic/VehiclePool.cs using Guid(f3b67f453557afde1b374a7f593754a3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'c4b3cac11a578cd037d67de25f77c7e4') in 0.28635019 seconds
+  Time since last request: 2580.338776 seconds.
+  path: Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs
+  artifactKey: Guid(e5d47baa3ff005310b09a3dc52e153fd) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
+Start importing Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs using Guid(e5d47baa3ff005310b09a3dc52e153fd) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '0600c19c94e3d32fdab8fa3102c40cc7') in 0.204614649 seconds
 Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000042 seconds.
-  path: Assets/_Game/Scripts/Fonts/SpaceGrotesk-Light SDF.asset
-  artifactKey: Guid(70467f4785aef1ca88dc36b577269b1f) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/Fonts/SpaceGrotesk-Light SDF.asset using Guid(70467f4785aef1ca88dc36b577269b1f) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '0d6abc0426c4d542bc81afba884b6b6c') in 0.367215212 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 5
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.001224 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_4560086_FireEngine.fbx
-  artifactKey: Guid(6748a2ca1052b923889a148424f1d572) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_4560086_FireEngine.fbx using Guid(6748a2ca1052b923889a148424f1d572) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'ac91f533e85d17f64188db19c79bc6b6') in 0.280203375 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 282
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000044 seconds.
-  path: Assets/_Game/Resources/BussimAssets/uploads_files_211010_3d-model.fbx
-  artifactKey: Guid(b16b6ad44aa67871fad2be8bf8707b91) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/uploads_files_211010_3d-model.fbx using Guid(b16b6ad44aa67871fad2be8bf8707b91) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '52b7c68035b5fdcc8e7ae9c28394fc13') in 0.005186935 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000907 seconds.
-  path: Assets/_Game/Resources/BussimAssets/trees/uploads_files_2986400_FBX+Corona.FBX
-  artifactKey: Guid(2f6ea7f04263e1b22939476b10f1eac2) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/trees/uploads_files_2986400_FBX+Corona.FBX using Guid(2f6ea7f04263e1b22939476b10f1eac2) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '6135710f7dd1e2f43f110eb03f200af0') in 1.261249968 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 10
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000055 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_6824323_lada.fbx
-  artifactKey: Guid(13f10534399a788b4b0f873d05afa340) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_6824323_lada.fbx using Guid(13f10534399a788b4b0f873d05afa340) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '8b92633276fd2a657cc75c01154687da') in 1.058186766 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1081
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000063 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_5844339_Palisade2024.fbx
-  artifactKey: Guid(fca4c83ac6941ac6e9dabfd0268dfc1c) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_5844339_Palisade2024.fbx using Guid(fca4c83ac6941ac6e9dabfd0268dfc1c) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '0d3b3dd26abe1c11deda460b2b36272c') in 0.359105107 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 753
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000069 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_6375847_ambulance.fbx
-  artifactKey: Guid(3937898aa524e390da2b1066e45ff382) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_6375847_ambulance.fbx using Guid(3937898aa524e390da2b1066e45ff382) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '19304cad11b5d14181d7aa0372396a4a') in 0.107986033 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 8
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000447 seconds.
-  path: Assets/_Game/Resources/BussimAssets/trees/Sour wood_Spring corona.FBX
-  artifactKey: Guid(03fa35f98a1ddca42874dc7f742e25d0) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/trees/Sour wood_Spring corona.FBX using Guid(03fa35f98a1ddca42874dc7f742e25d0) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '75501934c7a7e5255bb8dff117fb2e26') in 0.871297923 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 29
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000075 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/Van.fbx
-  artifactKey: Guid(252240eebc816c44485893bb644c77f2) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/Van.fbx using Guid(252240eebc816c44485893bb644c77f2) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'f24c04068bcd7f22163e96d383752b64') in 0.353191726 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 182
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000059 seconds.
-  path: Assets/_Game/Scripts/OSM/OSMRoadMeshBuilder.cs
-  artifactKey: Guid(2db2819f53c45e17a9cba319b97be01c) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/OSM/OSMRoadMeshBuilder.cs using Guid(2db2819f53c45e17a9cba319b97be01c) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '08212c67e0d5d6a285018bf8d733a621') in 0.005688373 seconds
+  Time since last request: 0.000028 seconds.
+  path: Assets/_Game/Scripts/Debug/RuntimeOsmPoiVisualizer.cs
+  artifactKey: Guid(c2538217ca33f610dafffeaeaab6c8e3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
+Start importing Assets/_Game/Scripts/Debug/RuntimeOsmPoiVisualizer.cs using Guid(c2538217ca33f610dafffeaeaab6c8e3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '74c35e56376cbe84ae7d135dd5d385a7') in 0.007814722 seconds
 Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000271 seconds.
-  path: Assets/_Game/Scripts/Debug
-  artifactKey: Guid(c04d97b2e44c09b72a15928e775b00ab) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/Debug using Guid(c04d97b2e44c09b72a15928e775b00ab) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '4b0070997c74f63b9342d43a34994dfa') in 0.005071442 seconds
+  Time since last request: 0.000202 seconds.
+  path: Assets/_Recovery/0 (5).unity
+  artifactKey: Guid(c5722ad5a129a139c8d03d4fa5beb19a) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
+Start importing Assets/_Recovery/0 (5).unity using Guid(c5722ad5a129a139c8d03d4fa5beb19a) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'b2d37dc63bd704f7a4542fd673da86f9') in 0.083861226 seconds
 Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000302 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_5836120_Fortuner.fbx
-  artifactKey: Guid(83317f0072dcb8194b27aa23f44fa5b1) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_5836120_Fortuner.fbx using Guid(83317f0072dcb8194b27aa23f44fa5b1) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'a1b8e2b4c49b1bba6d1ccc0f4c9712ed') in 4.861973265 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1581
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000067 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_4429671_Excavator+with+rig.fbx
-  artifactKey: Guid(b192997a963d4b830baa1f7feccb592c) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_4429671_Excavator+with+rig.fbx using Guid(b192997a963d4b830baa1f7feccb592c) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'ca5ee37671c970b5baeb7c368a616499') in 0.718228093 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 402
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000088 seconds.
-  path: Assets/_Game/Resources/BussimAssets/road_fbarrier1.fbx
-  artifactKey: Guid(b039427f57c6f923d98a14e34103e417) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/road_fbarrier1.fbx using Guid(b039427f57c6f923d98a14e34103e417) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '1c6c1f66859c6a2c70fba52649512281') in 0.026643805 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 8
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000192 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_2263056_bus_by_joao3DModels.unitypackage
-  artifactKey: Guid(7693d793255254896b4b889b2435eed3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_2263056_bus_by_joao3DModels.unitypackage using Guid(7693d793255254896b4b889b2435eed3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'b8e5b157a3966d3ae0f82fc55c7db17e') in 0.008241555 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000308 seconds.
-  path: Assets/_Game/Resources/BussimAssets/trees
-  artifactKey: Guid(e7e177b74568979119aa9e0f22ec41c5) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/trees using Guid(e7e177b74568979119aa9e0f22ec41c5) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '8bcf9f29c3befa08e4f32d3b3f7db984') in 0.01553866 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.003953 seconds.
-  path: Assets/_Game/Resources/BussimAssets/bus-models/Laksana.fbx
-  artifactKey: Guid(3dfab815bb06404c584c893b684a5715) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/bus-models/Laksana.fbx using Guid(3dfab815bb06404c584c893b684a5715) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '8067ebbac479c22aa14ec97130508fa3') in 0.526071456 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 386
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000049 seconds.
-  path: Assets/_Game/Resources/BussimAssets/bus-models
-  artifactKey: Guid(8456ea0e6d93ad49cab98b3e9a62c727) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/bus-models using Guid(8456ea0e6d93ad49cab98b3e9a62c727) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'ed7465f7438384177f87f89fecf72fa6') in 0.00680915 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000263 seconds.
-  path: Assets/_Game/Resources/BussimAssets/passenger/uploads_files_2460380_Marina_1276.fbx
-  artifactKey: Guid(1aac44155e26dd36086f5a9652ae2ef0) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/passenger/uploads_files_2460380_Marina_1276.fbx using Guid(1aac44155e26dd36086f5a9652ae2ef0) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'd9f987b1a9172589e3f2af14d235da3b') in 0.056145714 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 8
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000163 seconds.
-  path: Assets/_Game/Resources/BussimAssets/bus-models/Bus old travego.fbx
-  artifactKey: Guid(b898b61e9f80a34a9a48e738143b4a01) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/bus-models/Bus old travego.fbx using Guid(b898b61e9f80a34a9a48e738143b4a01) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '0a460f19ec63f9484d7d9a4b0b18b031') in 0.284499659 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 224
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000055 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_6073458_lowpoly++Nissan+Frontier+2016_V1.fbx
-  artifactKey: Guid(6a824d009fbe85661b92b16b81bf8a90) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_6073458_lowpoly++Nissan+Frontier+2016_V1.fbx using Guid(6a824d009fbe85661b92b16b81bf8a90) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '5ccc7d6b2744a4aa36b7cecb93cdc2ca') in 0.237387178 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 286
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000069 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic
-  artifactKey: Guid(2f03a3b78e6587412b56f21c489a24b4) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic using Guid(2f03a3b78e6587412b56f21c489a24b4) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '29595ee0d7cdc293a81c26e443c5ac8e') in 0.005677701 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000377 seconds.
-  path: Assets/_Game/Resources/BussimAssets/bus-models/Indonesian Bus AdiPutro JetBus.fbx
-  artifactKey: Guid(f074e3da19fe739d291691eaba1f21b9) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/bus-models/Indonesian Bus AdiPutro JetBus.fbx using Guid(f074e3da19fe739d291691eaba1f21b9) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '8fc6d8c1036b7c9e1b3b1b7d91b62383') in 0.159992956 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 100
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000033 seconds.
-  path: Assets/_Game/Resources/BussimAssets/passenger
-  artifactKey: Guid(70b1d81e37ea7b97cb5906cbc4ab06aa) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/passenger using Guid(70b1d81e37ea7b97cb5906cbc4ab06aa) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '2b40608593b70a0cace827053b3f5e3b') in 0.004259359 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000261 seconds.
-  path: Assets/_Game/Resources/BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx.Fbx
-  artifactKey: Guid(ab834887507b6c0fba84796be9f2c3ea) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx.Fbx using Guid(ab834887507b6c0fba84796be9f2c3ea) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '1a441241f2bd0d458a1e3345b8ed7377') in 1.869864032 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 269
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000047 seconds.
-  path: Assets/_Game/Scripts/Debug/RuntimeEnvironmentSpawner.cs
-  artifactKey: Guid(4b5321b62965c6bf98d9ba8294933f6f) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/Debug/RuntimeEnvironmentSpawner.cs using Guid(4b5321b62965c6bf98d9ba8294933f6f) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '7899d940f142eaa5410cf6ae427d38d1') in 0.005877072 seconds
+  Time since last request: 0.000177 seconds.
+  path: Assets/_Game/Scripts/Editor/BuildingsAndPoiDownloader.cs
+  artifactKey: Guid(208bd3e0a3817b676939033e1256cbeb) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
+Start importing Assets/_Game/Scripts/Editor/BuildingsAndPoiDownloader.cs using Guid(208bd3e0a3817b676939033e1256cbeb) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '1b17a648bad7c28a6da1caf535ecc560') in 0.005080138 seconds
 Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000595 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_3933648_van.fbx.zip
-  artifactKey: Guid(36184854045a918ac8881300ff83cae3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_3933648_van.fbx.zip using Guid(36184854045a918ac8881300ff83cae3) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '7dee5e776c0128c744d4811f8499ddc6') in 0.005481365 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.001521 seconds.
-  path: Assets/_Game/Scripts/Debug/RuntimeSpawnLogger.cs
-  artifactKey: Guid(f8fcc3f5292c372afb335700b45916fb) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/Debug/RuntimeSpawnLogger.cs using Guid(f8fcc3f5292c372afb335700b45916fb) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '0b24c21af85e81bbfc59880301b34503') in 0.008607076 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000633 seconds.
+  Time since last request: 0.000396 seconds.
   path: Assets/_Game/Scripts/UI/SceneBootstrap.cs
   artifactKey: Guid(a00db4b71924054abb77d7fb8d136a36) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/UI/SceneBootstrap.cs using Guid(a00db4b71924054abb77d7fb8d136a36) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '160665fe7bb87ae1af1dec99da26917b') in 0.007165497 seconds
+Start importing Assets/_Game/Scripts/UI/SceneBootstrap.cs using Guid(a00db4b71924054abb77d7fb8d136a36) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '5cf8cd1458bbe10689fc1b3762accaa7') in 0.003909243 seconds
 Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000226 seconds.
-  path: Assets/_Game/Scripts/Fonts/SpaceGrotesk-Regular SDF.asset
-  artifactKey: Guid(42dbb72bb6a795f7eab5ec6e00a19616) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Scripts/Fonts/SpaceGrotesk-Regular SDF.asset using Guid(42dbb72bb6a795f7eab5ec6e00a19616) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'cfcd4eaa7dfa1ced98d1499c0de5194a') in 0.237562495 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 5
+  Time since last request: 0.000219 seconds.
+  path: Assets/_Game/Scripts/OSM/OSMBuildingMeshBuilder.cs
+  artifactKey: Guid(d93bae729ac39709c9a314a39ad3e46d) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
+Start importing Assets/_Game/Scripts/OSM/OSMBuildingMeshBuilder.cs using Guid(d93bae729ac39709c9a314a39ad3e46d) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '62c0d617a63ac4fb58d405c08ec780c3') in 0.004501994 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000077 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_5533688_pickup+test2.fbx
-  artifactKey: Guid(be62cafd233a4f43d874ab17771e2deb) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_5533688_pickup+test2.fbx using Guid(be62cafd233a4f43d874ab17771e2deb) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'ab3226c0646fb9b63d2d5c4939b3d012') in 0.346606554 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 564
-
-========================================================================
-Received Import Request.
-  Time since last request: 0.000078 seconds.
-  path: Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_2902395_kombifbx.fbx
-  artifactKey: Guid(993e88defc4265c57b00180a6232abfe) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
-Start importing Assets/_Game/Resources/BussimAssets/aitraffic/uploads_files_2902395_kombifbx.fbx using Guid(993e88defc4265c57b00180a6232abfe) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: '67acd5cec2d1c132c1908b1c31c4102e') in 0.223868462 seconds
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 112
+  Time since last request: 29.974437 seconds.
+  path: Assets/StreamingAssets/Cities/NBO/poi.json
+  artifactKey: Guid(9f1431a4a91bc06289e59ba8a612349a) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d)
+Start importing Assets/StreamingAssets/Cities/NBO/poi.json using Guid(9f1431a4a91bc06289e59ba8a612349a) Importer(2089858483,b0f066a214c2f5e87bad3c948f4d605d) (ScriptedImporter) -> (artifact id: 'ddcd564c545fa8520a3bcc98d3236c47') in 0.005771623 seconds
+Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 1
 
 ========================================================================
 Received Prepare
-Begin MonoManager ReloadAssembly
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-- Loaded All Assemblies, in  2.793 seconds
-Refreshing native plugins compatible for Editor in 23.01 ms, found 0 plugins.
-Native extension for LinuxStandalone target not found
-Native extension for Android target not found
-Native extension for WebGL target not found
-[Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
-[Package Manager] Unable to send message (not connected to server process).
-[Package Manager] Cannot connect to Unity Package Manager local server
-Refreshing native plugins compatible for Editor in 23.89 ms, found 0 plugins.
-ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 [Licensing::Client] Successfully resolved entitlement details
 [Licensing::Module] License group:
   Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
@@ -572,286 +350,70 @@ ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
   Product: Unity Personal
   Type: Assigned
   Expiration: Unlimited
+Begin MonoManager ReloadAssembly
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
+  Product: Unity Personal
+  Type: ULF
+  Expiration: Unlimited
+[Licensing::Module] License group:
+  Id: 11270643085677-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+Symbol file LoadedFromMemory is not a mono symbol file
+Symbol file LoadedFromMemory is not a mono symbol file
+Symbol file LoadedFromMemory is not a mono symbol file
+- Loaded All Assemblies, in  1.940 seconds
+Refreshing native plugins compatible for Editor in 11.51 ms, found 0 plugins.
+Native extension for LinuxStandalone target not found
+Native extension for Android target not found
+Native extension for WebGL target not found
+[Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
+[Package Manager] Unable to send message (not connected to server process).
+[Package Manager] Cannot connect to Unity Package Manager local server
+Refreshing native plugins compatible for Editor in 11.35 ms, found 0 plugins.
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  3.908 seconds
-Domain Reload Profiling: 6702ms
-	BeginReloadAssembly (643ms)
+- Finished resetting the current domain, in  2.359 seconds
+Domain Reload Profiling: 4301ms
+	BeginReloadAssembly (442ms)
 		ExecutionOrderSort (0ms)
-		DisableScriptedObjects (49ms)
+		DisableScriptedObjects (32ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (247ms)
-	RebuildCommonClasses (164ms)
-	RebuildNativeTypeToScriptingClass (50ms)
-	initialDomainReloadingComplete (102ms)
-	LoadAllAssembliesAndSetupDomain (1832ms)
-		LoadAssemblies (1063ms)
+		CreateAndSetChildDomain (133ms)
+	RebuildCommonClasses (117ms)
+	RebuildNativeTypeToScriptingClass (28ms)
+	initialDomainReloadingComplete (80ms)
+	LoadAllAssembliesAndSetupDomain (1275ms)
+		LoadAssemblies (804ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (984ms)
-			TypeCache.Refresh (29ms)
+		AnalyzeDomain (644ms)
+			TypeCache.Refresh (26ms)
 				TypeCache.ScanAssembly (0ms)
-			BuildScriptInfoCaches (913ms)
-			ResolveRequiredComponents (29ms)
-	FinalizeReload (3909ms)
+			BuildScriptInfoCaches (584ms)
+			ResolveRequiredComponents (23ms)
+	FinalizeReload (2360ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (3006ms)
+		SetupLoadedEditorAssemblies (1899ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (53ms)
-			SetLoadedEditorAssemblies (37ms)
-			BeforeProcessingInitializeOnLoad (1022ms)
-			ProcessInitializeOnLoadAttributes (1606ms)
-			ProcessInitializeOnLoadMethodAttributes (255ms)
-			AfterProcessingInitializeOnLoad (32ms)
-			EditorAssembliesLoaded (2ms)
-		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (81ms)
-Refreshing native plugins compatible for Editor in 14.71 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 5771 unused Assets / (2.0 MB). Loaded Objects now: 6306.
-Memory consumption went from 108.6 MB to 106.7 MB.
-Total: 29.486913 ms (FindLiveObjects: 1.688536 ms CreateObjectMapping: 1.403557 ms MarkObjects: 22.000399 ms  DeleteObjects: 4.390446 ms)
-
-Prepare: number of updated asset objects reloaded= 0
-========================================================================
-Received Prepare
-[Licensing::Client] Successfully resolved entitlement details
-[Licensing::Module] License group:
-  Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
-  Product: Unity Personal
-  Type: ULF
-  Expiration: Unlimited
-[Licensing::Module] License group:
-  Id: 11270643085677-UnityPersXXXX
-  Product: Unity Personal
-  Type: Assigned
-  Expiration: Unlimited
-Begin MonoManager ReloadAssembly
-[Licensing::Client] Successfully resolved entitlement details
-[Licensing::Module] License group:
-  Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
-  Product: Unity Personal
-  Type: ULF
-  Expiration: Unlimited
-[Licensing::Module] License group:
-  Id: 11270643085677-UnityPersXXXX
-  Product: Unity Personal
-  Type: Assigned
-  Expiration: Unlimited
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-- Loaded All Assemblies, in  3.087 seconds
-Refreshing native plugins compatible for Editor in 12.19 ms, found 0 plugins.
-Native extension for LinuxStandalone target not found
-Native extension for Android target not found
-Native extension for WebGL target not found
-[Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
-[Package Manager] Unable to send message (not connected to server process).
-[Package Manager] Cannot connect to Unity Package Manager local server
-Refreshing native plugins compatible for Editor in 26.67 ms, found 0 plugins.
-ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
-Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  3.836 seconds
-Domain Reload Profiling: 6922ms
-	BeginReloadAssembly (577ms)
-		ExecutionOrderSort (0ms)
-		DisableScriptedObjects (60ms)
-		BackupInstance (0ms)
-		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (149ms)
-	RebuildCommonClasses (246ms)
-	RebuildNativeTypeToScriptingClass (70ms)
-	initialDomainReloadingComplete (149ms)
-	LoadAllAssembliesAndSetupDomain (2042ms)
-		LoadAssemblies (1506ms)
-		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (764ms)
-			TypeCache.Refresh (76ms)
-				TypeCache.ScanAssembly (42ms)
-			BuildScriptInfoCaches (652ms)
-			ResolveRequiredComponents (26ms)
-	FinalizeReload (3839ms)
-		ReleaseScriptCaches (0ms)
-		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (3172ms)
-			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (49ms)
-			SetLoadedEditorAssemblies (34ms)
-			BeforeProcessingInitializeOnLoad (824ms)
-			ProcessInitializeOnLoadAttributes (2025ms)
-			ProcessInitializeOnLoadMethodAttributes (217ms)
-			AfterProcessingInitializeOnLoad (21ms)
+			InitializePlatformSupportModulesInManaged (31ms)
+			SetLoadedEditorAssemblies (22ms)
+			BeforeProcessingInitializeOnLoad (657ms)
+			ProcessInitializeOnLoadAttributes (1030ms)
+			ProcessInitializeOnLoadMethodAttributes (142ms)
+			AfterProcessingInitializeOnLoad (16ms)
 			EditorAssembliesLoaded (1ms)
 		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (66ms)
-Refreshing native plugins compatible for Editor in 12.27 ms, found 0 plugins.
+		AwakeInstancesAfterBackupRestoration (47ms)
+Refreshing native plugins compatible for Editor in 12.70 ms, found 0 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 5772 unused Assets / (4.3 MB). Loaded Objects now: 6308.
-Memory consumption went from 108.7 MB to 104.4 MB.
-Total: 27.634103 ms (FindLiveObjects: 1.030070 ms CreateObjectMapping: 1.186573 ms MarkObjects: 18.388543 ms  DeleteObjects: 7.025402 ms)
+Unloading 5777 unused Assets / (2.0 MB). Loaded Objects now: 6316.
+Memory consumption went from 107.4 MB to 105.4 MB.
+Total: 30.285854 ms (FindLiveObjects: 2.348861 ms CreateObjectMapping: 1.407311 ms MarkObjects: 21.973643 ms  DeleteObjects: 4.553315 ms)
 
 Prepare: number of updated asset objects reloaded= 0
-========================================================================
-Received Prepare
-[Licensing::Client] Successfully resolved entitlement details
-[Licensing::Module] License group:
-  Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
-  Product: Unity Personal
-  Type: ULF
-  Expiration: Unlimited
-[Licensing::Module] License group:
-  Id: 11270643085677-UnityPersXXXX
-  Product: Unity Personal
-  Type: Assigned
-  Expiration: Unlimited
-Begin MonoManager ReloadAssembly
-[Licensing::Client] Successfully resolved entitlement details
-[Licensing::Module] License group:
-  Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
-  Product: Unity Personal
-  Type: ULF
-  Expiration: Unlimited
-[Licensing::Module] License group:
-  Id: 11270643085677-UnityPersXXXX
-  Product: Unity Personal
-  Type: Assigned
-  Expiration: Unlimited
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-- Loaded All Assemblies, in  4.451 seconds
-Refreshing native plugins compatible for Editor in 28.05 ms, found 0 plugins.
-Native extension for LinuxStandalone target not found
-Native extension for Android target not found
-Native extension for WebGL target not found
-[Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
-[Package Manager] Unable to send message (not connected to server process).
-[Package Manager] Cannot connect to Unity Package Manager local server
-Refreshing native plugins compatible for Editor in 77.16 ms, found 0 plugins.
-ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
-Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  6.448 seconds
-Domain Reload Profiling: 10910ms
-	BeginReloadAssembly (734ms)
-		ExecutionOrderSort (0ms)
-		DisableScriptedObjects (68ms)
-		BackupInstance (0ms)
-		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (190ms)
-	RebuildCommonClasses (242ms)
-	RebuildNativeTypeToScriptingClass (68ms)
-	initialDomainReloadingComplete (160ms)
-	LoadAllAssembliesAndSetupDomain (3254ms)
-		LoadAssemblies (1921ms)
-		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (1626ms)
-			TypeCache.Refresh (147ms)
-				TypeCache.ScanAssembly (98ms)
-			BuildScriptInfoCaches (1361ms)
-			ResolveRequiredComponents (93ms)
-	FinalizeReload (6452ms)
-		ReleaseScriptCaches (0ms)
-		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (5134ms)
-			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (72ms)
-			SetLoadedEditorAssemblies (49ms)
-			BeforeProcessingInitializeOnLoad (1680ms)
-			ProcessInitializeOnLoadAttributes (2845ms)
-			ProcessInitializeOnLoadMethodAttributes (445ms)
-			AfterProcessingInitializeOnLoad (42ms)
-			EditorAssembliesLoaded (2ms)
-		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (177ms)
-Refreshing native plugins compatible for Editor in 26.80 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 5774 unused Assets / (2.1 MB). Loaded Objects now: 6311.
-Memory consumption went from 108.7 MB to 106.6 MB.
-Total: 43.801988 ms (FindLiveObjects: 1.704434 ms CreateObjectMapping: 2.071868 ms MarkObjects: 35.251578 ms  DeleteObjects: 4.770556 ms)
-
-Prepare: number of updated asset objects reloaded= 0
-========================================================================
-Received Prepare
-[Licensing::Client] Successfully resolved entitlement details
-[Licensing::Module] License group:
-  Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
-  Product: Unity Personal
-  Type: ULF
-  Expiration: Unlimited
-[Licensing::Module] License group:
-  Id: 11270643085677-UnityPersXXXX
-  Product: Unity Personal
-  Type: Assigned
-  Expiration: Unlimited
-Begin MonoManager ReloadAssembly
-[Licensing::Client] Successfully resolved entitlement details
-[Licensing::Module] License group:
-  Id: F4-SHHD-CJ3J-HCUV-EMRH-XXXX
-  Product: Unity Personal
-  Type: ULF
-  Expiration: Unlimited
-[Licensing::Module] License group:
-  Id: 11270643085677-UnityPersXXXX
-  Product: Unity Personal
-  Type: Assigned
-  Expiration: Unlimited
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-Symbol file LoadedFromMemory is not a mono symbol file
-- Loaded All Assemblies, in  4.484 seconds
-Refreshing native plugins compatible for Editor in 35.90 ms, found 0 plugins.
-Native extension for LinuxStandalone target not found
-Native extension for Android target not found
-Native extension for WebGL target not found
-[Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
-[Package Manager] Unable to send message (not connected to server process).
-[Package Manager] Cannot connect to Unity Package Manager local server
-Refreshing native plugins compatible for Editor in 24.19 ms, found 0 plugins.
-ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
-Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  5.033 seconds
-Domain Reload Profiling: 9521ms
-	BeginReloadAssembly (1050ms)
-		ExecutionOrderSort (0ms)
-		DisableScriptedObjects (80ms)
-		BackupInstance (0ms)
-		ReleaseScriptingObjects (1ms)
-		CreateAndSetChildDomain (251ms)
-	RebuildCommonClasses (250ms)
-	RebuildNativeTypeToScriptingClass (51ms)
-	initialDomainReloadingComplete (151ms)
-	LoadAllAssembliesAndSetupDomain (2984ms)
-		LoadAssemblies (2335ms)
-		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (1068ms)
-			TypeCache.Refresh (86ms)
-				TypeCache.ScanAssembly (40ms)
-			BuildScriptInfoCaches (937ms)
-			ResolveRequiredComponents (32ms)
-	FinalizeReload (5035ms)
-		ReleaseScriptCaches (0ms)
-		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (4072ms)
-			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (57ms)
-			SetLoadedEditorAssemblies (53ms)
-			BeforeProcessingInitializeOnLoad (1275ms)
-			ProcessInitializeOnLoadAttributes (2297ms)
-			ProcessInitializeOnLoadMethodAttributes (359ms)
-			AfterProcessingInitializeOnLoad (29ms)
-			EditorAssembliesLoaded (2ms)
-		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (82ms)
-Refreshing native plugins compatible for Editor in 23.45 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 5774 unused Assets / (3.1 MB). Loaded Objects now: 6312.
-Memory consumption went from 108.7 MB to 105.6 MB.
-Total: 53.094720 ms (FindLiveObjects: 1.547944 ms CreateObjectMapping: 2.436070 ms MarkObjects: 41.516458 ms  DeleteObjects: 7.574033 ms)
-
-Prepare: number of updated asset objects reloaded= 0
-AssetImportWorkerClient::OnTransportError - code=2 error=End of file

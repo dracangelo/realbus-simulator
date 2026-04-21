@@ -18,13 +18,20 @@ public class GPSManager : MonoBehaviour
             return;
         }
         Instance = this;
+        ResolveMapTileLoader();
     }
 
     void Start()
     {
-        mapTileLoader = FindFirstObjectByType<MapTileLoader>();
+        ResolveMapTileLoader();
         if (mapTileLoader == null)
             Debug.LogError("GPSManager: No MapTileLoader found in scene!");
+    }
+
+    void ResolveMapTileLoader()
+    {
+        if (mapTileLoader == null)
+            mapTileLoader = FindFirstObjectByType<MapTileLoader>();
     }
 
     /// <summary>
@@ -32,6 +39,7 @@ public class GPSManager : MonoBehaviour
     /// </summary>
     public Vector3 GpsToWorld(double lat, double lon)
     {
+        ResolveMapTileLoader();
         if (mapTileLoader == null) return Vector3.zero;
         return mapTileLoader.GpsToWorldPosition(lat, lon);
     }
@@ -41,6 +49,7 @@ public class GPSManager : MonoBehaviour
     /// </summary>
     public (double lat, double lon) WorldToGps(Vector3 worldPos)
     {
+        ResolveMapTileLoader();
         if (mapTileLoader == null) return (0, 0);
         return mapTileLoader.WorldPositionToGps(worldPos);
     }

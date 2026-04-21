@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class StopPropSpawner : MonoBehaviour
 {
@@ -14,13 +15,25 @@ public class StopPropSpawner : MonoBehaviour
     [Header("Placement")]
     public float lateralOffset = 3f;
     public float forwardOffset = 1.5f;
+    public float stopModelVerticalOffset = 0f;
     public bool alignToRouteDirection = true;
     public Vector2 randomYawRange = new Vector2(-10f, 10f);
     public Vector2 randomScaleRange = new Vector2(0.8f, 1.2f);
+    public float triggerApproachDistance = 50f;
+    public float triggerDockingRadius = 12f;
+    public bool spawnOnlyFirstStopAtMissionStart = false;
     public bool logSpawns = true;
 
     void Start()
     {
+        StartCoroutine(SpawnStopPropsWhenReady());
+    }
+
+    IEnumerator SpawnStopPropsWhenReady()
+    {
+        while ((MissionManager.Instance == null || MissionManager.Instance.currentRoute == null) || GPSManager.Instance == null)
+            yield return null;
+
         SpawnStopProps();
     }
 
@@ -49,7 +62,10 @@ public class StopPropSpawner : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < route.stops.Length; i++)
+        ClearSpawnedProps();
+
+        int stopCount = spawnOnlyFirstStopAtMissionStart ? Mathf.Min(1, route.stops.Length) : route.stops.Length;
+        for (int i = 0; i < stopCount; i++)
         {
             var stop = route.stops[i];
             Vector3 stopPos = GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude);
@@ -71,13 +87,41 @@ public class StopPropSpawner : MonoBehaviour
                 : 0f;
             yaw += Random.Range(randomYawRange.x, randomYawRange.y);
 
-            var go = Instantiate(prefab, worldPos, Quaternion.Euler(0f, yaw, 0f), transform);
+            var stopRoot = new GameObject($"RuntimeStop_{i:00}_{SanitizeName(stop.stopName)}");
+            stopRoot.transform.SetParent(transform, false);
+            stopRoot.transform.position = stopPos;
+
+            var trigger = stopRoot.AddComponent<StopTrigger>();
+            trigger.stopName = stop.stopName;
+            trigger.stopIndex = i;
+            trigger.approachDistance = triggerApproachDistance;
+
+            var docking = stopRoot.AddComponent<DockingZone>();
+            docking.stopName = stop.stopName;
+            docking.stopIndex = i;
+            docking.dockingRadius = triggerDockingRadius;
+
+            var model = Instantiate(prefab, worldPos + Vector3.up * stopModelVerticalOffset, Quaternion.Euler(0f, yaw, 0f), stopRoot.transform);
             float scale = Random.Range(randomScaleRange.x, randomScaleRange.y);
-            go.transform.localScale = Vector3.Scale(go.transform.localScale, Vector3.one * scale);
+            model.transform.localScale = Vector3.Scale(model.transform.localScale, Vector3.one * scale);
 
             if (logSpawns)
                 Debug.Log($"[StopPropSpawner] Spawned {propPath} at stop '{stop.stopName}'.");
         }
+    }
+
+    void ClearSpawnedProps()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+            Destroy(transform.GetChild(i).gameObject);
+    }
+
+    static string SanitizeName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "Stop";
+
+        return value.Replace(" ", "_").Replace("/", "_");
     }
 
     float GetRouteYaw(BusRoute route, int index)

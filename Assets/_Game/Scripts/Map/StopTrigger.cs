@@ -31,6 +31,16 @@ public class StopTrigger : MonoBehaviour
     void Update()
     {
         if (busTransform == null) return;
+        if (!IsRelevantStop())
+        {
+            if (approachTriggered)
+            {
+                approachTriggered = false;
+                if (StopApproachUI.Instance != null)
+                    StopApproachUI.Instance.HideApproach();
+            }
+            return;
+        }
 
         float distance = Vector3.Distance(transform.position, busTransform.position);
 
@@ -62,6 +72,19 @@ public class StopTrigger : MonoBehaviour
         Debug.Log($"Approaching: {stopName} — {distance:F0}m");
         if (StopApproachUI.Instance != null)
             StopApproachUI.Instance.ShowApproach(stopName, distance);
+    }
+
+    bool IsRelevantStop()
+    {
+        var mission = MissionManager.Instance;
+        if (mission != null && mission.routeActive && mission.currentRoute != null)
+            return stopIndex == Mathf.Clamp(mission.currentStopIndex, 0, mission.currentRoute.stops.Length - 1);
+
+        var freeDrive = FreeDriveSession.Instance;
+        if (freeDrive != null && freeDrive.sessionActive)
+            return true;
+
+        return false;
     }
 
     void OnDrawGizmos()

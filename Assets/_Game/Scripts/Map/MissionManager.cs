@@ -3,6 +3,16 @@ using System.Collections;
 
 public class MissionManager : MonoBehaviour
 {
+    const float MaxSpawnDistanceFromMapCenterMeters = 3500f;
+    const float SpawnRaycastHeight = 600f;
+    const float SpawnRaycastDistance = 2000f;
+    const float SpawnClearanceAboveGround = 1.2f;
+    const float SpawnOffsetBehindStartStopMeters = 14f;
+    const float SpawnOffsetSideMeters = 5f;
+    const float StopApproachDistanceMeters = 120f;
+    const float WaitForRoadsTimeoutSeconds = 8f;
+    const float SpawnRoadSearchRadiusMeters = 45f;
+
     public static MissionManager Instance { get; private set; }
 
     [Header("Active Route")]
@@ -32,6 +42,9 @@ public class MissionManager : MonoBehaviour
 
     void Start()
     {
+        if (StopApproachUI.Instance != null)
+            StopApproachUI.Instance.HideApproach();
+
         StartCoroutine(InitNextFrame());
     }
 
@@ -67,10 +80,28 @@ public class MissionManager : MonoBehaviour
         busController.throttleInput = 0f;
         busController.brakeInput = 1f;
 
-        Vector3 startPos = GPSManager.Instance.GpsToWorld(
-            currentRoute.stops[0].latitude,
-            currentRoute.stops[0].longitude);
-        startPos.y = 1f;
+        var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        double spawnLat = city != null ? city.spawnLat : currentRoute.stops[0].latitude;
+        double spawnLon = city != null ? city.spawnLon : currentRoute.stops[0].longitude;
+        double routeLat = currentRoute.stops[0].latitude;
+        double routeLon = currentRoute.stops[0].longitude;
+
+        if (IsSpawnNearLoadedMap(routeLat, routeLon))
+        {
+            spawnLat = routeLat;
+            spawnLon = routeLon;
+        }
+        else
+        {
+            Debug.LogWarning("MissionManager: First route stop is outside loaded map bounds. Using city spawn instead.");
+        }
+
+        yield return WaitForRoadSurfaceIfAvailable();
+
+        Vector3 startPos = GPSManager.Instance.GpsToWorld(spawnLat, spawnLon);
+        startPos = ApplySpawnOffsetFromRouteStart(startPos);
+        startPos = SnapSpawnToNearestRoad(startPos);
+        startPos.y = ResolveSpawnHeight(startPos);
         busController.transform.position = startPos;
 
         Debug.Log("Mission starting...");
@@ -108,6 +139,108 @@ public class MissionManager : MonoBehaviour
         Debug.Log($"Route started: {currentRoute.routeName}");
     }
 
+    bool IsSpawnNearLoadedMap(double lat, double lon)
+    {
+        if (GPSManager.Instance == null)
+            return false;
+
+        var world = GPSManager.Instance.GpsToWorld(lat, lon);
+        world.y = 0f;
+        return world.sqrMagnitude <= MaxSpawnDistanceFromMapCenterMeters * MaxSpawnDistanceFromMapCenterMeters;
+    }
+
+    float ResolveSpawnHeight(Vector3 spawnWorldPos)
+    {
+        Vector3 castStart = spawnWorldPos + Vector3.up * SpawnRaycastHeight;
+        if (Physics.Raycast(castStart, Vector3.down, out RaycastHit hit, SpawnRaycastDistance, ~0, QueryTriggerInteraction.Ignore))
+            return hit.point.y + SpawnClearanceAboveGround;
+
+        var mapLoader = FindFirstObjectByType<MapTileLoader>();
+        if (mapLoader != null)
+            return mapLoader.tileSurfaceY + SpawnClearanceAboveGround;
+
+        return 1f;
+    }
+
+    IEnumerator WaitForRoadSurfaceIfAvailable()
+    {
+        float deadline = Time.time + WaitForRoadsTimeoutSeconds;
+        while (Time.time < deadline)
+        {
+            var roads = OSMRoadMeshBuilder.Instance;
+            if (roads != null && roads.roadsBuilt)
+                yield break;
+            yield return null;
+        }
+    }
+
+    Vector3 SnapSpawnToNearestRoad(Vector3 spawnPos)
+    {
+        var roads = OSMRoadMeshBuilder.Instance;
+        if (roads == null || !roads.roadsBuilt)
+            return spawnPos;
+
+        Vector3 probe = spawnPos + Vector3.up * 2f;
+        Collider[] nearby = Physics.OverlapSphere(probe, SpawnRoadSearchRadiusMeters, ~0, QueryTriggerInteraction.Ignore);
+        if (nearby == null || nearby.Length == 0)
+            return spawnPos;
+
+        Vector3 best = spawnPos;
+        float bestSqr = float.MaxValue;
+
+        for (int i = 0; i < nearby.Length; i++)
+        {
+            var col = nearby[i];
+            if (col == null) continue;
+            if (!IsRoadCollider(col)) continue;
+
+            Vector3 p = col.ClosestPoint(probe);
+            Vector2 delta = new Vector2(p.x - spawnPos.x, p.z - spawnPos.z);
+            float sqr = delta.sqrMagnitude;
+            if (sqr < bestSqr)
+            {
+                bestSqr = sqr;
+                best = new Vector3(p.x, spawnPos.y, p.z);
+            }
+        }
+
+        return bestSqr < float.MaxValue ? best : spawnPos;
+    }
+
+    bool IsRoadCollider(Collider col)
+    {
+        if (col == null) return false;
+        var t = col.transform;
+        if (t.name.StartsWith("Road_")) return true;
+        if (t.parent != null && t.parent.name == "OSM_Roads") return true;
+        if (t.root != null && t.root.name == "OSM_Roads") return true;
+        return false;
+    }
+
+    Vector3 ApplySpawnOffsetFromRouteStart(Vector3 startPos)
+    {
+        if (currentRoute == null || currentRoute.stops == null || currentRoute.stops.Length == 0 || GPSManager.Instance == null)
+            return startPos;
+
+        Vector3 forward = busController != null ? busController.transform.forward : Vector3.forward;
+        if (currentRoute.stops.Length > 1)
+        {
+            var secondStopWorld = GPSManager.Instance.GpsToWorld(
+                currentRoute.stops[1].latitude,
+                currentRoute.stops[1].longitude);
+            var routeDirection = new Vector3(
+                secondStopWorld.x - startPos.x,
+                0f,
+                secondStopWorld.z - startPos.z);
+            if (routeDirection.sqrMagnitude > 1f)
+                forward = routeDirection.normalized;
+        }
+
+        var right = Vector3.Cross(Vector3.up, forward).normalized;
+        var offset = (-forward * SpawnOffsetBehindStartStopMeters) + (right * SpawnOffsetSideMeters);
+        return startPos + offset;
+    }
+
     void Update()
     {
         if (!routeActive || currentRoute == null) return;
@@ -115,8 +248,33 @@ public class MissionManager : MonoBehaviour
         distanceToNextStop = Vector3.Distance(
             busController.transform.position, nextStopWorldPos);
 
+        UpdateStopApproachUI();
+
         if (distanceToNextStop < 15f)
             ArrivedAtStop();
+    }
+
+    void UpdateStopApproachUI()
+    {
+        if (StopApproachUI.Instance == null)
+            return;
+
+        if (currentStopIndex < 0 || currentRoute == null || currentRoute.stops == null || currentStopIndex >= currentRoute.stops.Length)
+        {
+            StopApproachUI.Instance.HideApproach();
+            return;
+        }
+
+        if (distanceToNextStop <= StopApproachDistanceMeters && distanceToNextStop > 15f && !isProcessingStop)
+        {
+            var stop = currentRoute.stops[currentStopIndex];
+            StopApproachUI.Instance.ShowApproach(stop.stopName, distanceToNextStop);
+            StopApproachUI.Instance.UpdateDistance(distanceToNextStop);
+        }
+        else if (!isProcessingStop)
+        {
+            StopApproachUI.Instance.HideApproach();
+        }
     }
 
     void SetNextStop()
@@ -132,6 +290,8 @@ public class MissionManager : MonoBehaviour
         nextStopWorldPos.y = busController.transform.position.y;
 
         missionState = MissionState.InProgress;
+        if (StopApproachUI.Instance != null)
+            StopApproachUI.Instance.HideApproach();
         Debug.Log($"Next stop: {stop.stopName} — {distanceToNextStop:F0}m away");
     }
 
@@ -148,6 +308,8 @@ public class MissionManager : MonoBehaviour
         var stop = currentRoute.stops[currentStopIndex];
         missionState = MissionState.AtStop;
         Debug.Log($"Arrived at: {stop.stopName}");
+        if (StopApproachUI.Instance != null)
+            StopApproachUI.Instance.ShowDocked(stop.stopName);
 
         // Record punctuality BEFORE incrementing index
         if (ScheduleManager.Instance != null)
@@ -181,6 +343,8 @@ public class MissionManager : MonoBehaviour
     {
         routeActive = false;
         missionState = MissionState.Completed;
+        if (StopApproachUI.Instance != null)
+            StopApproachUI.Instance.HideApproach();
         Debug.Log($"Route complete: {currentRoute.routeName}");
 
         // Generate and show result

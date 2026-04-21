@@ -88,6 +88,7 @@
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DockingZone.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/SkyController.cs" />
+    <Compile Include="Assets/_Game/Scripts/Debug/RuntimeOsmPoiVisualizer.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficStressTest.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MapOrigin.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MapTileLoader.cs" />

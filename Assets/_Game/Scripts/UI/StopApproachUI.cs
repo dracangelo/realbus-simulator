@@ -26,20 +26,28 @@ public class StopApproachUI : MonoBehaviour
 
     public void ShowApproach(string stopName, float distance)
     {
-        approachPanel.SetActive(true);
-        stopNameText.text = stopName;
-        distanceText.text = $"{distance:F0}m";
-        statusText.text = "APPROACHING";
+        if (approachPanel != null)
+            approachPanel.SetActive(true);
+        if (stopNameText != null)
+            stopNameText.text = stopName;
+        if (distanceText != null)
+            distanceText.text = $"{distance:F0}m";
+        if (statusText != null)
+            statusText.text = "APPROACHING";
         if (panelBackground != null)
             panelBackground.color = new Color(1f, 0.5f, 0f, 0.85f); // orange
     }
 
     public void ShowDocked(string stopName)
     {
-        approachPanel.SetActive(true);
-        stopNameText.text = stopName;
-        distanceText.text = "STOP";
-        statusText.text = "DOCKED";
+        if (approachPanel != null)
+            approachPanel.SetActive(true);
+        if (stopNameText != null)
+            stopNameText.text = stopName;
+        if (distanceText != null)
+            distanceText.text = "STOP";
+        if (statusText != null)
+            statusText.text = "DOCKED";
         if (panelBackground != null)
             panelBackground.color = new Color(0f, 0.8f, 0f, 0.85f); // green
     }
@@ -53,7 +61,7 @@ public class StopApproachUI : MonoBehaviour
     // Update distance live while approaching
     public void UpdateDistance(float distance)
     {
-        if (approachPanel != null && approachPanel.activeSelf)
+        if (approachPanel != null && approachPanel.activeSelf && distanceText != null)
             distanceText.text = $"{distance:F0}m";
     }
 }

@@ -10,6 +10,14 @@ public class SceneBootstrap : MonoBehaviour
 {
     [SerializeField] bool redirectIfNoManagers = true;
     [SerializeField] SceneCatalog sceneCatalog;
+    [Header("Direct Play Runtime")]
+    [SerializeField] bool spawnSupplementalWorldProps = false;
+    [SerializeField] bool spawnOnlyFirstStopPropsAtMissionStart = false;
+    [SerializeField] bool attachMainCameraToBusForDirectPlay = true;
+    [SerializeField] bool disableCinemachineVirtualCamerasForDirectPlay = true;
+    [SerializeField] bool disableCinemachineBrainForDirectPlay = true;
+    [SerializeField] Vector3 directPlayCameraLocalPosition = new Vector3(0f, 3.2f, -7.5f);
+    [SerializeField] Vector3 directPlayCameraLocalEuler = new Vector3(14f, 0f, 0f);
     [Header("Gameplay Fallbacks")]
     [SerializeField] BusRoute fallbackRoute;
     [SerializeField] MissionData fallbackMissionData;
@@ -92,11 +100,6 @@ public class SceneBootstrap : MonoBehaviour
         if (missionManager == null) return;
 
         EnsureRuntimeLogger();
-        EnsurePedestrianSpawner();
-        EnsureEnvironmentSpawner();
-        EnsureStopPropSpawner();
-        EnsureGasStationSpawner();
-        EnsureTarmacApplier();
 
         var selectedRoute = GameState.Instance?.selectedRoute;
         var routeToUse = selectedRoute != null ? selectedRoute : fallbackRoute;
@@ -120,7 +123,67 @@ public class SceneBootstrap : MonoBehaviour
         if (missionManager.busController == null)
             missionManager.busController = FindObjectOfType<BusController>();
 
+        EnsureGpsManager();
+        DisableCinemachineVirtualCamerasForDirectPlay();
+        EnsureMainCameraForDirectPlay(missionManager.busController);
+        ConfigureRoadGraphBackedSystems(routeToUse);
+        EnsurePedestrianSpawner();
+        EnsureStopPropSpawner();
+        EnsureTarmacApplier();
+        EnsureRuntimeRoadSystems();
+        EnsureBuildingSystems();
+        EnsurePoiVisualizer();
+
+        if (spawnSupplementalWorldProps)
+        {
+            EnsureEnvironmentSpawner();
+            EnsureGasStationSpawner();
+        }
+
         ApplyBusScaleFromMap();
+    }
+
+    void EnsureGpsManager()
+    {
+        if (FindObjectOfType<GPSManager>() != null)
+            return;
+
+        var mapLoader = FindObjectOfType<MapTileLoader>();
+        if (mapLoader == null)
+        {
+            Debug.LogWarning("SceneBootstrap: No MapTileLoader found, so GPSManager cannot resolve map coordinates yet.");
+            return;
+        }
+
+        var go = new GameObject("GPSManager");
+        go.AddComponent<GPSManager>();
+    }
+
+    void EnsureRuntimeRoadSystems()
+    {
+        var osmLoader = FindObjectOfType<OSMLoader>();
+        if (osmLoader == null)
+        {
+            var loaderGo = new GameObject("OSMLoader");
+            osmLoader = loaderGo.AddComponent<OSMLoader>();
+        }
+
+        var roadBuilder = FindObjectOfType<OSMRoadMeshBuilder>();
+        if (roadBuilder == null)
+        {
+            var roadsGo = new GameObject("OSMRoadMeshBuilder");
+            roadBuilder = roadsGo.AddComponent<OSMRoadMeshBuilder>();
+        }
+
+        // Always render + collide roads in direct-play so the player bus can drive on geometry.
+        roadBuilder.renderRoadSurface = true;
+        roadBuilder.drawCenterLines = true;
+        roadBuilder.maxColliderSegmentLength = Mathf.Clamp(roadBuilder.maxColliderSegmentLength, 10f, 60f);
+        roadBuilder.SetRoadSurfaceVisible(true);
+
+        var mapLoader = FindObjectOfType<MapTileLoader>();
+        if (mapLoader != null)
+            roadBuilder.roadYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.02f);
     }
 
 #if UNITY_EDITOR
@@ -239,13 +302,18 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsurePedestrianSpawner()
     {
-        if (FindObjectOfType<PedestrianSpawner>() != null)
+        var existing = FindObjectOfType<PedestrianSpawner>();
+        if (existing != null)
+        {
+            if (existing.roadGraph == null)
+                existing.useRandomGeneratedCrossings = false;
             return;
+        }
 
         var go = new GameObject("PedestrianSpawner");
         var spawner = go.AddComponent<PedestrianSpawner>();
-        spawner.useRandomGeneratedCrossings = true;
-        spawner.roadGraph = FindObjectOfType<AIRoadGraph>();
+        spawner.roadGraph = FindUsableRoadGraph();
+        spawner.useRandomGeneratedCrossings = spawner.roadGraph != null;
     }
 
     void EnsureEnvironmentSpawner()
@@ -259,11 +327,16 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureStopPropSpawner()
     {
-        if (FindObjectOfType<StopPropSpawner>() != null)
+        var existing = FindObjectOfType<StopPropSpawner>();
+        if (existing != null)
+        {
+            existing.spawnOnlyFirstStopAtMissionStart = spawnOnlyFirstStopPropsAtMissionStart;
             return;
+        }
 
         var go = new GameObject("StopPropSpawner");
-        go.AddComponent<StopPropSpawner>();
+        var spawner = go.AddComponent<StopPropSpawner>();
+        spawner.spawnOnlyFirstStopAtMissionStart = spawnOnlyFirstStopPropsAtMissionStart;
     }
 
     void EnsureGasStationSpawner()
@@ -284,6 +357,35 @@ public class SceneBootstrap : MonoBehaviour
         go.AddComponent<RuntimeTarmacApplier>();
     }
 
+    void EnsureBuildingSystems()
+    {
+        if (FindObjectOfType<OSMBuildingLoader>() == null)
+        {
+            var loaderGo = new GameObject("OSMBuildingLoader");
+            loaderGo.AddComponent<OSMBuildingLoader>();
+        }
+
+        var builder = FindObjectOfType<OSMBuildingMeshBuilder>();
+        if (builder == null)
+        {
+            var builderGo = new GameObject("OSMBuildingMeshBuilder");
+            builder = builderGo.AddComponent<OSMBuildingMeshBuilder>();
+        }
+
+        var mapLoader = FindObjectOfType<MapTileLoader>();
+        if (mapLoader != null)
+            builder.buildingBaseYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.2f);
+    }
+
+    void EnsurePoiVisualizer()
+    {
+        if (FindObjectOfType<RuntimeOsmPoiVisualizer>() != null)
+            return;
+
+        var go = new GameObject("RuntimeOsmPoiVisualizer");
+        go.AddComponent<RuntimeOsmPoiVisualizer>();
+    }
+
     void ApplyBusScaleFromMap()
     {
         var bus = FindObjectOfType<BusController>();
@@ -292,5 +394,120 @@ public class SceneBootstrap : MonoBehaviour
 
         float scale = map.tileWorldSize > 0f ? map.tileWorldSize / 200f : 1f;
         bus.transform.localScale = Vector3.one * Mathf.Max(0.5f, scale);
+    }
+
+    void EnsureMainCameraForDirectPlay(BusController bus)
+    {
+        if (!attachMainCameraToBusForDirectPlay || bus == null)
+            return;
+
+        var cam = Camera.main;
+        if (cam == null)
+            cam = FindObjectOfType<Camera>();
+        if (cam == null)
+            return;
+
+        DisableCinemachineBrain(cam);
+
+        Transform camTransform = cam.transform;
+        if (camTransform.parent == bus.transform)
+            return;
+
+        camTransform.SetParent(bus.transform, false);
+        camTransform.localPosition = directPlayCameraLocalPosition;
+        camTransform.localRotation = Quaternion.Euler(directPlayCameraLocalEuler);
+    }
+
+    void DisableCinemachineVirtualCamerasForDirectPlay()
+    {
+        if (!disableCinemachineVirtualCamerasForDirectPlay)
+            return;
+
+        var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            var behaviour = behaviours[i];
+            if (behaviour == null)
+                continue;
+
+            var type = behaviour.GetType();
+            if (type == null)
+                continue;
+
+            string fullName = type.FullName ?? string.Empty;
+            if (fullName.Contains("CinemachineVirtualCamera") ||
+                fullName.Contains("CinemachineFreeLook"))
+            {
+                behaviour.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    void DisableCinemachineBrain(Camera cam)
+    {
+        if (!disableCinemachineBrainForDirectPlay || cam == null)
+            return;
+
+        var behaviours = cam.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            var behaviour = behaviours[i];
+            if (behaviour == null)
+                continue;
+
+            var type = behaviour.GetType();
+            string fullName = type != null ? type.FullName ?? string.Empty : string.Empty;
+            if (fullName.Contains("CinemachineBrain"))
+                behaviour.enabled = false;
+        }
+    }
+
+    void ConfigureRoadGraphBackedSystems(BusRoute route)
+    {
+        var usableGraph = FindUsableRoadGraph(route);
+
+        var vehiclePool = FindObjectOfType<VehiclePool>();
+        if (vehiclePool != null)
+        {
+            vehiclePool.roadGraph = usableGraph;
+            vehiclePool.allowAutoResolveRoadGraph = usableGraph != null;
+            if (usableGraph == null)
+                Debug.LogWarning("SceneBootstrap: VehiclePool AIRoadGraph is misaligned with the active city. Traffic graph usage disabled for this direct-play run.");
+        }
+
+        var pedestrianSpawner = FindObjectOfType<PedestrianSpawner>();
+        if (pedestrianSpawner != null)
+        {
+            pedestrianSpawner.roadGraph = usableGraph;
+            pedestrianSpawner.useRandomGeneratedCrossings = usableGraph != null;
+            if (usableGraph == null)
+                Debug.LogWarning("SceneBootstrap: PedestrianSpawner AIRoadGraph is misaligned with the active city. Random crossings disabled for this direct-play run.");
+        }
+    }
+
+    AIRoadGraph FindUsableRoadGraph(BusRoute route = null)
+    {
+        var graph = FindObjectOfType<AIRoadGraph>();
+        if (graph == null || graph.NodeCount == 0)
+            return null;
+
+        var city = GameState.Instance?.selectedCity ?? CityManager.Instance?.activeCity;
+        if (city == null)
+            return graph;
+
+        BusStopData referenceStop = null;
+        if (route != null && route.stops != null && route.stops.Length > 0)
+            referenceStop = route.stops[0];
+
+        Vector3 referenceWorld = referenceStop != null
+            ? CoordinateConverter.LocalOriginGeoToWorld(referenceStop.latitude, referenceStop.longitude, city.centreLat, city.centreLon)
+            : CoordinateConverter.LocalOriginGeoToWorld(city.spawnLat, city.spawnLon, city.centreLat, city.centreLon);
+
+        int nearest = graph.GetNearestNodeIndex(referenceWorld);
+        if (!graph.IsValidNode(nearest))
+            return null;
+
+        float distance = Vector3.Distance(referenceWorld, graph.GetNodePosition(nearest));
+        return distance <= 500f ? graph : null;
     }
 }
