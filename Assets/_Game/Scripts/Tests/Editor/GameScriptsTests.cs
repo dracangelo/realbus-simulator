@@ -15,6 +15,8 @@ public class GameScriptsTests
         ResetSingleton<PassengerManager>();
         ResetSingleton<FreeDriveSession>();
         ResetSingleton<GameState>();
+        ResetSingleton<DriverShiftSystem>();
+        ResetSingleton<ExtendedTrafficViolationSystem>();
         ResetSingleton<WeatherSystem>();
 
         foreach (var gameObject in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
@@ -233,6 +235,31 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void MissionResult_Generate_UsesMissionSettlementBreakdown_WhenAvailable()
+    {
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.routeName = "Depot Loop";
+
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+        gameState.lastMissionSettlement.grossEarningsKES = 5000f;
+        gameState.lastMissionSettlement.fuelRefuelCostKES = 1200f;
+        gameState.lastMissionSettlement.maintenanceCostKES = 800f;
+        gameState.lastMissionSettlement.netEarningsKES = 3000f;
+
+        var passengerManager = CreateComponent<PassengerManager>("PassengerManager");
+        SetSingleton(passengerManager);
+        passengerManager.totalFareCollected = 5000f;
+
+        var result = MissionResult.Generate(route);
+
+        Assert.That(result.totalFareKES, Is.EqualTo(5000));
+        Assert.That(result.fuelRefuelCostKES, Is.EqualTo(1200));
+        Assert.That(result.maintenanceCostKES, Is.EqualTo(800));
+        Assert.That(result.netEarningsKES, Is.EqualTo(3000));
+    }
+
+    [Test]
     public void FreeDriveSession_StartAndEndSession_ResetAndToggleState()
     {
         var session = CreateComponent<FreeDriveSession>("FreeDriveSession");
@@ -331,6 +358,113 @@ public class GameScriptsTests
         gameState.SelectRoute(route);
 
         Assert.That(gameState.selectedRoute, Is.SameAs(route));
+    }
+
+    [Test]
+    public void GameState_GetFuelPercent_UsesPersistentVehicleState()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        gameState.vehicleState.fuelCapacityLitres = 300f;
+        gameState.vehicleState.fuelLitres = 60f;
+
+        Assert.That(gameState.GetFuelPercent(), Is.EqualTo(20f));
+    }
+
+    [Test]
+    public void MaintenanceSystem_GetWheelGripMultiplier_DropsAfterHalfWear()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+        gameState.vehicleState.axleTyreWearNormalized = new[] { 0.25f, 0.5f, 0.8f };
+
+        var maintenanceSystem = CreateComponent<MaintenanceSystem>("MaintenanceSystem");
+
+        Assert.That(maintenanceSystem.GetWheelGripMultiplier(0), Is.EqualTo(1f));
+        Assert.That(maintenanceSystem.GetWheelGripMultiplier(4), Is.LessThan(1f));
+    }
+
+    [Test]
+    public void DriverShiftSystem_PrepareRoute_StartsShift_Inspection_AndRota()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+        var shiftSystem = gameState.gameObject.AddComponent<DriverShiftSystem>();
+
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.estimatedTimeMinutes = 25f;
+
+        shiftSystem.PrepareRoute(route, null);
+
+        Assert.That(shiftSystem.shiftActive, Is.True);
+        Assert.That(shiftSystem.inspectionCompleted, Is.True);
+        Assert.That(shiftSystem.rotaSignedIn, Is.True);
+        Assert.That(shiftSystem.plannedRouteCount, Is.InRange(2, 4));
+    }
+
+    [Test]
+    public void DriverShiftSystem_CompleteRoute_BuildsShiftSummary_WhenShiftEnds()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+        var shiftSystem = gameState.gameObject.AddComponent<DriverShiftSystem>();
+
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.estimatedTimeMinutes = 20f;
+
+        shiftSystem.PrepareRoute(route, null);
+        shiftSystem.plannedRouteCount = 1;
+        gameState.vehicleState.totalFuelConsumedLitres = 6f;
+
+        var result = new MissionResult
+        {
+            routeName = "Depot Loop",
+            punctualityScore = 88f,
+            satisfactionScore = 84f,
+            safetyScore = 92f,
+            efficiencyScore = 81f,
+            totalPassengers = 54,
+            totalFareKES = 4200,
+            netEarningsKES = 3100,
+            totalDistanceKm = 18f,
+            totalTimeMinutes = 23f
+        };
+
+        shiftSystem.CompleteRoute(route, result, true);
+        bool applied = shiftSystem.TryApplyShiftSummary(result);
+
+        Assert.That(shiftSystem.shiftCompleted, Is.True);
+        Assert.That(applied, Is.True);
+        Assert.That(result.isShiftSummary, Is.True);
+        Assert.That(result.shiftRoutesCompleted, Is.EqualTo(1));
+        Assert.That(result.shiftFuelConsumedLitres, Is.EqualTo(6f));
+    }
+
+    [Test]
+    public void MissionResult_Generate_AppliesViolationPenalty_AndLowSatisfactionStarCap()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.routeName = "CBD";
+
+        var scoreTracker = CreateComponent<ScoreTracker>("ScoreTracker");
+        SetSingleton(scoreTracker);
+        scoreTracker.totalScore = 92f;
+        scoreTracker.punctualityScore = 90f;
+        scoreTracker.satisfactionScore = 55f;
+        scoreTracker.safetyScore = 92f;
+        scoreTracker.efficiencyScore = 91f;
+
+        var violationSystem = CreateComponent<ExtendedTrafficViolationSystem>("ViolationSystem");
+        SetSingleton(violationSystem);
+        violationSystem.RecordSignalViolation(false);
+
+        var result = MissionResult.Generate(route);
+
+        Assert.That(result.totalViolations, Is.GreaterThanOrEqualTo(1));
+        Assert.That(result.starRating, Is.LessThanOrEqualTo(2));
+        Assert.That(result.driverReputationRating, Is.LessThan(100f));
     }
 
     [Test]

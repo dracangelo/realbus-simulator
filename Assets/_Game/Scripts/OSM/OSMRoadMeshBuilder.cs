@@ -47,6 +47,12 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     public float roadModelSurfaceLift = 0.01f;
     public bool overrideRoadModelMaterials = false;
 
+    [Header("Median Barriers")]
+    public bool autoGenerateMedianBarriers = true;
+    public string medianBarrierResourcePath = "BussimAssets/road_fbarrier1";
+    public float medianBarrierSpacingMeters = 4.5f;
+    public float medianBarrierLift = 0.02f;
+
     [Header("Settings")]
     // Must be > MapTileLoader.tileSurfaceY (0.15) so roads render on top of map tiles.
     public float roadYOffset = 0.25f;
@@ -66,6 +72,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     private bool roadVisualPrefabLoadAttempted;
     private Bounds roadVisualBounds;
     private bool hasRoadVisualBounds;
+    private GameObject medianBarrierPrefab;
+    private bool medianBarrierLoadAttempted;
 
     void Awake()
     {
@@ -119,7 +127,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             Mesh mesh = BuildRoadSegmentMesh(points, width);
             if (mesh == null) continue;
 
-            var roadObj = new GameObject($"Road_{way.id}");
+            string roadLabel = way.GetRoadType();
+            string trafficMode = way.IsOneWay() ? "OneWay" : "TwoWay";
+            var roadObj = new GameObject($"Road_{way.id}_{roadLabel}_{trafficMode}_{way.GetDisplayName()}");
             roadObj.transform.parent = roadsParent.transform;
             if (roadLayer > 0)
                 roadObj.layer = roadLayer;
@@ -147,8 +157,11 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (!string.IsNullOrEmpty(roadTag) && IsValidTag(roadTag))
                 roadObj.tag = roadTag;
 
-            if (renderRoadSurface && drawCenterLines)
+            if (renderRoadSurface && drawCenterLines && way.ShouldDrawCenterLine())
                 BuildCenterLine(points);
+
+            if (autoGenerateMedianBarriers && way.ShouldGenerateMedianBarrier())
+                BuildMedianBarrier(roadObj.transform, points, way.GetRoadWidth());
 
             roadCount++;
         }
@@ -294,6 +307,20 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             Debug.LogWarning($"OSM: Failed to measure road model bounds for '{roadVisualPrefab.name}'. Falling back to generated mesh roads.");
     }
 
+    void EnsureMedianBarrierPrefabLoaded()
+    {
+        if (medianBarrierLoadAttempted)
+            return;
+
+        medianBarrierLoadAttempted = true;
+        if (!autoGenerateMedianBarriers || string.IsNullOrWhiteSpace(medianBarrierResourcePath))
+            return;
+
+        medianBarrierPrefab = Resources.Load<GameObject>(medianBarrierResourcePath);
+        if (medianBarrierPrefab == null)
+            Debug.LogWarning($"OSM: Median barrier model not found at Resources path '{medianBarrierResourcePath}'.");
+    }
+
     bool TryMeasureRoadVisualBounds(out Bounds bounds)
     {
         bounds = new Bounds();
@@ -367,6 +394,43 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                     if (overrideRoadModelMaterials)
                         renderer.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
                 }
+            }
+        }
+    }
+
+    void BuildMedianBarrier(Transform parent, List<Vector3> points, float roadWidth)
+    {
+        EnsureMedianBarrierPrefabLoaded();
+        if (medianBarrierPrefab == null || points == null || points.Count < 2)
+            return;
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            Vector3 from = points[i - 1];
+            Vector3 to = points[i];
+            Vector3 segment = to - from;
+            float segmentLength = segment.magnitude;
+            if (segmentLength < 1f)
+                continue;
+
+            Vector3 direction = segment / segmentLength;
+            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
+            int pieceCount = Mathf.Max(1, Mathf.FloorToInt(segmentLength / Mathf.Max(1f, medianBarrierSpacingMeters)));
+
+            for (int pieceIndex = 0; pieceIndex <= pieceCount; pieceIndex++)
+            {
+                float distance = Mathf.Min(segmentLength, pieceIndex * medianBarrierSpacingMeters);
+                Vector3 position = from + direction * distance;
+                position.y = roadYOffset + medianBarrierLift;
+
+                var barrier = Instantiate(medianBarrierPrefab, position, rotation, parent);
+                barrier.name = $"MedianBarrier_{i}_{pieceIndex}";
+                float lateralScale = Mathf.Clamp(roadWidth / 8f, 0.85f, 1.2f);
+                barrier.transform.localScale = new Vector3(
+                    barrier.transform.localScale.x * lateralScale,
+                    barrier.transform.localScale.y,
+                    barrier.transform.localScale.z);
+                ApplyLayerRecursively(barrier, parent.gameObject.layer);
             }
         }
     }

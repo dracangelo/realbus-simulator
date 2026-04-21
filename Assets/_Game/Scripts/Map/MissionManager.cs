@@ -79,6 +79,9 @@ public class MissionManager : MonoBehaviour
         missionState = MissionState.Briefing;
         busController.throttleInput = 0f;
         busController.brakeInput = 1f;
+        ExtendedTrafficViolationSystem.Instance?.ResetViolationLog();
+
+        DriverShiftSystem.Instance?.PrepareRoute(currentRoute, missionData);
 
         var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
         double spawnLat = city != null ? city.spawnLat : currentRoute.stops[0].latitude;
@@ -288,6 +291,7 @@ public class MissionManager : MonoBehaviour
         var stop = currentRoute.stops[currentStopIndex];
         nextStopWorldPos = GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude);
         nextStopWorldPos.y = busController.transform.position.y;
+        PassengerManager.Instance?.SetUpcomingStopIndex(currentStopIndex);
 
         missionState = MissionState.InProgress;
         if (StopApproachUI.Instance != null)
@@ -347,10 +351,53 @@ public class MissionManager : MonoBehaviour
             StopApproachUI.Instance.HideApproach();
         Debug.Log($"Route complete: {currentRoute.routeName}");
 
+        ApplyMissionSettlement();
+
         // Generate and show result
         var result = MissionResult.Generate(currentRoute);
+        DriverShiftSystem.Instance?.CompleteRoute(currentRoute, result, MissionEndedAtDepot());
+        DriverShiftSystem.Instance?.TryApplyShiftSummary(result);
         if (MissionResultUI.Instance != null)
             MissionResultUI.Instance.ShowResult(result);
+    }
+
+    void ApplyMissionSettlement()
+    {
+        if (GameState.Instance == null)
+            return;
+
+        float grossEarnings = PassengerManager.Instance != null
+            ? PassengerManager.Instance.sessionIncome
+            : 0f;
+
+        float fuelRefuelCost = 0f;
+        var fuelSystem = FindFirstObjectByType<FuelSystem>();
+        if (fuelSystem != null && MissionEndedAtDepot())
+            fuelRefuelCost = fuelSystem.AutoRefuelAtDepot();
+
+        float maintenanceCost = 0f;
+        var maintenanceSystem = FindFirstObjectByType<MaintenanceSystem>();
+        if (maintenanceSystem != null)
+            maintenanceCost = maintenanceSystem.AutoServiceAndGetCost();
+
+        float netEarnings = grossEarnings - fuelRefuelCost - maintenanceCost;
+
+        GameState.Instance.economy.balanceKES += netEarnings;
+        GameState.Instance.lastMissionSettlement.grossEarningsKES = grossEarnings;
+        GameState.Instance.lastMissionSettlement.fuelRefuelCostKES = fuelRefuelCost;
+        GameState.Instance.lastMissionSettlement.maintenanceCostKES = maintenanceCost;
+        GameState.Instance.lastMissionSettlement.netEarningsKES = netEarnings;
+        GameState.Instance.lastMissionSettlement.autoRefuelApplied = fuelRefuelCost > 0f;
+    }
+
+    bool MissionEndedAtDepot()
+    {
+        if (currentRoute == null || currentRoute.stops == null || currentRoute.stops.Length == 0)
+            return false;
+
+        string stopName = currentRoute.stops[currentRoute.stops.Length - 1].stopName;
+        return !string.IsNullOrWhiteSpace(stopName) &&
+               stopName.ToLowerInvariant().Contains("depot");
     }
 
     void OnDrawGizmos()

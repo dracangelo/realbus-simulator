@@ -56,6 +56,16 @@ public class MainMenuUI : MonoBehaviour
     public TextMeshProUGUI speedValueText;
     public Image speedFill;
 
+    TextMeshProUGUI batteryLabelText;
+    TextMeshProUGUI capacityLabelText;
+    TextMeshProUGUI wearLabelText;
+    TextMeshProUGUI speedLabelText;
+
+    RectTransform maintenanceDetailRoot;
+    TextMeshProUGUI[] maintenanceRowLabels;
+    TextMeshProUGUI[] maintenanceRowValues;
+    Image[] maintenanceRowFills;
+
     [Header("Career Panel")]
     public Image careerPanel;
     public TextMeshProUGUI careerTitleText;
@@ -102,10 +112,13 @@ public class MainMenuUI : MonoBehaviour
     void Start()
     {
         AutoBindLayoutReferences();
+        CacheGarageStatLabels();
+        EnsureMaintenanceDetailUI();
 
         CacheStaticStatsLayout();
 
         ApplyTheme();
+        RefreshGarageMetrics();
         Canvas.ForceUpdateCanvases();
         ApplyResponsiveLayout(force: true);
         SetupButtons();
@@ -115,6 +128,7 @@ public class MainMenuUI : MonoBehaviour
     void Update()
     {
         ApplyResponsiveLayout();
+        RefreshGarageMetrics();
     }
 
     void ApplyTheme()
@@ -147,7 +161,10 @@ public class MainMenuUI : MonoBehaviour
 
         if (currencyText)
         {
-            currencyText.text = "$254,000";
+            float balance = GameState.Instance != null && GameState.Instance.economy != null
+                ? GameState.Instance.economy.balanceKES
+                : 254000f;
+            currencyText.text = $"KES {balance:N0}";
             currencyText.color = UITheme.Accent;
             currencyText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
             currencyText.characterSpacing = 1f;
@@ -225,19 +242,24 @@ public class MainMenuUI : MonoBehaviour
         ApplyPanel(careerPanel);
 
         ApplySectionHeading(garageTitleText, "MY GARAGE");
-        ApplySectionSubtitle(garageSubtitleText, "Technical Performance Analysis");
+        ApplySectionSubtitle(garageSubtitleText, "Depot fuel, wear, and service overview");
         ApplySectionHeading(careerTitleText, "CAREER");
         ApplySectionSubtitle(careerSubtitleText, "Driver Level & Experience");
 
-        ApplyStatValue(batteryValueText, "420 KM", UITheme.TextPrimary);
-        ApplyStatValue(capacityValueText, "85 PAX", UITheme.TextPrimary);
-        ApplyStatValue(wearValueText, "12%", UITheme.Error);
-        ApplyStatValue(speedValueText, "115 KPH", UITheme.TextPrimary);
+        ApplyStatLabel(batteryLabelText, "FUEL RESERVE");
+        ApplyStatLabel(capacityLabelText, "BRAKES");
+        ApplyStatLabel(wearLabelText, "TYRES AVG");
+        ApplyStatLabel(speedLabelText, "ENGINE");
 
-        ApplyFill(batteryFill, UITheme.Secondary, 0.85f);
-        ApplyFill(capacityFill, UITheme.TertiaryDim, 0.70f);
-        ApplyFill(wearFill, UITheme.Error, 0.12f);
-        ApplyFill(speedFill, UITheme.Accent, 0.92f);
+        ApplyStatValue(batteryValueText, "300 / 300L", UITheme.TextPrimary);
+        ApplyStatValue(capacityValueText, "92%", UITheme.TextPrimary);
+        ApplyStatValue(wearValueText, "91%", UITheme.TextPrimary);
+        ApplyStatValue(speedValueText, "95%", UITheme.TextPrimary);
+
+        ApplyFill(batteryFill, UITheme.Secondary, 1f);
+        ApplyFill(capacityFill, UITheme.TertiaryDim, 0.92f);
+        ApplyFill(wearFill, UITheme.Accent, 0.91f);
+        ApplyFill(speedFill, UITheme.Success, 0.95f);
 
         if (levelValueText)
         {
@@ -545,7 +567,7 @@ public class MainMenuUI : MonoBehaviour
             statsGrid.anchoredPosition = Vector2.zero;
 
             float width = viewport.rect.width;
-            float garageHeight = 344f;
+            float garageHeight = 500f;
             float careerHeight = 240f;
             float gap = 18f;
             float contentHeight = garageHeight + gap + careerHeight;
@@ -702,6 +724,19 @@ public class MainMenuUI : MonoBehaviour
 
         if (versionText)
             versionText.fontSize = compact ? 13f : 16f;
+
+        if (maintenanceRowLabels != null)
+        {
+            float labelSize = compact ? 12f : 13f;
+            float valueSize = compact ? 12f : 13f;
+            for (int i = 0; i < maintenanceRowLabels.Length; i++)
+            {
+                if (maintenanceRowLabels[i])
+                    maintenanceRowLabels[i].fontSize = labelSize;
+                if (maintenanceRowValues != null && i < maintenanceRowValues.Length && maintenanceRowValues[i])
+                    maintenanceRowValues[i].fontSize = valueSize;
+            }
+        }
     }
 
     void SetupButtons()
@@ -794,6 +829,14 @@ public class MainMenuUI : MonoBehaviour
         label.font = UITheme.GetFont(UITheme.FontWeight.Bold);
     }
 
+    void ApplyStatLabel(TextMeshProUGUI label, string text)
+    {
+        if (!label) return;
+        label.text = text;
+        label.color = UITheme.TextMuted;
+        label.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+    }
+
     void ApplyFill(Image fill, Color color, float widthScale)
     {
         if (!fill) return;
@@ -813,5 +856,203 @@ public class MainMenuUI : MonoBehaviour
     {
         Transform t = parent.Find(childName);
         return t ? t.GetComponent<Image>() : null;
+    }
+
+    void CacheGarageStatLabels()
+    {
+        if (garagePanel == null)
+            return;
+
+        batteryLabelText = FindChildText(garagePanel.transform, "Stat_Battery/Text_Label");
+        capacityLabelText = FindChildText(garagePanel.transform, "Stat_Capacity/Text_Label");
+        wearLabelText = FindChildText(garagePanel.transform, "Stat_Wear/Text_Label");
+        speedLabelText = FindChildText(garagePanel.transform, "Stat_Speed/Text_Label");
+    }
+
+    void EnsureMaintenanceDetailUI()
+    {
+        if (garagePanel == null || maintenanceDetailRoot != null)
+            return;
+
+        var existing = garagePanel.transform.Find("MaintenanceDetailPanel");
+        if (existing != null)
+        {
+            maintenanceDetailRoot = existing as RectTransform;
+            return;
+        }
+
+        GameObject root = new GameObject("MaintenanceDetailPanel", typeof(RectTransform));
+        root.transform.SetParent(garagePanel.transform, false);
+        maintenanceDetailRoot = root.GetComponent<RectTransform>();
+        maintenanceDetailRoot.anchorMin = new Vector2(0f, 1f);
+        maintenanceDetailRoot.anchorMax = new Vector2(1f, 1f);
+        maintenanceDetailRoot.pivot = new Vector2(0.5f, 1f);
+        maintenanceDetailRoot.anchoredPosition = new Vector2(0f, -392f);
+        maintenanceDetailRoot.offsetMin = new Vector2(32f, -110f);
+        maintenanceDetailRoot.offsetMax = new Vector2(-32f, 0f);
+
+        string[] labels = { "Brakes", "Steer axle tyres", "Middle axle tyres", "Rear axle tyres", "Engine service" };
+        maintenanceRowLabels = new TextMeshProUGUI[labels.Length];
+        maintenanceRowValues = new TextMeshProUGUI[labels.Length];
+        maintenanceRowFills = new Image[labels.Length];
+
+        for (int i = 0; i < labels.Length; i++)
+        {
+            float top = -i * 24f;
+            GameObject row = new GameObject($"Row_{i}", typeof(RectTransform));
+            row.transform.SetParent(maintenanceDetailRoot, false);
+            RectTransform rowRect = row.GetComponent<RectTransform>();
+            rowRect.anchorMin = new Vector2(0f, 1f);
+            rowRect.anchorMax = new Vector2(1f, 1f);
+            rowRect.pivot = new Vector2(0.5f, 1f);
+            rowRect.anchoredPosition = new Vector2(0f, top);
+            rowRect.sizeDelta = new Vector2(0f, 20f);
+
+            maintenanceRowLabels[i] = CreateText($"{labels[i]}_Label", row.transform, labels[i], new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0f), 220f, TextAlignmentOptions.Left);
+            maintenanceRowValues[i] = CreateText($"{labels[i]}_Value", row.transform, "100%", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 0f), 180f, TextAlignmentOptions.Right);
+
+            GameObject barBg = new GameObject($"{labels[i]}_BarBG", typeof(RectTransform), typeof(Image));
+            barBg.transform.SetParent(row.transform, false);
+            RectTransform bgRect = barBg.GetComponent<RectTransform>();
+            bgRect.anchorMin = new Vector2(0.42f, 0.5f);
+            bgRect.anchorMax = new Vector2(0.88f, 0.5f);
+            bgRect.pivot = new Vector2(0.5f, 0.5f);
+            bgRect.sizeDelta = new Vector2(0f, 8f);
+            bgRect.anchoredPosition = Vector2.zero;
+            var bgImage = barBg.GetComponent<Image>();
+            bgImage.color = UITheme.Surface;
+
+            GameObject fill = new GameObject($"{labels[i]}_BarFill", typeof(RectTransform), typeof(Image));
+            fill.transform.SetParent(barBg.transform, false);
+            RectTransform fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(1f, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            maintenanceRowFills[i] = fill.GetComponent<Image>();
+            maintenanceRowFills[i].color = UITheme.Accent;
+        }
+    }
+
+    void RefreshGarageMetrics()
+    {
+        var gameState = GameState.Instance;
+        if (gameState == null || gameState.vehicleState == null)
+            return;
+
+        var vehicle = gameState.vehicleState;
+        float fuelCapacity = Mathf.Max(1f, vehicle.fuelCapacityLitres);
+        float fuelPercent = Mathf.Clamp01(vehicle.fuelLitres / fuelCapacity);
+        Color fuelColor = fuelPercent <= 0.05f
+            ? UITheme.Error
+            : fuelPercent <= 0.20f
+                ? UITheme.Tertiary
+                : UITheme.Secondary;
+
+        float brakeCondition = Mathf.Clamp01(1f - vehicle.brakeWearNormalized);
+        float tyreAverageCondition = 1f;
+        if (vehicle.axleTyreWearNormalized != null && vehicle.axleTyreWearNormalized.Length > 0)
+        {
+            float tyreWearTotal = 0f;
+            for (int i = 0; i < vehicle.axleTyreWearNormalized.Length; i++)
+                tyreWearTotal += vehicle.axleTyreWearNormalized[i];
+            tyreAverageCondition = 1f - (tyreWearTotal / vehicle.axleTyreWearNormalized.Length);
+        }
+
+        float engineCondition = Mathf.Clamp01(1f - (vehicle.engineHours / 250f));
+
+        if (currencyText && gameState.economy != null)
+            currencyText.text = $"KES {gameState.economy.balanceKES:N0}";
+
+        ApplyStatValue(batteryValueText, $"{vehicle.fuelLitres:F0} / {fuelCapacity:F0}L", fuelColor);
+        ApplyFill(batteryFill, fuelColor, fuelPercent);
+
+        ApplyStatValue(capacityValueText, $"{brakeCondition * 100f:F0}%", GetConditionColor(brakeCondition));
+        ApplyFill(capacityFill, GetConditionColor(brakeCondition), brakeCondition);
+
+        ApplyStatValue(wearValueText, $"{tyreAverageCondition * 100f:F0}%", GetConditionColor(tyreAverageCondition));
+        ApplyFill(wearFill, GetConditionColor(tyreAverageCondition), tyreAverageCondition);
+
+        ApplyStatValue(speedValueText, $"{engineCondition * 100f:F0}%", GetConditionColor(engineCondition));
+        ApplyFill(speedFill, GetConditionColor(engineCondition), engineCondition);
+
+        if (maintenanceRowLabels == null || maintenanceRowValues == null || maintenanceRowFills == null)
+            return;
+
+        SetMaintenanceRow(0, "Brakes", $"{brakeCondition * 100f:F0}%", brakeCondition);
+        SetMaintenanceRow(1, "Steer axle tyres", $"{GetAxleCondition(vehicle, 0):F0}%", GetAxleCondition(vehicle, 0) / 100f);
+        SetMaintenanceRow(2, "Middle axle tyres", $"{GetAxleCondition(vehicle, 1):F0}%", GetAxleCondition(vehicle, 1) / 100f);
+        SetMaintenanceRow(3, "Rear axle tyres", $"{GetAxleCondition(vehicle, 2):F0}%", GetAxleCondition(vehicle, 2) / 100f);
+        SetMaintenanceRow(4, "Engine service", $"{engineCondition * 100f:F0}%  •  {vehicle.engineHours:F1}h", engineCondition);
+    }
+
+    void SetMaintenanceRow(int index, string label, string value, float normalized)
+    {
+        if (maintenanceRowLabels == null || index < 0 || index >= maintenanceRowLabels.Length)
+            return;
+
+        if (maintenanceRowLabels[index])
+        {
+            maintenanceRowLabels[index].text = label;
+            maintenanceRowLabels[index].color = UITheme.TextSecondary;
+            maintenanceRowLabels[index].font = UITheme.GetFont(UITheme.FontWeight.Medium);
+        }
+
+        if (maintenanceRowValues != null && index < maintenanceRowValues.Length && maintenanceRowValues[index])
+        {
+            maintenanceRowValues[index].text = value;
+            maintenanceRowValues[index].color = GetConditionColor(normalized);
+            maintenanceRowValues[index].font = UITheme.GetFont(UITheme.FontWeight.Medium);
+        }
+
+        if (maintenanceRowFills != null && index < maintenanceRowFills.Length && maintenanceRowFills[index])
+        {
+            maintenanceRowFills[index].color = GetConditionColor(normalized);
+            var rect = maintenanceRowFills[index].rectTransform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(Mathf.Clamp01(normalized), 1f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+    }
+
+    float GetAxleCondition(VehiclePersistentState vehicle, int axleIndex)
+    {
+        if (vehicle.axleTyreWearNormalized == null || axleIndex < 0 || axleIndex >= vehicle.axleTyreWearNormalized.Length)
+            return 100f;
+        return (1f - Mathf.Clamp01(vehicle.axleTyreWearNormalized[axleIndex])) * 100f;
+    }
+
+    Color GetConditionColor(float normalized)
+    {
+        if (normalized <= 0.15f) return UITheme.Error;
+        if (normalized <= 0.5f) return UITheme.Tertiary;
+        return UITheme.Success;
+    }
+
+    TextMeshProUGUI FindChildText(Transform parent, string path)
+    {
+        var child = parent.Find(path);
+        return child ? child.GetComponent<TextMeshProUGUI>() : null;
+    }
+
+    TextMeshProUGUI CreateText(string name, Transform parent, string text, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition, float width, TextAlignmentOptions alignment)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.pivot = pivot;
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = new Vector2(width, 18f);
+
+        var tmp = go.GetComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.alignment = alignment;
+        tmp.font = UITheme.GetFont(UITheme.FontWeight.Medium);
+        tmp.color = UITheme.TextSecondary;
+        tmp.fontSize = 13f;
+        return tmp;
     }
 }

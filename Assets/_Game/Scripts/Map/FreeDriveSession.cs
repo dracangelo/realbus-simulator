@@ -22,7 +22,7 @@ public class FreeDriveSession : MonoBehaviour
 
     [Header("Fuel Settings")]
     public float fuelConsumptionPer100km = 35f; // litres per 100km (diesel bus)
-    public float fuelCapacityLitres = 200f;
+    public float fuelCapacityLitres = 300f;
     private float fuelLitres;
 
     private BusController busController;
@@ -36,7 +36,8 @@ public class FreeDriveSession : MonoBehaviour
     void Start()
     {
         busController = FindFirstObjectByType<BusController>();
-        fuelLitres = fuelCapacityLitres;
+        fuelLitres = ResolveInitialFuelLitres();
+        fuelLevel = Mathf.Clamp01(fuelLitres / Mathf.Max(1f, fuelCapacityLitres)) * 100f;
         StartCoroutine(BeginSessionWhenReady());
     }
 
@@ -52,18 +53,6 @@ public class FreeDriveSession : MonoBehaviour
             float speedKmh = busController.currentSpeedKmh;
             float distanceDelta = (speedKmh / 3600f) * Time.deltaTime;
             distanceDrivenKm += distanceDelta;
-
-            // Consume fuel
-            float fuelUsed = (fuelConsumptionPer100km / 100f) * distanceDelta;
-            fuelLitres = Mathf.Max(0f, fuelLitres - fuelUsed);
-            fuelLevel = (fuelLitres / fuelCapacityLitres) * 100f;
-
-            // Out of fuel
-            if (fuelLitres <= 0f)
-            {
-                busController.throttleInput = 0f;
-                Debug.Log("Out of fuel!");
-            }
         }
     }
 
@@ -88,8 +77,8 @@ public class FreeDriveSession : MonoBehaviour
         sessionActive = true;
         distanceDrivenKm = 0f;
         sessionTimeSeconds = 0f;
-        fuelLitres = fuelCapacityLitres;
-        fuelLevel = 100f;
+        fuelLitres = ResolveInitialFuelLitres();
+        fuelLevel = Mathf.Clamp01(fuelLitres / Mathf.Max(1f, fuelCapacityLitres)) * 100f;
         Debug.Log("Free drive session started!");
     }
 
@@ -249,5 +238,16 @@ public class FreeDriveSession : MonoBehaviour
         if (busController == null || GPSManager.Instance == null) return "0.0000, 0.0000";
         var (lat, lon) = GPSManager.Instance.WorldToGps(busController.transform.position);
         return $"{lat:F4}, {lon:F4}";
+    }
+
+    float ResolveInitialFuelLitres()
+    {
+        if (GameState.Instance != null && GameState.Instance.vehicleState != null)
+        {
+            fuelCapacityLitres = Mathf.Max(1f, GameState.Instance.vehicleState.fuelCapacityLitres);
+            return Mathf.Clamp(GameState.Instance.vehicleState.fuelLitres, 0f, fuelCapacityLitres);
+        }
+
+        return fuelCapacityLitres;
     }
 }

@@ -32,7 +32,15 @@ public class SignalViolationDetector : MonoBehaviour
             if (trafficLight.IsRed() && busController.currentSpeedKmh > 5f)
             {
                 Debug.Log("RED LIGHT VIOLATION!");
-                ScoreTracker.Instance?.RecordRedLight();
+                if (ExtendedTrafficViolationSystem.Instance != null)
+                    ExtendedTrafficViolationSystem.Instance.RecordSignalViolation(redLight: true);
+                else
+                    ScoreTracker.Instance?.RecordRedLight();
+            }
+            else if (trafficLight.currentState == TrafficLight.LightState.Amber && busController.currentSpeedKmh > 5f)
+            {
+                Debug.Log("YELLOW LIGHT VIOLATION!");
+                ExtendedTrafficViolationSystem.Instance?.RecordSignalViolation(redLight: false);
             }
         }
 

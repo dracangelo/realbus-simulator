@@ -47,6 +47,10 @@ public class BusController : MonoBehaviour
 
     private Rigidbody rb;
 
+    public bool RetarderActive => retarderActive;
+    public bool ParkingBrakeActive => parkingBrakeActive;
+    public Rigidbody Rigidbody => rb;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
