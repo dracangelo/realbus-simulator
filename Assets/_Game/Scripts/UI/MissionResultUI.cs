@@ -171,7 +171,7 @@ public class MissionResultUI : MonoBehaviour
         {
             distanceText.text = result.isShiftSummary
                 ? $"{result.shiftFuelConsumedLitres:F1} L"
-                : $"{result.totalDistanceKm:F1} km • V{result.totalViolations}";
+                : $"{result.totalDistanceKm:F1} km • V{result.totalViolations} • E{result.dynamicEventsTriggered}";
             distanceText.color = UITheme.TextPrimary;
             distanceText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
@@ -179,7 +179,7 @@ public class MissionResultUI : MonoBehaviour
         {
             xpText.text = result.isShiftSummary
                 ? $"Incidents {result.shiftIncidentCount}  •  Bay {(result.returnedToCorrectBay ? "OK" : "MISSED")}"
-                : $"+{result.xpEarned} XP  •  {result.violationSummary}  •  Rep {result.driverReputationRating:F0}";
+                : $"+{result.xpEarned} XP  •  {result.violationSummary}  •  {result.dynamicEventSummary}  •  Rep {result.driverReputationRating:F0}";
             xpText.color = UITheme.TertiaryDim;
             xpText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }

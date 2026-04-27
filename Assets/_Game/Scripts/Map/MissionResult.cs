@@ -25,6 +25,8 @@ public class MissionResult
     public int redLightViolations;
     public int totalViolations;
     public string violationSummary;
+    public int dynamicEventsTriggered;
+    public string dynamicEventSummary;
     public float driverReputationRating;
     public bool isShiftSummary;
     public int shiftRoutesCompleted;
@@ -71,13 +73,27 @@ public class MissionResult
         var violationSystem = ExtendedTrafficViolationSystem.Instance;
         result.totalViolations = violationSystem != null ? violationSystem.TotalViolationCount : result.redLightViolations;
         result.violationSummary = violationSystem != null ? violationSystem.GetViolationSummary() : $"SIG {result.redLightViolations}";
+        result.dynamicEventsTriggered = DynamicEventSystem.Instance != null ? DynamicEventSystem.Instance.TriggeredEventCount : 0;
+        result.dynamicEventSummary = DynamicEventSystem.Instance != null ? DynamicEventSystem.Instance.GetMissionEventSummary() : "No dynamic events";
         
         if (result.satisfactionScore < 60f)
             result.starRating = Mathf.Min(result.starRating, 2);
 
-        // XP formula: base 100 + score bonus + star bonus
-        result.xpEarned = Mathf.RoundToInt(
-            100f + (result.totalScore * 2f) + (result.starRating * 50f));
+        var missionData = MissionManager.Instance != null ? MissionManager.Instance.missionData : null;
+        int routeStars = missionData != null
+            ? Mathf.Clamp(missionData.starRating, 1, 5)
+            : Mathf.Clamp(route != null ? route.difficulty : result.starRating, 1, 5);
+        float difficultyMultiplier = missionData != null
+            ? Mathf.Max(0.1f, missionData.difficultyMultiplier)
+            : 1f;
+        int baseXp = missionData != null && missionData.baseXP > 0
+            ? missionData.baseXP
+            : routeStars * 200;
+
+        result.xpEarned = Mathf.RoundToInt(baseXp * (result.totalScore / 100f) * difficultyMultiplier);
+
+        if (missionData != null && result.punctualityScore >= Mathf.Clamp01(missionData.punctualityTarget) * 100f)
+            result.xpEarned += Mathf.Max(0, missionData.timeBonusXP);
 
         result.xpEarned = Mathf.Max(0, result.xpEarned - (result.totalViolations * 15));
 

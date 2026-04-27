@@ -143,11 +143,15 @@ public class SceneBootstrap : MonoBehaviour
         ConfigureRoadGraphBackedSystems(routeToUse);
         EnsurePedestrianSpawner();
         EnsureStopPropSpawner();
+        EnsurePassengerSystems();
         EnsureTarmacApplier();
+        EnsureWeatherSystems();
         EnsureRuntimeRoadSystems();
         EnsureBuildingSystems();
         EnsurePoiVisualizer();
         EnsureTrafficViolationSystem();
+        EnsureDynamicEventSystem();
+        EnsureAiTrafficSystems();
 
         if (spawnSupplementalWorldProps)
         {
@@ -232,6 +236,100 @@ public class SceneBootstrap : MonoBehaviour
 
         var violationSystem = bus.gameObject.AddComponent<ExtendedTrafficViolationSystem>();
         violationSystem.roadGraph = FindUsableRoadGraph();
+    }
+
+    void EnsureDynamicEventSystem()
+    {
+        if (FindObjectOfType<DynamicEventSystem>() != null)
+            return;
+
+        var go = new GameObject("DynamicEventSystem");
+        var system = go.AddComponent<DynamicEventSystem>();
+        system.busController = FindObjectOfType<BusController>();
+    }
+
+    void EnsurePassengerSystems()
+    {
+        if (FindObjectOfType<PassengerSpawner>() == null)
+        {
+            var spawnerGo = new GameObject("PassengerSpawner");
+            spawnerGo.AddComponent<PassengerSpawner>();
+        }
+
+        var passengerManager = FindObjectOfType<PassengerManager>();
+        if (passengerManager == null)
+        {
+            var managerGo = new GameObject("PassengerManager");
+            passengerManager = managerGo.AddComponent<PassengerManager>();
+        }
+
+        if (passengerManager.passengerSpawner == null)
+            passengerManager.passengerSpawner = FindObjectOfType<PassengerSpawner>();
+    }
+
+    void EnsureAiTrafficSystems()
+    {
+        var graph = FindUsableRoadGraph();
+        if (graph == null)
+            return;
+
+        var pool = FindObjectOfType<VehiclePool>();
+        if (pool == null)
+        {
+            var go = new GameObject("VehiclePool");
+            pool = go.AddComponent<VehiclePool>();
+        }
+
+        pool.roadGraph = graph;
+        pool.allowAutoResolveRoadGraph = true;
+
+        var busSpawner = FindObjectOfType<AIBusScheduleSpawner>();
+        if (busSpawner == null)
+        {
+            var go = new GameObject("AIBusScheduleSpawner");
+            busSpawner = go.AddComponent<AIBusScheduleSpawner>();
+        }
+
+        if (busSpawner.routes == null || busSpawner.routes.Length == 0)
+        {
+            busSpawner.routes = new[]
+            {
+                new AIBusScheduleSpawner.ScheduledAIBusRoute
+                {
+                    routeName = "Ambient Service",
+                    graph = graph,
+                    useRandomGeneratedNodes = true,
+                    randomNodeCount = 10,
+                    headwayMinutes = 14f,
+                    maxConcurrentBuses = 2
+                }
+            };
+        }
+        else
+        {
+            for (int i = 0; i < busSpawner.routes.Length; i++)
+            {
+                if (busSpawner.routes[i] != null && busSpawner.routes[i].graph == null)
+                    busSpawner.routes[i].graph = graph;
+            }
+        }
+    }
+
+    void EnsureWeatherSystems()
+    {
+        var weatherSystem = FindObjectOfType<WeatherSystem>();
+        if (weatherSystem == null)
+        {
+            var go = new GameObject("WeatherSystem");
+            weatherSystem = go.AddComponent<WeatherSystem>();
+        }
+
+        if (FindObjectOfType<TimeOfDaySystem>() == null)
+        {
+            var go = new GameObject("TimeOfDaySystem");
+            var timeSystem = go.AddComponent<TimeOfDaySystem>();
+            timeSystem.skyController = FindObjectOfType<SkyController>();
+        }
     }
 
 #if UNITY_EDITOR

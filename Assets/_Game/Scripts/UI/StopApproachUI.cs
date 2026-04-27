@@ -52,6 +52,20 @@ public class StopApproachUI : MonoBehaviour
             panelBackground.color = new Color(0f, 0.8f, 0f, 0.85f); // green
     }
 
+    public void ShowWaiting(string stopName, float waitSeconds)
+    {
+        if (approachPanel != null)
+            approachPanel.SetActive(true);
+        if (stopNameText != null)
+            stopNameText.text = stopName;
+        if (distanceText != null)
+            distanceText.text = $"{Mathf.CeilToInt(waitSeconds)}s";
+        if (statusText != null)
+            statusText.text = "WAIT FOR SCHEDULE";
+        if (panelBackground != null)
+            panelBackground.color = new Color(0.15f, 0.45f, 1f, 0.88f);
+    }
+
     public void HideApproach()
     {
         if (approachPanel != null)

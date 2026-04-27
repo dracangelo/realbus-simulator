@@ -288,7 +288,7 @@ public class WeatherSystem : MonoBehaviour
     {
         float targetInt = GetIntensityForState(newState);
         float elapsed = 0f;
-        float duration = 60f; // 1 minute transition
+        float duration = Random.Range(180f, 300f); // 3-5 minute transition
 
         WeatherState oldState = currentWeather;
         float oldIntensity = weatherIntensity;

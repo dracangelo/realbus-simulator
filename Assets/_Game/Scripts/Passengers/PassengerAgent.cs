@@ -51,7 +51,9 @@ public class PassengerAgent
     public void BeginBoarding()
     {
         isBoarding = true;
+        isAlighting = false;
         boardingLerp = 0f;
+        busLocalPosition = platformPosition;
     }
 
     public void MarkBoarded()
@@ -65,6 +67,7 @@ public class PassengerAgent
     {
         isAlighting = true;
         isBoarding = false;
+        preparingToAlight = false;
     }
 
     public void AssignBusSlot(int slotIndex)
@@ -77,6 +80,33 @@ public class PassengerAgent
         // Standing passengers sway opposite longitudinal acceleration.
         standingSway = Mathf.Clamp(inverseAcceleration * 0.08f, -0.35f, 0.35f);
         satisfaction = Mathf.Clamp01(satisfaction - Mathf.Abs(standingSway) * 0.0005f);
+    }
+
+    public void TickBoardingAnimation(float deltaTime, Vector3 targetBusLocalPosition, float lerpSpeed = 2.6f)
+    {
+        if (!isBoarding)
+            return;
+
+        boardingLerp = Mathf.Clamp01(boardingLerp + (deltaTime * Mathf.Max(0.1f, lerpSpeed)));
+        busLocalPosition = Vector3.Lerp(platformPosition, targetBusLocalPosition, boardingLerp);
+        if (boardingLerp >= 0.999f)
+            isBoarding = false;
+    }
+
+    public void TickAlightingAnimation(float deltaTime, Vector3 doorLocalPosition, float moveSpeed = 2.8f)
+    {
+        if (!isAlighting)
+            return;
+
+        busLocalPosition = Vector3.MoveTowards(
+            busLocalPosition,
+            doorLocalPosition,
+            Mathf.Max(0.1f, moveSpeed) * deltaTime);
+    }
+
+    public void RegisterHarshAcceleration()
+    {
+        satisfaction = Mathf.Clamp01(satisfaction - 0.04f);
     }
 
     public float GetBoardingTimeMultiplier()

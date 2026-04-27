@@ -287,9 +287,13 @@ public class TileStreamManager : MonoBehaviour
         texture.Apply(false, false);
         ApplyTextureSettings(texture, result.lod);
 
-        runtime.meshRenderer.sharedMaterial = new Material(ResolveTileShader());
-        runtime.meshRenderer.sharedMaterial.mainTexture = texture;
-        runtime.meshRenderer.sharedMaterial.color = Color.white;
+        Material tileMaterial = previousMaterial;
+        if (tileMaterial == null)
+            tileMaterial = new Material(ResolveTileShader());
+
+        tileMaterial.mainTexture = texture;
+        tileMaterial.color = Color.white;
+        runtime.meshRenderer.sharedMaterial = tileMaterial;
         runtime.meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         runtime.meshRenderer.receiveShadows = false;
 
@@ -299,10 +303,10 @@ public class TileStreamManager : MonoBehaviour
 
         if (previousMesh != null)
             Destroy(previousMesh);
-        if (previousMaterial != null)
-            Destroy(previousMaterial);
         if (previousTexture != null && previousTexture != runtime.sourceTexture)
             Destroy(previousTexture);
+
+        runtime.requestedLod = result.lod;
     }
 
     IEnumerator LoadTileRoutine(TileKey key)
@@ -519,6 +523,7 @@ public class TileStreamManager : MonoBehaviour
     {
         if (activeTiles.TryGetValue(key, out TileRuntime runtime) && runtime != null)
         {
+            ReleaseRuntimeAssets(runtime);
             if (runtime.sourceTexture != null)
                 Destroy(runtime.sourceTexture);
             if (runtime.root != null)
@@ -526,6 +531,33 @@ public class TileStreamManager : MonoBehaviour
         }
         activeTiles.Remove(key);
         loadingTiles.Remove(key);
+    }
+
+    void ReleaseRuntimeAssets(TileRuntime runtime)
+    {
+        if (runtime == null)
+            return;
+
+        if (runtime.meshCollider != null && runtime.meshCollider.sharedMesh != null)
+            runtime.meshCollider.sharedMesh = null;
+
+        if (runtime.meshFilter != null && runtime.meshFilter.sharedMesh != null)
+        {
+            Destroy(runtime.meshFilter.sharedMesh);
+            runtime.meshFilter.sharedMesh = null;
+        }
+
+        if (runtime.meshRenderer != null && runtime.meshRenderer.sharedMaterial != null)
+        {
+            var material = runtime.meshRenderer.sharedMaterial;
+            var texture = material.mainTexture as Texture2D;
+            runtime.meshRenderer.sharedMaterial = null;
+
+            if (texture != null && texture != runtime.sourceTexture)
+                Destroy(texture);
+
+            Destroy(material);
+        }
     }
 
     float EstimateTileDistanceMeters(int centerX, int centerY, int tileX, int tileY)

@@ -83,6 +83,59 @@ public class ScheduleManager : MonoBehaviour
     {
         return scheduledArrivals.ContainsKey(stopIndex) ? scheduledArrivals[stopIndex] : 0f;
     }
+
+    public float GetActualArrival(int stopIndex)
+    {
+        return actualArrivals.ContainsKey(stopIndex) ? actualArrivals[stopIndex] : 0f;
+    }
+
+    public bool HasActualArrival(int stopIndex)
+    {
+        return actualArrivals.ContainsKey(stopIndex);
+    }
+
+    public float GetArrivalDeltaMinutes(int stopIndex)
+    {
+        if (!scheduledArrivals.ContainsKey(stopIndex) || !actualArrivals.ContainsKey(stopIndex))
+            return 0f;
+
+        return actualArrivals[stopIndex] - scheduledArrivals[stopIndex];
+    }
+
+    public float GetEarlyWaitSecondsRequired(int stopIndex)
+    {
+        if (!scheduledArrivals.ContainsKey(stopIndex))
+            return 0f;
+
+        float minutesEarly = scheduledArrivals[stopIndex] - currentTimeMinutes;
+        return Mathf.Max(0f, minutesEarly * secondsPerGameMinute);
+    }
+
+    public string GetStatusLabel(int stopIndex)
+    {
+        if (!HasActualArrival(stopIndex))
+            return "Pending";
+
+        switch (RecordArrivalPreview(stopIndex))
+        {
+            case PunctualityStatus.Early: return "Early";
+            case PunctualityStatus.Late: return "Late";
+            case PunctualityStatus.SeverelyLate: return "Severely Late";
+            default: return "On Time";
+        }
+    }
+
+    PunctualityStatus RecordArrivalPreview(int stopIndex)
+    {
+        if (!scheduledArrivals.ContainsKey(stopIndex) || !actualArrivals.ContainsKey(stopIndex))
+            return PunctualityStatus.OnTime;
+
+        float diff = actualArrivals[stopIndex] - scheduledArrivals[stopIndex];
+        if (diff < -1f) return PunctualityStatus.Early;
+        if (diff <= 1f) return PunctualityStatus.OnTime;
+        if (diff <= 3f) return PunctualityStatus.Late;
+        return PunctualityStatus.SeverelyLate;
+    }
 }
 
 public enum PunctualityStatus

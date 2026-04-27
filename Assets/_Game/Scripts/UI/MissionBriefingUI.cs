@@ -22,6 +22,8 @@ public class MissionBriefingUI : MonoBehaviour
     public TextMeshProUGUI fareText;
     public TextMeshProUGUI departureText;
     public TextMeshProUGUI durationText;
+    public TextMeshProUGUI difficultyText;
+    public TextMeshProUGUI targetText;
 
     [Header("Stops List")]
     public TextMeshProUGUI stopsListText;
@@ -200,6 +202,23 @@ public class MissionBriefingUI : MonoBehaviour
                 : $"~{activeRoute.stops.Length * 5} min";
             durationText.color = UITheme.TextPrimary;
             durationText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        }
+
+        if (difficultyText)
+        {
+            int difficulty = missionData != null ? Mathf.Clamp(missionData.starRating, 1, 5) : Mathf.Clamp(activeRoute.difficulty, 1, 5);
+            difficultyText.text = new string('★', difficulty) + new string('☆', Mathf.Max(0, 5 - difficulty));
+            difficultyText.color = UITheme.TertiaryDim;
+            difficultyText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        }
+
+        if (targetText)
+        {
+            targetText.text = missionData != null
+                ? $"Target {missionData.minPassengersTarget}+ pax"
+                : $"Target {Mathf.Max(12, activeRoute.GetStopCount() * 4)}+ pax";
+            targetText.color = UITheme.TextSecondary;
+            targetText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
         }
 
         // Stops list

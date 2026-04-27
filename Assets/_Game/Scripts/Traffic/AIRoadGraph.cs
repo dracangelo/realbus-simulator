@@ -181,4 +181,164 @@ public class AIRoadGraph : MonoBehaviour
         }
         return best;
     }
+
+    public List<int> GetNodesWithinRadius(Vector3 worldPos, float radiusMeters)
+    {
+        var results = new List<int>();
+        if (nodes == null || nodes.Length == 0)
+            return results;
+
+        float radiusSqr = Mathf.Max(0.1f, radiusMeters) * Mathf.Max(0.1f, radiusMeters);
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            if (!IsValidNode(i))
+                continue;
+
+            if ((nodes[i].point.position - worldPos).sqrMagnitude <= radiusSqr)
+                results.Add(i);
+        }
+
+        return results;
+    }
+
+    public bool TryFindPathWorld(Vector3 startWorld, Vector3 endWorld, out List<Vector3> worldPath, ISet<int> blockedNodes = null)
+    {
+        worldPath = null;
+
+        int startIndex = GetNearestReachableNodeIndex(startWorld, blockedNodes);
+        int endIndex = GetNearestReachableNodeIndex(endWorld, blockedNodes);
+        if (!IsValidNode(startIndex) || !IsValidNode(endIndex))
+            return false;
+
+        if (!TryFindNodePath(startIndex, endIndex, out var nodePath, blockedNodes))
+            return false;
+
+        worldPath = new List<Vector3>(nodePath.Count + 2) { startWorld };
+        for (int i = 0; i < nodePath.Count; i++)
+        {
+            Vector3 point = nodes[nodePath[i]].point.position;
+            if ((point - worldPath[worldPath.Count - 1]).sqrMagnitude > 1f)
+                worldPath.Add(point);
+        }
+
+        if ((endWorld - worldPath[worldPath.Count - 1]).sqrMagnitude > 1f)
+            worldPath.Add(endWorld);
+
+        return worldPath.Count >= 2;
+    }
+
+    public bool TryFindNodePath(int startIndex, int endIndex, out List<int> nodePath, ISet<int> blockedNodes = null)
+    {
+        nodePath = null;
+        if (!IsValidNode(startIndex) || !IsValidNode(endIndex))
+            return false;
+        if (IsBlocked(startIndex, blockedNodes) || IsBlocked(endIndex, blockedNodes))
+            return false;
+
+        var openSet = new List<int> { startIndex };
+        var cameFrom = new Dictionary<int, int>();
+        var gScore = new Dictionary<int, float> { [startIndex] = 0f };
+        var fScore = new Dictionary<int, float> { [startIndex] = Heuristic(startIndex, endIndex) };
+        var closedSet = new HashSet<int>();
+
+        while (openSet.Count > 0)
+        {
+            int current = GetBestNode(openSet, fScore);
+            if (current == endIndex)
+            {
+                nodePath = ReconstructPath(cameFrom, current);
+                return nodePath.Count > 0;
+            }
+
+            openSet.Remove(current);
+            closedSet.Add(current);
+
+            var nextNodes = nodes[current].nextNodeIndices;
+            if (nextNodes == null)
+                continue;
+
+            for (int i = 0; i < nextNodes.Length; i++)
+            {
+                int neighbor = nextNodes[i];
+                if (!IsValidNode(neighbor) || IsBlocked(neighbor, blockedNodes) || closedSet.Contains(neighbor))
+                    continue;
+
+                float tentativeG = gScore[current] + Vector3.Distance(nodes[current].point.position, nodes[neighbor].point.position);
+                if (!gScore.TryGetValue(neighbor, out float existingG) || tentativeG < existingG)
+                {
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentativeG;
+                    fScore[neighbor] = tentativeG + Heuristic(neighbor, endIndex);
+                    if (!openSet.Contains(neighbor))
+                        openSet.Add(neighbor);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    int GetNearestReachableNodeIndex(Vector3 worldPos, ISet<int> blockedNodes)
+    {
+        if (nodes == null || nodes.Length == 0)
+            return -1;
+
+        int best = -1;
+        float bestSqr = float.MaxValue;
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            if (!IsValidNode(i) || IsBlocked(i, blockedNodes))
+                continue;
+
+            float sqr = (nodes[i].point.position - worldPos).sqrMagnitude;
+            if (sqr < bestSqr)
+            {
+                bestSqr = sqr;
+                best = i;
+            }
+        }
+
+        return best;
+    }
+
+    static int GetBestNode(List<int> openSet, Dictionary<int, float> fScore)
+    {
+        int bestIndex = openSet[0];
+        float bestValue = fScore.TryGetValue(bestIndex, out float initial) ? initial : float.MaxValue;
+        for (int i = 1; i < openSet.Count; i++)
+        {
+            int candidate = openSet[i];
+            float score = fScore.TryGetValue(candidate, out float value) ? value : float.MaxValue;
+            if (score < bestValue)
+            {
+                bestValue = score;
+                bestIndex = candidate;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    float Heuristic(int fromIndex, int toIndex)
+    {
+        return Vector3.Distance(nodes[fromIndex].point.position, nodes[toIndex].point.position);
+    }
+
+    static List<int> ReconstructPath(Dictionary<int, int> cameFrom, int current)
+    {
+        var path = new List<int> { current };
+        while (cameFrom.TryGetValue(current, out int previous))
+        {
+            current = previous;
+            path.Add(current);
+        }
+
+        path.Reverse();
+        return path;
+    }
+
+    static bool IsBlocked(int nodeIndex, ISet<int> blockedNodes)
+    {
+        return blockedNodes != null && blockedNodes.Contains(nodeIndex);
+    }
 }

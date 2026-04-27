@@ -23,11 +23,31 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     [Header("Settings")]
     public float defaultBuildingHeight = 10f;
     public float floorHeight = 3f;
-    public int maxBuildingsPerFrame = 50;
+
+    // Build aggressively enough that full-city datasets appear in a reasonable
+    // time instead of trickling in over thousands of frames.
+    public int maxBuildingsPerFrame = 500;
+
     public float buildingBaseYOffset = 0.2f;
-    public bool drawFootprints = true;
+
+    // ── PERF: footprints create one LineRenderer + one Material per building.
+    //          On 43 k buildings that is ~43 k extra draw calls.  Off by default.
+    public bool drawFootprints = false;
+
     public float footprintWidth = 0.35f;
     public float footprintYOffset = 0.05f;
+
+    // Optional distance culling for low-memory scenes. Disabled by default so
+    // the full OSM building set is displayed unless the project opts back in.
+    [Header("Distance Culling")]
+    public bool enableDistanceCulling = false;
+    public float maxBuildingDistance = 1500f;
+
+    // ── PERF: if a single frame takes longer than this threshold the coroutine
+    //          yields immediately, regardless of maxBuildingsPerFrame.
+    [Header("Frame-time Budget")]
+    [Tooltip("Max milliseconds to spend on buildings per frame (0 = disabled)")]
+    public float maxMsPerFrame = 0f;
 
     [Header("State")]
     public bool buildingsBuilt = false;
@@ -63,7 +83,12 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         buildingsParent.transform.position = Vector3.zero;
 
         int buildingCount = 0;
+        int skippedDistance = 0;
+        int skippedInvalidFootprint = 0;
+        int skippedMissingNodes = 0;
         int frameCount = 0;
+        float maxDistSq = maxBuildingDistance * maxBuildingDistance;
+        float frameStart = Time.realtimeSinceStartup;
 
         foreach (var way in data.ways)
         {
@@ -73,29 +98,57 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
             foreach (long nodeRef in way.nodeRefs)
             {
-                if (!data.nodeMap.ContainsKey(nodeRef)) continue;
-                var node = data.nodeMap[nodeRef];
+                if (!data.nodeMap.TryGetValue(nodeRef, out var node))
+                {
+                    skippedMissingNodes++;
+                    continue;
+                }
+
                 Vector3 worldPos = GPSManager.Instance.GpsToWorld(node.lat, node.lon);
                 worldPos.y = buildingBaseYOffset;
                 footprint.Add(worldPos);
             }
 
-            // Need at least 3 points for a building
-            if (footprint.Count < 3) continue;
+            if (footprint.Count < 3)
+            {
+                skippedInvalidFootprint++;
+                continue;
+            }
 
             // Remove duplicate last point if closed polygon
             if (footprint.Count > 1 &&
                 Vector3.Distance(footprint[0], footprint[footprint.Count - 1]) < 0.1f)
                 footprint.RemoveAt(footprint.Count - 1);
 
-            if (footprint.Count < 3) continue;
+            if (footprint.Count < 3)
+            {
+                skippedInvalidFootprint++;
+                continue;
+            }
 
-            // Get building height
+            // ── Distance culling: compute centroid XZ, skip if too far away
+            if (enableDistanceCulling)
+            {
+                Vector3 centroid = Vector3.zero;
+                foreach (var p in footprint) centroid += p;
+                centroid /= footprint.Count;
+                float distSq = centroid.x * centroid.x + centroid.z * centroid.z;
+                if (distSq > maxDistSq)
+                {
+                    skippedDistance++;
+                    continue;
+                }
+            }
+
             float height = ResolveBuildingHeight(way);
             var buildingKind = ResolveBuildingKind(way);
 
             Mesh mesh = BuildExtrudedMesh(footprint, height);
-            if (mesh == null) continue;
+            if (mesh == null)
+            {
+                skippedInvalidFootprint++;
+                continue;
+            }
 
             string buildingLabel = ResolveBuildingLabel(way, buildingKind);
             GameObject buildingObj = new GameObject($"Building_{buildingLabel}_{way.id}");
@@ -114,16 +167,23 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             buildingCount++;
             frameCount++;
 
-            // Spread across frames to avoid hitching
-            if (frameCount >= maxBuildingsPerFrame)
+            // ── Yield when batch limit OR frame-time budget is exceeded
+            bool batchFull = frameCount >= maxBuildingsPerFrame;
+            bool overBudget = maxMsPerFrame > 0f &&
+                              (Time.realtimeSinceStartup - frameStart) * 1000f >= maxMsPerFrame;
+
+            if (batchFull || overBudget)
             {
                 frameCount = 0;
+                frameStart = Time.realtimeSinceStartup;
                 yield return null;
             }
         }
 
         buildingsBuilt = true;
-        Debug.Log($"Buildings: Built {buildingCount} buildings!");
+        Debug.Log(
+            $"Buildings: Built {buildingCount} buildings! " +
+            $"(skipped {skippedDistance} by distance, {skippedInvalidFootprint} invalid footprints, {skippedMissingNodes} missing nodes)");
     }
 
     float ResolveBuildingHeight(OSMWay way)
