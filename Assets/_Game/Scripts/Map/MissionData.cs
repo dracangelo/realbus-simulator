@@ -12,11 +12,13 @@ public class MissionData : ScriptableObject
 
     [Header("Targets")]
     public int minPassengersTarget = 30;
+    public int stretchPassengersTarget = 45;
     public float punctualityTarget = 0.8f; // 80% on time
 
     [Header("Rewards")]
     public int baseXP = 200;
     public float difficultyMultiplier = 1.0f;
+    public int timeBonusXP = 50;
 
     [Header("Info")]
     public string missionName = "CBD to Westlands";

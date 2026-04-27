@@ -73,14 +73,20 @@ public class SkyController : MonoBehaviour
     {
         if (_isFlashing) return;
 
+        float timeSunMultiplier = TimeOfDaySystem.Instance != null ? TimeOfDaySystem.Instance.GetSunIntensityMultiplier() : 1f;
+        float timeAmbientMultiplier = TimeOfDaySystem.Instance != null ? TimeOfDaySystem.Instance.GetAmbientIntensityMultiplier() : 1f;
+        Color skyTint = TimeOfDaySystem.Instance != null ? TimeOfDaySystem.Instance.GetSkyTint() : Color.white;
+
         if (sunLight != null)
         {
             sunLight.color     = Color.Lerp(sunLight.color,     _targetSunColor,      Time.deltaTime * lerpSpeed);
-            sunLight.intensity = Mathf.Lerp(sunLight.intensity, targetSunIntensity,  Time.deltaTime * lerpSpeed);
+            sunLight.intensity = Mathf.Lerp(sunLight.intensity, targetSunIntensity * timeSunMultiplier,  Time.deltaTime * lerpSpeed);
         }
 
+        Color ambientTarget = _targetAmbient * timeAmbientMultiplier;
         RenderSettings.ambientLight = Color.Lerp(
-            RenderSettings.ambientLight, _targetAmbient, Time.deltaTime * lerpSpeed * 0.5f);
+            RenderSettings.ambientLight, ambientTarget, Time.deltaTime * lerpSpeed * 0.5f);
+        RenderSettings.ambientSkyColor = Color.Lerp(RenderSettings.ambientSkyColor, targetSkyColor * skyTint, Time.deltaTime * lerpSpeed * 0.4f);
     }
 
     // ── Public API ───────────────────────────────────────────────────

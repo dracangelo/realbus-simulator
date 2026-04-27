@@ -17,6 +17,7 @@ public class GameScriptsTests
         ResetSingleton<GameState>();
         ResetSingleton<DriverShiftSystem>();
         ResetSingleton<ExtendedTrafficViolationSystem>();
+        ResetSingleton<DynamicEventSystem>();
         ResetSingleton<WeatherSystem>();
 
         foreach (var gameObject in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
@@ -191,7 +192,7 @@ public class GameScriptsTests
         Assert.That(result.totalFareKES, Is.EqualTo(0));
         Assert.That(result.totalDistanceKm, Is.EqualTo(0f));
         Assert.That(result.totalTimeMinutes, Is.EqualTo(0f));
-        Assert.That(result.xpEarned, Is.EqualTo(150));
+        Assert.That(result.xpEarned, Is.EqualTo(0));
     }
 
     [Test]
@@ -231,7 +232,7 @@ public class GameScriptsTests
         Assert.That(result.totalFareKES, Is.EqualTo(124));
         Assert.That(result.totalDistanceKm, Is.EqualTo(12.5f));
         Assert.That(result.totalTimeMinutes, Is.EqualTo(15.5f));
-        Assert.That(result.xpEarned, Is.EqualTo(470));
+        Assert.That(result.xpEarned, Is.EqualTo(510));
     }
 
     [Test]
@@ -257,6 +258,45 @@ public class GameScriptsTests
         Assert.That(result.fuelRefuelCostKES, Is.EqualTo(1200));
         Assert.That(result.maintenanceCostKES, Is.EqualTo(800));
         Assert.That(result.netEarningsKES, Is.EqualTo(3000));
+    }
+
+    [Test]
+    public void MissionResult_Generate_IncludesDynamicEventSummary_WhenAvailable()
+    {
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.routeName = "Eventful Route";
+
+        var eventSystem = CreateComponent<DynamicEventSystem>("DynamicEventSystem");
+        SetSingleton(eventSystem);
+
+        var completed = GetPrivateField<List<DynamicEventRecord>>(eventSystem, "completedEvents");
+        completed.Add(new DynamicEventRecord
+        {
+            type = DynamicEventType.PoliceCheckpoint,
+            title = "CHECKPOINT",
+            description = "Mandatory slow zone",
+            triggered = true,
+            resolved = true,
+            complianceObserved = true
+        });
+
+        var result = MissionResult.Generate(route);
+
+        Assert.That(result.dynamicEventsTriggered, Is.EqualTo(1));
+        Assert.That(result.dynamicEventSummary, Does.Contain("CHECKPOINT OK"));
+    }
+
+    [Test]
+    public void ScoreTracker_ApplyDynamicEventImpact_ReducesExpectedCategories()
+    {
+        var scoreTracker = CreateComponent<ScoreTracker>("ScoreTracker");
+
+        scoreTracker.ApplyDynamicEventImpact(6f, 4f, "CHECKPOINT", true, 3f);
+
+        Assert.That(scoreTracker.safetyScore, Is.EqualTo(94f));
+        Assert.That(scoreTracker.punctualityScore, Is.EqualTo(96f));
+        Assert.That(scoreTracker.efficiencyScore, Is.EqualTo(97f));
+        Assert.That(scoreTracker.totalScore, Is.LessThan(100f));
     }
 
     [Test]
@@ -576,6 +616,43 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void AIRoadGraph_TryFindNodePath_AvoidsBlockedNodes_WhenAlternateExists()
+    {
+        var graph = CreateComponent<AIRoadGraph>("AIRoadGraph");
+        graph.nodes = new AIRoadGraph.RoadNode[4];
+
+        for (int i = 0; i < graph.nodes.Length; i++)
+        {
+            var point = new GameObject($"GraphNode_{i}").transform;
+            point.position = i switch
+            {
+                0 => new Vector3(0f, 0f, 0f),
+                1 => new Vector3(10f, 0f, 0f),
+                2 => new Vector3(0f, 0f, 10f),
+                _ => new Vector3(10f, 0f, 10f)
+            };
+
+            graph.nodes[i] = new AIRoadGraph.RoadNode
+            {
+                id = $"N{i}",
+                point = point,
+                nextNodeIndices = i switch
+                {
+                    0 => new[] { 1, 2 },
+                    1 => new[] { 3 },
+                    2 => new[] { 3 },
+                    _ => System.Array.Empty<int>()
+                }
+            };
+        }
+
+        bool found = graph.TryFindNodePath(0, 3, out var path, new HashSet<int> { 1 });
+
+        Assert.That(found, Is.True);
+        Assert.That(path, Is.EqualTo(new[] { 0, 2, 3 }));
+    }
+
+    [Test]
     public void PassengerSpawner_BuildRandomStopsFromRoadGraph_CreatesSyntheticStopsFromGraphNodes()
     {
         var graph = CreateLinearAirRoadGraph();
@@ -638,9 +715,11 @@ public class GameScriptsTests
         Assert.That(missionData.scheduledDepartureTime, Is.EqualTo(480f));
         Assert.That(missionData.targetDurationMinutes, Is.EqualTo(25f));
         Assert.That(missionData.minPassengersTarget, Is.EqualTo(30));
+        Assert.That(missionData.stretchPassengersTarget, Is.EqualTo(45));
         Assert.That(missionData.punctualityTarget, Is.EqualTo(0.8f));
         Assert.That(missionData.baseXP, Is.EqualTo(200));
         Assert.That(missionData.difficultyMultiplier, Is.EqualTo(1f));
+        Assert.That(missionData.timeBonusXP, Is.EqualTo(50));
         Assert.That(missionData.missionName, Is.EqualTo("CBD to Westlands"));
         Assert.That(missionData.description, Is.EqualTo("Complete the full route on time."));
         Assert.That(missionData.starRating, Is.EqualTo(1));

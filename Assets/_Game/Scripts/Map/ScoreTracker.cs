@@ -144,6 +144,19 @@ public class ScoreTracker : MonoBehaviour
         UpdateTotalScore();
     }
 
+    public void ApplyDynamicEventImpact(float safetyPenalty, float punctualityPenalty, string sourceLabel, bool complianceFailure, float efficiencyPenalty = 0f)
+    {
+        safetyScore = Mathf.Max(0f, safetyScore - Mathf.Max(0f, safetyPenalty));
+        punctualityScore = Mathf.Max(0f, punctualityScore - Mathf.Max(0f, punctualityPenalty));
+        efficiencyScore = Mathf.Max(0f, efficiencyScore - Mathf.Max(0f, efficiencyPenalty));
+        UpdateTotalScore();
+
+        if (complianceFailure)
+            Debug.Log($"Dynamic event non-compliance: {sourceLabel} | safety {safetyPenalty:F0} | punctuality {punctualityPenalty:F0}");
+        else
+            Debug.Log($"Dynamic event impact: {sourceLabel} | punctuality {punctualityPenalty:F0}");
+    }
+
     void UpdateTotalScore()
     {
         totalScore = (punctualityScore * punctualityWeight)

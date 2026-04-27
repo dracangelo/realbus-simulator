@@ -12,6 +12,8 @@ public class RouteVisualizer : MonoBehaviour
     public float lineHeightY = 0.2f;
 
     private LineRenderer lineRenderer;
+    private int lastGuidanceVersion = -1;
+    private BusRoute lastRoute;
 
     void Start()
     {
@@ -35,6 +37,15 @@ public class RouteVisualizer : MonoBehaviour
         StartCoroutine(DrawRouteNextFrame());
     }
 
+    void Update()
+    {
+        var mission = MissionManager.Instance;
+        int version = mission != null ? mission.GuidancePathVersion : -1;
+        BusRoute activeRoute = mission != null && mission.currentRoute != null ? mission.currentRoute : route;
+        if (version != lastGuidanceVersion || activeRoute != lastRoute)
+            RefreshRouteLine();
+    }
+
     IEnumerator DrawRouteNextFrame()
     {
         float timeout = 5f;
@@ -50,24 +61,55 @@ public class RouteVisualizer : MonoBehaviour
             yield break;
         }
 
-        if (route == null)
+        if (route == null && (MissionManager.Instance == null || MissionManager.Instance.currentRoute == null))
         {
             Debug.LogError("RouteVisualizer: No route assigned!");
             yield break;
         }
 
-        lineRenderer.positionCount = route.stops.Length;
+        RefreshRouteLine();
+    }
 
-        for (int i = 0; i < route.stops.Length; i++)
+    void RefreshRouteLine()
+    {
+        var mission = MissionManager.Instance;
+        if (mission != null && mission.currentRoute != null)
+            route = mission.currentRoute;
+
+        Vector3[] points = mission != null ? mission.GetGuidancePathPoints() : null;
+        if ((points == null || points.Length < 2) && route != null)
+            points = BuildFallbackPoints(route);
+
+        if (points == null || points.Length < 2)
         {
-            Vector3 worldPos = GPSManager.Instance.GpsToWorld(
-                route.stops[i].latitude,
-                route.stops[i].longitude);
-            worldPos.y = lineHeightY;
-            lineRenderer.SetPosition(i, worldPos);
-            Debug.Log($"Stop {i} — {route.stops[i].stopName} — world pos: {worldPos}");
+            lineRenderer.positionCount = 0;
+            return;
         }
 
-        Debug.Log("Route drawn!");
+        lineRenderer.positionCount = points.Length;
+        for (int i = 0; i < points.Length; i++)
+        {
+            Vector3 worldPos = points[i];
+            worldPos.y = lineHeightY;
+            lineRenderer.SetPosition(i, worldPos);
+        }
+
+        lastGuidanceVersion = mission != null ? mission.GuidancePathVersion : -1;
+        lastRoute = route;
+    }
+
+    Vector3[] BuildFallbackPoints(BusRoute activeRoute)
+    {
+        if (activeRoute == null)
+            return null;
+        if (activeRoute.pathPoints != null && activeRoute.pathPoints.Length >= 2)
+            return activeRoute.pathPoints;
+        if (activeRoute.stops == null || activeRoute.stops.Length < 2 || GPSManager.Instance == null)
+            return null;
+
+        var points = new Vector3[activeRoute.stops.Length];
+        for (int i = 0; i < activeRoute.stops.Length; i++)
+            points[i] = GPSManager.Instance.GpsToWorld(activeRoute.stops[i].latitude, activeRoute.stops[i].longitude);
+        return points;
     }
 }

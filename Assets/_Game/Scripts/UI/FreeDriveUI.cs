@@ -139,7 +139,15 @@ public class FreeDriveUI : MonoBehaviour
             timeText.text = session.GetFormattedTime();
 
         if (gpsText)
-            gpsText.text = session.GetCurrentGPSString();
+        {
+            string eventSuffix = DynamicEventSystem.Instance != null && DynamicEventSystem.Instance.ActiveEvent != null
+                ? $" • {DynamicEventSystem.Instance.ActiveEvent.title}"
+                : "";
+            string diversionSuffix = MissionManager.Instance != null && MissionManager.Instance.HasActiveDiversion
+                ? " • DETOUR"
+                : "";
+            gpsText.text = $"{session.GetCurrentGPSString()}{eventSuffix}{diversionSuffix}";
+        }
 
         if (passengerText && PassengerManager.Instance != null)
         {
@@ -158,7 +166,10 @@ public class FreeDriveUI : MonoBehaviour
             string violationSuffix = ExtendedTrafficViolationSystem.Instance != null && ExtendedTrafficViolationSystem.Instance.TotalViolationCount > 0
                 ? $" • V{ExtendedTrafficViolationSystem.Instance.TotalViolationCount}"
                 : "";
-            scoreText.text = $"{ScoreTracker.Instance.totalScore:F0}%{violationSuffix}";
+            string eventSuffix = DynamicEventSystem.Instance != null && DynamicEventSystem.Instance.ActiveEvent != null
+                ? $" • {DynamicEventSystem.Instance.ActiveEvent.title}"
+                : "";
+            scoreText.text = $"{ScoreTracker.Instance.totalScore:F0}%{violationSuffix}{eventSuffix}";
         }
     }
 

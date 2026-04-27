@@ -251,7 +251,9 @@ public class ExtendedTrafficViolationSystem : MonoBehaviour
         if (route == null)
             return;
 
-        float distance = GetDistanceToRoute(route, busController.transform.position);
+        float distance = MissionManager.Instance != null
+            ? MissionManager.Instance.GetDistanceToGuidancePath(busController.transform.position)
+            : GetDistanceToRoute(route, busController.transform.position);
         if (distance > offRouteDistanceMeters)
         {
             offRouteTimer += Time.deltaTime;

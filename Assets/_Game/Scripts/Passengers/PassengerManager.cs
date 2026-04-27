@@ -50,6 +50,16 @@ public class PassengerManager : MonoBehaviour
     public bool logBoardingSummary = true;
     public bool logEachPassengerBoarding = false;
 
+    [Header("Animation Proxies")]
+    public float boardingAnimationSpeed = 2.8f;
+    public float alightingAnimationSpeed = 3.2f;
+    public float standingRowSpacing = 0.55f;
+    public float standingColumnSpacing = 0.75f;
+    public Vector3 seatAreaOrigin = new Vector3(0f, 1.15f, 1.8f);
+    public Vector3 standingAreaOrigin = new Vector3(0f, 1.05f, -0.8f);
+    public Vector3 doorLocalPosition = new Vector3(0.9f, 1.05f, -2.4f);
+    public Vector3 platformLocalPosition = new Vector3(1.7f, 0f, -2.8f);
+
     private BusController busController;
     private readonly List<PassengerAgent> onboardPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> waitingPassengers = new List<PassengerAgent>();
@@ -74,6 +84,7 @@ public class PassengerManager : MonoBehaviour
         TrackDistance();
         TrackBusAcceleration();
         UpdateOnboardPassengerDynamics();
+        UpdatePassengerAnimationState();
         UpdatePatience();
         HandleStopRequestAcknowledgeInput();
     }
@@ -114,6 +125,27 @@ public class PassengerManager : MonoBehaviour
                 if (!alreadyComplained)
                     Debug.Log("[Passenger] Audible complaint after harsh braking.");
             }
+
+            float accelerationG = longitudinalAcceleration / 9.81f;
+            if (accelerationG > 0.35f)
+                passenger.RegisterHarshAcceleration();
+        }
+    }
+
+    void UpdatePassengerAnimationState()
+    {
+        for (int i = 0; i < onboardPassengers.Count; i++)
+        {
+            var passenger = onboardPassengers[i];
+            if (passenger == null)
+                continue;
+
+            Vector3 target = ResolveBusSlotLocalPosition(passenger, i);
+            passenger.TickBoardingAnimation(Time.deltaTime, target, boardingAnimationSpeed);
+            passenger.TickAlightingAnimation(Time.deltaTime, doorLocalPosition, alightingAnimationSpeed);
+
+            if (!passenger.isBoarding && !passenger.isAlighting)
+                passenger.busLocalPosition = Vector3.Lerp(passenger.busLocalPosition, target, Time.deltaTime * 4f);
         }
     }
 
@@ -181,6 +213,7 @@ public class PassengerManager : MonoBehaviour
             waitingPassengers.Clear();
             SpawnWaitingPassengers(stop, stopIndex, totalStops);
             waitingAtCurrentStop = waitingPassengers.Count;
+            PrepareAccessibilityBoarding();
 
             int canBoard = Mathf.Max(0, GetMaxCapacity() - currentPassengers);
             boarding = Mathf.Min(waitingAtCurrentStop, canBoard);
@@ -323,9 +356,10 @@ public class PassengerManager : MonoBehaviour
             if (p == null) continue;
 
             p.BeginBoarding();
+            p.platformPosition = platformLocalPosition + new Vector3(Random.Range(-0.25f, 0.25f), 0f, Random.Range(-0.4f, 0.4f));
             p.isSeated = onboardPassengers.Count < seatedCapacity;
             p.AssignBusSlot(onboardPassengers.Count);
-            p.MarkBoarded();
+            p.busLocalPosition = p.platformPosition;
             onboardPassengers.Add(p);
 
             if (p.isWheelchairPassenger)
@@ -417,6 +451,46 @@ public class PassengerManager : MonoBehaviour
         }
 
         hadElderlyBoarding = false;
+    }
+
+    void PrepareAccessibilityBoarding()
+    {
+        bool needsKneel = false;
+        for (int i = 0; i < waitingPassengers.Count; i++)
+        {
+            var passenger = waitingPassengers[i];
+            if (passenger == null)
+                continue;
+
+            if (passenger.isWheelchairPassenger || passenger.RequiresKneelingForBoarding())
+            {
+                needsKneel = true;
+                break;
+            }
+        }
+
+        if (busController != null)
+            busController.RequestKneelingSuspension(needsKneel);
+    }
+
+    Vector3 ResolveBusSlotLocalPosition(PassengerAgent passenger, int onboardIndex)
+    {
+        if (passenger != null && passenger.isSeated)
+        {
+            int seatsPerRow = 4;
+            int row = Mathf.Max(0, onboardIndex / seatsPerRow);
+            int column = onboardIndex % seatsPerRow;
+            float side = column < 2 ? -0.5f : 0.5f;
+            float lane = (column % 2 == 0) ? -0.35f : 0.35f;
+            return seatAreaOrigin + new Vector3((side + lane) * standingColumnSpacing, 0f, -row * standingRowSpacing);
+        }
+
+        int standingIndex = Mathf.Max(0, onboardIndex - seatedCapacity);
+        int standingColumns = 3;
+        int standingRow = standingIndex / standingColumns;
+        int standingColumn = standingIndex % standingColumns;
+        float lateral = (standingColumn - 1) * standingColumnSpacing;
+        return standingAreaOrigin + new Vector3(lateral, 0f, -standingRow * standingRowSpacing);
     }
 
     PassengerArchetype ResolveArchetype()

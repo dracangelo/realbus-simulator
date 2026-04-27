@@ -62,3 +62,36 @@ sysinfo.txt
 # OS files
 .DS_Store
 Thumbs.db
+
+# Unity generated
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+UserSettings/
+MemoryCaptures/
+
+# Large binary caches
+*.asset.meta
+*.unity.meta
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vs/
+.idea/
+*.csproj
+*.sln
+
+# Large 3D Models
+*.fbx
+*.obj
+*.FBX
+
+# Large Textures
+*.psd
+*.tga
