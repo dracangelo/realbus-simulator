@@ -10,6 +10,12 @@ public class PlayerEconomyData
 [System.Serializable]
 public class VehiclePersistentState
 {
+    public string activeBusId = "fleet.standard_single_decker";
+    public bool isElectricBus = false;
+    public string energyUnitLabel = "L";
+    public int passengerCapacity = 70;
+    public int seatedCapacity = 36;
+
     public float fuelCapacityLitres = 300f;
     public float fuelLitres = 300f;
     public float totalFuelConsumedLitres = 0f;
@@ -21,6 +27,26 @@ public class VehiclePersistentState
     public float engineHours = 12f;
     public bool doorFunctionOperational = true;
     public bool exteriorLightsOperational = true;
+
+    public void ApplyBusSpec(BusSpec spec, bool preserveEnergyPercent = true)
+    {
+        if (spec == null)
+            return;
+
+        float preservedEnergyPercent = preserveEnergyPercent && fuelCapacityLitres > 0.01f
+            ? Mathf.Clamp01(fuelLitres / fuelCapacityLitres)
+            : 1f;
+
+        activeBusId = spec.busId;
+        isElectricBus = spec.IsElectric;
+        energyUnitLabel = string.IsNullOrWhiteSpace(spec.energyUnitLabel)
+            ? (spec.IsElectric ? "kWh" : "L")
+            : spec.energyUnitLabel;
+        passengerCapacity = spec.PassengerCapacity;
+        seatedCapacity = spec.SeatedCapacity;
+        fuelCapacityLitres = Mathf.Max(1f, spec.energyCapacityUnits);
+        fuelLitres = Mathf.Clamp(preservedEnergyPercent * fuelCapacityLitres, 0f, fuelCapacityLitres);
+    }
 }
 
 [System.Serializable]
@@ -61,6 +87,9 @@ public class GameState : MonoBehaviour
             vehicleState.axleTyreWearNormalized = new float[] { 0.06f, 0.08f, 0.08f };
         if (lastMissionSettlement == null)
             lastMissionSettlement = new MissionSettlementData();
+
+        if (BusFleetManager.Instance != null)
+            vehicleState.ApplyBusSpec(BusFleetManager.Instance.GetSelectedBusSpec(), preserveEnergyPercent: true);
     }
 
     public void SelectCountry(CountryDefinition country)

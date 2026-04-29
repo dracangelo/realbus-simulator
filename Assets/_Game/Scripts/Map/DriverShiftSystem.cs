@@ -100,6 +100,7 @@ public class DriverShiftSystem : MonoBehaviour
         var vehicleState = GameState.Instance != null ? GameState.Instance.vehicleState : null;
         var maintenanceSystem = FindFirstObjectByType<MaintenanceSystem>();
         var fuelSystem = FindFirstObjectByType<FuelSystem>();
+        var batterySystem = FindFirstObjectByType<BatterySystem>();
 
         float lowestTyreCondition = 100f;
         if (maintenanceSystem != null)
@@ -109,7 +110,9 @@ public class DriverShiftSystem : MonoBehaviour
         }
 
         lastInspection.tyreConditionPassed = lowestTyreCondition >= 55f;
-        lastInspection.fuelLevelPassed = fuelSystem == null || fuelSystem.CurrentFuelPercent >= FuelSystem.FuelWarningPercent;
+        lastInspection.fuelLevelPassed = batterySystem != null
+            ? batterySystem.CurrentChargePercent >= BatterySystem.ChargeWarningPercent
+            : fuelSystem == null || fuelSystem.CurrentFuelPercent >= FuelSystem.FuelWarningPercent;
         lastInspection.doorFunctionPassed = vehicleState == null || vehicleState.doorFunctionOperational;
         lastInspection.exteriorLightsPassed = vehicleState == null || vehicleState.exteriorLightsOperational;
         inspectionCompleted = true;

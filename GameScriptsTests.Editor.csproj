@@ -51,6 +51,7 @@
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/RoadGraphTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/CoordinateConverterTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusRouteDataTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.asmdef" />

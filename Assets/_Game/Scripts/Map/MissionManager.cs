@@ -405,8 +405,14 @@ public class MissionManager : MonoBehaviour
 
         float fuelRefuelCost = 0f;
         var fuelSystem = FindFirstObjectByType<FuelSystem>();
-        if (fuelSystem != null && MissionEndedAtDepot())
-            fuelRefuelCost = fuelSystem.AutoRefuelAtDepot();
+        var batterySystem = FindFirstObjectByType<BatterySystem>();
+        if (MissionEndedAtDepot())
+        {
+            if (batterySystem != null)
+                fuelRefuelCost = batterySystem.AutoRechargeAtDepot();
+            else if (fuelSystem != null)
+                fuelRefuelCost = fuelSystem.AutoRefuelAtDepot();
+        }
 
         float maintenanceCost = 0f;
         var maintenanceSystem = FindFirstObjectByType<MaintenanceSystem>();

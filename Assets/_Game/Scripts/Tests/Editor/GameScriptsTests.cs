@@ -19,6 +19,11 @@ public class GameScriptsTests
         ResetSingleton<ExtendedTrafficViolationSystem>();
         ResetSingleton<DynamicEventSystem>();
         ResetSingleton<WeatherSystem>();
+        ResetSingleton<XPSystem>();
+        ResetSingleton<UnlockManager>();
+        ResetSingleton<BusFleetManager>();
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
 
         foreach (var gameObject in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
         {
@@ -1239,6 +1244,63 @@ public class GameScriptsTests
         Assert.That(GetPrivateField<float>(controller, "targetSunIntensity"), Is.EqualTo(controller.clearSunIntensity).Within(0.001f));
         Assert.That(GetPrivateField<float>(controller, "targetAmbientIntensity"), Is.EqualTo(controller.clearAmbientIntensity).Within(0.001f));
         Assert.That(GetPrivateField<Color>(controller, "targetSkyColor"), Is.EqualTo(controller.clearSkyColor));
+    }
+
+    [Test]
+    public void BusFleetManager_DefaultFleet_IncludesFiveTypes_AndStartsWithStandardBusSelected()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+
+        var xpSystem = CreateComponent<XPSystem>("XPSystem");
+        SetSingleton(xpSystem);
+        xpSystem.EnsureInitialized();
+
+        var fleetManager = CreateComponent<BusFleetManager>("BusFleetManager");
+        SetSingleton(fleetManager);
+        fleetManager.EnsureInitialized();
+
+        var specs = fleetManager.GetAllBusSpecs();
+
+        Assert.That(specs.Count, Is.GreaterThanOrEqualTo(5));
+        Assert.That(specs[0].displayName, Does.Contain("Single-Decker"));
+        Assert.That(fleetManager.IsBusOwned(specs[0]), Is.True);
+        Assert.That(fleetManager.GetSelectedBusSpec(), Is.EqualTo(specs[0]));
+        Assert.That(gameState.vehicleState.activeBusId, Is.EqualTo(specs[0].busId));
+    }
+
+    [Test]
+    public void BusFleetManager_UnlocksElectricBus_ByRank_AndPersistsSelectionIntoGameState()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+
+        var xpSystem = CreateComponent<XPSystem>("XPSystem");
+        SetSingleton(xpSystem);
+        xpSystem.EnsureInitialized();
+        xpSystem.AwardXP(4000, "Fleet Progress");
+
+        var fleetManager = CreateComponent<BusFleetManager>("BusFleetManager");
+        SetSingleton(fleetManager);
+        fleetManager.EnsureInitialized();
+
+        BusSpec electricSpec = null;
+        var specs = fleetManager.GetAllBusSpecs();
+        for (int i = 0; i < specs.Count; i++)
+        {
+            if (specs[i] != null && specs[i].IsElectric)
+            {
+                electricSpec = specs[i];
+                break;
+            }
+        }
+
+        Assert.That(electricSpec, Is.Not.Null);
+        Assert.That(fleetManager.IsBusOwned(electricSpec), Is.True);
+        Assert.That(fleetManager.TrySelectBus(electricSpec), Is.True);
+        Assert.That(gameState.vehicleState.activeBusId, Is.EqualTo(electricSpec.busId));
+        Assert.That(gameState.vehicleState.isElectricBus, Is.True);
+        Assert.That(gameState.vehicleState.energyUnitLabel, Is.EqualTo("kWh"));
     }
 
     private static T CreateComponent<T>(string name) where T : Component
