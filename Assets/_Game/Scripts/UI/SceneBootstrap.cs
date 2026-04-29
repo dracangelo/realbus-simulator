@@ -144,6 +144,7 @@ public class SceneBootstrap : MonoBehaviour
         EnsurePedestrianSpawner();
         EnsureStopPropSpawner();
         EnsurePassengerSystems();
+        ApplySelectedBusSpec(missionManager.busController);
         EnsureTarmacApplier();
         EnsureWeatherSystems();
         EnsureRuntimeRoadSystems();
@@ -168,11 +169,50 @@ public class SceneBootstrap : MonoBehaviour
         if (busController == null)
             return;
 
-        if (busController.GetComponent<FuelSystem>() == null)
-            busController.gameObject.AddComponent<FuelSystem>();
-
         if (busController.GetComponent<MaintenanceSystem>() == null)
             busController.gameObject.AddComponent<MaintenanceSystem>();
+    }
+
+    void ApplySelectedBusSpec(BusController busController)
+    {
+        if (busController == null)
+            return;
+
+        var fleet = BusFleetManager.EnsureExists();
+        var spec = fleet != null ? fleet.GetSelectedBusSpec() : null;
+        if (spec == null)
+            return;
+
+        busController.ApplyBusSpec(spec);
+        GameState.Instance?.vehicleState?.ApplyBusSpec(spec, preserveEnergyPercent: true);
+
+        var passengerManager = FindObjectOfType<PassengerManager>();
+        if (passengerManager != null)
+            passengerManager.ApplyBusSpec(spec);
+
+        var fuelSystem = busController.GetComponent<FuelSystem>();
+        var batterySystem = busController.GetComponent<BatterySystem>();
+
+        if (spec.IsElectric)
+        {
+            if (fuelSystem != null)
+                Destroy(fuelSystem);
+
+            if (batterySystem == null)
+                batterySystem = busController.gameObject.AddComponent<BatterySystem>();
+
+            batterySystem.ApplyBusSpec(spec);
+        }
+        else
+        {
+            if (batterySystem != null)
+                Destroy(batterySystem);
+
+            if (fuelSystem == null)
+                fuelSystem = busController.gameObject.AddComponent<FuelSystem>();
+
+            fuelSystem.ApplyBusSpec(spec);
+        }
     }
 
     void EnsureGpsManager()

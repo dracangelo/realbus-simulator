@@ -20,6 +20,7 @@ public class PassengerManager : MonoBehaviour
     [Range(0f, 1f)] public float averageSatisfaction = 1f;
 
     [Header("Capacity Policy")]
+    public bool useCapacityOverride = false;
     public int maxBusCapacity = 80;
     public int doorOpenCapacityLimit = 80;
 
@@ -160,9 +161,22 @@ public class PassengerManager : MonoBehaviour
 
     public int GetMaxCapacity()
     {
+        if (useCapacityOverride)
+            return Mathf.Max(1, maxBusCapacity);
         if (passengerData != null && passengerData.totalCapacity > 0)
             return passengerData.totalCapacity;
         return maxBusCapacity;
+    }
+
+    public void ApplyBusSpec(BusSpec spec)
+    {
+        if (spec == null)
+            return;
+
+        useCapacityOverride = true;
+        maxBusCapacity = Mathf.Max(1, spec.PassengerCapacity);
+        doorOpenCapacityLimit = Mathf.Clamp(spec.doorOpenCapacityLimit, 1, maxBusCapacity);
+        seatedCapacity = Mathf.Clamp(spec.SeatedCapacity, 0, maxBusCapacity);
     }
 
     public bool CanOpenDoors()

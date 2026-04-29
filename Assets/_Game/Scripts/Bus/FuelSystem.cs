@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class FuelSystem : MonoBehaviour
 {
-    public const float TankCapacityLitres = 300f;
+    public const float DefaultTankCapacityLitres = 300f;
     public const float FuelWarningPercent = 20f;
     public const float CriticalWarningPercent = 5f;
 
@@ -19,13 +19,15 @@ public class FuelSystem : MonoBehaviour
 
     [Header("Economy")]
     public float dieselPricePerLitreKES = 180f;
+    public float tankCapacityLitres = DefaultTankCapacityLitres;
+    public string energyUnitLabel = "L";
 
     [Header("Runtime")]
-    [SerializeField] float currentFuelLitres = TankCapacityLitres;
+    [SerializeField] float currentFuelLitres = DefaultTankCapacityLitres;
     [SerializeField] float lastConsumptionLPer100Km = 0f;
 
     public float CurrentFuelLitres => currentFuelLitres;
-    public float CurrentFuelPercent => Mathf.Clamp01(currentFuelLitres / TankCapacityLitres) * 100f;
+    public float CurrentFuelPercent => Mathf.Clamp01(currentFuelLitres / Mathf.Max(1f, tankCapacityLitres)) * 100f;
     public float LastConsumptionLPer100Km => lastConsumptionLPer100Km;
     public bool IsWarningActive => CurrentFuelPercent <= FuelWarningPercent;
     public bool IsCriticalActive => CurrentFuelPercent <= CriticalWarningPercent;
@@ -40,6 +42,24 @@ public class FuelSystem : MonoBehaviour
             freeDriveSession = FindFirstObjectByType<FreeDriveSession>();
 
         LoadFromGameState();
+        SyncSessionFuelDisplay();
+    }
+
+    public void ApplyBusSpec(BusSpec spec)
+    {
+        if (spec == null)
+            return;
+
+        float preservedPercent = CurrentFuelPercent / 100f;
+        tankCapacityLitres = Mathf.Max(1f, spec.energyCapacityUnits);
+        cityBaseLPer100Km = Mathf.Max(1f, spec.cityConsumptionPer100Km);
+        motorwayBaseLPer100Km = Mathf.Max(1f, spec.motorwayConsumptionPer100Km);
+        motorwaySpeedThresholdKmh = Mathf.Max(1f, spec.motorwaySpeedThresholdKmh);
+        optimalCruiseRpm = Mathf.Max(1f, spec.optimalCruiseRpm);
+        dieselPricePerLitreKES = Mathf.Max(0f, spec.unitPriceKES);
+        energyUnitLabel = string.IsNullOrWhiteSpace(spec.energyUnitLabel) ? "L" : spec.energyUnitLabel;
+        currentFuelLitres = Mathf.Clamp(preservedPercent * tankCapacityLitres, 0f, tankCapacityLitres);
+        PersistFuelUsage(0f);
         SyncSessionFuelDisplay();
     }
 
@@ -107,7 +127,7 @@ public class FuelSystem : MonoBehaviour
 
     public float GetMissingFuelLitres()
     {
-        return Mathf.Max(0f, TankCapacityLitres - currentFuelLitres);
+        return Mathf.Max(0f, tankCapacityLitres - currentFuelLitres);
     }
 
     public float AutoRefuelAtDepot()
@@ -117,12 +137,14 @@ public class FuelSystem : MonoBehaviour
             return 0f;
 
         float cost = litresNeeded * dieselPricePerLitreKES;
-        currentFuelLitres = TankCapacityLitres;
+        currentFuelLitres = tankCapacityLitres;
 
         if (GameState.Instance != null)
         {
-            GameState.Instance.vehicleState.fuelCapacityLitres = TankCapacityLitres;
+            GameState.Instance.vehicleState.fuelCapacityLitres = tankCapacityLitres;
             GameState.Instance.vehicleState.fuelLitres = currentFuelLitres;
+            GameState.Instance.vehicleState.energyUnitLabel = energyUnitLabel;
+            GameState.Instance.vehicleState.isElectricBus = false;
             GameState.Instance.vehicleState.lowFuelWarningTriggered = false;
             GameState.Instance.vehicleState.criticalFuelWarningTriggered = false;
         }
@@ -135,13 +157,15 @@ public class FuelSystem : MonoBehaviour
     {
         if (GameState.Instance == null || GameState.Instance.vehicleState == null)
         {
-            currentFuelLitres = TankCapacityLitres;
+            currentFuelLitres = tankCapacityLitres;
             return;
         }
 
         var state = GameState.Instance.vehicleState;
-        state.fuelCapacityLitres = TankCapacityLitres;
-        currentFuelLitres = Mathf.Clamp(state.fuelLitres, 0f, TankCapacityLitres);
+        tankCapacityLitres = Mathf.Max(1f, state.fuelCapacityLitres);
+        currentFuelLitres = Mathf.Clamp(state.fuelLitres, 0f, tankCapacityLitres);
+        state.energyUnitLabel = string.IsNullOrWhiteSpace(state.energyUnitLabel) ? "L" : state.energyUnitLabel;
+        state.isElectricBus = false;
     }
 
     void PersistFuelUsage(float fuelUsed)
@@ -150,9 +174,11 @@ public class FuelSystem : MonoBehaviour
             return;
 
         var state = GameState.Instance.vehicleState;
-        state.fuelCapacityLitres = TankCapacityLitres;
+        state.fuelCapacityLitres = tankCapacityLitres;
         state.fuelLitres = currentFuelLitres;
         state.totalFuelConsumedLitres += Mathf.Max(0f, fuelUsed);
+        state.energyUnitLabel = energyUnitLabel;
+        state.isElectricBus = false;
         state.lowFuelWarningTriggered = CurrentFuelPercent <= FuelWarningPercent;
         state.criticalFuelWarningTriggered = CurrentFuelPercent <= CriticalWarningPercent;
     }
@@ -164,7 +190,7 @@ public class FuelSystem : MonoBehaviour
         if (freeDriveSession == null)
             return;
 
-        freeDriveSession.fuelCapacityLitres = TankCapacityLitres;
+        freeDriveSession.fuelCapacityLitres = tankCapacityLitres;
         freeDriveSession.fuelLevel = CurrentFuelPercent;
     }
 

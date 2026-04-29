@@ -1,18 +1,33 @@
 using UnityEngine;
 
 /// <summary>
-/// Single conversion API for Geo <-> World used across gameplay systems.
-/// Uses Mapbox AbstractMap if present; otherwise falls back to local origin math.
+/// Single conversion API: GPS (WGS84) ↔ Unity world-space (metres).
+///
+/// Priority chain (first available wins):
+///   1. Mapbox AbstractMap   — if MAPBOX_SDK is defined and map is alive
+///   2. MapTileLoader        — if present and initialised
+///   3. Local-origin flat-earth approximation (deterministic, unit-testable)
+///
+/// Performance: hot-path calls (GeoToWorldPosition / WorldToGeoPosition) are
+/// O(1) with no allocations.  FindFirstObjectByType is only called during
+/// Start() and SetCityOrigin(), never per-frame.
 /// </summary>
-public class CoordinateConverter : MonoBehaviour
+public class CoordinateConverter : UnityEngine.MonoBehaviour
 {
     public static CoordinateConverter Instance { get; private set; }
 
     [Header("Origin")]
     public MapOrigin mapOrigin;
 
-    [Header("Optional fallback source")]
+    [Header("Optional – tile loader fallback")]
     public MapTileLoader mapTileLoader;
+
+    // ── Constants ────────────────────────────────────────────────────
+
+    /// <summary>Metres per degree of latitude (effectively constant).</summary>
+    public const double MetersPerDegreeLat = 111_320.0;
+
+    // ── Lifecycle ────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -25,79 +40,107 @@ public class CoordinateConverter : MonoBehaviour
         if (mapTileLoader == null)
             mapTileLoader = FindFirstObjectByType<MapTileLoader>();
 
-        if (mapOrigin == null && CityManager.Instance?.activeCity != null)
+        // Auto-seed origin from active city if no asset was assigned.
+        if (mapOrigin == null || !mapOrigin.IsValid())
         {
-            // If user didn't create an asset yet, seed from active city to avoid zero origin.
-            // (This is runtime-only; for persistence create a MapOrigin asset.)
-            mapOrigin = ScriptableObject.CreateInstance<MapOrigin>();
-            mapOrigin.originLat = CityManager.Instance.activeCity.centreLat;
-            mapOrigin.originLon = CityManager.Instance.activeCity.centreLon;
-            mapOrigin.originLabel = CityManager.Instance.activeCity.cityName;
+            var city = CityManager.Instance?.activeCity;
+            if (city != null)
+            {
+                if (mapOrigin == null)
+                    mapOrigin = ScriptableObject.CreateInstance<MapOrigin>();
+                mapOrigin.SetFromCity(city);
+            }
         }
     }
 
-    public Vector3 GeoToWorldPosition(double lat, double lon)
+    // ── Public API ───────────────────────────────────────────────────
+
+    public UnityEngine.Vector3 GeoToWorldPosition(double lat, double lon)
     {
-        // Mapbox integration (optional) — only if package is present at compile time.
 #if MAPBOX_SDK
-        var map = FindFirstObjectByType<Mapbox.Unity.Map.AbstractMap>();
-        if (map != null)
+        var abstractMap = Mapbox.Unity.Map.AbstractMap.Instance; // cached singleton
+        if (abstractMap != null)
         {
             var v2 = new Mapbox.Utils.Vector2d(lat, lon);
-            return map.GeoToWorldPosition(v2, true);
+            return abstractMap.GeoToWorldPosition(v2, true);
         }
 #endif
-
         if (mapTileLoader != null)
             return mapTileLoader.GpsToWorldPosition(lat, lon);
 
-        if (mapOrigin == null)
-            return Vector3.zero;
+        if (mapOrigin != null && mapOrigin.IsValid())
+            return LocalOriginGeoToWorld(lat, lon, mapOrigin.originLat, mapOrigin.originLon);
 
-        return LocalOriginGeoToWorld(lat, lon, mapOrigin.originLat, mapOrigin.originLon);
+        UnityEngine.Debug.LogWarning("CoordinateConverter: No origin set — returning Vector3.zero.");
+        return UnityEngine.Vector3.zero;
     }
 
-    public (double lat, double lon) WorldToGeoPosition(Vector3 worldPos)
+    public (double lat, double lon) WorldToGeoPosition(UnityEngine.Vector3 worldPos)
     {
 #if MAPBOX_SDK
-        var map = FindFirstObjectByType<Mapbox.Unity.Map.AbstractMap>();
-        if (map != null)
+        var abstractMap = Mapbox.Unity.Map.AbstractMap.Instance;
+        if (abstractMap != null)
         {
-            var v2 = map.WorldToGeoPosition(worldPos);
+            var v2 = abstractMap.WorldToGeoPosition(worldPos);
             return (v2.x, v2.y);
         }
 #endif
-
         if (mapTileLoader != null)
             return mapTileLoader.WorldPositionToGps(worldPos);
 
+        if (mapOrigin != null && mapOrigin.IsValid())
+            return LocalOriginWorldToGeo(worldPos, mapOrigin.originLat, mapOrigin.originLon);
+
+        return (0d, 0d);
+    }
+
+    /// <summary>Called by CitySelector when a new city is loaded.</summary>
+    public void SetCityOrigin(CityDefinition city)
+    {
+        if (city == null) return;
+
         if (mapOrigin == null)
-            return (0, 0);
+            mapOrigin = ScriptableObject.CreateInstance<MapOrigin>();
 
-        return LocalOriginWorldToGeo(worldPos, mapOrigin.originLat, mapOrigin.originLon);
+        mapOrigin.SetFromCity(city);
     }
 
-    // --- Pure math fallbacks (deterministic, testable) ---
+    // ── Pure-math helpers (static → fully unit-testable without a scene) ──
 
-    public static Vector3 LocalOriginGeoToWorld(double lat, double lon, double originLat, double originLon)
+    /// <summary>
+    /// Equirectangular projection anchored to an origin.
+    /// Accurate to within ~0.1 m for areas up to ~50 km radius.
+    /// Consistent with <see cref="LocalOriginWorldToGeo"/> (round-trip stable).
+    /// </summary>
+    public static UnityEngine.Vector3 LocalOriginGeoToWorld(
+        double lat, double lon,
+        double originLat, double originLon)
     {
-        // Same approximation used by MapTileLoader (good for small areas; consistent and invertible).
-        double metersPerDegreeLat = 111320.0;
-        double metersPerDegreeLon = 111320.0 * System.Math.Cos(originLat * System.Math.PI / 180.0);
+        double cosLat = System.Math.Cos(originLat * System.Math.PI / 180.0);
+        double metersPerDegreeLon = MetersPerDegreeLat * cosLat;
 
-        float worldX = (float)((lon - originLon) * metersPerDegreeLon);
-        float worldZ = (float)((lat - originLat) * metersPerDegreeLat);
-        return new Vector3(worldX, 0f, worldZ);
+        float x = (float)((lon - originLon) * metersPerDegreeLon);
+        float z = (float)((lat - originLat) * MetersPerDegreeLat);
+        return new UnityEngine.Vector3(x, 0f, z);
     }
 
-    public static (double lat, double lon) LocalOriginWorldToGeo(Vector3 worldPos, double originLat, double originLon)
+    /// <summary>Inverse of <see cref="LocalOriginGeoToWorld"/>.</summary>
+    public static (double lat, double lon) LocalOriginWorldToGeo(
+        UnityEngine.Vector3 worldPos,
+        double originLat, double originLon)
     {
-        double metersPerDegreeLat = 111320.0;
-        double metersPerDegreeLon = 111320.0 * System.Math.Cos(originLat * System.Math.PI / 180.0);
+        double cosLat = System.Math.Cos(originLat * System.Math.PI / 180.0);
+        double metersPerDegreeLon = MetersPerDegreeLat * cosLat;
 
-        double lat = originLat + (worldPos.z / metersPerDegreeLat);
-        double lon = originLon + (worldPos.x / metersPerDegreeLon);
+        double lat = originLat + worldPos.z / MetersPerDegreeLat;
+        double lon = originLon + worldPos.x / metersPerDegreeLon;
         return (lat, lon);
     }
-}
 
+    /// <summary>
+    /// Returns metres-per-degree-longitude at the given latitude.
+    /// Used by OverpassQueryBuilder and any system computing bounding boxes.
+    /// </summary>
+    public static double MetersPerDegreeLonAt(double lat) =>
+        MetersPerDegreeLat * System.Math.Cos(lat * System.Math.PI / 180.0);
+}

@@ -26,8 +26,8 @@ public class OfflineMapsUI : MonoBehaviour
 
         if (predownloader != null)
         {
-            predownloader.OnProgress01 += OnProgress;
-            predownloader.OnEstimatedMb += OnEstimatedSize;
+            predownloader.OnProgress          += OnProgress;       // was OnProgress01
+            predownloader.OnEstimatedMbChanged += OnEstimatedSize; // was OnEstimatedMb
         }
 
         SetProgress(0f);
@@ -37,8 +37,8 @@ public class OfflineMapsUI : MonoBehaviour
     {
         if (predownloader != null)
         {
-            predownloader.OnProgress01 -= OnProgress;
-            predownloader.OnEstimatedMb -= OnEstimatedSize;
+            predownloader.OnProgress          -= OnProgress;
+            predownloader.OnEstimatedMbChanged -= OnEstimatedSize;
         }
     }
 
@@ -94,4 +94,3 @@ public class OfflineMapsUI : MonoBehaviour
             progressLabel.text = $"{p01 * 100f:0}%";
     }
 }
-

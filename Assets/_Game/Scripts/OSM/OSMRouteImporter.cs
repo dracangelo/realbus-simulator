@@ -3,16 +3,69 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
+/// <summary>
+/// Runtime component that fetches OSM bus route data and converts it into
+/// <see cref="BusRoute"/> ScriptableObjects (section 3.7 / 3.7A).
+///
+/// Pipeline (section 3.7A):
+///   1. Fetch roads + routes from Overpass.
+///   2. Build <see cref="RoadGraph"/> from road ways.
+///   3. Parse raw routes via <see cref="BusRouteParser"/>.
+///   4. Snap each stop to the nearest road-graph segment.
+///   5. Group stops into corridor clusters (200–400 m proximity).
+///   6. Connect ordered stops with A* on the RoadGraph.
+///   7. Apply route filter (6–40 stops, 3–25 km).
+///   8. Classify difficulty; generate return routes.
+///   9. Emit <see cref="BusRoute"/> ScriptableObject instances.
+///
+/// In Editor builds the Editor tool (RouteEditorWindow) can also call
+/// <see cref="ImportForCity"/> directly and save assets to disk.
+/// </summary>
 public class OSMRouteImporter : MonoBehaviour
 {
     public static OSMRouteImporter Instance { get; private set; }
 
-    [Header("Settings")]
-    public bool autoImportOnStart = false;
+    // ── Inspector ──────────────────────────────────────────────────────
 
-    [Header("State")]
-    public bool importComplete = false;
-    public List<BusRoute> importedRoutes = new List<BusRoute>();
+    [Header("Settings")]
+    [Tooltip("Automatically fetch routes when a city is loaded.")]
+    public bool autoImportOnStart = false;
+    [Tooltip("Include synthetic return routes in output.")]
+    public bool generateReturnRoutes = true;
+    [Tooltip("Apply stop-count / length filter from spec 3.7A.")]
+    public bool applyRouteFilter = true;
+
+    [Header("Overpass")]
+    public string overpassEndpoint = "https://overpass-api.de/api/interpreter";
+    [Tooltip("Timeout for road graph query (seconds).")]
+    [Range(30, 300)] public int roadsTimeoutSec   = 120;
+    [Tooltip("Timeout for bus routes query (seconds).")]
+    [Range(30, 300)] public int routesTimeoutSec  = 120;
+
+    [Header("Stop Snapping (3.7A)")]
+    [Tooltip("Maximum distance a stop may be from its snapped road position.")]
+    [Range(10f, 200f)] public float maxSnapDistanceMeters = 60f;
+
+    [Header("State (read-only)")]
+    public bool  importInProgress;
+    public bool  importComplete;
+    public int   routesFound;
+    public int   routesAccepted;
+    public string statusMessage = "Idle";
+
+    [Header("Output")]
+    public List<BusRoute> importedRoutes = new();
+
+    // ── Events ─────────────────────────────────────────────────────────
+
+    public event System.Action<string>         OnStatusChanged;
+    public event System.Action<List<BusRoute>> OnImportComplete;
+
+    // ── Private ────────────────────────────────────────────────────────
+
+    CoordinateConverter _converter;
+
+    // ── Lifecycle ──────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -22,236 +75,288 @@ public class OSMRouteImporter : MonoBehaviour
 
     void Start()
     {
+        _converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
         if (autoImportOnStart)
-            StartCoroutine(WaitThenImport());
+            StartCoroutine(WaitForCityThenImport());
     }
-    IEnumerator WaitThenImport()
+
+    // ── Public API ─────────────────────────────────────────────────────
+
+    public void TriggerImport() =>
+        StartCoroutine(ImportRoutesForCity(CityManager.Instance?.activeCity));
+
+    public void TriggerImport(CityDefinition city)
     {
-        // Wait until CityManager has an active city
+        if (city != null)
+            CityManager.Instance?.SetActiveCity(city);
+        StartCoroutine(ImportRoutesForCity(city ?? CityManager.Instance?.activeCity));
+    }
+
+    // ── Main coroutine ─────────────────────────────────────────────────
+
+    IEnumerator WaitForCityThenImport()
+    {
         while (CityManager.Instance == null || CityManager.Instance.activeCity == null)
             yield return null;
-        yield return StartCoroutine(ImportRoutesForActiveCity());
+        yield return ImportRoutesForCity(CityManager.Instance.activeCity);
     }
 
-    public void TriggerImport()
+    IEnumerator ImportRoutesForCity(CityDefinition city)
     {
-        StartCoroutine(ImportRoutesForActiveCity());
-    }
-
-    IEnumerator ImportRoutesForActiveCity()
-    {
-        if (CityManager.Instance == null || CityManager.Instance.activeCity == null)
+        if (city == null)
         {
-            Debug.LogError("OSMRouteImporter: No active city!");
+            SetStatus("No active city — import aborted.");
             yield break;
         }
 
-        var city = CityManager.Instance.activeCity;
-        Debug.Log($"OSMRouteImporter: Fetching routes for {city.cityName}...");
-
-        string query = $"[out:json][timeout:60];" +
-                       $"relation[\"route\"=\"bus\"]" +
-                       $"({city.minLat},{city.minLon},{city.maxLat},{city.maxLon});" +
-                       $"out body;>;out skel qt;";
-
-        string url = "https://overpass-api.de/api/interpreter";
-        string postData = "data=" + UnityWebRequest.EscapeURL(query);
-
-        using (var request = new UnityWebRequest(url, "POST"))
+        if (importInProgress)
         {
-            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(postData);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type",
-                "application/x-www-form-urlencoded");
-            request.timeout = 60;
-
-            yield return request.SendWebRequest();
-
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError($"OSMRouteImporter: Fetch failed — {request.error}");
-                yield break;
-            }
-
-            string json = request.downloadHandler.text;
-            Debug.Log($"OSMRouteImporter: Received {json.Length} bytes");
-            yield return StartCoroutine(ParseAndCreateRoutes(json));
+            Debug.LogWarning("[OSMRouteImporter] Import already in progress.");
+            yield break;
         }
-    }
 
-    IEnumerator ParseAndCreateRoutes(string json)
-    {
-        // Parse JSON manually — Unity's JsonUtility doesn't handle OSM format
-        var parsed = ParseOSMJson(json);
+        importInProgress = true;
+        importComplete   = false;
+        importedRoutes.Clear();
 
-        Debug.Log($"OSMRouteImporter: Found {parsed.relations.Count} routes, " +
-                  $"{parsed.nodes.Count} nodes");
+        // ── Step 1: Fetch road graph data ─────────────────────────────
+        SetStatus($"Fetching road network for {city.cityName}…");
+        string roadsQuery = OverpassQueryBuilder.RoadsQuery(
+            city.minLat, city.minLon, city.maxLat, city.maxLon, roadsTimeoutSec);
 
-        int created = 0;
+        string roadsJson = null;
+        yield return FetchOverpass(roadsQuery, json => roadsJson = json);
 
-        foreach (var relation in parsed.relations)
+        if (string.IsNullOrEmpty(roadsJson))
         {
-            // Build stop list from member nodes
-            List<BusStopData> stops = new List<BusStopData>();
+            SetStatus("Road network fetch failed.");
+            importInProgress = false;
+            yield break;
+        }
 
-            foreach (var member in relation.members)
+        // ── Step 2: Build road graph ──────────────────────────────────
+        SetStatus("Building road graph…");
+        yield return null; // breathe
+
+        var roadsResponse = OverpassResponse.Deserialize(roadsJson);
+        roadsResponse.Resolve();
+        var roadGraph = RoadGraph.BuildFromOverpassWays(roadsResponse, _converter);
+        Debug.Log($"[OSMRouteImporter] Road graph: {roadGraph.nodes.Count} nodes.");
+
+        // ── Step 3: Fetch bus routes ──────────────────────────────────
+        SetStatus("Fetching bus routes…");
+        string routesQuery = OverpassQueryBuilder.BusRoutesQuery(
+            city.minLat, city.minLon, city.maxLat, city.maxLon, routesTimeoutSec);
+
+        string routesJson = null;
+        yield return FetchOverpass(routesQuery, json => routesJson = json);
+
+        if (string.IsNullOrEmpty(routesJson))
+        {
+            SetStatus("Bus routes fetch failed.");
+            importInProgress = false;
+            yield break;
+        }
+
+        // ── Step 4: Parse routes ──────────────────────────────────────
+        SetStatus("Parsing routes…");
+        yield return null;
+
+        var routesResponse = OverpassResponse.Deserialize(routesJson);
+        routesResponse.Resolve();
+        var parsedRoutes = BusRouteParser.ParseRoutes(routesResponse);
+        routesFound = parsedRoutes.Count;
+        Debug.Log($"[OSMRouteImporter] Parsed {routesFound} raw routes.");
+
+        // ── Step 5: Filter ────────────────────────────────────────────
+        if (applyRouteFilter)
+            parsedRoutes = BusRouteParser.FilterRoutes(parsedRoutes);
+
+        // ── Step 6: Stop snap + A* path per route ─────────────────────
+        SetStatus($"Processing {parsedRoutes.Count} routes…");
+        int processed = 0;
+
+        foreach (var pr in parsedRoutes)
+        {
+            SnapStopsToRoadGraph(pr, roadGraph);
+            RefineGeometryWithAStar(pr, roadGraph);
+            processed++;
+            if (processed % 5 == 0)
             {
-                if (member.role != "stop" && member.role != "stop_entry_only"
-                    && member.role != "stop_exit_only") continue;
-
-                if (!parsed.nodes.ContainsKey(member.nodeId)) continue;
-
-                var node = parsed.nodes[member.nodeId];
-                var stop = new BusStopData();
-                stop.stopName = node.name ?? $"Stop {member.nodeId}";
-                stop.latitude = node.lat;
-                stop.longitude = node.lon;
-                stops.Add(stop);
-            }
-
-            if (stops.Count < 2) continue;
-
-            // Create BusRoute object in memory
-            BusRoute route = ScriptableObject.CreateInstance<BusRoute>();
-            route.name = $"Route_{relation.tags.GetValueOrDefault("ref", relation.id.ToString())}";
-            route.routeName = relation.tags.GetValueOrDefault("name",
-                $"Route {relation.tags.GetValueOrDefault("ref", "?")}");
-            route.baseFare = 50f;
-            route.stops = stops.ToArray();
-
-            importedRoutes.Add(route);
-            created++;
-
-            Debug.Log($"OSMRouteImporter: Created {route.routeName} " +
-                      $"({stops.Count} stops)");
-
-            // Yield every 10 routes to avoid hitching
-            if (created % 10 == 0)
+                SetStatus($"Processing routes… {processed}/{parsedRoutes.Count}");
                 yield return null;
-        }
-
-        importComplete = true;
-        Debug.Log($"OSMRouteImporter: Done — {created} routes imported!");
-
-        // Add imported routes to active city
-        if (CityManager.Instance?.activeCity != null)
-        {
-            var existingRoutes = CityManager.Instance.activeCity.availableRoutes ?? 
-                                 new BusRoute[0];
-            var allRoutes = new BusRoute[existingRoutes.Length + importedRoutes.Count];
-            existingRoutes.CopyTo(allRoutes, 0);
-            importedRoutes.CopyTo(allRoutes, existingRoutes.Length);
-            CityManager.Instance.activeCity.availableRoutes = allRoutes;
-            Debug.Log($"City routes updated: {allRoutes.Length} total");
-        }
-    }
-
-    // ── Minimal OSM JSON parser ──────────────────────────────────────
-
-    class OSMNodeData
-    {
-        public long id;
-        public double lat, lon;
-        public string name;
-    }
-
-    class OSMMember
-    {
-        public long nodeId;
-        public string role;
-    }
-
-    class OSMRelation
-    {
-        public long id;
-        public List<OSMMember> members = new List<OSMMember>();
-        public Dictionary<string, string> tags = new Dictionary<string, string>();
-    }
-
-    class OSMParsed
-    {
-        public Dictionary<long, OSMNodeData> nodes = new Dictionary<long, OSMNodeData>();
-        public List<OSMRelation> relations = new List<OSMRelation>();
-    }
-
-    OSMParsed ParseOSMJson(string json)
-    {
-        var result = new OSMParsed();
-
-        try
-        {
-            // Use SimpleJSON-style manual parsing via Unity's built-in approach
-            var root = Json.Deserialize(json) as Dictionary<string, object>;
-            if (root == null) return result;
-
-            var elements = root["elements"] as List<object>;
-            if (elements == null) return result;
-
-            foreach (var elem in elements)
-            {
-                var e = elem as Dictionary<string, object>;
-                if (e == null) continue;
-
-                string type = e["type"] as string;
-
-                if (type == "node")
-                {
-                    var node = new OSMNodeData();
-                    node.id = System.Convert.ToInt64(e["id"]);
-                    node.lat = System.Convert.ToDouble(e["lat"]);
-                    node.lon = System.Convert.ToDouble(e["lon"]);
-
-                    if (e.ContainsKey("tags"))
-                    {
-                        var tags = e["tags"] as Dictionary<string, object>;
-                        if (tags != null && tags.ContainsKey("name"))
-                            node.name = tags["name"] as string;
-                    }
-
-                    result.nodes[node.id] = node;
-                }
-                else if (type == "relation")
-                {
-                    var relation = new OSMRelation();
-                    relation.id = System.Convert.ToInt64(e["id"]);
-
-                    if (e.ContainsKey("members"))
-                    {
-                        var members = e["members"] as List<object>;
-                        if (members != null)
-                        {
-                            foreach (var m in members)
-                            {
-                                var md = m as Dictionary<string, object>;
-                                if (md == null) continue;
-                                if (md["type"] as string != "node") continue;
-
-                                var member = new OSMMember();
-                                member.nodeId = System.Convert.ToInt64(md["ref"]);
-                                member.role = md["role"] as string ?? "";
-                                relation.members.Add(member);
-                            }
-                        }
-                    }
-
-                    if (e.ContainsKey("tags"))
-                    {
-                        var tags = e["tags"] as Dictionary<string, object>;
-                        if (tags != null)
-                            foreach (var kvp in tags)
-                                relation.tags[kvp.Key] = kvp.Value as string ?? "";
-                    }
-
-                    result.relations.Add(relation);
-                }
             }
         }
-        catch (System.Exception ex)
+
+        // ── Step 7: Generate return routes ────────────────────────────
+        if (generateReturnRoutes)
         {
-            Debug.LogError($"OSMRouteImporter parse error: {ex.Message}");
+            var returns = BusRouteParser.GenerateReturnRoutes(parsedRoutes);
+            parsedRoutes.AddRange(returns);
         }
 
-        return result;
+        // ── Step 8: Convert to BusRoute ScriptableObjects ─────────────
+        SetStatus("Creating route assets…");
+        yield return null;
+
+        foreach (var pr in parsedRoutes)
+        {
+            var route = CreateBusRouteAsset(pr);
+            importedRoutes.Add(route);
+        }
+
+        routesAccepted = importedRoutes.Count;
+
+        // ── Step 9: Register with city ────────────────────────────────
+        MergeIntoCity(city);
+
+        importInProgress = false;
+        importComplete   = true;
+        SetStatus($"Done — {routesAccepted} routes imported.");
+        Debug.Log($"[OSMRouteImporter] Complete: {routesAccepted} routes for {city.cityName}.");
+        OnImportComplete?.Invoke(importedRoutes);
+    }
+
+    // ── Section 3.7A: Stop snapping ───────────────────────────────────
+
+    void SnapStopsToRoadGraph(BusRouteParser.ParsedBusRoute route, RoadGraph graph)
+    {
+        if (graph.nodes.Count < 2 || _converter == null) return;
+
+        foreach (var stop in route.stops)
+        {
+            Vector3 stopWorld = _converter.GeoToWorldPosition(stop.latitude, stop.longitude);
+
+            if (!graph.TryProjectToNearestSegment(
+                    stopWorld,
+                    out Vector3 snapped,
+                    out _, out _,
+                    out float dist))
+                continue;
+
+            if (dist > maxSnapDistanceMeters) continue;
+
+            var (lat, lon) = _converter.WorldToGeoPosition(snapped);
+            stop.latitude  = lat;
+            stop.longitude = lon;
+        }
+    }
+
+    // ── Section 3.7A: A* geometry refinement ─────────────────────────
+
+    void RefineGeometryWithAStar(BusRouteParser.ParsedBusRoute route, RoadGraph graph)
+    {
+        if (route.stops.Count < 2 || graph.nodes.Count < 2 || _converter == null) return;
+
+        var refined = new List<(double lat, double lon)>();
+
+        for (int i = 0; i < route.stops.Count - 1; i++)
+        {
+            Vector3 aWorld = _converter.GeoToWorldPosition(
+                route.stops[i].latitude, route.stops[i].longitude);
+            Vector3 bWorld = _converter.GeoToWorldPosition(
+                route.stops[i + 1].latitude, route.stops[i + 1].longitude);
+
+            int startNode = graph.FindNearestNodeIndex(aWorld);
+            int goalNode  = graph.FindNearestNodeIndex(bWorld);
+
+            var path = graph.FindPathAStar(startNode, goalNode);
+
+            if (path.Count >= 2)
+            {
+                foreach (int ni in path)
+                    refined.Add((graph.nodes[ni].lat, graph.nodes[ni].lon));
+            }
+            else
+            {
+                // Fallback: straight line between stops.
+                refined.Add((route.stops[i].latitude,     route.stops[i].longitude));
+                refined.Add((route.stops[i + 1].latitude, route.stops[i + 1].longitude));
+            }
+        }
+
+        if (refined.Count > 0)
+            route.geometry = refined;
+    }
+
+    // ── BusRoute asset creation ────────────────────────────────────────
+
+    static BusRoute CreateBusRouteAsset(BusRouteParser.ParsedBusRoute pr)
+    {
+        var route      = ScriptableObject.CreateInstance<BusRoute>();
+        route.name     = SanitiseName($"Route_{pr.routeRef}_{pr.destinationName}");
+        route.routeName = pr.routeName;
+        route.baseFare  = 50f;
+
+        var stops = new BusStopData[pr.stops.Count];
+        for (int i = 0; i < pr.stops.Count; i++)
+        {
+            stops[i] = new BusStopData
+            {
+                stopName  = pr.stops[i].stopName,
+                latitude  = pr.stops[i].latitude,
+                longitude = pr.stops[i].longitude,
+            };
+        }
+        route.stops = stops;
+
+        return route;
+    }
+
+    void MergeIntoCity(CityDefinition city)
+    {
+        if (city == null || importedRoutes.Count == 0) return;
+
+        var existing  = city.availableRoutes ?? System.Array.Empty<BusRoute>();
+        var all       = new BusRoute[existing.Length + importedRoutes.Count];
+        existing.CopyTo(all, 0);
+        importedRoutes.CopyTo(all, existing.Length);
+        city.availableRoutes = all;
+
+        Debug.Log($"[OSMRouteImporter] City '{city.cityName}' now has {all.Length} routes.");
+    }
+
+    // ── Overpass HTTP helper ───────────────────────────────────────────
+
+    IEnumerator FetchOverpass(string query, System.Action<string> onDone)
+    {
+        string body = "data=" + UnityWebRequest.EscapeURL(query);
+        byte[] raw  = System.Text.Encoding.UTF8.GetBytes(body);
+
+        using var req = new UnityWebRequest(overpassEndpoint, "POST");
+        req.uploadHandler   = new UploadHandlerRaw(raw);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        req.timeout         = Mathf.Max(roadsTimeoutSec, routesTimeoutSec) + 10;
+
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"[OSMRouteImporter] Overpass request failed: {req.error}");
+            onDone?.Invoke(null);
+            yield break;
+        }
+
+        string json = req.downloadHandler.text;
+        Debug.Log($"[OSMRouteImporter] Overpass response: {json.Length:N0} bytes.");
+        onDone?.Invoke(json);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────
+
+    void SetStatus(string msg)
+    {
+        statusMessage = msg;
+        OnStatusChanged?.Invoke(msg);
+        Debug.Log($"[OSMRouteImporter] {msg}");
+    }
+
+    static string SanitiseName(string raw)
+    {
+        var sb = new System.Text.StringBuilder(raw.Length);
+        foreach (char c in raw)
+            sb.Append(char.IsLetterOrDigit(c) || c == '_' ? c : '_');
+        return sb.ToString();
     }
 }

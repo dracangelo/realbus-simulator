@@ -48,6 +48,7 @@
     <Analyzer Include="/home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Tools/BuildPipeline/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/_Game/Scripts/Bus/BusSpec.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AmbulanceBehaviour.cs" />
     <Compile Include="Assets/_Game/Scripts/City/CityDefinition.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/WeatherPhysics.cs" />
@@ -57,20 +58,25 @@
     <Compile Include="Assets/_Game/Scripts/UI/SceneCatalog.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DynamicEventSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/BusRouteParser.cs" />
+    <Compile Include="Assets/_Game/Scripts/Util/RuntimeDistanceCuller.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficDebugHUD.cs" />
+    <Compile Include="Assets/_Game/Scripts/Bus/BusFleetManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/FuelSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OverpassResponse.cs" />
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeSpawnLogger.cs" />
+    <Compile Include="Assets/_Game/Scripts/UI/RankUpSequence.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/WheelVisualSync.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingMeshBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/BusRoute.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/PassengerCountUI.cs" />
+    <Compile Include="Assets/_Game/Scripts/Progress/XPSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/City/CountryDefinition.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MissionResult.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/FreeDriveSession.cs" />
     <Compile Include="Assets/_Game/Scripts/Util/MiniJSON.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/GpsTracker.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/RoadSurfaceFrictionController.cs" />
+    <Compile Include="Assets/_Game/Scripts/Bus/BatterySystem.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/FreeDriveUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MissionState.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/Weathersystem.cs" />
@@ -81,12 +87,14 @@
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeGasStationSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusController.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CoordinateConverter.cs" />
+    <Compile Include="Assets/_Game/Scripts/UI/XPBar.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMRoadMeshBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/GPSManager.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/SceneLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AIBusScheduleSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerAgent.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/WeatherUI.cs" />
+    <Compile Include="Assets/_Game/Scripts/City/CityConfig.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/SplineVehicle.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/TimeOfDaySystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerSpawner.cs" />
@@ -133,14 +141,17 @@
     <Compile Include="Assets/_Game/Scripts/Traffic/AIVehicleController.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/RouteSelectUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/TileStreamManager.cs" />
+    <Compile Include="Assets/_Game/Scripts/City/CitySelector.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/RoadSurfaceDetector.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CityPredownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMRouteImporter.cs" />
+    <Compile Include="Assets/_Game/Scripts/UI/GarageScreenUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeEnvironmentSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DriverShiftSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/StopTrigger.cs" />
+    <Compile Include="Assets/_Game/Scripts/Progress/UnlockManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AIRoadGraph.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MissionBriefingUI.cs" />

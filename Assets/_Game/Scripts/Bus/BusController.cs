@@ -16,6 +16,8 @@ public class BusController : MonoBehaviour
     [Header("Data")]
     public EngineSystem engineData;
     public TransmissionSystem transmissionData;
+    public Transform modelRoot;
+    public bool replaceModelFromSpec = false;
 
     [Header("Wheels")]
     public WheelCollider[] driveWheels;   // rear 4
@@ -46,6 +48,9 @@ public class BusController : MonoBehaviour
     public bool kneelingSuspensionActive = false;
 
     private Rigidbody rb;
+    private EngineSystem runtimeEngineInstance;
+    private TransmissionSystem runtimeTransmissionInstance;
+    private GameObject activeModelInstance;
 
     public bool RetarderActive => retarderActive;
     public bool ParkingBrakeActive => parkingBrakeActive;
@@ -54,7 +59,20 @@ public class BusController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        if (rb == null)
+            return;
+
+        if (rb.mass <= 0.01f)
+            rb.mass = 13200f;
         rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+    }
+
+    void OnDestroy()
+    {
+        if (runtimeEngineInstance != null)
+            Destroy(runtimeEngineInstance);
+        if (runtimeTransmissionInstance != null)
+            Destroy(runtimeTransmissionInstance);
     }
 
     void Update()
@@ -65,14 +83,17 @@ public class BusController : MonoBehaviour
         throttleInput = keyboard.wKey.isPressed ? 1f : 0f;
         brakeInput = keyboard.sKey.isPressed ? 1f : 0f;
 
-        if (keyboard.eKey.wasPressedThisFrame) transmissionData.ShiftUp();
-        if (keyboard.qKey.wasPressedThisFrame) transmissionData.ShiftDown();
+        if (transmissionData != null && keyboard.eKey.wasPressedThisFrame) transmissionData.ShiftUp();
+        if (transmissionData != null && keyboard.qKey.wasPressedThisFrame) transmissionData.ShiftDown();
         if (keyboard.rKey.wasPressedThisFrame) retarderActive = !retarderActive;
         if (keyboard.pKey.wasPressedThisFrame) parkingBrakeActive = !parkingBrakeActive;
     }
 
     void FixedUpdate()
     {
+        if (rb == null || engineData == null || transmissionData == null)
+            return;
+
         ApplyThrottle();
         ApplySteering();
         ApplyBrakes();
@@ -154,9 +175,11 @@ public class BusController : MonoBehaviour
     void UpdateRPM()
     {
         currentSpeedKmh = rb.linearVelocity.magnitude * 3.6f;
+        float minRpm = engineData != null ? Mathf.Max(350f, engineData.idleRPM) : 500f;
+        float maxRpm = engineData != null ? Mathf.Max(minRpm + 100f, engineData.maxRPM) : 2500f;
         currentRPM = Mathf.Clamp(
-            500f + currentSpeedKmh * transmissionData.GetCurrentRatio() * 20f,
-            500f, 2500f);
+            minRpm + currentSpeedKmh * transmissionData.GetCurrentRatio() * 20f,
+            minRpm, maxRpm);
 
         if (throttleInput == 0f && !retarderActive)
         {
@@ -245,5 +268,69 @@ public class BusController : MonoBehaviour
     public void RequestKneelingSuspension(bool active)
     {
         kneelingSuspensionActive = active;
+    }
+
+    public void ApplyBusSpec(BusSpec spec)
+    {
+        if (spec == null)
+            return;
+
+        maxSteerAngle = Mathf.Max(1f, spec.maxSteerAngle);
+        steerSpeed = Mathf.Max(0.01f, spec.steerSpeed);
+        centerOfMassY = spec.centerOfMassY;
+        antiRollForce = Mathf.Max(0f, spec.antiRollForce);
+        maxBrakeTorque = Mathf.Max(0f, spec.maxBrakeTorque);
+        retarderStrength = Mathf.Max(0f, spec.retarderStrength);
+        dragCoefficient = Mathf.Max(0f, spec.dragCoefficient);
+        frontalArea = Mathf.Max(0.1f, spec.frontalArea);
+        airDensity = Mathf.Max(0.1f, spec.airDensity);
+
+        if (rb == null)
+            rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.mass = Mathf.Max(1f, spec.rigidbodyMassKg);
+            rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+        }
+
+        ApplyRuntimeEngine(spec.engineProfile);
+        ApplyRuntimeTransmission(spec.transmissionProfile);
+
+        if (replaceModelFromSpec && spec.modelPrefab != null)
+            ReplaceModel(spec.modelPrefab);
+    }
+
+    void ApplyRuntimeEngine(EngineSystem source)
+    {
+        if (runtimeEngineInstance != null)
+            Destroy(runtimeEngineInstance);
+
+        runtimeEngineInstance = source != null ? Instantiate(source) : null;
+        engineData = runtimeEngineInstance != null ? runtimeEngineInstance : source;
+        if (engineData != null)
+            currentRPM = Mathf.Max(350f, engineData.idleRPM);
+    }
+
+    void ApplyRuntimeTransmission(TransmissionSystem source)
+    {
+        if (runtimeTransmissionInstance != null)
+            Destroy(runtimeTransmissionInstance);
+
+        runtimeTransmissionInstance = source != null ? Instantiate(source) : null;
+        transmissionData = runtimeTransmissionInstance != null ? runtimeTransmissionInstance : source;
+        if (transmissionData != null)
+            transmissionData.currentGear = 0;
+    }
+
+    void ReplaceModel(GameObject modelPrefab)
+    {
+        Transform parent = modelRoot != null ? modelRoot : transform;
+        if (activeModelInstance != null)
+            Destroy(activeModelInstance);
+
+        activeModelInstance = Instantiate(modelPrefab, parent);
+        activeModelInstance.transform.localPosition = Vector3.zero;
+        activeModelInstance.transform.localRotation = Quaternion.identity;
+        activeModelInstance.transform.localScale = Vector3.one;
     }
 }

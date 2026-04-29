@@ -34,6 +34,7 @@ public class MainMenuUI : MonoBehaviour
     public TextMeshProUGUI currencyText;
 
     [Header("Hero")]
+    public Image heroBusImage;
     public TextMeshProUGUI statusChipText;
     public Image statusChipBackground;
     public TextMeshProUGUI heroTitleText;
@@ -75,6 +76,11 @@ public class MainMenuUI : MonoBehaviour
     public Image xpFill;
     public TextMeshProUGUI versionText;
 
+    RectTransform careerDetailRoot;
+    TextMeshProUGUI[] careerDetailLabels;
+    TextMeshProUGUI[] careerDetailValues;
+    Image[] careerDetailFills;
+
     Vector2Int lastScreenSize;
     RectTransform statsViewport;
     ScrollRect statsScrollRect;
@@ -108,17 +114,23 @@ public class MainMenuUI : MonoBehaviour
     Vector2 careerSizeDeltaStatic;
     Vector2 careerOffsetMinStatic;
     Vector2 careerOffsetMaxStatic;
+    GarageScreenUI garageScreen;
+    bool garageScreenVisible;
 
     void Start()
     {
+        BusFleetManager.EnsureExists();
+        XPSystem.EnsureExists();
         AutoBindLayoutReferences();
         CacheGarageStatLabels();
         EnsureMaintenanceDetailUI();
+        EnsureCareerDetailUI();
 
         CacheStaticStatsLayout();
 
         ApplyTheme();
-        RefreshGarageMetrics();
+        EnsureGarageScreen();
+        RefreshGarageAndFleetPresentation();
         Canvas.ForceUpdateCanvases();
         ApplyResponsiveLayout(force: true);
         SetupButtons();
@@ -129,6 +141,8 @@ public class MainMenuUI : MonoBehaviour
     {
         ApplyResponsiveLayout();
         RefreshGarageMetrics();
+        RefreshFleetPresentation();
+        RefreshCareerProgress();
     }
 
     void ApplyTheme()
@@ -142,6 +156,9 @@ public class MainMenuUI : MonoBehaviour
         if (heroGradientOverlay)
             heroGradientOverlay.color = UITheme.WithAlpha(UITheme.Background, 0.58f);
 
+        if (heroBusImage)
+            heroBusImage.preserveAspect = false;
+
         if (titleText)
         {
             titleText.text = "REAL BUS SIM";
@@ -153,7 +170,7 @@ public class MainMenuUI : MonoBehaviour
 
         ApplyNavLabel(navDriveText, "DRIVE", true);
         ApplyNavLabel(navGarageText, "GARAGE", false);
-        ApplyNavLabel(navRoutesText, "ROUTES", false);
+        ApplyNavLabel(navRoutesText, "START PLAYING", false);
         ApplyNavLabel(navMarketText, "MARKET", false);
 
         if (currencyBadge)
@@ -184,7 +201,7 @@ public class MainMenuUI : MonoBehaviour
 
         if (heroTitleText)
         {
-            heroTitleText.text = "VOLTA S-SERIES";
+            heroTitleText.text = "FLEET READY";
             heroTitleText.color = UITheme.TextPrimary;
             heroTitleText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
             heroTitleText.fontStyle = FontStyles.Bold | FontStyles.Italic;
@@ -192,7 +209,7 @@ public class MainMenuUI : MonoBehaviour
 
         if (heroDescriptionText)
         {
-            heroDescriptionText.text = "Next-gen electric propulsion. Optimized for high-density metropolitan routes with adaptive air suspension.";
+            heroDescriptionText.text = "Choose the right vehicle for the route, the crowd, and the shift.";
             heroDescriptionText.color = UITheme.TextSecondary;
             heroDescriptionText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
         }
@@ -232,7 +249,7 @@ public class MainMenuUI : MonoBehaviour
 
         if (customizeButtonText)
         {
-            customizeButtonText.text = "CUSTOMIZE";
+            customizeButtonText.text = "OPEN GARAGE";
             customizeButtonText.color = UITheme.TextPrimary;
             customizeButtonText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
             customizeButtonText.characterSpacing = 4f;
@@ -241,10 +258,10 @@ public class MainMenuUI : MonoBehaviour
         ApplyPanel(garagePanel);
         ApplyPanel(careerPanel);
 
-        ApplySectionHeading(garageTitleText, "MY GARAGE");
+        ApplySectionHeading(garageTitleText, "FLEET GARAGE");
         ApplySectionSubtitle(garageSubtitleText, "Depot fuel, wear, and service overview");
         ApplySectionHeading(careerTitleText, "CAREER");
-        ApplySectionSubtitle(careerSubtitleText, "Driver Level & Experience");
+        ApplySectionSubtitle(careerSubtitleText, "Driver level and dispatch readiness");
 
         ApplyStatLabel(batteryLabelText, "FUEL RESERVE");
         ApplyStatLabel(capacityLabelText, "BRAKES");
@@ -263,23 +280,23 @@ public class MainMenuUI : MonoBehaviour
 
         if (levelValueText)
         {
-            levelValueText.text = "24";
+            levelValueText.text = "1";
             levelValueText.color = UITheme.TextPrimary;
             levelValueText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
 
         if (xpValueText)
         {
-            xpValueText.text = "8,420 / 10,000 XP";
+            xpValueText.text = "0 / 500 XP  •  500 TO NEXT";
             xpValueText.color = UITheme.TextSecondary;
             xpValueText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
         }
 
-        ApplyFill(xpFill, UITheme.Accent, 0.84f);
+        ApplyFill(xpFill, UITheme.Accent, 0f);
 
         if (versionText)
         {
-            versionText.text = "v0.1.0 — Early Access";
+            versionText.text = "v0.1.0 - Early Access";
             versionText.color = UITheme.TextMuted;
             versionText.font = UITheme.GetFont(UITheme.FontWeight.Regular);
         }
@@ -300,11 +317,90 @@ public class MainMenuUI : MonoBehaviour
         if (!statsGrid && rootPanel)
             statsGrid = FindRect(rootPanel, "StatsGrid");
 
+        if (!backgroundPanel)
+            backgroundPanel = GetComponent<Image>();
+
+        if (!heroCardBackground && heroCard)
+            heroCardBackground = heroCard.GetComponent<Image>();
+
+        if (!heroGradientOverlay && heroCard)
+            heroGradientOverlay = FindImage(heroCard, "HeroOverlay");
+
         if (!garagePanel && statsGrid)
             garagePanel = FindImage(statsGrid, "GaragePanel");
 
         if (!careerPanel && statsGrid)
             careerPanel = FindImage(statsGrid, "CareerPanel");
+
+        if (!titleText && topBar)
+            titleText = FindChildText(topBar, "BrandGroup/Text_Title");
+
+        if (!navDriveText && topBar)
+            navDriveText = FindChildText(topBar, "NavLinks/Text_Drive");
+        if (!navGarageText && topBar)
+            navGarageText = FindChildText(topBar, "NavLinks/Text_Garage");
+        if (!navRoutesText && topBar)
+            navRoutesText = FindChildText(topBar, "NavLinks/Text_Routes");
+        if (!navMarketText && topBar)
+            navMarketText = FindChildText(topBar, "NavLinks/Text_Market");
+
+        if (!currencyBadge && topBar)
+            currencyBadge = FindImage(topBar, "CurrencyBadge");
+        if (!currencyText && topBar)
+            currencyText = FindChildText(topBar, "CurrencyBadge/Text_Cash");
+
+        if (!heroBusImage && heroCard)
+            heroBusImage = FindImage(heroCard, "HeroBusImage");
+        if (!statusChipBackground && heroCard)
+            statusChipBackground = FindImage(heroCard, "HeroContent/StatusChip");
+        if (!statusChipText && heroCard)
+            statusChipText = FindChildText(heroCard, "HeroContent/StatusChip/Text_Status");
+        if (!heroTitleText && heroCard)
+            heroTitleText = FindChildText(heroCard, "HeroContent/Text_HeroTitle");
+        if (!heroDescriptionText && heroCard)
+            heroDescriptionText = FindChildText(heroCard, "HeroContent/Text_HeroDesc");
+        if (!playButton && heroCard)
+            playButton = FindButton(heroCard, "HeroContent/Btn_Play");
+        if (!playButtonText && heroCard)
+            playButtonText = FindChildText(heroCard, "HeroContent/Btn_Play/Text");
+        if (!customizeButton && heroCard)
+            customizeButton = FindButton(heroCard, "HeroContent/Btn_Customize");
+        if (!customizeButtonText && heroCard)
+            customizeButtonText = FindChildText(heroCard, "HeroContent/Btn_Customize/Text");
+
+        if (!garageTitleText && garagePanel)
+            garageTitleText = FindChildText(garagePanel.transform, "Text_GarageTitle");
+        if (!garageSubtitleText && garagePanel)
+            garageSubtitleText = FindChildText(garagePanel.transform, "Text_GarageSubtitle");
+        if (!batteryValueText && garagePanel)
+            batteryValueText = FindChildText(garagePanel.transform, "Stat_Battery/Text_Value");
+        if (!batteryFill && garagePanel)
+            batteryFill = FindChildImage(garagePanel.transform, "Stat_Battery/Bar_BG/Bar_Fill");
+        if (!capacityValueText && garagePanel)
+            capacityValueText = FindChildText(garagePanel.transform, "Stat_Capacity/Text_Value");
+        if (!capacityFill && garagePanel)
+            capacityFill = FindChildImage(garagePanel.transform, "Stat_Capacity/Bar_BG/Bar_Fill");
+        if (!wearValueText && garagePanel)
+            wearValueText = FindChildText(garagePanel.transform, "Stat_Wear/Text_Value");
+        if (!wearFill && garagePanel)
+            wearFill = FindChildImage(garagePanel.transform, "Stat_Wear/Bar_BG/Bar_Fill");
+        if (!speedValueText && garagePanel)
+            speedValueText = FindChildText(garagePanel.transform, "Stat_Speed/Text_Value");
+        if (!speedFill && garagePanel)
+            speedFill = FindChildImage(garagePanel.transform, "Stat_Speed/Bar_BG/Bar_Fill");
+
+        if (!careerTitleText && careerPanel)
+            careerTitleText = FindChildText(careerPanel.transform, "Text_CareerTitle");
+        if (!careerSubtitleText && careerPanel)
+            careerSubtitleText = FindChildText(careerPanel.transform, "Text_CareerSubtitle");
+        if (!levelValueText && careerPanel)
+            levelValueText = FindChildText(careerPanel.transform, "Text_LevelValue");
+        if (!xpValueText && careerPanel)
+            xpValueText = FindChildText(careerPanel.transform, "Text_XPValue");
+        if (!xpFill && careerPanel)
+            xpFill = FindChildImage(careerPanel.transform, "XPBar_BG/XPBar_Fill");
+        if (!versionText && rootPanel)
+            versionText = FindChildText(rootPanel, "Text_Version");
     }
 
     void CacheStaticStatsLayout()
@@ -737,10 +833,25 @@ public class MainMenuUI : MonoBehaviour
                     maintenanceRowValues[i].fontSize = valueSize;
             }
         }
+
+        if (careerDetailLabels != null)
+        {
+            float labelSize = compact ? 11f : 12f;
+            float valueSize = compact ? 12f : 13f;
+            for (int i = 0; i < careerDetailLabels.Length; i++)
+            {
+                if (careerDetailLabels[i])
+                    careerDetailLabels[i].fontSize = labelSize;
+                if (careerDetailValues != null && i < careerDetailValues.Length && careerDetailValues[i])
+                    careerDetailValues[i].fontSize = valueSize;
+            }
+        }
     }
 
     void SetupButtons()
     {
+        playButton?.onClick.RemoveListener(OnPlay);
+        customizeButton?.onClick.RemoveListener(OnCustomize);
         playButton?.onClick.AddListener(OnPlay);
         customizeButton?.onClick.AddListener(OnCustomize);
     }
@@ -752,7 +863,39 @@ public class MainMenuUI : MonoBehaviour
 
     void OnCustomize()
     {
-        Debug.Log("Customize bus — Phase 7");
+        ToggleGarage();
+    }
+
+    void LoadPrimaryAction()
+    {
+        var loader = SceneLoader.Instance;
+        if (loader == null)
+            return;
+
+        var gameState = GameState.Instance;
+        if (gameState != null && gameState.selectedRoute != null)
+        {
+            loader.LoadGameChecked();
+            return;
+        }
+
+        var selectedCity = gameState != null ? gameState.selectedCity : null;
+        var activeCity = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        if (selectedCity != null || activeCity != null)
+        {
+            loader.LoadRouteSelectChecked();
+            return;
+        }
+
+        var selectedCountry = gameState != null ? gameState.selectedCountry : null;
+        var activeCountry = CityManager.Instance != null ? CityManager.Instance.activeCountry : null;
+        if (selectedCountry != null || activeCountry != null)
+        {
+            loader.LoadCitySelectChecked();
+            return;
+        }
+
+        loader.LoadCountrySelect();
     }
 
     IEnumerator TransitionOut()
@@ -764,7 +907,7 @@ public class MainMenuUI : MonoBehaviour
         if (canvasGroup)
             yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.3f));
 
-        SceneLoader.Instance?.LoadCountrySelect();
+        LoadPrimaryAction();
     }
 
     IEnumerator AnimateIn()
@@ -858,6 +1001,18 @@ public class MainMenuUI : MonoBehaviour
         return t ? t.GetComponent<Image>() : null;
     }
 
+    Button FindButton(Transform parent, string path)
+    {
+        Transform child = parent.Find(path);
+        return child ? child.GetComponent<Button>() : null;
+    }
+
+    Image FindChildImage(Transform parent, string path)
+    {
+        Transform child = parent.Find(path);
+        return child ? child.GetComponent<Image>() : null;
+    }
+
     void CacheGarageStatLabels()
     {
         if (garagePanel == null)
@@ -869,6 +1024,108 @@ public class MainMenuUI : MonoBehaviour
         speedLabelText = FindChildText(garagePanel.transform, "Stat_Speed/Text_Label");
     }
 
+    void EnsureGarageScreen()
+    {
+        if (garageScreen != null)
+            return;
+
+        var screenObject = new GameObject("GarageScreenUI", typeof(RectTransform), typeof(CanvasGroup), typeof(GarageScreenUI));
+        screenObject.transform.SetParent(transform, false);
+        var rect = screenObject.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        garageScreen = screenObject.GetComponent<GarageScreenUI>();
+        garageScreen.Initialize(this);
+    }
+
+    void ToggleGarage()
+    {
+        EnsureGarageScreen();
+        garageScreenVisible = !garageScreenVisible;
+
+        if (garageScreenVisible)
+            garageScreen.Show();
+        else
+            garageScreen.Hide();
+
+        RefreshFleetPresentation();
+    }
+
+    public void HandleGarageVisibilityChanged(bool visible)
+    {
+        garageScreenVisible = visible;
+        RefreshFleetPresentation();
+    }
+
+    public void RefreshGarageAndFleetPresentation()
+    {
+        RefreshFleetPresentation();
+        RefreshGarageMetrics();
+        RefreshCareerProgress();
+        if (garageScreen != null && garageScreenVisible)
+            garageScreen.Refresh();
+    }
+
+    void RefreshFleetPresentation()
+    {
+        var fleet = BusFleetManager.Instance != null ? BusFleetManager.Instance : BusFleetManager.EnsureExists();
+        var spec = fleet != null ? fleet.GetSelectedBusSpec() : null;
+        if (spec == null)
+            return;
+
+        ApplyNavLabel(navDriveText, "DRIVE", !garageScreenVisible);
+        ApplyNavLabel(navGarageText, "GARAGE", garageScreenVisible);
+        ApplyNavLabel(navRoutesText, "START PLAYING", false);
+        ApplyNavLabel(navMarketText, "MARKET", false);
+
+        var gameState = GameState.Instance;
+        var city = gameState != null && gameState.selectedCity != null
+            ? gameState.selectedCity
+            : CityManager.Instance != null
+                ? CityManager.Instance.activeCity
+                : null;
+        var country = gameState != null && gameState.selectedCountry != null
+            ? gameState.selectedCountry
+            : CityManager.Instance != null
+                ? CityManager.Instance.activeCountry
+                : null;
+        var route = gameState != null ? gameState.selectedRoute : null;
+        int availableRoutes = city != null && city.availableRoutes != null ? city.availableRoutes.Length : 0;
+
+        if (statusChipText)
+            statusChipText.text = BuildStatusLabel(spec, route, city);
+
+        if (heroTitleText)
+            heroTitleText.text = spec.displayName.ToUpper();
+
+        if (heroDescriptionText)
+            heroDescriptionText.text = BuildHeroDescription(spec, city, route, availableRoutes);
+
+        if (heroBusImage && spec.previewSprite != null)
+        {
+            heroBusImage.sprite = spec.previewSprite;
+            heroBusImage.color = Color.white;
+            heroBusImage.preserveAspect = true;
+        }
+
+        if (garageTitleText)
+            garageTitleText.text = "FLEET GARAGE";
+
+        if (garageSubtitleText)
+            garageSubtitleText.text = $"{spec.displayName}  •  {spec.PassengerCapacity} pax  •  Rank {spec.requiredRank}+";
+
+        if (customizeButtonText)
+            customizeButtonText.text = garageScreenVisible ? "CLOSE GARAGE" : "OPEN GARAGE";
+
+        if (playButtonText)
+            playButtonText.text = GetPrimaryActionLabel(route, city, country);
+
+        ApplyStatLabel(batteryLabelText, spec.IsElectric ? "CHARGE RESERVE" : "FUEL RESERVE");
+    }
+
     void EnsureMaintenanceDetailUI()
     {
         if (garagePanel == null || maintenanceDetailRoot != null)
@@ -878,60 +1135,61 @@ public class MainMenuUI : MonoBehaviour
         if (existing != null)
         {
             maintenanceDetailRoot = existing as RectTransform;
-            return;
+            if (TryBindDetailRows(maintenanceDetailRoot, 5, out maintenanceRowLabels, out maintenanceRowValues, out maintenanceRowFills))
+                return;
         }
-
-        GameObject root = new GameObject("MaintenanceDetailPanel", typeof(RectTransform));
-        root.transform.SetParent(garagePanel.transform, false);
-        maintenanceDetailRoot = root.GetComponent<RectTransform>();
-        maintenanceDetailRoot.anchorMin = new Vector2(0f, 1f);
-        maintenanceDetailRoot.anchorMax = new Vector2(1f, 1f);
-        maintenanceDetailRoot.pivot = new Vector2(0.5f, 1f);
-        maintenanceDetailRoot.anchoredPosition = new Vector2(0f, -392f);
-        maintenanceDetailRoot.offsetMin = new Vector2(32f, -110f);
-        maintenanceDetailRoot.offsetMax = new Vector2(-32f, 0f);
+        else
+        {
+            GameObject root = new GameObject("MaintenanceDetailPanel", typeof(RectTransform));
+            root.transform.SetParent(garagePanel.transform, false);
+            maintenanceDetailRoot = root.GetComponent<RectTransform>();
+            maintenanceDetailRoot.anchorMin = new Vector2(0f, 1f);
+            maintenanceDetailRoot.anchorMax = new Vector2(1f, 1f);
+            maintenanceDetailRoot.pivot = new Vector2(0.5f, 1f);
+            maintenanceDetailRoot.anchoredPosition = new Vector2(0f, -392f);
+            maintenanceDetailRoot.offsetMin = new Vector2(32f, -110f);
+            maintenanceDetailRoot.offsetMax = new Vector2(-32f, 0f);
+        }
 
         string[] labels = { "Brakes", "Steer axle tyres", "Middle axle tyres", "Rear axle tyres", "Engine service" };
-        maintenanceRowLabels = new TextMeshProUGUI[labels.Length];
-        maintenanceRowValues = new TextMeshProUGUI[labels.Length];
-        maintenanceRowFills = new Image[labels.Length];
+        CreateDetailRows(maintenanceDetailRoot, labels, 24f, 0.42f, 0.88f, out maintenanceRowLabels, out maintenanceRowValues, out maintenanceRowFills);
+    }
 
-        for (int i = 0; i < labels.Length; i++)
+    void EnsureCareerDetailUI()
+    {
+        if (careerPanel == null || careerDetailRoot != null)
+            return;
+
+        var existing = careerPanel.transform.Find("CareerDataPanel");
+        if (existing != null)
         {
-            float top = -i * 24f;
-            GameObject row = new GameObject($"Row_{i}", typeof(RectTransform));
-            row.transform.SetParent(maintenanceDetailRoot, false);
-            RectTransform rowRect = row.GetComponent<RectTransform>();
-            rowRect.anchorMin = new Vector2(0f, 1f);
-            rowRect.anchorMax = new Vector2(1f, 1f);
-            rowRect.pivot = new Vector2(0.5f, 1f);
-            rowRect.anchoredPosition = new Vector2(0f, top);
-            rowRect.sizeDelta = new Vector2(0f, 20f);
-
-            maintenanceRowLabels[i] = CreateText($"{labels[i]}_Label", row.transform, labels[i], new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0f), 220f, TextAlignmentOptions.Left);
-            maintenanceRowValues[i] = CreateText($"{labels[i]}_Value", row.transform, "100%", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 0f), 180f, TextAlignmentOptions.Right);
-
-            GameObject barBg = new GameObject($"{labels[i]}_BarBG", typeof(RectTransform), typeof(Image));
-            barBg.transform.SetParent(row.transform, false);
-            RectTransform bgRect = barBg.GetComponent<RectTransform>();
-            bgRect.anchorMin = new Vector2(0.42f, 0.5f);
-            bgRect.anchorMax = new Vector2(0.88f, 0.5f);
-            bgRect.pivot = new Vector2(0.5f, 0.5f);
-            bgRect.sizeDelta = new Vector2(0f, 8f);
-            bgRect.anchoredPosition = Vector2.zero;
-            var bgImage = barBg.GetComponent<Image>();
-            bgImage.color = UITheme.Surface;
-
-            GameObject fill = new GameObject($"{labels[i]}_BarFill", typeof(RectTransform), typeof(Image));
-            fill.transform.SetParent(barBg.transform, false);
-            RectTransform fillRect = fill.GetComponent<RectTransform>();
-            fillRect.anchorMin = new Vector2(0f, 0f);
-            fillRect.anchorMax = new Vector2(1f, 1f);
-            fillRect.offsetMin = Vector2.zero;
-            fillRect.offsetMax = Vector2.zero;
-            maintenanceRowFills[i] = fill.GetComponent<Image>();
-            maintenanceRowFills[i].color = UITheme.Accent;
+            careerDetailRoot = existing as RectTransform;
+            if (TryBindDetailRows(careerDetailRoot, 5, out careerDetailLabels, out careerDetailValues, out careerDetailFills))
+                return;
         }
+        else
+        {
+            GameObject root = new GameObject("CareerDataPanel", typeof(RectTransform));
+            root.transform.SetParent(careerPanel.transform, false);
+            careerDetailRoot = root.GetComponent<RectTransform>();
+            careerDetailRoot.anchorMin = new Vector2(0f, 0f);
+            careerDetailRoot.anchorMax = new Vector2(1f, 0f);
+            careerDetailRoot.pivot = new Vector2(0.5f, 0f);
+            careerDetailRoot.anchoredPosition = new Vector2(0f, 24f);
+            careerDetailRoot.sizeDelta = new Vector2(0f, 190f);
+            careerDetailRoot.offsetMin = new Vector2(28f, 24f);
+            careerDetailRoot.offsetMax = new Vector2(-28f, 214f);
+        }
+
+        string[] labels =
+        {
+            "CURRENT CITY",
+            "ACTIVE ROUTE",
+            "LAST PAYOUT",
+            "REPUTATION",
+            "NEXT UNLOCK"
+        };
+        CreateDetailRows(careerDetailRoot, labels, 36f, 0.42f, 0.78f, out careerDetailLabels, out careerDetailValues, out careerDetailFills);
     }
 
     void RefreshGarageMetrics()
@@ -941,6 +1199,13 @@ public class MainMenuUI : MonoBehaviour
             return;
 
         var vehicle = gameState.vehicleState;
+        var fleet = BusFleetManager.Instance != null ? BusFleetManager.Instance : BusFleetManager.EnsureExists();
+        var spec = fleet != null ? fleet.GetSelectedBusSpec() : null;
+        string unitLabel = !string.IsNullOrWhiteSpace(vehicle.energyUnitLabel)
+            ? vehicle.energyUnitLabel
+            : spec != null && !string.IsNullOrWhiteSpace(spec.energyUnitLabel)
+                ? spec.energyUnitLabel
+                : "L";
         float fuelCapacity = Mathf.Max(1f, vehicle.fuelCapacityLitres);
         float fuelPercent = Mathf.Clamp01(vehicle.fuelLitres / fuelCapacity);
         Color fuelColor = fuelPercent <= 0.05f
@@ -964,7 +1229,7 @@ public class MainMenuUI : MonoBehaviour
         if (currencyText && gameState.economy != null)
             currencyText.text = $"KES {gameState.economy.balanceKES:N0}";
 
-        ApplyStatValue(batteryValueText, $"{vehicle.fuelLitres:F0} / {fuelCapacity:F0}L", fuelColor);
+        ApplyStatValue(batteryValueText, $"{vehicle.fuelLitres:F0} / {fuelCapacity:F0}{unitLabel}", fuelColor);
         ApplyFill(batteryFill, fuelColor, fuelPercent);
 
         ApplyStatValue(capacityValueText, $"{brakeCondition * 100f:F0}%", GetConditionColor(brakeCondition));
@@ -984,6 +1249,63 @@ public class MainMenuUI : MonoBehaviour
         SetMaintenanceRow(2, "Middle axle tyres", $"{GetAxleCondition(vehicle, 1):F0}%", GetAxleCondition(vehicle, 1) / 100f);
         SetMaintenanceRow(3, "Rear axle tyres", $"{GetAxleCondition(vehicle, 2):F0}%", GetAxleCondition(vehicle, 2) / 100f);
         SetMaintenanceRow(4, "Engine service", $"{engineCondition * 100f:F0}%  •  {vehicle.engineHours:F1}h", engineCondition);
+    }
+
+    void RefreshCareerProgress()
+    {
+        var xpSystem = XPSystem.Instance != null ? XPSystem.Instance : XPSystem.EnsureExists();
+        var snapshot = xpSystem != null ? xpSystem.GetProgressSnapshot() : default;
+        var gameState = GameState.Instance;
+        var city = gameState != null && gameState.selectedCity != null
+            ? gameState.selectedCity
+            : CityManager.Instance != null
+                ? CityManager.Instance.activeCity
+                : null;
+        var country = gameState != null && gameState.selectedCountry != null
+            ? gameState.selectedCountry
+            : CityManager.Instance != null
+                ? CityManager.Instance.activeCountry
+                : null;
+        var route = gameState != null ? gameState.selectedRoute : null;
+        float reputation = gameState != null && gameState.economy != null
+            ? gameState.economy.driverReputationRating
+            : 0f;
+        float payout = gameState != null && gameState.lastMissionSettlement != null
+            ? gameState.lastMissionSettlement.netEarningsKES
+            : 0f;
+        int availableRoutes = city != null && city.availableRoutes != null ? city.availableRoutes.Length : 0;
+
+        if (careerSubtitleText)
+            careerSubtitleText.text = string.IsNullOrWhiteSpace(snapshot.currentRankTitle)
+                ? "Driver level and dispatch readiness"
+                : snapshot.currentRankTitle;
+
+        if (levelValueText)
+        {
+            levelValueText.text = snapshot.currentRank > 0 ? snapshot.currentRank.ToString() : "1";
+            levelValueText.color = UITheme.TextPrimary;
+            levelValueText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        }
+
+        if (xpValueText)
+        {
+            xpValueText.text = snapshot.isMaxRank
+                ? $"MAX RANK  •  {snapshot.totalXP:N0} XP"
+                : $"{snapshot.xpIntoCurrentRank:N0} / {snapshot.xpRequiredForNextRank:N0} XP  •  {snapshot.xpToNextRank:N0} TO RANK {snapshot.currentRank + 1}";
+            xpValueText.color = UITheme.TextSecondary;
+            xpValueText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
+        }
+
+        ApplyFill(xpFill, UITheme.Accent, snapshot.currentRank > 0 ? Mathf.Clamp01(snapshot.progress01) : 0f);
+
+        if (careerDetailLabels == null || careerDetailValues == null || careerDetailFills == null)
+            return;
+
+        SetDetailRow(0, "CURRENT CITY", BuildCitySummary(city, country), city != null ? UITheme.Accent : UITheme.TextMuted, city != null ? 1f : 0.08f);
+        SetDetailRow(1, "ACTIVE ROUTE", BuildRouteSummary(route, availableRoutes), route != null ? UITheme.Secondary : UITheme.TextSecondary, route != null ? 1f : Mathf.Clamp01(availableRoutes / 8f));
+        SetDetailRow(2, "LAST PAYOUT", BuildPayoutSummary(payout), payout > 0f ? UITheme.Success : UITheme.TextSecondary, Mathf.Clamp01(Mathf.Abs(payout) / 50000f));
+        SetDetailRow(3, "REPUTATION", $"{reputation:F0} / 100", GetConditionColor(Mathf.Clamp01(reputation / 100f)), Mathf.Clamp01(reputation / 100f));
+        SetDetailRow(4, "NEXT UNLOCK", BuildNextUnlockSummary(snapshot), snapshot.isMaxRank ? UITheme.Success : UITheme.Secondary, snapshot.currentRank > 0 ? Mathf.Clamp01(snapshot.progress01) : 0.1f);
     }
 
     void SetMaintenanceRow(int index, string label, string value, float normalized)
@@ -1016,6 +1338,38 @@ public class MainMenuUI : MonoBehaviour
         }
     }
 
+    void SetDetailRow(int index, string label, string value, Color color, float normalized)
+    {
+        if (careerDetailLabels == null || careerDetailValues == null || careerDetailFills == null)
+            return;
+        if (index < 0 || index >= careerDetailLabels.Length)
+            return;
+
+        if (careerDetailLabels[index])
+        {
+            careerDetailLabels[index].text = label;
+            careerDetailLabels[index].color = UITheme.TextMuted;
+            careerDetailLabels[index].font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        }
+
+        if (careerDetailValues[index])
+        {
+            careerDetailValues[index].text = value;
+            careerDetailValues[index].color = color;
+            careerDetailValues[index].font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        }
+
+        if (careerDetailFills[index])
+        {
+            careerDetailFills[index].color = color;
+            RectTransform rect = careerDetailFills[index].rectTransform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(Mathf.Clamp01(normalized), 1f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+    }
+
     float GetAxleCondition(VehiclePersistentState vehicle, int axleIndex)
     {
         if (vehicle.axleTyreWearNormalized == null || axleIndex < 0 || axleIndex >= vehicle.axleTyreWearNormalized.Length)
@@ -1030,10 +1384,149 @@ public class MainMenuUI : MonoBehaviour
         return UITheme.Success;
     }
 
+    bool TryBindDetailRows(RectTransform root, int rowCount, out TextMeshProUGUI[] labels, out TextMeshProUGUI[] values, out Image[] fills)
+    {
+        labels = new TextMeshProUGUI[rowCount];
+        values = new TextMeshProUGUI[rowCount];
+        fills = new Image[rowCount];
+
+        for (int i = 0; i < rowCount; i++)
+        {
+            labels[i] = FindChildText(root, $"Row_{i}/Text_Label");
+            values[i] = FindChildText(root, $"Row_{i}/Text_Value");
+            fills[i] = FindChildImage(root, $"Row_{i}/Bar_BG/Bar_Fill");
+
+            if (!labels[i] || !values[i] || !fills[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    void CreateDetailRows(RectTransform root, string[] labels, float verticalSpacing, float barMinAnchor, float barMaxAnchor, out TextMeshProUGUI[] labelTexts, out TextMeshProUGUI[] valueTexts, out Image[] fillImages)
+    {
+        labelTexts = new TextMeshProUGUI[labels.Length];
+        valueTexts = new TextMeshProUGUI[labels.Length];
+        fillImages = new Image[labels.Length];
+
+        for (int i = 0; i < labels.Length; i++)
+        {
+            float top = -i * verticalSpacing;
+            GameObject row = new GameObject($"Row_{i}", typeof(RectTransform));
+            row.transform.SetParent(root, false);
+            RectTransform rowRect = row.GetComponent<RectTransform>();
+            rowRect.anchorMin = new Vector2(0f, 1f);
+            rowRect.anchorMax = new Vector2(1f, 1f);
+            rowRect.pivot = new Vector2(0.5f, 1f);
+            rowRect.anchoredPosition = new Vector2(0f, top);
+            rowRect.sizeDelta = new Vector2(0f, 28f);
+
+            labelTexts[i] = CreateText("Text_Label", row.transform, labels[i], new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0f), 180f, TextAlignmentOptions.Left);
+            valueTexts[i] = CreateText("Text_Value", row.transform, "-", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 0f), 180f, TextAlignmentOptions.Right);
+
+            GameObject barBg = new GameObject("Bar_BG", typeof(RectTransform), typeof(Image));
+            barBg.transform.SetParent(row.transform, false);
+            RectTransform bgRect = barBg.GetComponent<RectTransform>();
+            bgRect.anchorMin = new Vector2(barMinAnchor, 0.5f);
+            bgRect.anchorMax = new Vector2(barMaxAnchor, 0.5f);
+            bgRect.pivot = new Vector2(0.5f, 0.5f);
+            bgRect.sizeDelta = new Vector2(0f, 8f);
+            bgRect.anchoredPosition = Vector2.zero;
+            barBg.GetComponent<Image>().color = UITheme.Surface;
+
+            GameObject fill = new GameObject("Bar_Fill", typeof(RectTransform), typeof(Image));
+            fill.transform.SetParent(barBg.transform, false);
+            RectTransform fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(0f, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            fillImages[i] = fill.GetComponent<Image>();
+            fillImages[i].color = UITheme.Accent;
+        }
+    }
+
     TextMeshProUGUI FindChildText(Transform parent, string path)
     {
         var child = parent.Find(path);
         return child ? child.GetComponent<TextMeshProUGUI>() : null;
+    }
+
+    string BuildStatusLabel(BusSpec spec, BusRoute route, CityDefinition city)
+    {
+        string energy = spec != null && spec.IsElectric ? "ELECTRIC" : "DIESEL";
+        if (route != null)
+            return $"CURRENTLY EQUIPPED • {energy} • {route.routeName.ToUpper()}";
+        if (city != null)
+            return $"CURRENTLY EQUIPPED • {energy} • {city.cityName.ToUpper()}";
+        return $"CURRENTLY EQUIPPED • {energy}";
+    }
+
+    string BuildHeroDescription(BusSpec spec, CityDefinition city, BusRoute route, int availableRoutes)
+    {
+        if (spec == null)
+            return "Choose the right vehicle for the route, the crowd, and the shift.";
+
+        if (route != null)
+        {
+            string routeNumber = string.IsNullOrWhiteSpace(route.routeNumber) ? "Route" : route.routeNumber;
+            return $"{spec.description} Assigned to {routeNumber} • {route.routeName} for the next dispatch.";
+        }
+
+        if (city != null)
+            return $"{spec.description} {city.cityName} is live with {availableRoutes} routes ready for dispatch.";
+
+        return spec.description;
+    }
+
+    string GetPrimaryActionLabel(BusRoute route, CityDefinition city, CountryDefinition country)
+    {
+        if (route != null)
+            return "CONTINUE ROUTE";
+        if (city != null)
+            return "SELECT ROUTE";
+        if (country != null)
+            return "SELECT CITY";
+        return "START DRIVING";
+    }
+
+    string BuildCitySummary(CityDefinition city, CountryDefinition country)
+    {
+        if (city != null)
+            return $"{city.cityName} • {city.country}";
+        if (country != null)
+            return $"{country.countryName} • Pick a city";
+        return "No deployment selected";
+    }
+
+    string BuildRouteSummary(BusRoute route, int availableRoutes)
+    {
+        if (route != null)
+        {
+            string routeNumber = string.IsNullOrWhiteSpace(route.routeNumber) ? "LINE" : route.routeNumber;
+            return $"{routeNumber} • {route.routeName}";
+        }
+
+        if (availableRoutes > 0)
+            return $"{availableRoutes} routes ready";
+
+        return "No route selected";
+    }
+
+    string BuildPayoutSummary(float payout)
+    {
+        if (Mathf.Abs(payout) < 0.01f)
+            return "No shift payout yet";
+        return $"KES {payout:N0} net";
+    }
+
+    string BuildNextUnlockSummary(RankProgressSnapshot snapshot)
+    {
+        if (snapshot.isMaxRank)
+            return "Master operator status reached";
+        if (!string.IsNullOrWhiteSpace(snapshot.nextRankUnlockReveal))
+            return $"Rank {snapshot.currentRank + 1} • {snapshot.nextRankUnlockReveal}";
+        return $"Rank {snapshot.currentRank + 1} incoming";
     }
 
     TextMeshProUGUI CreateText(string name, Transform parent, string text, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition, float width, TextAlignmentOptions alignment)

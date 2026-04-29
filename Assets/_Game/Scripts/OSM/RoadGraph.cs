@@ -1,8 +1,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Navigable road graph built from OSM way data (section 3.6).
+///
+/// Improvements vs original:
+///   • Spatial grid index — <see cref="FindNearestNodeIndex"/> and
+///     <see cref="TryProjectToNearestSegment"/> run in sub-linear time for
+///     large graphs (Nairobi = ~40 000 nodes).
+///   • A* cost uses travel-time (distance / speed) so routing prefers fast
+///     roads over slow residential streets.
+///   • One-way road support via <c>oneway</c> OSM tag.
+///   • <see cref="BuildFromOverpassWays"/> calls <see cref="OverpassResponse.Resolve"/>
+///     so it works with both <c>out geom</c> and <c>out body;>;out skel</c>
+///     responses.
+/// </summary>
 public class RoadGraph
 {
+    // ── Enums & data classes ───────────────────────────────────────────
+
     public enum RoadType
     {
         Motorway,
@@ -17,102 +33,146 @@ public class RoadGraph
 
     public class Node
     {
-        public int index;
-        public double lat;
-        public double lon;
+        public int     index;
+        public double  lat;
+        public double  lon;
         public Vector3 world;
-        public List<Edge> edges = new List<Edge>();
+        public List<Edge> edges = new(4);
     }
 
     public class Edge
     {
-        public int from;
-        public int to;
-        public float speedLimitKmh;
+        public int      from;
+        public int      to;
+        public float    speedLimitKmh;
         public RoadType roadType;
+        /// <summary>Pre-computed travel cost in seconds.</summary>
+        public float    travelTimeSec;
     }
 
-    public readonly List<Node> nodes = new List<Node>();
-    readonly Dictionary<(long quantLat, long quantLon), int> coordToNodeIndex = new Dictionary<(long, long), int>();
+    // ── Storage ────────────────────────────────────────────────────────
 
+    public readonly List<Node> nodes = new();
+
+    // Deduplication key: quantised lat/lon → node index.
+    readonly Dictionary<(long, long), int> _coordIndex = new();
+
+    // Spatial grid for fast nearest-node lookups.
+    readonly Dictionary<(int, int), List<int>> _spatialGrid = new();
+    const float GridCellSize = 100f; // metres per grid cell
+
+    // ── Public API ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Finds the nearest graph node to <paramref name="worldPos"/>.
+    /// Uses spatial grid — O(1) average for uniform distributions.
+    /// </summary>
     public int FindNearestNodeIndex(Vector3 worldPos)
     {
-        int best = -1;
+        if (nodes.Count == 0) return -1;
+
+        // Search expanding rings of grid cells until we find a candidate.
+        int cx = Mathf.FloorToInt(worldPos.x / GridCellSize);
+        int cz = Mathf.FloorToInt(worldPos.z / GridCellSize);
+
+        int best    = -1;
         float bestSqr = float.MaxValue;
-        for (int i = 0; i < nodes.Count; i++)
+
+        for (int radius = 0; radius <= 8; radius++)
         {
-            float sqr = (nodes[i].world - worldPos).sqrMagnitude;
-            if (sqr < bestSqr)
+            SearchGridRing(cx, cz, radius, worldPos, ref best, ref bestSqr);
+            // Stop expanding once we've checked at least one full ring beyond a hit.
+            if (best >= 0 && radius > 0)
             {
-                bestSqr = sqr;
-                best = i;
+                float ringEdgeDist = (radius - 1) * GridCellSize;
+                if (bestSqr <= ringEdgeDist * ringEdgeDist)
+                    break;
             }
         }
+
         return best;
     }
 
-    public bool TryProjectToNearestSegment(Vector3 worldPos, out Vector3 projectedWorld, out int segA, out int segB, out float distanceMeters)
+    /// <summary>
+    /// Projects <paramref name="worldPos"/> onto the nearest road segment.
+    /// Returns false if the graph has fewer than 2 nodes.
+    /// </summary>
+    public bool TryProjectToNearestSegment(
+        Vector3 worldPos,
+        out Vector3 projected,
+        out int segA, out int segB,
+        out float distanceMeters)
     {
-        projectedWorld = Vector3.zero;
-        segA = -1;
-        segB = -1;
+        projected      = Vector3.zero;
+        segA = segB    = -1;
         distanceMeters = float.MaxValue;
+
         if (nodes.Count < 2) return false;
 
-        // Iterate unique undirected segments (from < to) to avoid duplicates.
-        for (int i = 0; i < nodes.Count; i++)
+        // Start with the nearest node; only check its edges (and two rings of
+        // neighbours) rather than the entire graph — fast enough for real-time use.
+        int nearest = FindNearestNodeIndex(worldPos);
+        if (nearest < 0) return false;
+
+        var candidates = new HashSet<int> { nearest };
+        foreach (var e in nodes[nearest].edges)
         {
-            var edges = nodes[i].edges;
-            for (int e = 0; e < edges.Count; e++)
+            candidates.Add(e.to);
+            foreach (var e2 in nodes[e.to].edges)
+                candidates.Add(e2.to);
+        }
+
+        foreach (int a in candidates)
+        {
+            foreach (var edge in nodes[a].edges)
             {
-                int a = edges[e].from;
-                int b = edges[e].to;
-                if (a >= b) continue;
-                Vector3 p = nodes[a].world;
-                Vector3 q = nodes[b].world;
+                int b = edge.to;
+                if (b <= a) continue; // undirected: check each pair once
+
+                Vector3 p    = nodes[a].world;
+                Vector3 q    = nodes[b].world;
                 Vector3 proj = ClosestPointOnSegment(worldPos, p, q);
-                float d = Vector3.Distance(worldPos, proj);
+                float d      = Vector3.Distance(worldPos, proj);
+
                 if (d < distanceMeters)
                 {
                     distanceMeters = d;
-                    projectedWorld = proj;
-                    segA = a;
-                    segB = b;
+                    projected      = proj;
+                    segA           = a;
+                    segB           = b;
                 }
             }
         }
 
-        return segA >= 0 && segB >= 0;
+        return segA >= 0;
     }
 
-    static Vector3 ClosestPointOnSegment(Vector3 p, Vector3 a, Vector3 b)
-    {
-        Vector3 ab = b - a;
-        float t = Vector3.Dot(p - a, ab) / Mathf.Max(0.0001f, Vector3.Dot(ab, ab));
-        t = Mathf.Clamp01(t);
-        return a + ab * t;
-    }
-
+    /// <summary>
+    /// A* shortest path using travel-time as the cost (not raw distance).
+    /// This routes the bus onto faster roads when available.
+    /// </summary>
     public List<int> FindPathAStar(int startNode, int goalNode)
     {
         var path = new List<int>();
-        if (startNode < 0 || goalNode < 0 || startNode >= nodes.Count || goalNode >= nodes.Count) return path;
+        if (!ValidNode(startNode) || !ValidNode(goalNode)) return path;
         if (startNode == goalNode) { path.Add(startNode); return path; }
 
-        var open = new MinHeap();
-        var cameFrom = new int[nodes.Count];
-        var gScore = new float[nodes.Count];
-        var fScore = new float[nodes.Count];
-        var inOpen = new bool[nodes.Count];
-        var closed = new bool[nodes.Count];
+        int n = nodes.Count;
 
-        for (int i = 0; i < nodes.Count; i++)
+        var cameFrom = new int[n];
+        var gScore   = new float[n];
+        var fScore   = new float[n];
+        var inOpen   = new bool[n];
+        var closed   = new bool[n];
+
+        for (int i = 0; i < n; i++)
         {
             cameFrom[i] = -1;
-            gScore[i] = float.PositiveInfinity;
-            fScore[i] = float.PositiveInfinity;
+            gScore[i]   = float.PositiveInfinity;
+            fScore[i]   = float.PositiveInfinity;
         }
 
+        var open = new MinHeap();
         gScore[startNode] = 0f;
         fScore[startNode] = Heuristic(startNode, goalNode);
         open.Push(startNode, fScore[startNode]);
@@ -120,48 +180,228 @@ public class RoadGraph
 
         while (open.Count > 0)
         {
-            int current = open.PopMin();
-            inOpen[current] = false;
-            if (current == goalNode)
-                return Reconstruct(cameFrom, current);
+            int cur = open.PopMin();
+            inOpen[cur] = false;
 
-            closed[current] = true;
+            if (cur == goalNode)
+                return ReconstructPath(cameFrom, cur);
 
-            var edges = nodes[current].edges;
-            for (int i = 0; i < edges.Count; i++)
+            closed[cur] = true;
+
+            foreach (var edge in nodes[cur].edges)
             {
-                int neighbor = edges[i].to;
-                if (neighbor < 0 || neighbor >= nodes.Count) continue;
-                if (closed[neighbor]) continue;
+                int nb = edge.to;
+                if (!ValidNode(nb) || closed[nb]) continue;
 
-                float tentative = gScore[current] + Vector3.Distance(nodes[current].world, nodes[neighbor].world);
-                if (tentative < gScore[neighbor])
+                float tentG = gScore[cur] + edge.travelTimeSec;
+                if (tentG >= gScore[nb]) continue;
+
+                cameFrom[nb] = cur;
+                gScore[nb]   = tentG;
+                fScore[nb]   = tentG + Heuristic(nb, goalNode);
+
+                if (!inOpen[nb])
                 {
-                    cameFrom[neighbor] = current;
-                    gScore[neighbor] = tentative;
-                    fScore[neighbor] = tentative + Heuristic(neighbor, goalNode);
-                    if (!inOpen[neighbor])
-                    {
-                        open.Push(neighbor, fScore[neighbor]);
-                        inOpen[neighbor] = true;
-                    }
-                    else
-                    {
-                        open.DecreaseKey(neighbor, fScore[neighbor]);
-                    }
+                    open.Push(nb, fScore[nb]);
+                    inOpen[nb] = true;
+                }
+                else
+                {
+                    open.DecreaseKey(nb, fScore[nb]);
                 }
             }
         }
 
-        return path;
+        return path; // empty = no path found
     }
+
+    // ── Build from Overpass ────────────────────────────────────────────
+
+    public static RoadGraph BuildFromOverpassWays(
+        OverpassResponse response,
+        CoordinateConverter converter)
+    {
+        var graph = new RoadGraph();
+        if (response == null) return graph;
+
+        // Resolve node positions if this is a body+skel response.
+        response.Resolve();
+
+        foreach (var elem in response.elements)
+        {
+            if (elem?.type != "way") continue;
+            if (elem.geometry == null || elem.geometry.Count < 2) continue;
+
+            var  roadType = ParseRoadType(elem.tags);
+            float speed   = ParseSpeedLimit(elem.tags, roadType);
+            bool oneWay   = IsOneWay(elem.tags, roadType);
+
+            int prev = -1;
+            foreach (var p in elem.geometry)
+            {
+                int n = graph.GetOrCreateNode(p.lat, p.lon, converter);
+                if (prev >= 0 && n != prev)
+                {
+                    graph.AddEdge(prev, n, speed, roadType);
+                    if (!oneWay)
+                        graph.AddEdge(n, prev, speed, roadType);
+                }
+                prev = n;
+            }
+        }
+
+        return graph;
+    }
+
+    // ── Private: node management ───────────────────────────────────────
+
+    int GetOrCreateNode(double lat, double lon, CoordinateConverter converter)
+    {
+        long qLat = (long)System.Math.Round(lat * 1e7);
+        long qLon = (long)System.Math.Round(lon * 1e7);
+        var  key  = (qLat, qLon);
+
+        if (_coordIndex.TryGetValue(key, out int idx))
+            return idx;
+
+        var world = converter != null
+            ? converter.GeoToWorldPosition(lat, lon)
+            : CoordinateConverter.LocalOriginGeoToWorld(lat, lon, 0, 0);
+
+        var node = new Node
+        {
+            index = nodes.Count,
+            lat   = lat,
+            lon   = lon,
+            world = world
+        };
+        nodes.Add(node);
+        _coordIndex[key] = node.index;
+        AddToSpatialGrid(node);
+        return node.index;
+    }
+
+    void AddToSpatialGrid(Node node)
+    {
+        int cx = Mathf.FloorToInt(node.world.x / GridCellSize);
+        int cz = Mathf.FloorToInt(node.world.z / GridCellSize);
+        var cell = (cx, cz);
+        if (!_spatialGrid.TryGetValue(cell, out var list))
+        {
+            list = new List<int>(4);
+            _spatialGrid[cell] = list;
+        }
+        list.Add(node.index);
+    }
+
+    void SearchGridRing(int cx, int cz, int radius, Vector3 target,
+                        ref int bestIdx, ref float bestSqr)
+    {
+        int lo = -radius, hi = radius;
+        for (int dx = lo; dx <= hi; dx++)
+        {
+            for (int dz = lo; dz <= hi; dz++)
+            {
+                if (Mathf.Abs(dx) != radius && Mathf.Abs(dz) != radius) continue; // ring only
+                if (!_spatialGrid.TryGetValue((cx + dx, cz + dz), out var list)) continue;
+                foreach (int ni in list)
+                {
+                    float sqr = (nodes[ni].world - target).sqrMagnitude;
+                    if (sqr < bestSqr) { bestSqr = sqr; bestIdx = ni; }
+                }
+            }
+        }
+    }
+
+    // ── Private: edge management ───────────────────────────────────────
+
+    void AddEdge(int from, int to, float speedKmh, RoadType type)
+    {
+        if (!ValidNode(from) || !ValidNode(to)) return;
+
+        float distM       = Vector3.Distance(nodes[from].world, nodes[to].world);
+        float speedMs     = Mathf.Max(1f, speedKmh) / 3.6f;
+        float travelSec   = distM / speedMs;
+
+        nodes[from].edges.Add(new Edge
+        {
+            from          = from,
+            to            = to,
+            speedLimitKmh = speedKmh,
+            roadType      = type,
+            travelTimeSec = travelSec
+        });
+    }
+
+    bool ValidNode(int i) => i >= 0 && i < nodes.Count;
+
+    // ── Private: OSM tag parsing ───────────────────────────────────────
+
+    static RoadType ParseRoadType(Dictionary<string, string> tags)
+    {
+        if (tags == null || !tags.TryGetValue("highway", out var hwy) || string.IsNullOrEmpty(hwy))
+            return RoadType.Other;
+
+        return hwy switch
+        {
+            "motorway"      => RoadType.Motorway,
+            "trunk"         => RoadType.Trunk,
+            "primary"       => RoadType.Primary,
+            "secondary"     => RoadType.Secondary,
+            "tertiary"      => RoadType.Tertiary,
+            "residential"   => RoadType.Residential,
+            "unclassified"  => RoadType.Residential,
+            "service"       => RoadType.Service,
+            _               => RoadType.Other
+        };
+    }
+
+    static float ParseSpeedLimit(Dictionary<string, string> tags, RoadType type)
+    {
+        if (tags != null && tags.TryGetValue("maxspeed", out var ms) && !string.IsNullOrEmpty(ms))
+        {
+            string s   = ms.Trim().ToLowerInvariant();
+            bool   mph = s.Contains("mph");
+            s = s.Replace("mph", "").Replace("km/h", "").Replace("kph", "").Trim();
+            if (float.TryParse(s,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out float v))
+                return mph ? v * 1.60934f : v;
+        }
+
+        return type switch
+        {
+            RoadType.Motorway    => 90f,
+            RoadType.Trunk       => 80f,
+            RoadType.Primary     => 60f,
+            RoadType.Secondary   => 50f,
+            RoadType.Tertiary    => 40f,
+            RoadType.Residential => 30f,
+            RoadType.Service     => 20f,
+            _                    => 35f
+        };
+    }
+
+    static bool IsOneWay(Dictionary<string, string> tags, RoadType type)
+    {
+        if (tags == null) return false;
+        if (tags.TryGetValue("oneway", out var ow))
+            return ow == "yes" || ow == "1" || ow == "true";
+        // Motorways and trunk roads are implicitly one-way per carriageway in OSM.
+        return type == RoadType.Motorway || type == RoadType.Trunk;
+    }
+
+    // ── Private: A* helpers ────────────────────────────────────────────
 
     float Heuristic(int a, int b)
     {
-        return Vector3.Distance(nodes[a].world, nodes[b].world);
+        // Admissible: straight-line distance / fastest road speed (90 km/h = 25 m/s).
+        float dist = Vector3.Distance(nodes[a].world, nodes[b].world);
+        return dist / 25f;
     }
 
-    static List<int> Reconstruct(int[] cameFrom, int current)
+    static List<int> ReconstructPath(int[] cameFrom, int current)
     {
         var result = new List<int> { current };
         while (cameFrom[current] >= 0)
@@ -173,37 +413,46 @@ public class RoadGraph
         return result;
     }
 
+    static Vector3 ClosestPointOnSegment(Vector3 p, Vector3 a, Vector3 b)
+    {
+        Vector3 ab = b - a;
+        float   t  = Vector3.Dot(p - a, ab) / Mathf.Max(1e-6f, ab.sqrMagnitude);
+        return a + ab * Mathf.Clamp01(t);
+    }
+
+    // ── Inner: binary min-heap ─────────────────────────────────────────
+
     class MinHeap
     {
         struct Item { public int node; public float priority; }
-        readonly List<Item> heap = new List<Item>();
-        readonly Dictionary<int, int> positions = new Dictionary<int, int>();
-        public int Count => heap.Count;
+        readonly List<Item>             _heap = new();
+        readonly Dictionary<int, int>   _pos  = new();
+
+        public int Count => _heap.Count;
 
         public void Push(int node, float priority)
         {
-            var it = new Item { node = node, priority = priority };
-            heap.Add(it);
-            int i = heap.Count - 1;
-            positions[node] = i;
+            _heap.Add(new Item { node = node, priority = priority });
+            int i = _heap.Count - 1;
+            _pos[node] = i;
             SiftUp(i);
         }
 
         public int PopMin()
         {
-            int minNode = heap[0].node;
-            Swap(0, heap.Count - 1);
-            heap.RemoveAt(heap.Count - 1);
-            positions.Remove(minNode);
-            if (heap.Count > 0) SiftDown(0);
-            return minNode;
+            int root = _heap[0].node;
+            Swap(0, _heap.Count - 1);
+            _heap.RemoveAt(_heap.Count - 1);
+            _pos.Remove(root);
+            if (_heap.Count > 0) SiftDown(0);
+            return root;
         }
 
-        public void DecreaseKey(int node, float newPriority)
+        public void DecreaseKey(int node, float p)
         {
-            if (!positions.TryGetValue(node, out int i)) return;
-            if (newPriority >= heap[i].priority) return;
-            heap[i] = new Item { node = node, priority = newPriority };
+            if (!_pos.TryGetValue(node, out int i)) return;
+            if (p >= _heap[i].priority) return;
+            _heap[i] = new Item { node = node, priority = p };
             SiftUp(i);
         }
 
@@ -211,10 +460,9 @@ public class RoadGraph
         {
             while (i > 0)
             {
-                int p = (i - 1) / 2;
-                if (heap[p].priority <= heap[i].priority) break;
-                Swap(p, i);
-                i = p;
+                int p = (i - 1) >> 1;
+                if (_heap[p].priority <= _heap[i].priority) break;
+                Swap(p, i); i = p;
             }
         }
 
@@ -222,134 +470,19 @@ public class RoadGraph
         {
             while (true)
             {
-                int l = i * 2 + 1;
-                int r = l + 1;
-                int smallest = i;
-                if (l < heap.Count && heap[l].priority < heap[smallest].priority) smallest = l;
-                if (r < heap.Count && heap[r].priority < heap[smallest].priority) smallest = r;
-                if (smallest == i) break;
-                Swap(i, smallest);
-                i = smallest;
+                int l = (i << 1) + 1, r = l + 1, s = i;
+                if (l < _heap.Count && _heap[l].priority < _heap[s].priority) s = l;
+                if (r < _heap.Count && _heap[r].priority < _heap[s].priority) s = r;
+                if (s == i) break;
+                Swap(i, s); i = s;
             }
         }
 
         void Swap(int a, int b)
         {
-            var tmp = heap[a];
-            heap[a] = heap[b];
-            heap[b] = tmp;
-            positions[heap[a].node] = a;
-            positions[heap[b].node] = b;
-        }
-    }
-
-    public static RoadGraph BuildFromOverpassWays(OverpassResponse response, CoordinateConverter converter)
-    {
-        var graph = new RoadGraph();
-        if (response == null) return graph;
-
-        foreach (var elem in response.elements)
-        {
-            if (elem == null) continue;
-            if (elem.type != "way") continue;
-            if (elem.geometry == null || elem.geometry.Count < 2) continue;
-
-            var roadType = ParseRoadType(elem.tags);
-            float speed = ParseSpeedLimit(elem.tags, roadType);
-
-            int prev = -1;
-            for (int i = 0; i < elem.geometry.Count; i++)
-            {
-                var p = elem.geometry[i];
-                int n = graph.GetOrCreateNode(p.lat, p.lon, converter);
-                if (prev >= 0 && n != prev)
-                {
-                    graph.AddBidirectional(prev, n, speed, roadType);
-                }
-                prev = n;
-            }
-        }
-
-        return graph;
-    }
-
-    int GetOrCreateNode(double lat, double lon, CoordinateConverter converter)
-    {
-        // Quantize to reduce duplicates from float formatting differences.
-        long qLat = (long)System.Math.Round(lat * 1e7);
-        long qLon = (long)System.Math.Round(lon * 1e7);
-        var key = (qLat, qLon);
-
-        if (coordToNodeIndex.TryGetValue(key, out int idx))
-            return idx;
-
-        var node = new Node
-        {
-            index = nodes.Count,
-            lat = lat,
-            lon = lon,
-            world = converter != null ? converter.GeoToWorldPosition(lat, lon) : Vector3.zero
-        };
-        nodes.Add(node);
-        coordToNodeIndex[key] = node.index;
-        return node.index;
-    }
-
-    void AddBidirectional(int a, int b, float speedLimit, RoadType type)
-    {
-        AddEdge(a, b, speedLimit, type);
-        AddEdge(b, a, speedLimit, type);
-    }
-
-    void AddEdge(int from, int to, float speedLimit, RoadType type)
-    {
-        if (from < 0 || to < 0 || from >= nodes.Count || to >= nodes.Count) return;
-        nodes[from].edges.Add(new Edge { from = from, to = to, speedLimitKmh = speedLimit, roadType = type });
-    }
-
-    static RoadType ParseRoadType(Dictionary<string, string> tags)
-    {
-        if (tags == null || !tags.TryGetValue("highway", out var hwy) || string.IsNullOrEmpty(hwy))
-            return RoadType.Other;
-
-        switch (hwy)
-        {
-            case "motorway": return RoadType.Motorway;
-            case "trunk": return RoadType.Trunk;
-            case "primary": return RoadType.Primary;
-            case "secondary": return RoadType.Secondary;
-            case "tertiary": return RoadType.Tertiary;
-            case "residential":
-            case "unclassified": return RoadType.Residential;
-            case "service": return RoadType.Service;
-            default: return RoadType.Other;
-        }
-    }
-
-    static float ParseSpeedLimit(Dictionary<string, string> tags, RoadType type)
-    {
-        if (tags != null && tags.TryGetValue("maxspeed", out var ms) && !string.IsNullOrEmpty(ms))
-        {
-            // Common formats: "50", "50 km/h", "30 mph"
-            string s = ms.ToLowerInvariant().Trim();
-            bool mph = s.Contains("mph");
-            s = s.Replace("km/h", "").Replace("kph", "").Replace("mph", "").Trim();
-            if (float.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v))
-                return mph ? v * 1.60934f : v;
-        }
-
-        // Fallback defaults by type.
-        switch (type)
-        {
-            case RoadType.Motorway: return 90f;
-            case RoadType.Trunk: return 80f;
-            case RoadType.Primary: return 60f;
-            case RoadType.Secondary: return 50f;
-            case RoadType.Tertiary: return 40f;
-            case RoadType.Residential: return 30f;
-            case RoadType.Service: return 20f;
-            default: return 35f;
+            (_heap[a], _heap[b]) = (_heap[b], _heap[a]);
+            _pos[_heap[a].node] = a;
+            _pos[_heap[b].node] = b;
         }
     }
 }
-
