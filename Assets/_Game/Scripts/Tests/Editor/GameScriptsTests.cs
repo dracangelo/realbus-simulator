@@ -22,6 +22,7 @@ public class GameScriptsTests
         ResetSingleton<XPSystem>();
         ResetSingleton<UnlockManager>();
         ResetSingleton<BusFleetManager>();
+        ResetSingleton<SaveManager>();
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
 
@@ -94,6 +95,33 @@ public class GameScriptsTests
 
         scheduleManager.currentTimeMinutes = 700f;
         Assert.That(scheduleManager.RecordArrival(99), Is.EqualTo(PunctualityStatus.OnTime));
+    }
+
+    [Test]
+    public void ScheduleManager_ReportsArrivalDeltaLatePenaltyAndEarlyWaitInSeconds()
+    {
+        var scheduleManager = CreateComponent<ScheduleManager>("ScheduleManager");
+        scheduleManager.secondsPerGameMinute = 60f;
+
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.stops = new[]
+        {
+            new BusStopData { stopName = "A" },
+            new BusStopData { stopName = "B" },
+            new BusStopData { stopName = "C" }
+        };
+
+        scheduleManager.SetupSchedule(route, 480f, 20f);
+
+        scheduleManager.currentTimeMinutes = 488.5f;
+        Assert.That(scheduleManager.RecordArrival(1), Is.EqualTo(PunctualityStatus.Early));
+        Assert.That(scheduleManager.GetArrivalDeltaSeconds(1), Is.EqualTo(-90f).Within(0.001f));
+        Assert.That(scheduleManager.GetEarlyWaitSecondsRequired(1), Is.EqualTo(90f).Within(0.001f));
+
+        scheduleManager.currentTimeMinutes = 501.5f;
+        Assert.That(scheduleManager.RecordArrival(2), Is.EqualTo(PunctualityStatus.Late));
+        Assert.That(scheduleManager.GetArrivalDeltaSeconds(2), Is.EqualTo(90f).Within(0.001f));
+        Assert.That(scheduleManager.GetLatePenaltyPercent(2), Is.EqualTo(6f).Within(0.001f));
     }
 
     [Test]
@@ -266,6 +294,33 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void MissionResult_SaveToPlayerPrefs_RoundTripsLatestMissionResult()
+    {
+        var result = new MissionResult
+        {
+            routeName = "Airport Express",
+            totalScore = 88.5f,
+            starRating = 4,
+            punctualityScore = 92f,
+            coinsEarned = 2450,
+            xpEarned = 610,
+            totalViolations = 1
+        };
+
+        result.SaveToPlayerPrefs();
+        var loaded = MissionResult.LoadLastFromPlayerPrefs();
+
+        Assert.That(loaded, Is.Not.Null);
+        Assert.That(loaded.routeName, Is.EqualTo("Airport Express"));
+        Assert.That(loaded.totalScore, Is.EqualTo(88.5f).Within(0.001f));
+        Assert.That(loaded.starRating, Is.EqualTo(4));
+        Assert.That(loaded.punctualityScore, Is.EqualTo(92f).Within(0.001f));
+        Assert.That(loaded.coinsEarned, Is.EqualTo(2450));
+        Assert.That(loaded.xpEarned, Is.EqualTo(610));
+        Assert.That(loaded.totalViolations, Is.EqualTo(1));
+    }
+
+    [Test]
     public void MissionResult_Generate_IncludesDynamicEventSummary_WhenAvailable()
     {
         var route = ScriptableObject.CreateInstance<BusRoute>();
@@ -289,6 +344,43 @@ public class GameScriptsTests
 
         Assert.That(result.dynamicEventsTriggered, Is.EqualTo(1));
         Assert.That(result.dynamicEventSummary, Does.Contain("CHECKPOINT OK"));
+    }
+
+    [Test]
+    public void MissionResult_Generate_IncludesMissionModeMetadata_WhenMissionDataExists()
+    {
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.routeName = "Storm Line";
+
+        var missionData = ScriptableObject.CreateInstance<MissionData>();
+        missionData.route = route;
+        missionData.missionType = MissionArchetype.WeatherChallenge;
+        missionData.requiredWeather = WeatherState.HeavyRain;
+        missionData.scenarioBonusXP = 40;
+
+        var missionManager = CreateComponent<MissionManager>("MissionManager");
+        missionManager.missionData = missionData;
+        missionManager.currentRoute = route;
+
+        var scoreTracker = CreateComponent<ScoreTracker>("ScoreTracker");
+        SetSingleton(scoreTracker);
+        scoreTracker.totalScore = 84f;
+        scoreTracker.punctualityScore = 88f;
+        scoreTracker.satisfactionScore = 79f;
+        scoreTracker.safetyScore = 91f;
+        scoreTracker.efficiencyScore = 73f;
+
+        var weatherSystem = CreateComponent<WeatherSystem>("WeatherSystem");
+        SetSingleton(weatherSystem);
+        weatherSystem.currentWeather = WeatherState.HeavyRain;
+
+        var result = MissionResult.Generate(route);
+
+        Assert.That(result.missionTypeLabel, Is.EqualTo("Weather Challenge"));
+        Assert.That(result.missionObjectiveSummary, Does.Contain("Heavy Rain"));
+        Assert.That(result.scenarioObjectivePassed, Is.True);
+        Assert.That(result.scenarioObjectiveStatus, Does.Contain("Weather run cleared"));
+        Assert.That(result.xpEarned, Is.EqualTo(258));
     }
 
     [Test]
@@ -323,6 +415,37 @@ public class GameScriptsTests
         session.EndSession();
 
         Assert.That(session.sessionActive, Is.False);
+    }
+
+    [Test]
+    public void FreeDriveSession_StartSession_AbortsMissionAndClearsPassengerState()
+    {
+        var missionManager = CreateComponent<MissionManager>("MissionManager");
+        SetSingleton(missionManager);
+        missionManager.routeActive = true;
+        missionManager.missionState = MissionState.InProgress;
+
+        var passengerManager = CreateComponent<PassengerManager>("PassengerManager");
+        SetSingleton(passengerManager);
+        passengerManager.currentPassengers = 12;
+        passengerManager.waitingAtCurrentStop = 5;
+        passengerManager.lastBoardingCount = 3;
+        passengerManager.stopRequestActive = true;
+        passengerManager.stopRequestAcknowledged = true;
+
+        var session = CreateComponent<FreeDriveSession>("FreeDriveSession");
+        SetSingleton(session);
+
+        session.StartSession();
+
+        Assert.That(session.sessionActive, Is.True);
+        Assert.That(missionManager.routeActive, Is.False);
+        Assert.That(missionManager.missionState, Is.EqualTo(MissionState.NotStarted));
+        Assert.That(passengerManager.currentPassengers, Is.EqualTo(0));
+        Assert.That(passengerManager.waitingAtCurrentStop, Is.EqualTo(0));
+        Assert.That(passengerManager.lastBoardingCount, Is.EqualTo(0));
+        Assert.That(passengerManager.stopRequestActive, Is.False);
+        Assert.That(passengerManager.stopRequestAcknowledged, Is.False);
     }
 
     [Test]
@@ -361,6 +484,41 @@ public class GameScriptsTests
         passengerManager.fuelCostPerKm = 12f;
 
         Assert.That(passengerManager.GetProfit(), Is.EqualTo(1260f));
+    }
+
+    [Test]
+    public void FuelSystem_GetLoadFactor_ReachesRequestedEighteenPercentIncrease_AtFullPassengerLoad()
+    {
+        var passengerManager = CreateComponent<PassengerManager>("PassengerManager");
+        SetSingleton(passengerManager);
+        passengerManager.useCapacityOverride = true;
+        passengerManager.maxBusCapacity = 80;
+        passengerManager.currentPassengers = 80;
+
+        var fuelSystem = CreateComponent<FuelSystem>("FuelSystem");
+        fuelSystem.passengerManager = passengerManager;
+
+        Assert.That(fuelSystem.GetLoadFactor(), Is.EqualTo(1.18f).Within(0.001f));
+    }
+
+    [Test]
+    public void FuelSystem_AutoRefuelAtDepot_FillsTank_AndReturnsCost()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+
+        var fuelSystem = CreateComponent<FuelSystem>("FuelSystem");
+        fuelSystem.tankCapacityLitres = 300f;
+        fuelSystem.dieselPricePerLitreKES = 180f;
+        SetPrivateField(fuelSystem, "currentFuelLitres", 120f);
+
+        float cost = fuelSystem.AutoRefuelAtDepot();
+
+        Assert.That(cost, Is.EqualTo(180f * 180f).Within(0.001f));
+        Assert.That(fuelSystem.CurrentFuelLitres, Is.EqualTo(300f).Within(0.001f));
+        Assert.That(gameState.vehicleState.fuelLitres, Is.EqualTo(300f).Within(0.001f));
+        Assert.That(gameState.vehicleState.lowFuelWarningTriggered, Is.False);
+        Assert.That(gameState.vehicleState.criticalFuelWarningTriggered, Is.False);
     }
 
     [Test]
@@ -686,6 +844,77 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void PassengerSpawner_GetDensityMultiplierForCurrentTime_HitsRushHourPeak()
+    {
+        var scheduleManager = CreateComponent<ScheduleManager>("ScheduleManager");
+        SetSingleton(scheduleManager);
+        var passengerSpawner = CreateComponent<PassengerSpawner>("PassengerSpawner");
+
+        scheduleManager.currentTimeMinutes = 7.5f * 60f;
+        Assert.That(passengerSpawner.GetDensityMultiplierForCurrentTime(), Is.EqualTo(5f).Within(0.001f));
+
+        scheduleManager.currentTimeMinutes = 12f * 60f;
+        Assert.That(passengerSpawner.GetDensityMultiplierForCurrentTime(), Is.EqualTo(1f).Within(0.05f));
+    }
+
+    [Test]
+    public void PassengerManager_ProcessAlighting_QueuesExitAnimation_AndClearsStopRequest()
+    {
+        var passengerManager = CreateComponent<PassengerManager>("PassengerManager");
+        SetSingleton(passengerManager);
+
+        var onboardPassengers = GetPrivateField<List<PassengerAgent>>(passengerManager, "onboardPassengers");
+        var continuingPassenger = new PassengerAgent(0, 4, 90f, false);
+        var alightingPassenger = new PassengerAgent(1, 2, 60f, false);
+        alightingPassenger.PressStopRequest();
+        onboardPassengers.Add(continuingPassenger);
+        onboardPassengers.Add(alightingPassenger);
+
+        passengerManager.currentPassengers = onboardPassengers.Count;
+        passengerManager.stopRequestActive = true;
+        passengerManager.stopRequestAcknowledged = true;
+
+        int alighting = (int)InvokePrivateMethodWithResult(passengerManager, "ProcessAlighting", 2);
+        InvokePrivateMethod(passengerManager, "ClearStopRequestsAtStop", 2);
+
+        var exitingPassengers = GetPrivateField<List<PassengerAgent>>(passengerManager, "alightingPassengers");
+
+        Assert.That(alighting, Is.EqualTo(1));
+        Assert.That(onboardPassengers, Has.Count.EqualTo(1));
+        Assert.That(exitingPassengers, Has.Count.EqualTo(1));
+        Assert.That(exitingPassengers[0], Is.SameAs(alightingPassenger));
+        Assert.That(alightingPassenger.isAlighting, Is.True);
+        Assert.That(alightingPassenger.stopRequested, Is.False);
+        Assert.That(passengerManager.stopRequestActive, Is.False);
+        Assert.That(passengerManager.stopRequestAcknowledged, Is.False);
+    }
+
+    [Test]
+    public void PassengerManager_RecalculateDwellTime_WheelchairBoarding_AddsExtraTimeAndArmsReset()
+    {
+        var passengerManager = CreateComponent<PassengerManager>("PassengerManager");
+        SetSingleton(passengerManager);
+
+        var busController = CreateComponent<BusController>("BusController");
+        SetPrivateField(passengerManager, "busController", busController);
+
+        var onboardPassengers = GetPrivateField<List<PassengerAgent>>(passengerManager, "onboardPassengers");
+        var wheelchairPassenger = new PassengerAgent(0, 3, 90f, true);
+        onboardPassengers.Add(wheelchairPassenger);
+
+        passengerManager.extraWheelchairDwellSeconds = 10f;
+        passengerManager.lastBoardingCount = 1;
+        passengerManager.lastAlightingCount = 0;
+        passengerManager.hadWheelchairBoarding = true;
+
+        InvokePrivateMethod(passengerManager, "RecalculateDwellTime");
+
+        Assert.That(passengerManager.GetRequiredDwellTimeSeconds(), Is.EqualTo(12f).Within(0.001f));
+        Assert.That(busController.kneelingSuspensionActive, Is.True);
+        Assert.That(GetPrivateField<float>(passengerManager, "accessibilityResetTimer"), Is.EqualTo(12f).Within(0.001f));
+    }
+
+    [Test]
     public void PedestrianSpawner_BuildRandomCrossingsFromRoadGraph_GeneratesRuntimeCrossings()
     {
         var graph = CreateLinearAirRoadGraph();
@@ -713,10 +942,98 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void VehiclePool_UpdateSimulationTiers_PromotesAdditionalNearbyVehiclesUpToCap_WhenBusMovesCloser()
+    {
+        var graph = CreateComponent<AIRoadGraph>("AIRoadGraph");
+        graph.nodes = new AIRoadGraph.RoadNode[20];
+
+        for (int i = 0; i < graph.nodes.Length; i++)
+        {
+            var point = new GameObject($"TrafficNode_{i}").transform;
+            point.position = i < 10
+                ? new Vector3(40f + (i * 5f), 0f, 0f)
+                : new Vector3(250f + ((i - 10) * 5f), 0f, 0f);
+
+            graph.nodes[i] = new AIRoadGraph.RoadNode
+            {
+                id = $"TN{i}",
+                point = point,
+                laneCount = 2,
+                laneWidth = 3.3f,
+                speedLimitKmh = 40f,
+                nextNodeIndices = new[] { (i + 1) % graph.nodes.Length }
+            };
+        }
+
+        var prefab = new GameObject("VehiclePrefab");
+        prefab.AddComponent<Rigidbody>();
+        prefab.AddComponent<AIVehicleController>();
+        prefab.AddComponent<SplineVehicle>();
+
+        var vehiclePool = CreateComponent<VehiclePool>("VehiclePool");
+        vehiclePool.roadGraph = graph;
+        vehiclePool.allowAutoResolveRoadGraph = false;
+        vehiclePool.poolSizePerScene = 20;
+        vehiclePool.fullAiRadiusMeters = 200f;
+        vehiclePool.splineRadiusMeters = 400f;
+        vehiclePool.maxFullAiVehicles = 18;
+        vehiclePool.prefabs = new[]
+        {
+            new VehiclePool.VehiclePrefabEntry
+            {
+                type = AIVehicleController.VehicleType.Car,
+                prefab = prefab,
+                weight = 1f
+            }
+        };
+
+        InvokePrivateMethod(vehiclePool, "WarmPool");
+        SetPrivateField(vehiclePool, "forcedActiveCount", 20);
+        InvokePrivateMethod(vehiclePool, "ApplyDensityNow");
+
+        var bus = new GameObject("PlayerBus").transform;
+        bus.position = Vector3.zero;
+        SetPrivateField(vehiclePool, "playerBus", bus);
+
+        var spawnedVehicles = new List<Transform>();
+        foreach (Transform child in vehiclePool.transform)
+        {
+            if (child.gameObject == prefab)
+                continue;
+            spawnedVehicles.Add(child);
+        }
+
+        Assert.That(spawnedVehicles, Has.Count.EqualTo(20));
+        for (int i = 0; i < spawnedVehicles.Count; i++)
+        {
+            spawnedVehicles[i].position = i < 10
+                ? new Vector3(50f + (i * 5f), 0f, 0f)
+                : new Vector3(250f + ((i - 10) * 5f), 0f, 0f);
+        }
+
+        InvokePrivateMethod(vehiclePool, "UpdateSimulationTiers");
+        vehiclePool.GetTierCounts(out int initialFullAi, out _, out _, out _);
+        Assert.That(initialFullAi, Is.EqualTo(10));
+
+        bus.position = new Vector3(125f, 0f, 0f);
+        InvokePrivateMethod(vehiclePool, "UpdateSimulationTiers");
+        vehiclePool.GetTierCounts(out int movedFullAi, out _, out _, out _);
+
+        Assert.That(movedFullAi, Is.EqualTo(18));
+    }
+
+    [Test]
     public void MissionData_DefaultValues_AreInitializedAsExpected()
     {
         var missionData = ScriptableObject.CreateInstance<MissionData>();
 
+        Assert.That(missionData.missionType, Is.EqualTo(MissionArchetype.ScheduledRoute));
+        Assert.That(missionData.requiredWeather, Is.EqualTo(WeatherState.HeavyRain));
+        Assert.That(missionData.requiredWeatherIntensity, Is.EqualTo(0.85f));
+        Assert.That(missionData.minimumDynamicEvents, Is.EqualTo(0));
+        Assert.That(missionData.maximumAllowedViolations, Is.EqualTo(2));
+        Assert.That(missionData.minimumSafetyScore, Is.EqualTo(0.75f));
+        Assert.That(missionData.scenarioBonusXP, Is.EqualTo(0));
         Assert.That(missionData.scheduledDepartureTime, Is.EqualTo(480f));
         Assert.That(missionData.targetDurationMinutes, Is.EqualTo(25f));
         Assert.That(missionData.minPassengersTarget, Is.EqualTo(30));
@@ -728,6 +1045,19 @@ public class GameScriptsTests
         Assert.That(missionData.missionName, Is.EqualTo("CBD to Westlands"));
         Assert.That(missionData.description, Is.EqualTo("Complete the full route on time."));
         Assert.That(missionData.starRating, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void MissionData_RushHourObjectiveText_ReflectsPeakTrafficScenario()
+    {
+        var missionData = ScriptableObject.CreateInstance<MissionData>();
+        missionData.missionType = MissionArchetype.RushHourChaos;
+        missionData.stretchPassengersTarget = 52;
+
+        Assert.That(missionData.GetMissionTypeLabel(), Is.EqualTo("Rush Hour Chaos"));
+        Assert.That(missionData.GetScenarioObjectiveText(), Does.Contain("peak traffic"));
+        Assert.That(missionData.GetScenarioObjectiveText(), Does.Contain("52+ passengers"));
+        Assert.That(missionData.GetEffectiveMinimumDynamicEvents(), Is.EqualTo(1));
     }
 
     [Test]
@@ -776,6 +1106,21 @@ public class GameScriptsTests
         var duration = (float)InvokePrivateMethodWithResult(trafficLight, "GetStateDuration", state);
 
         Assert.That(duration, Is.EqualTo(expectedDuration));
+    }
+
+    [Test]
+    public void TrafficLight_ApplyPhaseOffset_CanAdvanceAcrossMultipleStates()
+    {
+        var trafficLight = CreateComponent<TrafficLight>("TrafficLight");
+        trafficLight.redDuration = 45f;
+        trafficLight.greenDuration = 35f;
+        trafficLight.amberDuration = 5f;
+        trafficLight.phaseOffset = 52f;
+
+        InvokePrivateMethod(trafficLight, "ApplyPhaseOffset");
+
+        Assert.That(trafficLight.currentState, Is.EqualTo(TrafficLight.LightState.Green));
+        Assert.That(trafficLight.timeInState, Is.EqualTo(7f).Within(0.001f));
     }
 
     [Test]
@@ -1107,6 +1452,20 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void WeatherSystem_CurrentCompositeWeatherLabel_AppendsNight_WhenTimeOfDayReportsNight()
+    {
+        var weatherSystem = CreateComponent<WeatherSystem>("WeatherSystem");
+        var timeOfDaySystem = CreateComponent<TimeOfDaySystem>("TimeOfDaySystem");
+        SetSingleton(timeOfDaySystem);
+        weatherSystem.currentWeather = WeatherState.Fog;
+        typeof(TimeOfDaySystem)
+            .GetField("<IsNight>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?.SetValue(timeOfDaySystem, true);
+
+        Assert.That(weatherSystem.CurrentCompositeWeatherLabel, Is.EqualTo("Fog Night"));
+    }
+
+    [Test]
     public void RainController_SetRain_LightRain_UpdatesAudioWetnessAndWipers()
     {
         var controller = CreateComponent<RainController>("RainController");
@@ -1204,8 +1563,8 @@ public class GameScriptsTests
 
         Assert.That(RenderSettings.fog, Is.True);
         Assert.That(RenderSettings.fogMode, Is.EqualTo(FogMode.Linear));
-        Assert.That(GetPrivateField<float>(controller, "targetFogStart"), Is.EqualTo(255f).Within(0.001f));
-        Assert.That(GetPrivateField<float>(controller, "targetFogEnd"), Is.EqualTo(1075f).Within(0.001f));
+        Assert.That(GetPrivateField<float>(controller, "targetFogStart"), Is.EqualTo(8f).Within(0.001f));
+        Assert.That(GetPrivateField<float>(controller, "targetFogEnd"), Is.EqualTo(80f).Within(0.001f));
         Assert.That(GetPrivateField<bool>(controller, "fogActive"), Is.True);
     }
 
@@ -1229,9 +1588,39 @@ public class GameScriptsTests
 
         controller.SetSky(WeatherState.Blizzard, 0.7f, -5f);
 
-        Assert.That(GetPrivateField<float>(controller, "targetSunIntensity"), Is.EqualTo(controller.thunderSunIntensity).Within(0.001f));
+        Assert.That(GetPrivateField<float>(controller, "targetSunIntensity"), Is.EqualTo(controller.blizzardIntensity).Within(0.001f));
         Assert.That(GetPrivateField<float>(controller, "targetAmbientIntensity"), Is.EqualTo(controller.thunderAmbientIntensity).Within(0.001f));
         Assert.That(GetPrivateField<Color>(controller, "targetSkyColor"), Is.EqualTo(Color.Lerp(controller.snowSkyColor, controller.rainSkyColor, 0.5f)));
+    }
+
+    [Test]
+    public void TimeOfDaySystem_ApplyTimeOfDayImmediate_ActivatesNightLightsAndObjects_AfterSunset()
+    {
+        var system = CreateComponent<TimeOfDaySystem>("TimeOfDaySystem");
+        SetSingleton(system);
+        var streetLight = CreateComponent<Light>("StreetLight");
+        var headLight = CreateComponent<Light>("HeadLight");
+        var interiorLight = CreateComponent<Light>("InteriorLight");
+        var streetObject = new GameObject("StreetLampRoot");
+        var busObject = new GameObject("HeadLampRoot");
+
+        streetObject.SetActive(false);
+        busObject.SetActive(false);
+        system.streetLights = new[] { streetLight };
+        system.busHeadLights = new[] { headLight };
+        system.busInteriorLights = new[] { interiorLight };
+        system.streetLightObjects = new[] { streetObject };
+        system.busHeadLightObjects = new[] { busObject };
+        system.currentTimeMinutes = system.sunsetMinutes + 30f;
+
+        InvokePrivateMethod(system, "ApplyTimeOfDayImmediate");
+
+        Assert.That(system.IsNight, Is.True);
+        Assert.That(streetLight.enabled, Is.True);
+        Assert.That(headLight.enabled, Is.True);
+        Assert.That(interiorLight.enabled, Is.True);
+        Assert.That(streetObject.activeSelf, Is.True);
+        Assert.That(busObject.activeSelf, Is.True);
     }
 
     [Test]
@@ -1301,6 +1690,177 @@ public class GameScriptsTests
         Assert.That(gameState.vehicleState.activeBusId, Is.EqualTo(electricSpec.busId));
         Assert.That(gameState.vehicleState.isElectricBus, Is.True);
         Assert.That(gameState.vehicleState.energyUnitLabel, Is.EqualTo("kWh"));
+    }
+
+    [Test]
+    public void XPSystem_DefaultDefinitions_CoverTenRanks_AndExposeThresholds()
+    {
+        var xpSystem = CreateComponent<XPSystem>("XPSystem");
+        SetSingleton(xpSystem);
+        xpSystem.EnsureInitialized();
+
+        Assert.That(xpSystem.RankDefinitions.Count, Is.EqualTo(10));
+        Assert.That(xpSystem.GetRankDefinition(1).requiredTotalXP, Is.EqualTo(0));
+        Assert.That(xpSystem.GetRankDefinition(10).requiredTotalXP, Is.EqualTo(18000));
+    }
+
+    [Test]
+    public void UnlockManager_GetRoutesForCity_AddsGrandTour_AfterAllBaseRoutesAreCompleted()
+    {
+        var xpSystem = CreateComponent<XPSystem>("XPSystem");
+        SetSingleton(xpSystem);
+        xpSystem.EnsureInitialized();
+        xpSystem.AwardXP(20000, "Test");
+
+        var cityManager = CreateComponent<CityManager>("CityManager");
+        SetSingleton(cityManager);
+
+        var city = ScriptableObject.CreateInstance<CityDefinition>();
+        city.cityName = "Nairobi";
+        city.cityCode = "NBO";
+
+        var routeA = ScriptableObject.CreateInstance<BusRoute>();
+        routeA.routeNumber = "12";
+        routeA.routeName = "CBD Loop";
+        routeA.stops = new[] { new BusStopData { stopName = "A" }, new BusStopData { stopName = "B" } };
+
+        var routeB = ScriptableObject.CreateInstance<BusRoute>();
+        routeB.routeNumber = "24";
+        routeB.routeName = "Museum Link";
+        routeB.stops = new[] { new BusStopData { stopName = "C" }, new BusStopData { stopName = "D" } };
+
+        city.availableRoutes = new[] { routeA, routeB };
+        cityManager.allCities = new[] { city };
+
+        var unlockManager = CreateComponent<UnlockManager>("UnlockManager");
+        SetSingleton(unlockManager);
+
+        unlockManager.RecordRouteCompletion(routeA, city);
+        unlockManager.RecordRouteCompletion(routeB, city);
+
+        var routes = unlockManager.GetRoutesForCity(city);
+
+        Assert.That(routes.Count, Is.EqualTo(3));
+        Assert.That(routes.Exists(route => route != null && route.isGrandTourRoute), Is.True);
+    }
+
+    [Test]
+    public void SaveManager_ApplySaveData_RestoresXpBusSelectionAndEconomyState()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+
+        var xpSystem = CreateComponent<XPSystem>("XPSystem");
+        SetSingleton(xpSystem);
+        xpSystem.EnsureInitialized();
+
+        var unlockManager = CreateComponent<UnlockManager>("UnlockManager");
+        SetSingleton(unlockManager);
+
+        var fleetManager = CreateComponent<BusFleetManager>("BusFleetManager");
+        SetSingleton(fleetManager);
+        fleetManager.EnsureInitialized();
+
+        BusSpec electricSpec = null;
+        var specs = fleetManager.GetAllBusSpecs();
+        for (int i = 0; i < specs.Count; i++)
+        {
+            if (specs[i] != null && specs[i].IsElectric)
+            {
+                electricSpec = specs[i];
+                break;
+            }
+        }
+
+        Assert.That(electricSpec, Is.Not.Null);
+
+        var saveManager = CreateComponent<SaveManager>("SaveManager");
+        SetSingleton(saveManager);
+        saveManager.EnsureInitialized();
+
+        var saveData = new SaveData
+        {
+            playerXP = 5400,
+            rank = 6,
+            unlockedBuses = new[] { specs[0].busId, electricSpec.busId },
+            selectedBusId = electricSpec.busId,
+            economy = new PlayerEconomyData
+            {
+                balanceKES = 321000f,
+                driverReputationRating = 88f
+            },
+            vehicleState = new VehiclePersistentState
+            {
+                activeBusId = electricSpec.busId,
+                isElectricBus = true,
+                energyUnitLabel = "kWh",
+                fuelCapacityLitres = 420f,
+                fuelLitres = 300f
+            },
+            lastMissionSettlement = new MissionSettlementData
+            {
+                netEarningsKES = 18200f
+            }
+        };
+
+        saveManager.ApplySaveData(saveData, saveLocalBackup: true, pushCloud: false);
+
+        Assert.That(xpSystem.CurrentRank, Is.EqualTo(6));
+        Assert.That(fleetManager.GetSelectedBusSpec(), Is.EqualTo(electricSpec));
+        Assert.That(gameState.economy.balanceKES, Is.EqualTo(321000f));
+        Assert.That(gameState.vehicleState.isElectricBus, Is.True);
+        Assert.That(gameState.lastMissionSettlement.netEarningsKES, Is.EqualTo(18200f));
+        Assert.That(PlayerPrefs.GetString(SaveManager.LocalSavePrefsKey, string.Empty), Is.Not.Empty);
+    }
+
+    [Test]
+    public void SaveManager_RecordMissionResult_AppendsMissionHistory_AndWritesLocalSave()
+    {
+        var gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
+
+        var xpSystem = CreateComponent<XPSystem>("XPSystem");
+        SetSingleton(xpSystem);
+        xpSystem.EnsureInitialized();
+
+        var unlockManager = CreateComponent<UnlockManager>("UnlockManager");
+        SetSingleton(unlockManager);
+
+        var fleetManager = CreateComponent<BusFleetManager>("BusFleetManager");
+        SetSingleton(fleetManager);
+        fleetManager.EnsureInitialized();
+
+        var saveManager = CreateComponent<SaveManager>("SaveManager");
+        SetSingleton(saveManager);
+        saveManager.EnsureInitialized();
+
+        var city = ScriptableObject.CreateInstance<CityDefinition>();
+        city.cityCode = "NBO";
+        city.cityName = "Nairobi";
+
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.routeNumber = "11";
+        route.routeName = "Airport Express";
+
+        var result = new MissionResult
+        {
+            routeName = route.routeName,
+            xpEarned = 320,
+            starRating = 4,
+            netEarningsKES = 9200,
+            totalScore = 86f
+        };
+
+        saveManager.RecordMissionResult(result, route, city);
+
+        string payload = PlayerPrefs.GetString(SaveManager.LocalSavePrefsKey, string.Empty);
+        Assert.That(payload, Is.Not.Empty);
+
+        var saved = JsonUtility.FromJson<SaveData>(payload);
+        Assert.That(saved.missionHistory, Is.Not.Null);
+        Assert.That(saved.missionHistory.Length, Is.EqualTo(1));
+        Assert.That(saved.missionHistory[0].routeName, Is.EqualTo("Airport Express"));
+        Assert.That(saved.missionHistory[0].cityCode, Is.EqualTo("NBO"));
     }
 
     private static T CreateComponent<T>(string name) where T : Component

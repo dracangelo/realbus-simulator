@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-04-21T07:03:57Z",
+    "timestamp_osm_base": "2026-04-29T11:04:55Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -4215,6 +4215,31 @@
     "operational_status": "operational",
     "operational_status:electricity": "often",
     "operator:type": "private"
+  }
+},
+{
+  "type": "node",
+  "id": 696543032,
+  "lat": -1.3133393,
+  "lon": 36.7985247,
+  "tags": {
+    "amenity": "clinic",
+    "contact:email": "mtaanicentre@gmail.com",
+    "health_facility:exam_room": "yes",
+    "health_facility:type": "vct_center",
+    "medical_service:antiretroviral_therapy": "yes",
+    "medical_service:condom_distribution": "yes",
+    "medical_service:family_planning": "yes",
+    "medical_service:pmtct": "yes",
+    "medical_service:sexually_transmitted_infections_management": "yes",
+    "medical_service:vct_hiv_counselling_test": "yes",
+    "medical_staff:counsellor": "1",
+    "medical_staff:lab_tech": "1",
+    "name": "Mtaani VCT",
+    "opening_hours": "Mo-Fr 08:00-20:00",
+    "operational_status": "operational",
+    "operational_status:electricity": "always",
+    "operator:type": "ngo_self_help"
   }
 },
 {
@@ -12726,8 +12751,8 @@
 {
   "type": "node",
   "id": 5340559317,
-  "lat": -1.2571908,
-  "lon": 36.8034933,
+  "lat": -1.2572785,
+  "lon": 36.8035070,
   "tags": {
     "addr:city": "Nairobi",
     "addr:housenumber": "Westgate Mall,",
@@ -15781,8 +15806,8 @@
 {
   "type": "node",
   "id": 6089822587,
-  "lat": -1.2572657,
-  "lon": 36.8033495,
+  "lat": -1.2571939,
+  "lon": 36.8033689,
   "tags": {
     "name": "Diamond Watch",
     "phone": "+254 729272245",
@@ -15792,8 +15817,8 @@
 {
   "type": "node",
   "id": 6089825186,
-  "lat": -1.2571591,
-  "lon": 36.8033286,
+  "lat": -1.2571443,
+  "lon": 36.8032660,
   "tags": {
     "tourism": "information"
   }
@@ -15885,8 +15910,8 @@
 {
   "type": "node",
   "id": 6171147696,
-  "lat": -1.2571830,
-  "lon": 36.8030276,
+  "lat": -1.2568481,
+  "lon": 36.8027018,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Mwanzi Road",
@@ -21213,6 +21238,27 @@
 },
 {
   "type": "node",
+  "id": 9507652859,
+  "lat": -1.3092305,
+  "lon": 36.8014124,
+  "tags": {
+    "amenity": "school",
+    "boundary_type:Ward_boundary": "yes",
+    "name": "Mbagathi Road Primary Polling Station",
+    "operational_status:electricity": "often",
+    "polling_station": "yes",
+    "polling_station:accessibility": "motor_bikes,small_cars,big_cars.tractors",
+    "polling_station:election_year": "2013",
+    "polling_station:nearest_health_centre": "Mbagathi hospital",
+    "polling_station:nearest_police_station": "Kenyatta police post",
+    "polling_station:registered_voters": "4,086",
+    "polling_station:source": "map_kibera_trust",
+    "polling_station:type": "school",
+    "polling_station:type_description": "Its a public school"
+  }
+},
+{
+  "type": "node",
   "id": 9587521823,
   "lat": -1.2930205,
   "lon": 36.7928528,
@@ -22140,8 +22186,8 @@
 {
   "type": "node",
   "id": 11370972617,
-  "lat": -1.2567718,
-  "lon": 36.8031828,
+  "lat": -1.2566613,
+  "lon": 36.8028240,
   "tags": {
     "brand": "Carrefour",
     "brand:wikidata": "Q217599",
@@ -24314,8 +24360,8 @@
 {
   "type": "node",
   "id": 13048510078,
-  "lat": -1.2569754,
-  "lon": 36.8031868,
+  "lat": -1.2569173,
+  "lon": 36.8032358,
   "tags": {
     "addr:floor": "3",
     "brand": "Apple Store",
@@ -24330,8 +24376,8 @@
 {
   "type": "node",
   "id": 13050270435,
-  "lat": -1.2570931,
-  "lon": 36.8033148,
+  "lat": -1.2570441,
+  "lon": 36.8034845,
   "tags": {
     "addr:floor": "G",
     "brand": "Decathlon",
@@ -24580,6 +24626,26 @@
     "payment:onchain": "yes",
     "phone": "0742725569",
     "shop": "mobile_phone_accessories"
+  }
+},
+{
+  "type": "node",
+  "id": 13754706610,
+  "lat": -1.2926008,
+  "lon": 36.7902722,
+  "tags": {
+    "addr:city": "Conway",
+    "addr:postcode": "29526",
+    "addr:state": "SC",
+    "addr:street": "2761 US-501",
+    "country": "USA",
+    "description": "Established in 2009, Car City is your premier used car dealer located in Conway. We take pride in having a reputation for reliable and affordable used cars. Our unique collection features a range of diverse makes and models, making us perfectly equipped t",
+    "image": "https://s3.amazonaws.com/user-media.venngage.com/25462919-5427a017f4dda377d574ec53487743ad.png",
+    "name": "Car City",
+    "opening_hours": "N/A",
+    "phone": "843-331-1151",
+    "shop": "car",
+    "website": "https://carcitycentral.com"
   }
 },
 {
@@ -25907,9 +25973,11 @@
     "internet_access": "wired;wlan",
     "internet_access:fee": "customers",
     "internet_access:ssid": "Chemichemi , Chemiweb",
+    "isced:level": "6;7;8",
     "name": "University of Nairobi- College of Biological & Physical Sciences",
-    "operator": "University of Nairobi",
-    "operator:type": "government",
+    "operator": "Ministry of Education, science and technology",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161",
     "short_name": "UoN CBPS"
   }
 },
@@ -35192,7 +35260,11 @@
   "tags": {
     "amenity": "school",
     "check_date": "2023-05-11",
-    "name": "Nairobi Primary School"
+    "isced:level": "0;1;2",
+    "name": "Nairobi Primary School",
+    "operator": "Ministry of Education, science & technology",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -36922,8 +36994,13 @@
     "addr:street": "General Waruingi Street",
     "amenity": "school",
     "barrier": "wall",
+    "grades": "10-12",
+    "isced:level": "3",
     "name": "Starehe Boys' Centre and School",
-    "phone": "+254 777 761 213",
+    "operator": "Ministry of Education, science and technology",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161",
+    "phone": "+254 777 761213",
     "website": "http://www.stareheboyscentre.ac.ke/",
     "wikidata": "Q7601804",
     "wikipedia": "en:Starehe Boys' Centre and School"
@@ -36968,11 +37045,12 @@
     "amenity": "hospital",
     "beds": "350",
     "description": "Every Monday and Friday",
-    "healthcare": "counselling",
+    "healthcare": "birthing_centre",
     "name": "Pumwani Maternity Hospital",
     "opening_hours": "24/7",
-    "operator": "public",
+    "operator": "ministry of health kenya",
     "operator:type": "public/government",
+    "operator:wikipedia": "en.Ministry of Health (Kenya)",
     "phone": "+254 720 381038"
   }
 },
@@ -40011,7 +40089,11 @@
     "internet_access": "yes",
     "internet_access:fee": "customers",
     "internet_access:ssid": "chemichemi, chemiweb",
+    "isced:level": "6;7;8",
     "name": "University of Nairobi - Main Campus",
+    "operator": "Ministry of Education, science and technology",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161",
     "short_name": "CHSS",
     "website": "https://www.uonbi.ac.ke/content/college-humanities-and-social-sciences-chss",
     "wikidata": "Q649998",
@@ -40412,12 +40494,12 @@
   "tags": {
     "amenity": "school",
     "check_date": "2023-05-11",
-    "grades": "7-12",
+    "grades": "10-12",
+    "isced:level": "3",
     "name": "Jammhuri High School",
-    "operator": "Government of Kenya",
-    "operator:short": "GOK",
-    "operator:type": "public",
-    "operator:wikidata": "Q21022441"
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -40909,7 +40991,11 @@
   ],
   "tags": {
     "amenity": "college",
+    "isced:level": "4",
     "name": "National Industrial Training Authority",
+    "operator": "Ministry of labour and social protection",
+    "operator:type": "public",
+    "operator:website": "www.labour.go.ke",
     "short_name": "NITA",
     "website": "https://nita.go.ke"
   }
@@ -40953,9 +41039,10 @@
     "addr:city": "Nairobi",
     "addr:postcode": "00100",
     "addr:street": "Commercial Street",
-    "alt_name": "Kenya Institute of Highway & Building Technology Mechanical Engineering School",
+    "alt_name": "KIHBT Mechanical Engineering School",
     "amenity": "college",
-    "name": "KIHBT Mechanical Engineering School",
+    "isced:level": "5",
+    "name": "Kenya Institute of Highway & Building Technology -Mechanical Engineering School",
     "short_name": "KIHBT",
     "website": "https://kihbt.ac.ke"
   }
@@ -40999,7 +41086,12 @@
     "addr:postcode": "00100",
     "addr:street": "General Waruingi Street",
     "amenity": "school",
-    "name": "Pumwani Boys' Secondary School"
+    "grades": "10-12",
+    "isced:level": "3",
+    "name": "Pumwani Boys' Secondary School",
+    "operator": "Ministry of Education, science and technology",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -41131,11 +41223,12 @@
   ],
   "tags": {
     "amenity": "school",
+    "grades": "10-12",
+    "isced:level": "3",
     "name": "Pangani Girls' High School",
-    "operator": "Government of Kenya",
-    "operator:short": "GOK",
+    "operator": "Ministry of Education",
     "operator:type": "government",
-    "operator:wikidata": "Q21022441"
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -41600,8 +41693,12 @@
   ],
   "tags": {
     "amenity": "college",
+    "isced:level": "6;7;8",
     "name": "U.O.N. College of Architecture and Engineering",
-    "operator": "University of Nairobi"
+    "operator": "University of Nairobi",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161",
+    "website": "https://www.uonbi.ac.ke/content/college-architecture-and-engineering-cae"
   }
 },
 {
@@ -41711,7 +41808,11 @@
   ],
   "tags": {
     "amenity": "college",
+    "isced:level": "5",
     "name": "Kenya Medical Training College- Mathari Campus",
+    "operator": "Ministry of Education, science & technology",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161",
     "short_name": "KMTC",
     "website": "https://kmtc.ac.ke/"
   }
@@ -42119,7 +42220,12 @@
   ],
   "tags": {
     "amenity": "school",
+    "grades": "10-12",
+    "isced:level": "3",
     "name": "State House Girls High school",
+    "operator": "Ministry of Education, science & technology",
+    "operator:type": "public",
+    "operator:wikidata": "Q30285161",
     "type": "multipolygon"
   }
 },
@@ -42165,8 +42271,9 @@
     "internet_access": "yes",
     "internet_access:fee": "customers",
     "internet_access:ssid": "chemichemi;chemiweb",
+    "isced:level": "6",
     "name": "University of Nairobi- Department of Architecture Design & Development",
-    "operator": "University of Nairobi",
+    "operator": "Ministry of Educa",
     "operator:type": "public",
     "short_name": "UON- ADD",
     "type": "multipolygon",

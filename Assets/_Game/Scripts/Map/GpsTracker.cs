@@ -15,6 +15,24 @@ public class GpsTracker : MonoBehaviour
 {
     public static GpsTracker Instance { get; private set; }
 
+    public readonly struct GpsSample
+    {
+        public readonly double Latitude;
+        public readonly double Longitude;
+        public readonly float HeadingDegrees;
+        public readonly float SpeedKmh;
+        public readonly Vector3 WorldPosition;
+
+        public GpsSample(double latitude, double longitude, float headingDegrees, float speedKmh, Vector3 worldPosition)
+        {
+            Latitude = latitude;
+            Longitude = longitude;
+            HeadingDegrees = headingDegrees;
+            SpeedKmh = speedKmh;
+            WorldPosition = worldPosition;
+        }
+    }
+
     // ── Inspector ─────────────────────────────────────────────────────
 
     [Header("References")]
@@ -25,6 +43,9 @@ public class GpsTracker : MonoBehaviour
     [Tooltip("How often to fire OnGpsUpdated (seconds). 0.2 = 5 Hz.")]
     [Range(0.05f, 2f)]
     public float updateInterval = 0.2f;
+
+    [Tooltip("Use the bus transform's forward direction for heading when speed is near zero.")]
+    public bool useTransformForwardWhenStationary = true;
 
     // ── Read-only state ───────────────────────────────────────────────
 
@@ -47,6 +68,8 @@ public class GpsTracker : MonoBehaviour
     public event System.Action<double, double> OnGpsUpdated;
     /// <summary>Fired when heading changes by more than <see cref="headingChangeTolerance"/> degrees.</summary>
     public event System.Action<float> OnHeadingChanged;
+    /// <summary>Fired with the full GPS state sample after each tracker update.</summary>
+    public event System.Action<GpsSample> OnGpsSampled;
 
     [Tooltip("Minimum heading change (degrees) that fires OnHeadingChanged.")]
     public float headingChangeTolerance = 2f;
@@ -77,7 +100,10 @@ public class GpsTracker : MonoBehaviour
         }
 
         if (busTransform != null)
+        {
             _prevWorldPos = busTransform.position;
+            SampleGps(forceHeadingFromTransform: true);
+        }
     }
 
     void Update()
@@ -90,38 +116,7 @@ public class GpsTracker : MonoBehaviour
         float dt = _timer;
         _timer = 0f;
 
-        Vector3 currentWorldPos = busTransform.position;
-
-        // ── GPS position ──────────────────────────────────────────
-        var gps = converter.WorldToGeoPosition(currentWorldPos);
-        _currentLat = gps.lat;
-        _currentLon = gps.lon;
-
-        // ── Speed (km/h) ──────────────────────────────────────────
-        float distanceMeters = Vector3.Distance(currentWorldPos, _prevWorldPos);
-        _speedKmh = (distanceMeters / dt) * 3.6f;
-
-        // ── Heading ───────────────────────────────────────────────
-        if (!_firstUpdate && distanceMeters > 0.05f)
-        {
-            Vector3 dir = currentWorldPos - _prevWorldPos;
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 0.001f)
-            {
-                float newHeading = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
-                if (newHeading < 0f) newHeading += 360f;
-
-                float delta = Mathf.Abs(Mathf.DeltaAngle(_headingDeg, newHeading));
-                _headingDeg = newHeading;
-                if (delta >= headingChangeTolerance)
-                    OnHeadingChanged?.Invoke(_headingDeg);
-            }
-        }
-
-        _prevWorldPos = currentWorldPos;
-        _firstUpdate  = false;
-
-        OnGpsUpdated?.Invoke(_currentLat, _currentLon);
+        SampleGps(forceHeadingFromTransform: false, dtOverride: dt);
     }
 
     // ── Public helpers ─────────────────────────────────────────────────
@@ -140,5 +135,54 @@ public class GpsTracker : MonoBehaviour
         double dLon = (_currentLon - lon) * CoordinateConverter.MetersPerDegreeLat * cosLat;
         double distSqr = dLat * dLat + dLon * dLon;
         return distSqr <= (double)(radiusMeters * radiusMeters);
+    }
+
+    void SampleGps(bool forceHeadingFromTransform, float dtOverride = -1f)
+    {
+        Vector3 currentWorldPos = busTransform.position;
+
+        var gps = converter.WorldToGeoPosition(currentWorldPos);
+        _currentLat = gps.lat;
+        _currentLon = gps.lon;
+
+        float dt = dtOverride > 0f ? dtOverride : Mathf.Max(Time.deltaTime, 0.0001f);
+        float distanceMeters = Vector3.Distance(currentWorldPos, _prevWorldPos);
+        _speedKmh = dt > 0f ? (distanceMeters / dt) * 3.6f : 0f;
+
+        float previousHeading = _headingDeg;
+        bool usedMovementHeading = false;
+
+        if (!_firstUpdate && distanceMeters > 0.05f)
+        {
+            Vector3 dir = currentWorldPos - _prevWorldPos;
+            dir.y = 0f;
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                _headingDeg = HeadingFromDirection(dir);
+                usedMovementHeading = true;
+            }
+        }
+
+        if (!usedMovementHeading && useTransformForwardWhenStationary && (forceHeadingFromTransform || _firstUpdate))
+            _headingDeg = HeadingFromDirection(busTransform.forward);
+
+        float headingDelta = Mathf.Abs(Mathf.DeltaAngle(previousHeading, _headingDeg));
+        if (!_firstUpdate && headingDelta >= headingChangeTolerance)
+            OnHeadingChanged?.Invoke(_headingDeg);
+
+        _prevWorldPos = currentWorldPos;
+        _firstUpdate = false;
+
+        OnGpsUpdated?.Invoke(_currentLat, _currentLon);
+        OnGpsSampled?.Invoke(new GpsSample(_currentLat, _currentLon, _headingDeg, _speedKmh, currentWorldPos));
+    }
+
+    static float HeadingFromDirection(Vector3 direction)
+    {
+        if (direction.sqrMagnitude <= 0.0001f)
+            return 0f;
+
+        float heading = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+        return heading < 0f ? heading + 360f : heading;
     }
 }

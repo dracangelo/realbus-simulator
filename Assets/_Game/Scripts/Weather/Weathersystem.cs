@@ -26,7 +26,9 @@ public class WeatherSystem : MonoBehaviour
     public float weatherIntensity = 0f; // 0-1
 
     [Header("Transition")]
-    public float transitionSpeed = 0.5f; // seconds per unit intensity
+    public float transitionSpeed = 0.5f; // legacy tuning value
+    public float transitionMinSeconds = 180f;
+    public float transitionMaxSeconds = 300f;
 
     [Header("Controllers — assign in Inspector")]
     public RainController rainController;
@@ -40,6 +42,12 @@ public class WeatherSystem : MonoBehaviour
 
     private CityDefinition activeCity;
     private bool weatherLoaded = false;
+    private Coroutine weatherTransitionRoutine;
+
+    public WeatherState TargetWeather { get; private set; } = WeatherState.Clear;
+    public float TransitionProgress01 { get; private set; } = 1f;
+    public bool IsNightCompositeActive => TimeOfDaySystem.Instance != null && TimeOfDaySystem.Instance.IsNight;
+    public string CurrentCompositeWeatherLabel => IsNightCompositeActive ? $"{currentWeather} Night" : currentWeather.ToString();
 
     void Awake()
     {
@@ -249,6 +257,8 @@ public class WeatherSystem : MonoBehaviour
     public void ApplyWeather(WeatherState state, float intensity, float temp)
     {
         currentWeather = state;
+        TargetWeather = state;
+        TransitionProgress01 = 1f;
         weatherIntensity = intensity;
         temperature = temp;
 
@@ -280,7 +290,12 @@ public class WeatherSystem : MonoBehaviour
             if (newState == WeatherState.Thunderstorm && currentWeather == WeatherState.Clear)
                 newState = WeatherState.HeavyRain;
 
-            yield return StartCoroutine(TransitionToWeather(newState));
+            if (weatherTransitionRoutine != null)
+                StopCoroutine(weatherTransitionRoutine);
+
+            weatherTransitionRoutine = StartCoroutine(TransitionToWeather(newState));
+            yield return weatherTransitionRoutine;
+            weatherTransitionRoutine = null;
         }
     }
 
@@ -288,15 +303,20 @@ public class WeatherSystem : MonoBehaviour
     {
         float targetInt = GetIntensityForState(newState);
         float elapsed = 0f;
-        float duration = Random.Range(180f, 300f); // 3-5 minute transition
+        float duration = Random.Range(
+            Mathf.Max(1f, transitionMinSeconds),
+            Mathf.Max(Mathf.Max(1f, transitionMinSeconds), transitionMaxSeconds));
 
         WeatherState oldState = currentWeather;
         float oldIntensity = weatherIntensity;
+        TargetWeather = newState;
+        TransitionProgress01 = 0f;
 
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / duration;
+            float t = Mathf.Clamp01(elapsed / duration);
+            TransitionProgress01 = t;
 
             float blendedIntensity = Mathf.Lerp(oldIntensity, targetInt, t);
 
@@ -309,6 +329,8 @@ public class WeatherSystem : MonoBehaviour
         }
 
         currentWeather = newState;
+        TargetWeather = newState;
+        TransitionProgress01 = 1f;
         weatherIntensity = targetInt;
         Debug.Log($"WeatherSystem: Transitioned to {newState}");
     }

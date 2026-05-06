@@ -11,7 +11,9 @@ public class StopApproachUI : MonoBehaviour
     public TextMeshProUGUI stopNameText;
     public TextMeshProUGUI distanceText;
     public TextMeshProUGUI statusText;
+    public TextMeshProUGUI guidanceText;
     public Image panelBackground;
+    public RectTransform directionArrow;
 
     void Awake()
     {
@@ -24,7 +26,7 @@ public class StopApproachUI : MonoBehaviour
         HideApproach();
     }
 
-    public void ShowApproach(string stopName, float distance)
+    public void ShowApproach(string stopName, float distance, float signedAngleDeg = 0f)
     {
         if (approachPanel != null)
             approachPanel.SetActive(true);
@@ -34,6 +36,7 @@ public class StopApproachUI : MonoBehaviour
             distanceText.text = $"{distance:F0}m";
         if (statusText != null)
             statusText.text = "APPROACHING";
+        SetGuidanceHint(signedAngleDeg);
         if (panelBackground != null)
             panelBackground.color = new Color(1f, 0.5f, 0f, 0.85f); // orange
     }
@@ -48,6 +51,10 @@ public class StopApproachUI : MonoBehaviour
             distanceText.text = "STOP";
         if (statusText != null)
             statusText.text = "DOCKED";
+        if (guidanceText != null)
+            guidanceText.text = "ALIGN TO KERB";
+        if (directionArrow != null)
+            directionArrow.localRotation = Quaternion.identity;
         if (panelBackground != null)
             panelBackground.color = new Color(0f, 0.8f, 0f, 0.85f); // green
     }
@@ -62,6 +69,8 @@ public class StopApproachUI : MonoBehaviour
             distanceText.text = $"{Mathf.CeilToInt(waitSeconds)}s";
         if (statusText != null)
             statusText.text = "WAIT FOR SCHEDULE";
+        if (guidanceText != null)
+            guidanceText.text = "HOLD POSITION";
         if (panelBackground != null)
             panelBackground.color = new Color(0.15f, 0.45f, 1f, 0.88f);
     }
@@ -77,5 +86,27 @@ public class StopApproachUI : MonoBehaviour
     {
         if (approachPanel != null && approachPanel.activeSelf && distanceText != null)
             distanceText.text = $"{distance:F0}m";
+    }
+
+    public void UpdateGuidance(float distance, float signedAngleDeg)
+    {
+        UpdateDistance(distance);
+        SetGuidanceHint(signedAngleDeg);
+    }
+
+    void SetGuidanceHint(float signedAngleDeg)
+    {
+        if (guidanceText != null)
+        {
+            if (signedAngleDeg > 8f)
+                guidanceText.text = "STEER RIGHT";
+            else if (signedAngleDeg < -8f)
+                guidanceText.text = "STEER LEFT";
+            else
+                guidanceText.text = "STRAIGHT AHEAD";
+        }
+
+        if (directionArrow != null)
+            directionArrow.localRotation = Quaternion.Euler(0f, 0f, -signedAngleDeg);
     }
 }

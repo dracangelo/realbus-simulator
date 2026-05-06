@@ -55,7 +55,7 @@ public class StopTrigger : MonoBehaviour
         if (approachTriggered && distance < approachDistance)
         {
             if (StopApproachUI.Instance != null)
-                StopApproachUI.Instance.UpdateDistance(distance);
+                StopApproachUI.Instance.UpdateGuidance(distance, CalculateSignedAngleToStop());
         }
 
         // Reset when bus moves away
@@ -71,7 +71,22 @@ public class StopTrigger : MonoBehaviour
     {
         Debug.Log($"Approaching: {stopName} — {distance:F0}m");
         if (StopApproachUI.Instance != null)
-            StopApproachUI.Instance.ShowApproach(stopName, distance);
+            StopApproachUI.Instance.ShowApproach(stopName, distance, CalculateSignedAngleToStop());
+    }
+
+    float CalculateSignedAngleToStop()
+    {
+        if (busTransform == null)
+            return 0f;
+
+        Vector3 toStop = transform.position - busTransform.position;
+        toStop.y = 0f;
+        Vector3 forward = busTransform.forward;
+        forward.y = 0f;
+        if (toStop.sqrMagnitude <= 0.001f || forward.sqrMagnitude <= 0.001f)
+            return 0f;
+
+        return Vector3.SignedAngle(forward.normalized, toStop.normalized, Vector3.up);
     }
 
     bool IsRelevantStop()

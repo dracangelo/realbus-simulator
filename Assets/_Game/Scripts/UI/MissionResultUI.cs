@@ -29,12 +29,17 @@ public class MissionResultUI : MonoBehaviour
     public TextMeshProUGUI fareText;
     public TextMeshProUGUI distanceText;
     public TextMeshProUGUI xpText;
+    public Image xpFillImage;
 
     [Header("Buttons")]
     public Button playAgainButton;
     public TextMeshProUGUI playAgainButtonText;
     public Button mainMenuButton;
     public TextMeshProUGUI mainMenuButtonText;
+
+    Coroutine revealRoutine;
+    XPBar runtimeXpBar;
+    RankUpSequence rankUpSequence;
 
     void Awake()
     {
@@ -102,7 +107,7 @@ public class MissionResultUI : MonoBehaviour
         mainMenuButton?.onClick.AddListener(OnMainMenu);
     }
 
-    public void ShowResult(MissionResult result)
+    public void ShowResult(MissionResult result, XPAwardResult awardResult = null)
     {
         if (resultPanel) resultPanel.SetActive(true);
         if (resultCanvasGroup)
@@ -115,8 +120,8 @@ public class MissionResultUI : MonoBehaviour
             cityRouteText.text = result.isShiftSummary
                 ? $"SHIFT SUMMARY — {result.routeName}"
                 : city != null
-                    ? $"{city.cityName.ToUpper()} — {result.routeName}"
-                    : result.routeName;
+                    ? $"{city.cityName.ToUpper()} — {result.routeName} • {result.missionTypeLabel.ToUpper()}"
+                    : $"{result.routeName} • {result.missionTypeLabel.ToUpper()}";
             cityRouteText.color = UITheme.TextSecondary;
             cityRouteText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
         }
@@ -124,7 +129,7 @@ public class MissionResultUI : MonoBehaviour
         // Total score — large
         if (totalScoreText)
         {
-            totalScoreText.text = $"{result.totalScore:F0}%";
+            totalScoreText.text = "0%";
             totalScoreText.color = GetScoreColor(result.totalScore);
             totalScoreText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
@@ -132,10 +137,7 @@ public class MissionResultUI : MonoBehaviour
         // Star rating
         if (starRatingText)
         {
-            string stars = "";
-            for (int i = 0; i < 5; i++)
-                stars += i < result.starRating ? "★" : "☆";
-            starRatingText.text = stars;
+            starRatingText.text = "☆☆☆☆☆";
             starRatingText.color = UITheme.TertiaryDim;
             starRatingText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
@@ -179,10 +181,51 @@ public class MissionResultUI : MonoBehaviour
         {
             xpText.text = result.isShiftSummary
                 ? $"Incidents {result.shiftIncidentCount}  •  Bay {(result.returnedToCorrectBay ? "OK" : "MISSED")}"
-                : $"+{result.xpEarned} XP  •  {result.violationSummary}  •  {result.dynamicEventSummary}  •  Rep {result.driverReputationRating:F0}";
+                : $"{(result.scenarioObjectivePassed ? "OBJ OK" : "OBJ MISSED")}  •  {result.scenarioObjectiveStatus}  •  +{result.xpEarned} XP  •  {result.violationSummary}  •  Rep {result.driverReputationRating:F0}";
             xpText.color = UITheme.TertiaryDim;
             xpText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
+
+        EnsureProgressUi();
+        if (runtimeXpBar != null)
+        {
+            if (awardResult != null)
+                runtimeXpBar.AnimateAward(awardResult);
+            else
+                runtimeXpBar.RefreshCurrent();
+        }
+
+        if (revealRoutine != null)
+            StopCoroutine(revealRoutine);
+        revealRoutine = StartCoroutine(AnimateReveal(result));
+
+        if (awardResult != null && awardResult.RankedUp && rankUpSequence != null)
+            StartCoroutine(rankUpSequence.PlaySequence(awardResult.rankUps));
+    }
+
+    void EnsureProgressUi()
+    {
+        if (resultPanel == null || runtimeXpBar != null)
+            return;
+
+        var root = new GameObject("XPProgressRoot", typeof(RectTransform));
+        root.transform.SetParent(resultPanel.transform, false);
+        var rootRect = root.GetComponent<RectTransform>();
+        rootRect.anchorMin = new Vector2(0.08f, 0.02f);
+        rootRect.anchorMax = new Vector2(0.92f, 0.16f);
+        rootRect.offsetMin = Vector2.zero;
+        rootRect.offsetMax = Vector2.zero;
+
+        runtimeXpBar = XPBar.CreateRuntimeBar(root.transform, "MissionResultXPBar");
+        var xpRect = runtimeXpBar.GetComponent<RectTransform>();
+        xpRect.anchorMin = Vector2.zero;
+        xpRect.anchorMax = Vector2.one;
+        xpRect.offsetMin = Vector2.zero;
+        xpRect.offsetMax = Vector2.zero;
+
+        rankUpSequence = gameObject.GetComponent<RankUpSequence>();
+        if (rankUpSequence == null)
+            rankUpSequence = gameObject.AddComponent<RankUpSequence>();
     }
 
     void SetBreakdown(TextMeshProUGUI tmp, string label,
@@ -200,6 +243,41 @@ public class MissionResultUI : MonoBehaviour
         if (score >= 80f) return UITheme.Success;
         if (score >= 60f) return UITheme.Accent;
         return UITheme.Error;
+    }
+
+    IEnumerator AnimateReveal(MissionResult result)
+    {
+        float duration = 1.1f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float eased = 1f - Mathf.Pow(1f - t, 3f);
+
+            if (totalScoreText != null)
+                totalScoreText.text = $"{Mathf.RoundToInt(Mathf.Lerp(0f, result.totalScore, eased))}%";
+
+            if (xpFillImage != null)
+                xpFillImage.fillAmount = eased;
+
+            if (starRatingText != null)
+            {
+                int starsVisible = Mathf.Clamp(Mathf.FloorToInt(eased * (result.starRating + 0.25f)), 0, result.starRating);
+                starRatingText.text = new string('★', starsVisible) + new string('☆', Mathf.Max(0, 5 - starsVisible));
+            }
+
+            yield return null;
+        }
+
+        if (totalScoreText != null)
+            totalScoreText.text = $"{result.totalScore:F0}%";
+        if (starRatingText != null)
+            starRatingText.text = new string('★', result.starRating) + new string('☆', Mathf.Max(0, 5 - result.starRating));
+        if (xpFillImage != null)
+            xpFillImage.fillAmount = 1f;
+
+        revealRoutine = null;
     }
 
     void OnPlayAgain()

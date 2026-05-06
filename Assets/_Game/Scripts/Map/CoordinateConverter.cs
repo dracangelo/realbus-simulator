@@ -1,10 +1,12 @@
+using System;
+using System.Reflection;
 using UnityEngine;
 
 /// <summary>
 /// Single conversion API: GPS (WGS84) ↔ Unity world-space (metres).
 ///
 /// Priority chain (first available wins):
-///   1. Mapbox AbstractMap   — if MAPBOX_SDK is defined and map is alive
+///   1. Mapbox AbstractMap   — when a runtime Mapbox map is alive
 ///   2. MapTileLoader        — if present and initialised
 ///   3. Local-origin flat-earth approximation (deterministic, unit-testable)
 ///
@@ -21,6 +23,21 @@ public class CoordinateConverter : UnityEngine.MonoBehaviour
 
     [Header("Optional – tile loader fallback")]
     public MapTileLoader mapTileLoader;
+
+    [Header("Diagnostics")]
+    [SerializeField] bool useMapboxBridge = true;
+    [SerializeField] bool logBridgeSelection;
+
+    object _cachedMapboxMap;
+    Type _cachedAbstractMapType;
+    Type _cachedVector2dType;
+    MethodInfo _geoToWorldMethod;
+    MethodInfo _worldToGeoMethod;
+    FieldInfo _vector2dXField;
+    FieldInfo _vector2dYField;
+    bool _mapboxTypeLookupAttempted;
+    float _nextMapboxLookupTime;
+    string _lastBridgeLabel = "Unresolved";
 
     // ── Constants ────────────────────────────────────────────────────
 
@@ -51,20 +68,17 @@ public class CoordinateConverter : UnityEngine.MonoBehaviour
                 mapOrigin.SetFromCity(city);
             }
         }
+
+        RefreshBridgeSelectionLog();
     }
 
     // ── Public API ───────────────────────────────────────────────────
 
     public UnityEngine.Vector3 GeoToWorldPosition(double lat, double lon)
     {
-#if MAPBOX_SDK
-        var abstractMap = Mapbox.Unity.Map.AbstractMap.Instance; // cached singleton
-        if (abstractMap != null)
-        {
-            var v2 = new Mapbox.Utils.Vector2d(lat, lon);
-            return abstractMap.GeoToWorldPosition(v2, true);
-        }
-#endif
+        if (TryGeoToWorldWithMapbox(lat, lon, out Vector3 mapboxWorld))
+            return mapboxWorld;
+
         if (mapTileLoader != null)
             return mapTileLoader.GpsToWorldPosition(lat, lon);
 
@@ -77,14 +91,9 @@ public class CoordinateConverter : UnityEngine.MonoBehaviour
 
     public (double lat, double lon) WorldToGeoPosition(UnityEngine.Vector3 worldPos)
     {
-#if MAPBOX_SDK
-        var abstractMap = Mapbox.Unity.Map.AbstractMap.Instance;
-        if (abstractMap != null)
-        {
-            var v2 = abstractMap.WorldToGeoPosition(worldPos);
-            return (v2.x, v2.y);
-        }
-#endif
+        if (TryWorldToGeoWithMapbox(worldPos, out var mapboxGeo))
+            return mapboxGeo;
+
         if (mapTileLoader != null)
             return mapTileLoader.WorldPositionToGps(worldPos);
 
@@ -143,4 +152,170 @@ public class CoordinateConverter : UnityEngine.MonoBehaviour
     /// </summary>
     public static double MetersPerDegreeLonAt(double lat) =>
         MetersPerDegreeLat * System.Math.Cos(lat * System.Math.PI / 180.0);
+
+    bool TryGeoToWorldWithMapbox(double lat, double lon, out Vector3 worldPosition)
+    {
+        worldPosition = default;
+        if (!TryResolveMapboxBridge())
+            return false;
+
+        try
+        {
+            object latLon = Activator.CreateInstance(_cachedVector2dType, lat, lon);
+            object result = _geoToWorldMethod.Invoke(_cachedMapboxMap, new[] { latLon, (object)true });
+            if (result is Vector3 vector)
+            {
+                worldPosition = vector;
+                _lastBridgeLabel = "Mapbox";
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"CoordinateConverter: Mapbox GeoToWorldPosition bridge failed. {ex.Message}");
+            InvalidateMapboxBridge();
+        }
+
+        return false;
+    }
+
+    bool TryWorldToGeoWithMapbox(Vector3 worldPosition, out (double lat, double lon) geoPosition)
+    {
+        geoPosition = default;
+        if (!TryResolveMapboxBridge())
+            return false;
+
+        try
+        {
+            object result = _worldToGeoMethod.Invoke(_cachedMapboxMap, new object[] { worldPosition });
+            if (result != null)
+            {
+                double lat = Convert.ToDouble(_vector2dXField.GetValue(result));
+                double lon = Convert.ToDouble(_vector2dYField.GetValue(result));
+                geoPosition = (lat, lon);
+                _lastBridgeLabel = "Mapbox";
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"CoordinateConverter: Mapbox WorldToGeoPosition bridge failed. {ex.Message}");
+            InvalidateMapboxBridge();
+        }
+
+        return false;
+    }
+
+    bool TryResolveMapboxBridge()
+    {
+        if (!useMapboxBridge)
+            return false;
+
+        if (_cachedMapboxMap is UnityEngine.Object cachedObject && cachedObject != null &&
+            _geoToWorldMethod != null && _worldToGeoMethod != null &&
+            _vector2dXField != null && _vector2dYField != null)
+        {
+            return true;
+        }
+
+        if (Time.unscaledTime < _nextMapboxLookupTime)
+            return false;
+
+        _nextMapboxLookupTime = Time.unscaledTime + 1f;
+
+        if (!_mapboxTypeLookupAttempted)
+        {
+            _mapboxTypeLookupAttempted = true;
+            _cachedAbstractMapType = FindType("Mapbox.Unity.Map.AbstractMap");
+            _cachedVector2dType = FindType("Mapbox.Utils.Vector2d");
+            if (_cachedVector2dType != null)
+            {
+                _vector2dXField = _cachedVector2dType.GetField("x");
+                _vector2dYField = _cachedVector2dType.GetField("y");
+            }
+        }
+
+        if (_cachedAbstractMapType == null || _cachedVector2dType == null)
+            return false;
+
+        _geoToWorldMethod = _cachedAbstractMapType.GetMethod(
+            "GeoToWorldPosition",
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            types: new[] { _cachedVector2dType, typeof(bool) },
+            modifiers: null);
+
+        _worldToGeoMethod = _cachedAbstractMapType.GetMethod(
+            "WorldToGeoPosition",
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            types: new[] { typeof(Vector3) },
+            modifiers: null);
+
+        if (_geoToWorldMethod == null || _worldToGeoMethod == null ||
+            _vector2dXField == null || _vector2dYField == null)
+        {
+            InvalidateMapboxBridge(clearTypeCache: false);
+            return false;
+        }
+
+        var loadedMaps = Resources.FindObjectsOfTypeAll(_cachedAbstractMapType);
+        for (int i = 0; i < loadedMaps.Length; i++)
+        {
+            if (loadedMaps[i] is Component component &&
+                component.gameObject.scene.IsValid() &&
+                component.gameObject.scene.isLoaded)
+            {
+                _cachedMapboxMap = loadedMaps[i];
+                return true;
+            }
+        }
+
+        _cachedMapboxMap = null;
+        return false;
+    }
+
+    void InvalidateMapboxBridge(bool clearTypeCache = false)
+    {
+        _cachedMapboxMap = null;
+        _geoToWorldMethod = null;
+        _worldToGeoMethod = null;
+        _nextMapboxLookupTime = Time.unscaledTime + 1f;
+
+        if (clearTypeCache)
+        {
+            _cachedAbstractMapType = null;
+            _cachedVector2dType = null;
+            _vector2dXField = null;
+            _vector2dYField = null;
+            _mapboxTypeLookupAttempted = false;
+        }
+    }
+
+    static Type FindType(string fullName)
+    {
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        for (int i = 0; i < assemblies.Length; i++)
+        {
+            Type type = assemblies[i].GetType(fullName, throwOnError: false);
+            if (type != null)
+                return type;
+        }
+
+        return null;
+    }
+
+    void RefreshBridgeSelectionLog()
+    {
+        string nextLabel = "LocalOrigin";
+        if (TryResolveMapboxBridge())
+            nextLabel = "Mapbox";
+        else if (mapTileLoader != null)
+            nextLabel = "MapTileLoader";
+
+        if (logBridgeSelection && !string.Equals(_lastBridgeLabel, nextLabel, StringComparison.Ordinal))
+            Debug.Log($"CoordinateConverter: using {nextLabel} bridge.");
+
+        _lastBridgeLabel = nextLabel;
+    }
 }

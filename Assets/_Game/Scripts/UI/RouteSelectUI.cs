@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 
 public class RouteSelectUI : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class RouteSelectUI : MonoBehaviour
 
     void Start()
     {
+        UnlockManager.EnsureExists();
         ApplyTheme();
         SetupButtons();
         PopulateRouteList();
@@ -87,17 +89,22 @@ public class RouteSelectUI : MonoBehaviour
         }
 
         activeCity = city;
-        var routes = city.availableRoutes;
+        List<BusRoute> routes = UnlockManager.Instance != null
+            ? UnlockManager.Instance.GetRoutesForCity(city)
+            : new List<BusRoute>(city.availableRoutes);
 
-        if (routes == null || routes.Length == 0)
+        if (routes == null || routes.Count == 0)
         {
             CreateEmptyState($"No routes available for {city.cityName} yet.");
             return;
         }
 
-        foreach (var route in routes)
+        for (int i = 0; i < routes.Count; i++)
+        {
+            var route = routes[i];
             if (route != null)
                 CreateRouteCard(route);
+        }
     }
 
     CityDefinition ResolveActiveCity()
@@ -174,6 +181,7 @@ public class RouteSelectUI : MonoBehaviour
         string routeCode = BuildRouteCode(route);
         string serviceClass = GetServiceClass(route.difficulty);
         Color serviceColor = GetServiceColor(route.difficulty);
+        string difficultyStars = new string('★', Mathf.Clamp(route.difficulty, 1, 5)) + new string('☆', Mathf.Max(0, 5 - Mathf.Clamp(route.difficulty, 1, 5)));
         float distanceKm = Mathf.Max(0f, route.distanceKm);
         float etaMinutes = Mathf.Max(0f, route.estimatedTimeMinutes);
         float headwayMinutes = GetHeadwayMinutes(route.difficulty);
@@ -265,6 +273,16 @@ public class RouteSelectUI : MonoBehaviour
         chipTextRect.anchorMax = new Vector2(1f, 1f);
         chipTextRect.offsetMin = Vector2.zero;
         chipTextRect.offsetMax = Vector2.zero;
+
+        var difficultyText = CreateText("Text_Difficulty", card.transform,
+            difficultyStars, 16,
+            UITheme.GetFont(UITheme.FontWeight.Bold), UITheme.TertiaryDim,
+            TextAlignmentOptions.Right);
+        var difficultyRect = difficultyText.GetComponent<RectTransform>();
+        difficultyRect.anchorMin = new Vector2(0.72f, 0.02f);
+        difficultyRect.anchorMax = new Vector2(1f, 0.2f);
+        difficultyRect.offsetMin = new Vector2(0f, 0f);
+        difficultyRect.offsetMax = new Vector2(-18f, 0f);
 
         var capturedRoute = route;
         btn.onClick.AddListener(() => OnRouteSelected(capturedRoute));

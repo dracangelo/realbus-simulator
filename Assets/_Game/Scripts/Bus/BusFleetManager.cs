@@ -119,6 +119,24 @@ public class BusFleetManager : MonoBehaviour
         return spec != null && string.Equals(selectedBusId, spec.busId, StringComparison.OrdinalIgnoreCase);
     }
 
+    public string[] GetOwnedBusIds()
+    {
+        EnsureInitialized();
+        SyncUnlockOwnership();
+
+        string[] ids = new string[ownedBusIds.Count];
+        ownedBusIds.CopyTo(ids);
+        Array.Sort(ids, StringComparer.OrdinalIgnoreCase);
+        return ids;
+    }
+
+    public string GetSelectedBusId()
+    {
+        EnsureInitialized();
+        SyncUnlockOwnership();
+        return selectedBusId ?? string.Empty;
+    }
+
     public bool TrySelectBus(BusSpec spec)
     {
         EnsureInitialized();
@@ -134,6 +152,28 @@ public class BusFleetManager : MonoBehaviour
         FleetChanged?.Invoke();
         SelectedBusChanged?.Invoke(spec);
         return true;
+    }
+
+    public void ApplySaveState(IEnumerable<string> ownedIds, string selectedId)
+    {
+        EnsureInitialized();
+
+        ownedBusIds.Clear();
+        if (ownedIds != null)
+        {
+            foreach (string ownedId in ownedIds)
+            {
+                if (!string.IsNullOrWhiteSpace(ownedId))
+                    ownedBusIds.Add(ownedId);
+            }
+        }
+
+        selectedBusId = selectedId ?? string.Empty;
+        SyncUnlockOwnership();
+        EnsureSelectedBusIsValid();
+        ApplySelectedBusToGameState();
+        FleetChanged?.Invoke();
+        SelectedBusChanged?.Invoke(GetSelectedBusSpec());
     }
 
     public int GetRequiredRank(BusSpec spec)

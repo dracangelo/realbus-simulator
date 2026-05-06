@@ -79,6 +79,17 @@ public class UnlockManager : MonoBehaviour
         return currentRank >= GetRequiredRank(city);
     }
 
+    public string GetCityLockTooltip(CityDefinition city)
+    {
+        if (city == null)
+            return string.Empty;
+
+        int requiredRank = GetRequiredRank(city);
+        return IsCityUnlocked(city)
+            ? "Unlocked"
+            : $"Unlock at Rank {requiredRank}";
+    }
+
     public List<BusRoute> GetRoutesForCity(CityDefinition city)
     {
         var routes = GetBaseRoutesForCity(city);
@@ -119,6 +130,63 @@ public class UnlockManager : MonoBehaviour
         PlayerPrefs.SetInt(BuildRouteCompletionKey(resolvedCity, route), 1);
         PlayerPrefs.Save();
         grandTourCache.Remove(resolvedCity.cityCode);
+    }
+
+    public string[] GetUnlockedCityCodes()
+    {
+        RefreshFeaturedCities();
+
+        var unlocked = new List<string>();
+        for (int i = 0; i < featuredCities.Count; i++)
+        {
+            var city = featuredCities[i];
+            if (city != null && IsCityUnlocked(city) && !string.IsNullOrWhiteSpace(city.cityCode))
+                unlocked.Add(city.cityCode);
+        }
+
+        return unlocked.ToArray();
+    }
+
+    public string[] GetCompletedRouteKeys()
+    {
+        var completed = new List<string>();
+        var cityManager = CityManager.Instance;
+        if (cityManager?.allCities == null)
+            return completed.ToArray();
+
+        for (int i = 0; i < cityManager.allCities.Length; i++)
+        {
+            var city = cityManager.allCities[i];
+            var routes = GetBaseRoutesForCity(city);
+            for (int j = 0; j < routes.Count; j++)
+            {
+                var route = routes[j];
+                if (route != null && IsRouteCompleted(route, city))
+                    completed.Add(BuildRouteCompletionKey(city, route));
+            }
+        }
+
+        return completed.ToArray();
+    }
+
+    public void ApplyCompletedRouteKeys(IEnumerable<string> completionKeys)
+    {
+        grandTourCache.Clear();
+        ClearStoredRouteCompletions();
+
+        if (completionKeys == null)
+        {
+            PlayerPrefs.Save();
+            return;
+        }
+
+        foreach (string key in completionKeys)
+        {
+            if (!string.IsNullOrWhiteSpace(key))
+                PlayerPrefs.SetInt(key, 1);
+        }
+
+        PlayerPrefs.Save();
     }
 
     public float GetCityCompletion01(CityDefinition city)
@@ -368,6 +436,27 @@ public class UnlockManager : MonoBehaviour
     string BuildRouteCompletionKey(CityDefinition city, BusRoute route)
     {
         return $"{RouteCompletionPrefsPrefix}.{city.cityCode}.{route.GetProgressionId(city.cityCode)}";
+    }
+
+    void ClearStoredRouteCompletions()
+    {
+        var cityManager = CityManager.Instance;
+        if (cityManager?.allCities == null)
+            return;
+
+        for (int i = 0; i < cityManager.allCities.Length; i++)
+        {
+            var city = cityManager.allCities[i];
+            var routes = GetBaseRoutesForCity(city);
+            for (int j = 0; j < routes.Count; j++)
+            {
+                var route = routes[j];
+                if (route == null)
+                    continue;
+
+                PlayerPrefs.DeleteKey(BuildRouteCompletionKey(city, route));
+            }
+        }
     }
 
     bool CodesMatch(CityDefinition city, string cityCode)

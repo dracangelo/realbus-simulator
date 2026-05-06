@@ -83,10 +83,19 @@ public class TileStreamManager : MonoBehaviour
     public int maxConcurrentLodBuilds = 2;
     public int maxLodAppliesPerFrame = 2;
 
+    [Header("Predictive Streaming")]
+    public bool useForwardLookahead = true;
+    public float lookaheadSeconds = 8f;
+    public float minLookaheadMeters = 250f;
+    public float maxLookaheadMeters = 1200f;
+
     [Header("References")]
     public Transform busTransform;
+    public BusController busController;
+    public GpsTracker gpsTracker;
     public CoordinateConverter converter;
     public OfflineCacheManager cache;
+    public MapTileLoader mapTileLoader;
     public TileStreamingLoadingUI loadingUI;
 
     readonly Dictionary<TileKey, TileRuntime> activeTiles = new Dictionary<TileKey, TileRuntime>();
@@ -102,12 +111,20 @@ public class TileStreamManager : MonoBehaviour
             converter = CoordinateConverter.Instance != null ? CoordinateConverter.Instance : FindFirstObjectByType<CoordinateConverter>();
         if (cache == null)
             cache = OfflineCacheManager.Instance != null ? OfflineCacheManager.Instance : FindFirstObjectByType<OfflineCacheManager>();
+        if (gpsTracker == null)
+            gpsTracker = GpsTracker.Instance != null ? GpsTracker.Instance : FindFirstObjectByType<GpsTracker>();
+        if (busController == null)
+            busController = FindFirstObjectByType<BusController>();
+        if (mapTileLoader == null)
+            mapTileLoader = FindFirstObjectByType<MapTileLoader>();
         if (busTransform == null)
         {
-            var bus = FindFirstObjectByType<BusController>();
-            if (bus != null)
-                busTransform = bus.transform;
+            if (busController != null)
+                busTransform = busController.transform;
         }
+        SyncMapSettingsFromLoader();
+        if (loadingUI == null)
+            loadingUI = FindFirstObjectByType<TileStreamingLoadingUI>();
     }
 
     void Update()
@@ -135,7 +152,11 @@ public class TileStreamManager : MonoBehaviour
 
     void StreamTiles()
     {
-        var gps = converter.WorldToGeoPosition(busTransform.position);
+        SyncMapSettingsFromLoader();
+
+        Vector3 busWorldPosition = busTransform.position;
+        Vector3 streamFocusPosition = GetStreamingFocusWorldPosition(busWorldPosition);
+        var gps = converter.WorldToGeoPosition(streamFocusPosition);
         int centerX = MapTileLoader.LonToTileX(gps.lon, zoomLevel);
         int centerY = MapTileLoader.LatToTileY(gps.lat, zoomLevel);
 
@@ -150,7 +171,10 @@ public class TileStreamManager : MonoBehaviour
                 if (worldDist > loadRadiusMeters)
                     continue;
 
-                needed.Add((new TileKey(zoomLevel, centerX + dx, centerY + dy), worldDist));
+                var key = new TileKey(zoomLevel, centerX + dx, centerY + dy);
+                Vector3 tileCenter = EstimateTileCenterWorldPosition(key);
+                float distanceFromBus = Vector3.Distance(busWorldPosition, tileCenter);
+                needed.Add((key, distanceFromBus));
             }
         }
 
@@ -159,7 +183,8 @@ public class TileStreamManager : MonoBehaviour
         var toUnload = new List<TileKey>();
         foreach (var kvp in activeTiles)
         {
-            float dist = EstimateTileDistanceMeters(centerX, centerY, kvp.Key.x, kvp.Key.y);
+            Vector3 tileCenter = kvp.Value != null ? kvp.Value.centerPosition : EstimateTileCenterWorldPosition(kvp.Key);
+            float dist = Vector3.Distance(busWorldPosition, tileCenter);
             if (dist > unloadRadiusMeters)
                 toUnload.Add(kvp.Key);
         }
@@ -391,7 +416,8 @@ public class TileStreamManager : MonoBehaviour
             runtime.meshCollider = tileRoot.AddComponent<MeshCollider>();
 
         activeTiles[key] = runtime;
-        QueueLodBuild(runtime, ResolveLod(Vector3.Distance(busTransform.position, centerPos)));
+        float busDistance = busTransform != null ? Vector3.Distance(busTransform.position, centerPos) : tier3DistanceMeters;
+        QueueLodBuild(runtime, ResolveLod(busDistance));
     }
 
     Texture2D EnsureReadableTexture(Texture2D source)
@@ -560,11 +586,47 @@ public class TileStreamManager : MonoBehaviour
         }
     }
 
-    float EstimateTileDistanceMeters(int centerX, int centerY, int tileX, int tileY)
+    void SyncMapSettingsFromLoader()
     {
-        float dx = tileX - centerX;
-        float dy = tileY - centerY;
-        return Mathf.Sqrt(dx * dx + dy * dy) * tileWorldSize;
+        if (mapTileLoader == null)
+            return;
+
+        mapboxToken = mapTileLoader.mapboxToken;
+        mapStyle = mapTileLoader.mapStyle;
+
+        zoomLevel = mapTileLoader.zoomLevel;
+        tileWorldSize = mapTileLoader.tileWorldSize;
+        tileLayer = mapTileLoader.tileLayer;
+        tileSurfaceY = mapTileLoader.tileSurfaceY;
+    }
+
+    Vector3 GetStreamingFocusWorldPosition(Vector3 busWorldPosition)
+    {
+        if (!useForwardLookahead || busTransform == null)
+            return busWorldPosition;
+
+        float speedKmh = 0f;
+        if (gpsTracker != null)
+            speedKmh = gpsTracker.SpeedKmh;
+        else if (busController != null)
+            speedKmh = busController.currentSpeedKmh;
+
+        float lookaheadMeters = Mathf.Clamp(speedKmh / 3.6f * lookaheadSeconds, minLookaheadMeters, maxLookaheadMeters);
+        Vector3 forward = busTransform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude <= 0.001f)
+            return busWorldPosition;
+
+        return busWorldPosition + forward.normalized * lookaheadMeters;
+    }
+
+    Vector3 EstimateTileCenterWorldPosition(TileKey key)
+    {
+        double centerLon = MapTileLoader.TileXToLon(key.x + 0.5, key.zoom);
+        double centerLat = MapTileLoader.TileYToLat(key.y + 0.5, key.zoom);
+        Vector3 center = converter.GeoToWorldPosition(centerLat, centerLon);
+        center.y = tileSurfaceY;
+        return center;
     }
 
     readonly struct TileKey

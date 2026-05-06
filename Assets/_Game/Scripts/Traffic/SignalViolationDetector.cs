@@ -21,9 +21,9 @@ public class SignalViolationDetector : MonoBehaviour
     {
         if (busController == null || trafficLight == null) return;
 
-        Vector3 diff = busController.transform.position - transform.position;
-        bool inZone = Mathf.Abs(diff.x) < detectionWidth * 0.5f
-                   && Mathf.Abs(diff.z) < detectionDepth * 0.5f;
+        Vector3 local = transform.InverseTransformPoint(busController.transform.position);
+        bool inZone = Mathf.Abs(local.x) < detectionWidth * 0.5f
+                   && Mathf.Abs(local.z) < detectionDepth * 0.5f;
 
         if (inZone && !busInZone)
         {

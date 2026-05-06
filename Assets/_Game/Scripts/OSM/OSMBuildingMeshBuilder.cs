@@ -70,7 +70,9 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         while (OSMBuildingLoader.Instance == null || !OSMBuildingLoader.Instance.dataLoaded || GPSManager.Instance == null)
             yield return new WaitForSeconds(0.5f);
 
-        Debug.Log("Buildings: Building meshes...");
+        Debug.Log(
+            $"Buildings: Building meshes... " +
+            $"(maxBuildingsPerFrame={maxBuildingsPerFrame}, distanceCulling={enableDistanceCulling})");
         yield return StartCoroutine(BuildBuildingsAsync(OSMBuildingLoader.Instance.osmData));
     }
 
@@ -125,6 +127,18 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
                 skippedInvalidFootprint++;
                 continue;
             }
+
+            float signedArea = GetSignedAreaXZ(footprint);
+            if (Mathf.Abs(signedArea) < 0.01f)
+            {
+                skippedInvalidFootprint++;
+                continue;
+            }
+
+            // Normalize winding so roof triangles face upward and wall faces
+            // point outward instead of being culled from the common camera view.
+            if (signedArea < 0f)
+                footprint.Reverse();
 
             // ── Distance culling: compute centroid XZ, skip if too far away
             if (enableDistanceCulling)
@@ -184,6 +198,22 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         Debug.Log(
             $"Buildings: Built {buildingCount} buildings! " +
             $"(skipped {skippedDistance} by distance, {skippedInvalidFootprint} invalid footprints, {skippedMissingNodes} missing nodes)");
+    }
+
+    float GetSignedAreaXZ(List<Vector3> footprint)
+    {
+        if (footprint == null || footprint.Count < 3)
+            return 0f;
+
+        float areaTwice = 0f;
+        for (int i = 0; i < footprint.Count; i++)
+        {
+            int next = (i + 1) % footprint.Count;
+            areaTwice += footprint[i].x * footprint[next].z;
+            areaTwice -= footprint[next].x * footprint[i].z;
+        }
+
+        return areaTwice * 0.5f;
     }
 
     float ResolveBuildingHeight(OSMWay way)

@@ -25,6 +25,8 @@ public class FreeDriveSession : MonoBehaviour
     public float fuelCapacityLitres = 300f;
     private float fuelLitres;
 
+    public event System.Action<bool> OnSessionActiveChanged;
+
     private BusController busController;
 
     void Awake()
@@ -74,11 +76,15 @@ public class FreeDriveSession : MonoBehaviour
 
     public void StartSession()
     {
+        MissionManager.Instance?.AbortMissionForFreeDrive();
+        PassengerManager.Instance?.ResetForFreeDriveMode();
+
         sessionActive = true;
         distanceDrivenKm = 0f;
         sessionTimeSeconds = 0f;
         fuelLitres = ResolveInitialFuelLitres();
         fuelLevel = Mathf.Clamp01(fuelLitres / Mathf.Max(1f, fuelCapacityLitres)) * 100f;
+        OnSessionActiveChanged?.Invoke(true);
         Debug.Log("Free drive session started!");
     }
 
@@ -223,6 +229,7 @@ public class FreeDriveSession : MonoBehaviour
     public void EndSession()
     {
         sessionActive = false;
+        OnSessionActiveChanged?.Invoke(false);
         Debug.Log($"Session ended — Distance: {distanceDrivenKm:F2} km, Time: {sessionTimeSeconds:F0}s");
     }
 

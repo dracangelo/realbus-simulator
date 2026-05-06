@@ -26,8 +26,7 @@ public class TrafficLight : MonoBehaviour
 
     void Start()
     {
-        // Apply phase offset
-        timeInState = phaseOffset % GetStateDuration(currentState);
+        ApplyPhaseOffset();
         UpdateVisuals();
     }
 
@@ -77,4 +76,24 @@ public class TrafficLight : MonoBehaviour
 
     public bool IsRed() => currentState == LightState.Red;
     public bool IsGreen() => currentState == LightState.Green;
+
+    void ApplyPhaseOffset()
+    {
+        float remainingOffset = Mathf.Max(0f, phaseOffset);
+        currentState = LightState.Red;
+        timeInState = 0f;
+
+        while (remainingOffset > 0f)
+        {
+            float stateDuration = GetStateDuration(currentState);
+            if (remainingOffset < stateDuration)
+            {
+                timeInState = remainingOffset;
+                break;
+            }
+
+            remainingOffset -= stateDuration;
+            AdvanceState();
+        }
+    }
 }

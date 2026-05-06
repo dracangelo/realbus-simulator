@@ -16,6 +16,10 @@ public class RoadSurfaceFrictionController : MonoBehaviour
     public float baseForwardStiffness = 1.5f;
     public float baseSidewaysStiffness = 1.3f;
 
+    [Header("Weather")]
+    public bool useWeatherSystemForNonRainConditions = true;
+    public float rainGripMultiplier = 0.7f;
+
     [Header("Smoothing")]
     public float lerpSpeed = 6f;
 
@@ -35,9 +39,7 @@ public class RoadSurfaceFrictionController : MonoBehaviour
     {
         if (busController == null || busController.allWheels == null) return;
 
-        float weatherGrip = 1f;
-        if (WeatherSystem.Instance != null)
-            weatherGrip = Mathf.Clamp01(WeatherSystem.Instance.GetRoadGripMultiplier());
+        float weatherGrip = ResolveWeatherGripMultiplier();
 
         currentGrip = Mathf.Lerp(currentGrip, weatherGrip, Time.deltaTime * lerpSpeed);
 
@@ -69,4 +71,22 @@ public class RoadSurfaceFrictionController : MonoBehaviour
         }
     }
 
+    float ResolveWeatherGripMultiplier()
+    {
+        if (WeatherSystem.Instance == null)
+            return 1f;
+
+        if (WeatherSystem.Instance.IsRaining())
+        {
+            if (surfaceDetector != null)
+                return Mathf.Clamp(surfaceDetector.wetMultiplier, 0.05f, 1f);
+
+            return Mathf.Clamp(rainGripMultiplier, 0.05f, 1f);
+        }
+
+        if (!useWeatherSystemForNonRainConditions)
+            return 1f;
+
+        return Mathf.Clamp(WeatherSystem.Instance.GetRoadGripMultiplier(), 0.05f, 1f);
+    }
 }

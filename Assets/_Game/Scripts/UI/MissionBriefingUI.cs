@@ -157,7 +157,9 @@ public class MissionBriefingUI : MonoBehaviour
         // Route name
         if (routeNameText)
         {
-            routeNameText.text = activeRoute.routeName;
+            routeNameText.text = missionData != null && !string.IsNullOrWhiteSpace(missionData.missionName)
+                ? missionData.missionName
+                : activeRoute.routeName;
             routeNameText.color = UITheme.TextPrimary;
             routeNameText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         }
@@ -181,13 +183,7 @@ public class MissionBriefingUI : MonoBehaviour
         if (departureText)
         {
             if (missionData != null)
-            {
-                int h = Mathf.FloorToInt(missionData.scheduledDepartureTime / 60f);
-                int m = Mathf.FloorToInt(missionData.scheduledDepartureTime % 60f);
-                string ampm = h >= 12 ? "PM" : "AM";
-                int h12 = h % 12; if (h12 == 0) h12 = 12;
-                departureText.text = $"{h12:00}:{m:00} {ampm}";
-            }
+                departureText.text = missionData.GetDepartureLabel();
             else
                 departureText.text = "08:00 AM";
 
@@ -215,7 +211,8 @@ public class MissionBriefingUI : MonoBehaviour
         if (targetText)
         {
             targetText.text = missionData != null
-                ? $"Target {missionData.minPassengersTarget}+ pax"
+                ? $"{missionData.GetMissionTypeLabel()} • {missionData.GetScenarioObjectiveText()}" +
+                  (missionData.scenarioBonusXP > 0 ? $" • +{missionData.scenarioBonusXP} XP bonus" : string.Empty)
                 : $"Target {Mathf.Max(12, activeRoute.GetStopCount() * 4)}+ pax";
             targetText.color = UITheme.TextSecondary;
             targetText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
@@ -224,6 +221,7 @@ public class MissionBriefingUI : MonoBehaviour
         // Stops list
         if (stopsListText)
         {
+            string pressureSummary = missionData != null ? missionData.GetOperationalPressureText() : string.Empty;
             string stops = "";
             for (int i = 0; i < activeRoute.stops.Length; i++)
             {
@@ -232,7 +230,9 @@ public class MissionBriefingUI : MonoBehaviour
                 string prefix = isFirst ? "◉  " : isLast ? "◉  " : "○  ";
                 stops += $"{prefix}{activeRoute.stops[i].stopName}\n";
             }
-            stopsListText.text = stops.TrimEnd();
+            stopsListText.text = string.IsNullOrWhiteSpace(pressureSummary)
+                ? stops.TrimEnd()
+                : $"{pressureSummary}\n\n{stops.TrimEnd()}";
             stopsListText.color = UITheme.TextSecondary;
             stopsListText.font = UITheme.GetFont(UITheme.FontWeight.Regular);
         }

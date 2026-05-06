@@ -141,7 +141,12 @@ public class DynamicEventSystem : MonoBehaviour
             return;
 
         int stopCount = route.stops != null ? route.stops.Length : route.GetStopCount();
-        int targetCount = Mathf.Clamp(Mathf.RoundToInt((stopCount - 1) / 3f), minEventsPerRoute, maxEventsPerRoute);
+        var missionData = MissionManager.Instance != null ? MissionManager.Instance.missionData : null;
+        int missionMinimum = missionData != null ? missionData.GetEffectiveMinimumDynamicEvents() : 0;
+        int targetCount = Mathf.Clamp(
+            Mathf.Max(Mathf.RoundToInt((stopCount - 1) / 3f), missionMinimum),
+            minEventsPerRoute,
+            Mathf.Max(maxEventsPerRoute, missionMinimum));
         var usedTypes = new HashSet<DynamicEventType>();
 
         for (int i = 0; i < targetCount; i++)
@@ -157,6 +162,7 @@ public class DynamicEventSystem : MonoBehaviour
     DynamicEventType PickWeightedEventType(HashSet<DynamicEventType> usedTypes)
     {
         var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        var missionData = MissionManager.Instance != null ? MissionManager.Instance.missionData : null;
         WeatherState currentWeather = WeatherSystem.Instance != null ? WeatherSystem.Instance.currentWeather : WeatherState.Clear;
         float timeMinutes = ScheduleManager.Instance != null ? ScheduleManager.Instance.currentTimeMinutes : 720f;
         bool isPeakHour = (timeMinutes >= 420f && timeMinutes <= 570f) || (timeMinutes >= 960f && timeMinutes <= 1140f);
@@ -164,14 +170,20 @@ public class DynamicEventSystem : MonoBehaviour
         bool isWet = currentWeather == WeatherState.Drizzle || currentWeather == WeatherState.LightRain ||
                      currentWeather == WeatherState.HeavyRain || currentWeather == WeatherState.Thunderstorm;
 
+        float rushWeight = missionData != null && missionData.IsRushHourMission ? 1.1f : 0f;
+        float eventWeight = missionData != null && missionData.IsUnexpectedEventMission ? 1.2f : 0f;
+        float enforcementWeight = missionData != null && missionData.IsRuleEnforcementMission ? 1.1f : 0f;
+        float weatherWeight = missionData != null && missionData.IsWeatherChallengeMission ? 1.0f : 0f;
+
         var weights = new List<EventWeight>
         {
-            new EventWeight(DynamicEventType.TrafficAccident, 1f + (isPeakHour ? 1.1f : 0f) + (isWet ? 0.8f : 0f)),
-            new EventWeight(DynamicEventType.PlannedRoadClosure, 0.9f + (city != null && city.cityCode == "NBO" ? 0.2f : 0f)),
-            new EventWeight(DynamicEventType.PoliceCheckpoint, 0.8f + (isNight ? 0.9f : 0.25f)),
-            new EventWeight(DynamicEventType.ConstructionZone, 1.0f + (!isNight ? 0.8f : 0f)),
-            new EventWeight(DynamicEventType.SignalFailure, 0.55f + (isWet ? 1.0f : 0f)),
-            new EventWeight(DynamicEventType.SuddenWeatherTransition, WeatherSystem.Instance != null && !WeatherSystem.Instance.forceWeather ? 0.8f : 0.1f)
+            new EventWeight(DynamicEventType.TrafficAccident, 1f + (isPeakHour ? 1.1f : 0f) + (isWet ? 0.8f : 0f) + rushWeight + eventWeight),
+            new EventWeight(DynamicEventType.PlannedRoadClosure, 0.9f + (city != null && city.cityCode == "NBO" ? 0.2f : 0f) + eventWeight),
+            new EventWeight(DynamicEventType.PoliceCheckpoint, 0.8f + (isNight ? 0.9f : 0.25f) + enforcementWeight),
+            new EventWeight(DynamicEventType.ConstructionZone, 1.0f + (!isNight ? 0.8f : 0f) + eventWeight),
+            new EventWeight(DynamicEventType.SignalFailure, 0.55f + (isWet ? 1.0f : 0f) + enforcementWeight),
+            new EventWeight(DynamicEventType.SuddenWeatherTransition,
+                (WeatherSystem.Instance != null && !WeatherSystem.Instance.forceWeather ? 0.8f : 0.1f) + weatherWeight)
         };
 
         float total = 0f;

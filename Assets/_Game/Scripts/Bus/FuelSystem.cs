@@ -107,6 +107,25 @@ public class FuelSystem : MonoBehaviour
         return Mathf.Lerp(1f, 1.18f, occupancy);
     }
 
+    public float GetBaseConsumptionLPer100Km()
+    {
+        if (busController == null)
+            return cityBaseLPer100Km;
+
+        return busController.currentSpeedKmh >= motorwaySpeedThresholdKmh
+            ? motorwayBaseLPer100Km
+            : cityBaseLPer100Km;
+    }
+
+    public string GetFuelWarningLabel()
+    {
+        if (IsCriticalActive)
+            return "CRITICAL";
+        if (IsWarningActive)
+            return "LOW";
+        return string.Empty;
+    }
+
     public float GetRpmEfficiencyFactor()
     {
         if (busController == null)

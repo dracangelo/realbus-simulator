@@ -30,6 +30,9 @@ public class TimeOfDaySystem : MonoBehaviour
     public Light[] streetLights;
     public Light[] busHeadLights;
     public Light[] busInteriorLights;
+    public GameObject[] streetLightObjects;
+    public GameObject[] busHeadLightObjects;
+    public GameObject[] busInteriorLightObjects;
     public float nightStreetLightIntensity = 1.15f;
     public float nightHeadlightIntensity = 1.25f;
     public float nightInteriorIntensity = 0.65f;
@@ -106,6 +109,9 @@ public class TimeOfDaySystem : MonoBehaviour
         ApplyManagedLights(streetLights, IsNight, nightStreetLightIntensity);
         ApplyManagedLights(busHeadLights, IsNight, nightHeadlightIntensity);
         ApplyManagedLights(busInteriorLights, IsNight, nightInteriorIntensity);
+        ApplyManagedObjects(streetLightObjects, IsNight);
+        ApplyManagedObjects(busHeadLightObjects, IsNight);
+        ApplyManagedObjects(busInteriorLightObjects, IsNight);
     }
 
     void ApplyManagedLights(Light[] lights, bool active, float targetIntensity)
@@ -133,6 +139,12 @@ public class TimeOfDaySystem : MonoBehaviour
             busHeadLights = FindLightsByName("head", "front");
         if (busInteriorLights == null || busInteriorLights.Length == 0)
             busInteriorLights = FindLightsByName("interior", "cabin", "saloon");
+        if (streetLightObjects == null || streetLightObjects.Length == 0)
+            streetLightObjects = FindObjectsByName("street", "lamp");
+        if (busHeadLightObjects == null || busHeadLightObjects.Length == 0)
+            busHeadLightObjects = FindObjectsByName("head", "front");
+        if (busInteriorLightObjects == null || busInteriorLightObjects.Length == 0)
+            busInteriorLightObjects = FindObjectsByName("interior", "cabin", "saloon");
     }
 
     Light[] FindLightsByName(params string[] nameTokens)
@@ -158,6 +170,46 @@ public class TimeOfDaySystem : MonoBehaviour
         }
 
         return matches.ToArray();
+    }
+
+    GameObject[] FindObjectsByName(params string[] nameTokens)
+    {
+        var allTransforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var matches = new System.Collections.Generic.List<GameObject>();
+
+        for (int i = 0; i < allTransforms.Length; i++)
+        {
+            var transformRef = allTransforms[i];
+            if (transformRef == null || transformRef == transform)
+                continue;
+
+            string lower = transformRef.name.ToLowerInvariant();
+            for (int tokenIndex = 0; tokenIndex < nameTokens.Length; tokenIndex++)
+            {
+                if (lower.Contains(nameTokens[tokenIndex]))
+                {
+                    matches.Add(transformRef.gameObject);
+                    break;
+                }
+            }
+        }
+
+        return matches.ToArray();
+    }
+
+    void ApplyManagedObjects(GameObject[] objects, bool active)
+    {
+        if (objects == null)
+            return;
+
+        for (int i = 0; i < objects.Length; i++)
+        {
+            var target = objects[i];
+            if (target == null)
+                continue;
+
+            target.SetActive(active);
+        }
     }
 
     void EnsureDefaultGradient()

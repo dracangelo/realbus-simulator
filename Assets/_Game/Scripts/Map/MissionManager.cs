@@ -31,9 +31,11 @@ public class MissionManager : MonoBehaviour
 
     [Header("Countdown")]
     public int countdownSeconds = 5;
+    [SerializeField] int currentCountdownValue;
 
     private Vector3 nextStopWorldPos;
     private bool isProcessingStop = false;
+    private bool pendingDoorOpenRequest = false;
     private Vector3[] activeGuidancePathPoints;
     private int guidancePathVersion = 0;
     private bool diversionActive = false;
@@ -46,6 +48,10 @@ public class MissionManager : MonoBehaviour
     public bool HasActiveDiversion => diversionActive;
     public string CurrentDiversionLabel => diversionActive ? diversionLabel : string.Empty;
     public string CurrentDiversionReason => diversionActive ? diversionReason : string.Empty;
+    public int CurrentCountdownValue => currentCountdownValue;
+
+    public event System.Action<MissionState> OnMissionStateChanged;
+    public event System.Action<int> OnCountdownTick;
 
     void Awake()
     {
@@ -77,7 +83,7 @@ public class MissionManager : MonoBehaviour
             yield break;
         }
 
-        missionState = MissionState.Briefing;
+        SetMissionState(MissionState.Briefing);
         Debug.Log("MissionManager: Ready — waiting for mission start.");
     }
 
@@ -90,7 +96,7 @@ public class MissionManager : MonoBehaviour
 
     IEnumerator MissionStartSequence()
     {
-        missionState = MissionState.Briefing;
+        SetMissionState(MissionState.Briefing);
         busController.throttleInput = 0f;
         busController.brakeInput = 1f;
         ExtendedTrafficViolationSystem.Instance?.ResetViolationLog();
@@ -116,6 +122,8 @@ public class MissionManager : MonoBehaviour
 
         yield return WaitForRoadSurfaceIfAvailable();
 
+        ApplyMissionConditions();
+
         Vector3 startPos = GPSManager.Instance.GpsToWorld(spawnLat, spawnLon);
         startPos = ApplySpawnOffsetFromRouteStart(startPos);
         startPos = SnapSpawnToNearestRoad(startPos);
@@ -126,12 +134,15 @@ public class MissionManager : MonoBehaviour
 
         for (int i = countdownSeconds; i > 0; i--)
         {
+            currentCountdownValue = i;
+            OnCountdownTick?.Invoke(i);
             Debug.Log($"Departing in {i}...");
             yield return new WaitForSeconds(1f);
         }
 
+        currentCountdownValue = 0;
         busController.brakeInput = 0f;
-        missionState = MissionState.InProgress;
+        SetMissionState(MissionState.InProgress);
         routeActive = true;
 
         // Setup schedule
@@ -155,6 +166,24 @@ public class MissionManager : MonoBehaviour
         SetNextStop();
 
         Debug.Log($"Route started: {currentRoute.routeName}");
+    }
+
+    void ApplyMissionConditions()
+    {
+        if (missionData == null)
+            return;
+
+        if (missionData.IsWeatherChallengeMission && WeatherSystem.Instance != null)
+        {
+            WeatherSystem.Instance.ApplyWeather(
+                missionData.requiredWeather,
+                Mathf.Clamp01(missionData.requiredWeatherIntensity),
+                WeatherSystem.Instance.temperature);
+
+            Debug.Log(
+                $"MissionManager: Applied mission weather {missionData.requiredWeather} " +
+                $"({missionData.requiredWeatherIntensity:0.00}) for {missionData.GetMissionTypeLabel()}.");
+        }
     }
 
     bool IsSpawnNearLoadedMap(double lat, double lon)
@@ -267,9 +296,7 @@ public class MissionManager : MonoBehaviour
             busController.transform.position, nextStopWorldPos);
 
         UpdateStopApproachUI();
-
-        if (distanceToNextStop < 15f)
-            ArrivedAtStop();
+        HandleDoorOpenRequest();
     }
 
     void UpdateStopApproachUI()
@@ -287,7 +314,7 @@ public class MissionManager : MonoBehaviour
         {
             var stop = currentRoute.stops[currentStopIndex];
             StopApproachUI.Instance.ShowApproach(stop.stopName, distanceToNextStop);
-            StopApproachUI.Instance.UpdateDistance(distanceToNextStop);
+            StopApproachUI.Instance.UpdateGuidance(distanceToNextStop, GetSignedAngleToNextStop());
         }
         else if (!isProcessingStop)
         {
@@ -309,7 +336,7 @@ public class MissionManager : MonoBehaviour
         PassengerManager.Instance?.SetUpcomingStopIndex(currentStopIndex);
         UpdateGuidancePathForCurrentState();
 
-        missionState = MissionState.InProgress;
+        SetMissionState(MissionState.InProgress);
         if (StopApproachUI.Instance != null)
             StopApproachUI.Instance.HideApproach();
         Debug.Log($"Next stop: {stop.stopName} — {distanceToNextStop:F0}m away");
@@ -326,7 +353,7 @@ public class MissionManager : MonoBehaviour
         isProcessingStop = true;
 
         var stop = currentRoute.stops[currentStopIndex];
-        missionState = MissionState.AtStop;
+        SetMissionState(MissionState.AtStop);
         Debug.Log($"Arrived at: {stop.stopName}");
         if (StopApproachUI.Instance != null)
             StopApproachUI.Instance.ShowDocked(stop.stopName);
@@ -356,7 +383,9 @@ public class MissionManager : MonoBehaviour
 
         // Update score
         if (ScoreTracker.Instance != null)
-            ScoreTracker.Instance.RecordStopArrival(status);
+            ScoreTracker.Instance.RecordStopArrival(status, ScheduleManager.Instance != null
+                ? ScheduleManager.Instance.GetArrivalDeltaSeconds(currentStopIndex)
+                : 0f);
 
         // Handle passengers
         if (PassengerManager.Instance != null)
@@ -364,6 +393,7 @@ public class MissionManager : MonoBehaviour
                 stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length);
 
         currentStopIndex++;
+        pendingDoorOpenRequest = false;
         if (diversionActive)
             ClearTemporaryDiversion();
         SetNextStop();
@@ -378,7 +408,7 @@ public class MissionManager : MonoBehaviour
     void RouteComplete()
     {
         routeActive = false;
-        missionState = MissionState.Completed;
+        SetMissionState(MissionState.Completed);
         if (StopApproachUI.Instance != null)
             StopApproachUI.Instance.HideApproach();
         Debug.Log($"Route complete: {currentRoute.routeName}");
@@ -388,10 +418,38 @@ public class MissionManager : MonoBehaviour
 
         // Generate and show result
         var result = MissionResult.Generate(currentRoute);
+        UnlockManager.Instance?.RecordRouteCompletion(currentRoute, GameState.Instance != null ? GameState.Instance.selectedCity : CityManager.Instance?.activeCity);
+        result.SaveToPlayerPrefs();
+        XPAwardResult xpAwardResult = null;
+        if (XPSystem.Instance != null && result.xpEarned > 0)
+            xpAwardResult = XPSystem.Instance.AwardXP(result.xpEarned, result.routeName);
+        SaveManager.Instance?.RecordMissionResult(result, currentRoute, GameState.Instance != null ? GameState.Instance.selectedCity : CityManager.Instance?.activeCity);
         DriverShiftSystem.Instance?.CompleteRoute(currentRoute, result, MissionEndedAtDepot());
         DriverShiftSystem.Instance?.TryApplyShiftSummary(result);
         if (MissionResultUI.Instance != null)
-            MissionResultUI.Instance.ShowResult(result);
+            MissionResultUI.Instance.ShowResult(result, xpAwardResult);
+    }
+
+    public void AbortMissionForFreeDrive()
+    {
+        routeActive = false;
+        isProcessingStop = false;
+        pendingDoorOpenRequest = false;
+        ResetGuidancePath();
+        SetMissionState(MissionState.NotStarted);
+    }
+
+    public bool TryOpenDoorsAtCurrentStop()
+    {
+        if (!routeActive || currentRoute == null || isProcessingStop)
+            return false;
+
+        pendingDoorOpenRequest = true;
+        if (!IsReadyToProcessDockedStop(out _))
+            return false;
+
+        ArrivedAtStop();
+        return true;
     }
 
     void ApplyMissionSettlement()
@@ -643,5 +701,49 @@ public class MissionManager : MonoBehaviour
         Vector3 segment = end - start;
         float t = Vector3.Dot(point - start, segment) / Mathf.Max(0.0001f, Vector3.Dot(segment, segment));
         return start + segment * Mathf.Clamp01(t);
+    }
+
+    void HandleDoorOpenRequest()
+    {
+        if (!pendingDoorOpenRequest)
+            return;
+
+        if (IsReadyToProcessDockedStop(out _))
+            ArrivedAtStop();
+    }
+
+    bool IsReadyToProcessDockedStop(out DockingZone dockingZone)
+    {
+        dockingZone = DockingZone.CurrentDockedZone;
+        if (dockingZone != null && dockingZone.isCorrectlyDocked)
+        {
+            if (dockingZone.stopIndex >= 0)
+                return dockingZone.stopIndex == Mathf.Clamp(currentStopIndex, 0, currentRoute.stops.Length - 1);
+
+            return string.Equals(dockingZone.stopName, currentRoute.stops[currentStopIndex].stopName, System.StringComparison.Ordinal);
+        }
+
+        return distanceToNextStop <= 3f && busController.currentSpeedKmh <= 1f;
+    }
+
+    float GetSignedAngleToNextStop()
+    {
+        Vector3 toStop = nextStopWorldPos - busController.transform.position;
+        toStop.y = 0f;
+        Vector3 forward = busController.transform.forward;
+        forward.y = 0f;
+        if (toStop.sqrMagnitude <= 0.001f || forward.sqrMagnitude <= 0.001f)
+            return 0f;
+
+        return Vector3.SignedAngle(forward.normalized, toStop.normalized, Vector3.up);
+    }
+
+    void SetMissionState(MissionState nextState)
+    {
+        if (missionState == nextState)
+            return;
+
+        missionState = nextState;
+        OnMissionStateChanged?.Invoke(missionState);
     }
 }
