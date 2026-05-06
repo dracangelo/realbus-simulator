@@ -47,10 +47,16 @@ public class BusController : MonoBehaviour
     public float currentSpeedKmh = 0f;
     public bool kneelingSuspensionActive = false;
 
+    [Header("Kneeling Suspension")]
+    public float kneelingDropMeters = 0.08f;
+    public float kneelingLerpSpeed = 4f;
+
     private Rigidbody rb;
     private EngineSystem runtimeEngineInstance;
     private TransmissionSystem runtimeTransmissionInstance;
     private GameObject activeModelInstance;
+    private Vector3 modelRootBaseLocalPosition;
+    private bool modelRootPositionCaptured;
 
     public bool RetarderActive => retarderActive;
     public bool ParkingBrakeActive => parkingBrakeActive;
@@ -65,6 +71,8 @@ public class BusController : MonoBehaviour
         if (rb.mass <= 0.01f)
             rb.mass = 13200f;
         rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+
+        CaptureModelRootBasePosition();
     }
 
     void OnDestroy()
@@ -78,15 +86,18 @@ public class BusController : MonoBehaviour
     void Update()
     {
         var keyboard = Keyboard.current;
-        if (keyboard == null) return;
+        if (keyboard != null)
+        {
+            throttleInput = keyboard.wKey.isPressed ? 1f : 0f;
+            brakeInput = keyboard.sKey.isPressed ? 1f : 0f;
 
-        throttleInput = keyboard.wKey.isPressed ? 1f : 0f;
-        brakeInput = keyboard.sKey.isPressed ? 1f : 0f;
+            if (transmissionData != null && keyboard.eKey.wasPressedThisFrame) transmissionData.ShiftUp();
+            if (transmissionData != null && keyboard.qKey.wasPressedThisFrame) transmissionData.ShiftDown();
+            if (keyboard.rKey.wasPressedThisFrame) retarderActive = !retarderActive;
+            if (keyboard.pKey.wasPressedThisFrame) parkingBrakeActive = !parkingBrakeActive;
+        }
 
-        if (transmissionData != null && keyboard.eKey.wasPressedThisFrame) transmissionData.ShiftUp();
-        if (transmissionData != null && keyboard.qKey.wasPressedThisFrame) transmissionData.ShiftDown();
-        if (keyboard.rKey.wasPressedThisFrame) retarderActive = !retarderActive;
-        if (keyboard.pKey.wasPressedThisFrame) parkingBrakeActive = !parkingBrakeActive;
+        UpdateKneelingVisuals(Time.deltaTime);
     }
 
     void FixedUpdate()
@@ -332,5 +343,26 @@ public class BusController : MonoBehaviour
         activeModelInstance.transform.localPosition = Vector3.zero;
         activeModelInstance.transform.localRotation = Quaternion.identity;
         activeModelInstance.transform.localScale = Vector3.one;
+    }
+
+    void CaptureModelRootBasePosition()
+    {
+        if (modelRoot != null)
+        {
+            modelRootBaseLocalPosition = modelRoot.localPosition;
+            modelRootPositionCaptured = true;
+        }
+    }
+
+    void UpdateKneelingVisuals(float deltaTime)
+    {
+        if (modelRoot == null)
+            return;
+
+        if (!modelRootPositionCaptured)
+            CaptureModelRootBasePosition();
+
+        Vector3 targetLocal = modelRootBaseLocalPosition + Vector3.down * (kneelingSuspensionActive ? kneelingDropMeters : 0f);
+        modelRoot.localPosition = Vector3.Lerp(modelRoot.localPosition, targetLocal, deltaTime * kneelingLerpSpeed);
     }
 }

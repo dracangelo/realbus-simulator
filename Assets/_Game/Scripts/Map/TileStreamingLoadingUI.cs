@@ -14,6 +14,8 @@ public class TileStreamingLoadingUI : MonoBehaviour
     {
         if (canvasGroup == null)
             canvasGroup = GetComponentInChildren<CanvasGroup>();
+
+        SetLoading(false);
     }
 
     void Update()
@@ -27,8 +29,7 @@ public class TileStreamingLoadingUI : MonoBehaviour
         loading = isLoading;
         if (canvasGroup == null) return;
         canvasGroup.alpha = loading ? 1f : 0f;
-        canvasGroup.blocksRaycasts = loading;
-        canvasGroup.interactable = loading;
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.interactable = false;
     }
 }
-

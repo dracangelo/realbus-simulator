@@ -58270,7 +58270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: GameScripts::CoordinateConverter
   mapOrigin: {fileID: 0}
-  mapTileLoader: {fileID: 0}
+  mapTileLoader: {fileID: 1358180313}
 --- !u!4 &635010388
 Transform:
   m_ObjectHideFlags: 0
@@ -65499,6 +65499,8 @@ MonoBehaviour:
   antiRollForce: 8000
   engineData: {fileID: 11400000, guid: e62efad03e9902e418324690f55383b2, type: 2}
   transmissionData: {fileID: 11400000, guid: f3a5fb6e7040f5aaabbd3cb6c624f929, type: 2}
+  modelRoot: {fileID: 0}
+  replaceModelFromSpec: 0
   driveWheels:
   - {fileID: 1164712587}
   - {fileID: 33493565}
@@ -159093,7 +159095,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OSMRouteImporter
   autoImportOnStart: 0
+  generateReturnRoutes: 1
+  applyRouteFilter: 1
+  overpassEndpoint: https://overpass-api.de/api/interpreter
+  roadsTimeoutSec: 120
+  routesTimeoutSec: 120
+  maxSnapDistanceMeters: 60
+  importInProgress: 0
   importComplete: 0
+  routesFound: 0
+  routesAccepted: 0
+  statusMessage: Idle
   importedRoutes: []
 --- !u!114 &1358180303
 MonoBehaviour:
@@ -159111,7 +159123,14 @@ MonoBehaviour:
   roofMaterial: {fileID: 0}
   defaultBuildingHeight: 10
   floorHeight: 3
-  maxBuildingsPerFrame: 50
+  maxBuildingsPerFrame: 500
+  buildingBaseYOffset: 0.2
+  drawFootprints: 0
+  footprintWidth: 0.35
+  footprintYOffset: 0.05
+  enableDistanceCulling: 0
+  maxBuildingDistance: 1500
+  maxMsPerFrame: 0
   buildingsBuilt: 0
 --- !u!114 &1358180304
 MonoBehaviour:
@@ -159127,10 +159146,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OSMRoadMeshBuilder
   roadMaterial: {fileID: 0}
   pavementMaterial: {fileID: 0}
+  useRoadModelInstances: 1
+  roadModelResourcePath: 'BussimAssets/roads/road with two lines in middle '
+  roadModelForwardAxis: 0
+  roadModelSurfaceLift: 0.01
+  overrideRoadModelMaterials: 0
+  autoGenerateMedianBarriers: 1
+  medianBarrierResourcePath: BussimAssets/road_fbarrier1
+  medianBarrierSpacingMeters: 4.5
+  medianBarrierLift: 0.02
   roadYOffset: 0.02
   roadLayer: 0
   roadTag: Road
   roadPhysicMaterial: {fileID: 0}
+  maxColliderSegmentLength: 100
+  renderRoadSurface: 1
+  drawCenterLines: 1
+  centerLineWidth: 0.3
+  centerLineColor: {r: 1, g: 0.85, b: 0.2, a: 1}
   roadsBuilt: 0
 --- !u!114 &1358180305
 MonoBehaviour:
@@ -159259,6 +159292,7 @@ MonoBehaviour:
   totalFaresCollected: 0
   sessionIncome: 0
   averageSatisfaction: 1
+  useCapacityOverride: 0
   maxBusCapacity: 80
   doorOpenCapacityLimit: 80
   fuelCostPerKm: 12
@@ -159274,6 +159308,20 @@ MonoBehaviour:
   hadWheelchairBoarding: 0
   doorsOpen: 1
   latestRequiredDwellSeconds: 2
+  stopRequestActive: 0
+  stopRequestAcknowledged: 0
+  upcomingStopIndex: -1
+  missedRequestedStops: 0
+  logBoardingSummary: 1
+  logEachPassengerBoarding: 0
+  boardingAnimationSpeed: 2.8
+  alightingAnimationSpeed: 3.2
+  standingRowSpacing: 0.55
+  standingColumnSpacing: 0.75
+  seatAreaOrigin: {x: 0, y: 1.15, z: 1.8}
+  standingAreaOrigin: {x: 0, y: 1.05, z: -0.8}
+  doorLocalPosition: {x: 0.9, y: 1.05, z: -2.4}
+  platformLocalPosition: {x: 1.7, y: 0, z: -2.8}
 --- !u!114 &1358180312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159300,13 +159348,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RealBus.Map.MapSystem
   mapboxToken: pk.eyJ1IjoicmVhbGJ1c3NpbSIsImEiOiJjbW1kZXVhZ2UwMmI2MnFxdWpicXhsbmV1In0.-YXAUbvxHXXYC699suUCBQ
   mapStyle: mapbox/satellite-streets-v12
+  preferLabelFreeSatellite: 1
   centreLat: -1.2864
   centreLon: 36.8172
   zoomLevel: 15
   tilesX: 20
   tilesY: 20
   tileWorldSize: 500
+  tileSurfaceY: 0.15
+  keepTileColliders: 1
   tileLayer: 0
+  loadOnAwake: 1
+  preferOfflineCache: 1
+  hideFallbackPlaneWhenTilesLoad: 1
+  fallbackPlaneObjectName: Plane
+  httpTimeoutSeconds: 12
+  highPriorityRing: 1
+  deferredTileStartDelay: 0.03
+  maxTileFailureLogs: 8
+  haltDownloadsAfterAuthFailure: 1
+  forceSharpTileFiltering: 1
+  tileMipMapBias: -0.75
+  tileAnisoLevel: 16
 --- !u!4 &1358180314
 Transform:
   m_ObjectHideFlags: 0
@@ -169003,7 +169066,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
-  m_FirstSelected: {fileID: 0}
+  m_FirstSelected: {fileID: 716194751}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
 --- !u!4 &1474154672
@@ -223590,6 +223653,15 @@ MonoBehaviour:
   - type: 4
     prefab: {fileID: 7536025273544103433, guid: 1b1a6de82b1378e82baf44b1744dc1cc, type: 3}
     weight: 0.1
+  logSpawnEvents: 1
+  allowAutoResolveRoadGraph: 1
+  debugForceActiveCount: 6
+  logBusDistance: 1
+  logBusDistanceOnce: 1
+  logBusDistanceIntervalSeconds: 5
+  logFirstActivationOnly: 1
+  roadGraphRetryIntervalSeconds: 1.5
+  maxAutoBindDistanceMeters: 1200
   fullAiRadiusMeters: 200
   splineRadiusMeters: 400
   transitionHysteresisMeters: 25

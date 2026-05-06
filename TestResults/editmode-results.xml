@@ -1,79 +1,183 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="95" result="Passed" total="95" passed="95" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:45Z" duration="0.6919751">
-  <test-suite type="TestSuite" id="1000" name="My-project" fullname="My-project" runstate="Runnable" testcasecount="200" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:45Z" duration="0.691975" total="95" passed="95" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="133" result="Failed(Child)" total="133" passed="128" failed="5" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:41Z" duration="1.0234279">
+  <test-suite type="TestSuite" id="1000" name="My-project" fullname="My-project" runstate="Runnable" testcasecount="238" result="Failed" site="Child" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:41Z" duration="1.023428" total="133" passed="128" failed="5" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1250" name="GameScriptsTests.Editor.dll" fullname="/home/vng370/Documents/coding/python/My-project/Library/ScriptAssemblies/GameScriptsTests.Editor.dll" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:45Z" duration="0.648647" total="95" passed="95" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1291" name="GameScriptsTests.Editor.dll" fullname="/home/vng370/Documents/coding/python/My-project/Library/ScriptAssemblies/GameScriptsTests.Editor.dll" runstate="Runnable" testcasecount="133" result="Failed" site="Child" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:41Z" duration="0.986151" total="133" passed="128" failed="5" inconclusive="0" skipped="0" asserts="0">
       <properties>
-        <property name="_PID" value="395887" />
+        <property name="_PID" value="127686" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestFixture" id="1147" name="GameScriptsTests" fullname="GameScriptsTests" classname="GameScriptsTests" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:45Z" duration="0.640363" total="95" passed="95" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestFixture" id="1147" name="BusRouteDataTests" fullname="BusRouteDataTests" classname="BusRouteDataTests" runstate="Runnable" testcasecount="3" result="Failed" site="Child" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.148613" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1179" name="BusRoute_AndBusStopData_Defaults_AreInitialized" fullname="GameScriptsTests.BusRoute_AndBusStopData_Defaults_AreInitialized" methodname="BusRoute_AndBusStopData_Defaults_AreInitialized" classname="GameScriptsTests" runstate="Runnable" seed="519887685" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.053663" asserts="0">
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1149" name="BusRoute_SyncLegacyStopsFromBusStops_CopiesOrderedStopData" fullname="BusRouteDataTests.BusRoute_SyncLegacyStopsFromBusStops_CopiesOrderedStopData" methodname="BusRoute_SyncLegacyStopsFromBusStops_CopiesOrderedStopData" classname="BusRouteDataTests" runstate="Runnable" seed="472072979" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.045671" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1175" name="CityDefinition_BuildsStreamingAssetsPaths_FromConfiguredValues" fullname="GameScriptsTests.CityDefinition_BuildsStreamingAssetsPaths_FromConfiguredValues" methodname="CityDefinition_BuildsStreamingAssetsPaths_FromConfiguredValues" classname="GameScriptsTests" runstate="Runnable" seed="1473894971" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.004166" asserts="0">
+        <test-case id="1148" name="BusRouteParser_ParseRoutes_ExtractsOrderedStopsGeometryAndDestination" fullname="BusRouteDataTests.BusRouteParser_ParseRoutes_ExtractsOrderedStopsGeometryAndDestination" methodname="BusRouteParser_ParseRoutes_ExtractsOrderedStopsGeometryAndDestination" classname="BusRouteDataTests" runstate="Runnable" seed="251340815" result="Failed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.041291" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Expected: 3
+  But was:  2
+]]></message>
+            <stack-trace><![CDATA[at BusRouteDataTests.BusRouteParser_ParseRoutes_ExtractsOrderedStopsGeometryAndDestination () [0x000d2] in /home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Tests/Editor/BusRouteDataTests.cs:28
+]]></stack-trace>
+          </failure>
+        </test-case>
+        <test-case id="1150" name="CityConfig_CreateRuntimeCityDefinition_ComputesBoundingBoxAndCopiesRoutes" fullname="BusRouteDataTests.CityConfig_CreateRuntimeCityDefinition_ComputesBoundingBoxAndCopiesRoutes" methodname="CityConfig_CreateRuntimeCityDefinition_ComputesBoundingBoxAndCopiesRoutes" classname="BusRouteDataTests" runstate="Runnable" seed="1021550741" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.011696" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1177" name="CityDefinition_SeasonChecks_ReturnFalse_ForNullOrEmptyMonths" fullname="GameScriptsTests.CityDefinition_SeasonChecks_ReturnFalse_ForNullOrEmptyMonths" methodname="CityDefinition_SeasonChecks_ReturnFalse_ForNullOrEmptyMonths" classname="GameScriptsTests" runstate="Runnable" seed="1710208613" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.003402" asserts="0">
+      </test-suite>
+      <test-suite type="TestFixture" id="1151" name="CoordinateConverterTests" fullname="CoordinateConverterTests" classname="CoordinateConverterTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.020249" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1153" name="Instance_UsesAssignedMapOrigin_WhenNoMapboxOrTileLoaderIsPresent" fullname="CoordinateConverterTests.Instance_UsesAssignedMapOrigin_WhenNoMapboxOrTileLoaderIsPresent" methodname="Instance_UsesAssignedMapOrigin_WhenNoMapboxOrTileLoaderIsPresent" classname="CoordinateConverterTests" runstate="Runnable" seed="135998332" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.009184" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1176" name="CityDefinition_SeasonChecks_UseConfiguredMonthLists" fullname="GameScriptsTests.CityDefinition_SeasonChecks_UseConfiguredMonthLists" methodname="CityDefinition_SeasonChecks_UseConfiguredMonthLists" classname="GameScriptsTests" runstate="Runnable" seed="1162421905" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.002928" asserts="0">
+        <test-case id="1152" name="LocalOrigin_RoundTrip_GeoToWorldToGeo_IsAccurateWithinPointOneMeters" fullname="CoordinateConverterTests.LocalOrigin_RoundTrip_GeoToWorldToGeo_IsAccurateWithinPointOneMeters" methodname="LocalOrigin_RoundTrip_GeoToWorldToGeo_IsAccurateWithinPointOneMeters" classname="CoordinateConverterTests" runstate="Runnable" seed="1227723074" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006752" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1173" name="CityManager_GetCitiesForCountry_ReturnsCountryCities_OrEmptyArray" fullname="GameScriptsTests.CityManager_GetCitiesForCountry_ReturnsCountryCities_OrEmptyArray" methodname="CityManager_GetCitiesForCountry_ReturnsCountryCities_OrEmptyArray" classname="GameScriptsTests" runstate="Runnable" seed="1532883137" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.010655" asserts="0">
+      </test-suite>
+      <test-suite type="TestFixture" id="1154" name="GameScriptsTests" fullname="GameScriptsTests" classname="GameScriptsTests" runstate="Runnable" testcasecount="126" result="Failed" site="Child" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:41Z" duration="0.777607" total="126" passed="123" failed="3" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1199" name="AIRoadGraph_BuildRandomNodeSequence_ReturnsConnectedValidNodes" fullname="GameScriptsTests.AIRoadGraph_BuildRandomNodeSequence_ReturnsConnectedValidNodes" methodname="AIRoadGraph_BuildRandomNodeSequence_ReturnsConnectedValidNodes" classname="GameScriptsTests" runstate="Runnable" seed="1751801205" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.015725" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1174" name="CityManager_GetCountriesByContinent_FiltersAndIgnoresNullEntries" fullname="GameScriptsTests.CityManager_GetCountriesByContinent_FiltersAndIgnoresNullEntries" methodname="CityManager_GetCountriesByContinent_FiltersAndIgnoresNullEntries" classname="GameScriptsTests" runstate="Runnable" seed="1478302030" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.003580" asserts="0">
+        <test-case id="1198" name="AIRoadGraph_GetRandomNodeIndex_SkipsDeadEnds_WhenOutgoingConnectionRequired" fullname="GameScriptsTests.AIRoadGraph_GetRandomNodeIndex_SkipsDeadEnds_WhenOutgoingConnectionRequired" methodname="AIRoadGraph_GetRandomNodeIndex_SkipsDeadEnds_WhenOutgoingConnectionRequired" classname="GameScriptsTests" runstate="Runnable" seed="1730684021" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003631" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1247" name="FogController_SetFog_Clear_SetsTargetsBackToClearValues" fullname="GameScriptsTests.FogController_SetFog_Clear_SetsTargetsBackToClearValues" methodname="FogController_SetFog_Clear_SetsTargetsBackToClearValues" classname="GameScriptsTests" runstate="Runnable" seed="2044497710" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.023381" asserts="0">
+        <test-case id="1200" name="AIRoadGraph_TryFindNodePath_AvoidsBlockedNodes_WhenAlternateExists" fullname="GameScriptsTests.AIRoadGraph_TryFindNodePath_AvoidsBlockedNodes_WhenAlternateExists" methodname="AIRoadGraph_TryFindNodePath_AvoidsBlockedNodes_WhenAlternateExists" classname="GameScriptsTests" runstate="Runnable" seed="1822165764" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.015139" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1246" name="FogController_SetFog_FogState_ConfiguresLinearFogTargets" fullname="GameScriptsTests.FogController_SetFog_FogState_ConfiguresLinearFogTargets" methodname="FogController_SetFog_FogState_ConfiguresLinearFogTargets" classname="GameScriptsTests" runstate="Runnable" seed="402394953" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.003675" asserts="0">
+        <test-case id="1282" name="BusFleetManager_DefaultFleet_IncludesFiveTypes_AndStartsWithStandardBusSelected" fullname="GameScriptsTests.BusFleetManager_DefaultFleet_IncludesFiveTypes_AndStartsWithStandardBusSelected" methodname="BusFleetManager_DefaultFleet_IncludesFiveTypes_AndStartsWithStandardBusSelected" classname="GameScriptsTests" runstate="Runnable" seed="626793366" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.028402" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1166" name="FreeDriveSession_FormatsElapsedTime_AsMinutesAndSeconds" fullname="GameScriptsTests.FreeDriveSession_FormatsElapsedTime_AsMinutesAndSeconds" methodname="FreeDriveSession_FormatsElapsedTime_AsMinutesAndSeconds" classname="GameScriptsTests" runstate="Runnable" seed="1786678180" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.009605" asserts="0">
+        <test-case id="1283" name="BusFleetManager_UnlocksElectricBus_ByRank_AndPersistsSelectionIntoGameState" fullname="GameScriptsTests.BusFleetManager_UnlocksElectricBus_ByRank_AndPersistsSelectionIntoGameState" methodname="BusFleetManager_UnlocksElectricBus_ByRank_AndPersistsSelectionIntoGameState" classname="GameScriptsTests" runstate="Runnable" seed="80742402" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.015629" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1167" name="FreeDriveSession_ReturnsDefaultGpsString_WhenDependenciesAreMissing" fullname="GameScriptsTests.FreeDriveSession_ReturnsDefaultGpsString_WhenDependenciesAreMissing" methodname="FreeDriveSession_ReturnsDefaultGpsString_WhenDependenciesAreMissing" classname="GameScriptsTests" runstate="Runnable" seed="584756993" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.001835" asserts="0">
+        <test-case id="1208" name="BusRoute_AndBusStopData_Defaults_AreInitialized" fullname="GameScriptsTests.BusRoute_AndBusStopData_Defaults_AreInitialized" methodname="BusRoute_AndBusStopData_Defaults_AreInitialized" classname="GameScriptsTests" runstate="Runnable" seed="779938448" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003098" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1165" name="FreeDriveSession_StartAndEndSession_ResetAndToggleState" fullname="GameScriptsTests.FreeDriveSession_StartAndEndSession_ResetAndToggleState" methodname="FreeDriveSession_StartAndEndSession_ResetAndToggleState" classname="GameScriptsTests" runstate="Runnable" seed="1770975389" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.009802" asserts="0">
+        <test-case id="1195" name="CityDefinition_BuildsStreamingAssetsPaths_FromConfiguredValues" fullname="GameScriptsTests.CityDefinition_BuildsStreamingAssetsPaths_FromConfiguredValues" methodname="CityDefinition_BuildsStreamingAssetsPaths_FromConfiguredValues" classname="GameScriptsTests" runstate="Runnable" seed="617573241" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002420" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1197" name="CityDefinition_SeasonChecks_ReturnFalse_ForNullOrEmptyMonths" fullname="GameScriptsTests.CityDefinition_SeasonChecks_ReturnFalse_ForNullOrEmptyMonths" methodname="CityDefinition_SeasonChecks_ReturnFalse_ForNullOrEmptyMonths" classname="GameScriptsTests" runstate="Runnable" seed="401808768" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002677" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1196" name="CityDefinition_SeasonChecks_UseConfiguredMonthLists" fullname="GameScriptsTests.CityDefinition_SeasonChecks_UseConfiguredMonthLists" methodname="CityDefinition_SeasonChecks_UseConfiguredMonthLists" classname="GameScriptsTests" runstate="Runnable" seed="481653961" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001709" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1193" name="CityManager_GetCitiesForCountry_ReturnsCountryCities_OrEmptyArray" fullname="GameScriptsTests.CityManager_GetCitiesForCountry_ReturnsCountryCities_OrEmptyArray" methodname="CityManager_GetCitiesForCountry_ReturnsCountryCities_OrEmptyArray" classname="GameScriptsTests" runstate="Runnable" seed="1491883900" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.005165" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1194" name="CityManager_GetCountriesByContinent_FiltersAndIgnoresNullEntries" fullname="GameScriptsTests.CityManager_GetCountriesByContinent_FiltersAndIgnoresNullEntries" methodname="CityManager_GetCountriesByContinent_FiltersAndIgnoresNullEntries" classname="GameScriptsTests" runstate="Runnable" seed="86232763" result="Failed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.007965" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Expected is <CountryDefinition[2]>, actual is <CountryDefinition[0]>
+  Values differ at index [0]
+  Missing:  < < (CountryDefinition)>, < (CountryDefinition)> >]]></message>
+            <stack-trace><![CDATA[at GameScriptsTests.CityManager_GetCountriesByContinent_FiltersAndIgnoresNullEntries () [0x00092] in /home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs:670
+]]></stack-trace>
+          </failure>
+        </test-case>
+        <test-case id="1191" name="DriverShiftSystem_CompleteRoute_BuildsShiftSummary_WhenShiftEnds" fullname="GameScriptsTests.DriverShiftSystem_CompleteRoute_BuildsShiftSummary_WhenShiftEnds" methodname="DriverShiftSystem_CompleteRoute_BuildsShiftSummary_WhenShiftEnds" classname="GameScriptsTests" runstate="Runnable" seed="358111721" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.008206" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1190" name="DriverShiftSystem_PrepareRoute_StartsShift_Inspection_AndRota" fullname="GameScriptsTests.DriverShiftSystem_PrepareRoute_StartsShift_Inspection_AndRota" methodname="DriverShiftSystem_PrepareRoute_StartsShift_Inspection_AndRota" classname="GameScriptsTests" runstate="Runnable" seed="366263380" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003172" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1278" name="FogController_SetFog_Clear_SetsTargetsBackToClearValues" fullname="GameScriptsTests.FogController_SetFog_Clear_SetsTargetsBackToClearValues" methodname="FogController_SetFog_Clear_SetsTargetsBackToClearValues" classname="GameScriptsTests" runstate="Runnable" seed="1615951095" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.009488" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1277" name="FogController_SetFog_FogState_ConfiguresLinearFogTargets" fullname="GameScriptsTests.FogController_SetFog_FogState_ConfiguresLinearFogTargets" methodname="FogController_SetFog_FogState_ConfiguresLinearFogTargets" classname="GameScriptsTests" runstate="Runnable" seed="1405614589" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003477" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1179" name="FreeDriveSession_FormatsElapsedTime_AsMinutesAndSeconds" fullname="GameScriptsTests.FreeDriveSession_FormatsElapsedTime_AsMinutesAndSeconds" methodname="FreeDriveSession_FormatsElapsedTime_AsMinutesAndSeconds" classname="GameScriptsTests" runstate="Runnable" seed="820836756" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002188" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1180" name="FreeDriveSession_ReturnsDefaultGpsString_WhenDependenciesAreMissing" fullname="GameScriptsTests.FreeDriveSession_ReturnsDefaultGpsString_WhenDependenciesAreMissing" methodname="FreeDriveSession_ReturnsDefaultGpsString_WhenDependenciesAreMissing" classname="GameScriptsTests" runstate="Runnable" seed="1889471849" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001651" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1177" name="FreeDriveSession_StartAndEndSession_ResetAndToggleState" fullname="GameScriptsTests.FreeDriveSession_StartAndEndSession_ResetAndToggleState" methodname="FreeDriveSession_StartAndEndSession_ResetAndToggleState" classname="GameScriptsTests" runstate="Runnable" seed="1680527751" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.007931" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -82,7 +186,33 @@
 Session ended — Distance: 0.00 km, Time: 0s
 ]]></output>
         </test-case>
-        <test-case id="1171" name="GameState_SelectCity_SetsCityAndClearsRoute" fullname="GameScriptsTests.GameState_SelectCity_SetsCityAndClearsRoute" methodname="GameState_SelectCity_SetsCityAndClearsRoute" classname="GameScriptsTests" runstate="Runnable" seed="1835801662" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.005039" asserts="0">
+        <test-case id="1178" name="FreeDriveSession_StartSession_AbortsMissionAndClearsPassengerState" fullname="GameScriptsTests.FreeDriveSession_StartSession_AbortsMissionAndClearsPassengerState" methodname="FreeDriveSession_StartSession_AbortsMissionAndClearsPassengerState" classname="GameScriptsTests" runstate="Runnable" seed="1175356763" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.007789" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Free drive session started!
+]]></output>
+        </test-case>
+        <test-case id="1184" name="FuelSystem_AutoRefuelAtDepot_FillsTank_AndReturnsCost" fullname="GameScriptsTests.FuelSystem_AutoRefuelAtDepot_FillsTank_AndReturnsCost" methodname="FuelSystem_AutoRefuelAtDepot_FillsTank_AndReturnsCost" classname="GameScriptsTests" runstate="Runnable" seed="1260801239" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004540" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1183" name="FuelSystem_GetLoadFactor_ReachesRequestedEighteenPercentIncrease_AtFullPassengerLoad" fullname="GameScriptsTests.FuelSystem_GetLoadFactor_ReachesRequestedEighteenPercentIncrease_AtFullPassengerLoad" methodname="FuelSystem_GetLoadFactor_ReachesRequestedEighteenPercentIncrease_AtFullPassengerLoad" classname="GameScriptsTests" runstate="Runnable" seed="1601107230" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004608" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1188" name="GameState_GetFuelPercent_UsesPersistentVehicleState" fullname="GameScriptsTests.GameState_GetFuelPercent_UsesPersistentVehicleState" methodname="GameState_GetFuelPercent_UsesPersistentVehicleState" classname="GameScriptsTests" runstate="Runnable" seed="1234534409" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003357" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1186" name="GameState_SelectCity_SetsCityAndClearsRoute" fullname="GameScriptsTests.GameState_SelectCity_SetsCityAndClearsRoute" methodname="GameState_SelectCity_SetsCityAndClearsRoute" classname="GameScriptsTests" runstate="Runnable" seed="1084565385" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006481" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -90,7 +220,7 @@ Session ended — Distance: 0.00 km, Time: 0s
           <output><![CDATA[GameState: City selected — Nairobi
 ]]></output>
         </test-case>
-        <test-case id="1170" name="GameState_SelectCountry_ResetsCityAndRoute" fullname="GameScriptsTests.GameState_SelectCountry_ResetsCityAndRoute" methodname="GameState_SelectCountry_ResetsCityAndRoute" classname="GameScriptsTests" runstate="Runnable" seed="2061032040" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.003487" asserts="0">
+        <test-case id="1185" name="GameState_SelectCountry_ResetsCityAndRoute" fullname="GameScriptsTests.GameState_SelectCountry_ResetsCityAndRoute" methodname="GameState_SelectCountry_ResetsCityAndRoute" classname="GameScriptsTests" runstate="Runnable" seed="1102738936" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.005231" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -98,7 +228,7 @@ Session ended — Distance: 0.00 km, Time: 0s
           <output><![CDATA[GameState: Country selected — Kenya
 ]]></output>
         </test-case>
-        <test-case id="1172" name="GameState_SelectRoute_SetsSelectedRoute" fullname="GameScriptsTests.GameState_SelectRoute_SetsSelectedRoute" methodname="GameState_SelectRoute_SetsSelectedRoute" classname="GameScriptsTests" runstate="Runnable" seed="1935238872" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.004294" asserts="0">
+        <test-case id="1187" name="GameState_SelectRoute_SetsSelectedRoute" fullname="GameScriptsTests.GameState_SelectRoute_SetsSelectedRoute" methodname="GameState_SelectRoute_SetsSelectedRoute" classname="GameScriptsTests" runstate="Runnable" seed="477641325" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004071" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -106,79 +236,177 @@ Session ended — Distance: 0.00 km, Time: 0s
           <output><![CDATA[GameState: Route selected — CBD Loop
 ]]></output>
         </test-case>
-        <test-case id="1186" name="Json_Deserialize_ParsesNestedDataAndEscapedText" fullname="GameScriptsTests.Json_Deserialize_ParsesNestedDataAndEscapedText" methodname="Json_Deserialize_ParsesNestedDataAndEscapedText" classname="GameScriptsTests" runstate="Runnable" seed="1102240201" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.012689" asserts="0">
+        <test-case id="1216" name="Json_Deserialize_ParsesNestedDataAndEscapedText" fullname="GameScriptsTests.Json_Deserialize_ParsesNestedDataAndEscapedText" methodname="Json_Deserialize_ParsesNestedDataAndEscapedText" classname="GameScriptsTests" runstate="Runnable" seed="239841410" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.005078" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1187" name="Json_Deserialize_ReturnsNull_ForNullOrInvalidJson" fullname="GameScriptsTests.Json_Deserialize_ReturnsNull_ForNullOrInvalidJson" methodname="Json_Deserialize_ReturnsNull_ForNullOrInvalidJson" classname="GameScriptsTests" runstate="Runnable" seed="1742969069" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.001157" asserts="0">
+        <test-case id="1217" name="Json_Deserialize_ReturnsNull_ForNullOrInvalidJson" fullname="GameScriptsTests.Json_Deserialize_ReturnsNull_ForNullOrInvalidJson" methodname="Json_Deserialize_ReturnsNull_ForNullOrInvalidJson" classname="GameScriptsTests" runstate="Runnable" seed="633320531" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001779" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1189" name="Json_Serialize_PrettyFormatsWithCustomIndent_AndHandlesEmptyCollections" fullname="GameScriptsTests.Json_Serialize_PrettyFormatsWithCustomIndent_AndHandlesEmptyCollections" methodname="Json_Serialize_PrettyFormatsWithCustomIndent_AndHandlesEmptyCollections" classname="GameScriptsTests" runstate="Runnable" seed="789553729" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.007078" asserts="0">
+        <test-case id="1219" name="Json_Serialize_PrettyFormatsWithCustomIndent_AndHandlesEmptyCollections" fullname="GameScriptsTests.Json_Serialize_PrettyFormatsWithCustomIndent_AndHandlesEmptyCollections" methodname="Json_Serialize_PrettyFormatsWithCustomIndent_AndHandlesEmptyCollections" classname="GameScriptsTests" runstate="Runnable" seed="186967904" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006387" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1188" name="Json_Serialize_ProducesCompactJson_ForCollectionsAndObjects" fullname="GameScriptsTests.Json_Serialize_ProducesCompactJson_ForCollectionsAndObjects" methodname="Json_Serialize_ProducesCompactJson_ForCollectionsAndObjects" classname="GameScriptsTests" runstate="Runnable" seed="848413978" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.005311" asserts="0">
+        <test-case id="1218" name="Json_Serialize_ProducesCompactJson_ForCollectionsAndObjects" fullname="GameScriptsTests.Json_Serialize_ProducesCompactJson_ForCollectionsAndObjects" methodname="Json_Serialize_ProducesCompactJson_ForCollectionsAndObjects" classname="GameScriptsTests" runstate="Runnable" seed="878348721" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004865" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1178" name="MissionData_DefaultValues_AreInitializedAsExpected" fullname="GameScriptsTests.MissionData_DefaultValues_AreInitializedAsExpected" methodname="MissionData_DefaultValues_AreInitializedAsExpected" classname="GameScriptsTests" runstate="Runnable" seed="1655423760" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.001699" asserts="0">
+        <test-case id="1189" name="MaintenanceSystem_GetWheelGripMultiplier_DropsAfterHalfWear" fullname="GameScriptsTests.MaintenanceSystem_GetWheelGripMultiplier_DropsAfterHalfWear" methodname="MaintenanceSystem_GetWheelGripMultiplier_DropsAfterHalfWear" classname="GameScriptsTests" runstate="Runnable" seed="460997966" result="Failed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.005234" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Expected: less than 1.0f
+  But was:  1.0f
+]]></message>
+            <stack-trace><![CDATA[at GameScriptsTests.MaintenanceSystem_GetWheelGripMultiplier_DropsAfterHalfWear () [0x00056] in /home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs:549
+]]></stack-trace>
+          </failure>
+        </test-case>
+        <test-case id="1207" name="MissionData_DefaultValues_AreInitializedAsExpected" fullname="GameScriptsTests.MissionData_DefaultValues_AreInitializedAsExpected" methodname="MissionData_DefaultValues_AreInitializedAsExpected" classname="GameScriptsTests" runstate="Runnable" seed="1476999596" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002571" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1163" name="MissionResult_Generate_UsesFallbackValues_WhenManagersAreMissing" fullname="GameScriptsTests.MissionResult_Generate_UsesFallbackValues_WhenManagersAreMissing" methodname="MissionResult_Generate_UsesFallbackValues_WhenManagersAreMissing" classname="GameScriptsTests" runstate="Runnable" seed="729027658" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.002732" asserts="0">
+        <test-case id="1192" name="MissionResult_Generate_AppliesViolationPenalty_AndLowSatisfactionStarCap" fullname="GameScriptsTests.MissionResult_Generate_AppliesViolationPenalty_AndLowSatisfactionStarCap" methodname="MissionResult_Generate_AppliesViolationPenalty_AndLowSatisfactionStarCap" classname="GameScriptsTests" runstate="Runnable" seed="493383439" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.014439" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[TrafficViolation] Crossed stop line during amber
+]]></output>
+        </test-case>
+        <test-case id="1175" name="MissionResult_Generate_IncludesDynamicEventSummary_WhenAvailable" fullname="GameScriptsTests.MissionResult_Generate_IncludesDynamicEventSummary_WhenAvailable" methodname="MissionResult_Generate_IncludesDynamicEventSummary_WhenAvailable" classname="GameScriptsTests" runstate="Runnable" seed="190099979" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004353" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1164" name="MissionResult_Generate_UsesLiveSessionState_AndCalculatesXp" fullname="GameScriptsTests.MissionResult_Generate_UsesLiveSessionState_AndCalculatesXp" methodname="MissionResult_Generate_UsesLiveSessionState_AndCalculatesXp" classname="GameScriptsTests" runstate="Runnable" seed="392398034" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.003576" asserts="0">
+        <test-case id="1171" name="MissionResult_Generate_UsesFallbackValues_WhenManagersAreMissing" fullname="GameScriptsTests.MissionResult_Generate_UsesFallbackValues_WhenManagersAreMissing" methodname="MissionResult_Generate_UsesFallbackValues_WhenManagersAreMissing" classname="GameScriptsTests" runstate="Runnable" seed="1755582752" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001918" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1168" name="PassengerData_TotalCapacity_AddsSeatedAndStandingCapacity" fullname="GameScriptsTests.PassengerData_TotalCapacity_AddsSeatedAndStandingCapacity" methodname="PassengerData_TotalCapacity_AddsSeatedAndStandingCapacity" classname="GameScriptsTests" runstate="Runnable" seed="1847531834" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.001290" asserts="0">
+        <test-case id="1172" name="MissionResult_Generate_UsesLiveSessionState_AndCalculatesXp" fullname="GameScriptsTests.MissionResult_Generate_UsesLiveSessionState_AndCalculatesXp" methodname="MissionResult_Generate_UsesLiveSessionState_AndCalculatesXp" classname="GameScriptsTests" runstate="Runnable" seed="1368354213" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003961" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1169" name="PassengerManager_GetProfit_SubtractsFuelCostFromIncome" fullname="GameScriptsTests.PassengerManager_GetProfit_SubtractsFuelCostFromIncome" methodname="PassengerManager_GetProfit_SubtractsFuelCostFromIncome" classname="GameScriptsTests" runstate="Runnable" seed="338066648" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:44Z" duration="0.001343" asserts="0">
+        <test-case id="1173" name="MissionResult_Generate_UsesMissionSettlementBreakdown_WhenAvailable" fullname="GameScriptsTests.MissionResult_Generate_UsesMissionSettlementBreakdown_WhenAvailable" methodname="MissionResult_Generate_UsesMissionSettlementBreakdown_WhenAvailable" classname="GameScriptsTests" runstate="Runnable" seed="1696653999" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002746" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1243" name="RainController_SetRain_Clear_DisablesWipersAndStopsAudio" fullname="GameScriptsTests.RainController_SetRain_Clear_DisablesWipersAndStopsAudio" methodname="RainController_SetRain_Clear_DisablesWipersAndStopsAudio" classname="GameScriptsTests" runstate="Runnable" seed="273950122" result="Passed" start-time="2026-04-02 13:13:44Z" end-time="2026-04-02 13:13:45Z" duration="0.030254" asserts="0">
+        <test-case id="1174" name="MissionResult_SaveToPlayerPrefs_RoundTripsLatestMissionResult" fullname="GameScriptsTests.MissionResult_SaveToPlayerPrefs_RoundTripsLatestMissionResult" methodname="MissionResult_SaveToPlayerPrefs_RoundTripsLatestMissionResult" classname="GameScriptsTests" runstate="Runnable" seed="513011167" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003153" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1241" name="RainController_SetRain_LightRain_UpdatesAudioWetnessAndWipers" fullname="GameScriptsTests.RainController_SetRain_LightRain_UpdatesAudioWetnessAndWipers" methodname="RainController_SetRain_LightRain_UpdatesAudioWetnessAndWipers" classname="GameScriptsTests" runstate="Runnable" seed="898100231" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.008553" asserts="0">
+        <test-case id="1181" name="PassengerData_TotalCapacity_AddsSeatedAndStandingCapacity" fullname="GameScriptsTests.PassengerData_TotalCapacity_AddsSeatedAndStandingCapacity" methodname="PassengerData_TotalCapacity_AddsSeatedAndStandingCapacity" classname="GameScriptsTests" runstate="Runnable" seed="303602693" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001470" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1242" name="RainController_SetRain_Thunderstorm_UsesFallbackParticlesAndMaxWetness" fullname="GameScriptsTests.RainController_SetRain_Thunderstorm_UsesFallbackParticlesAndMaxWetness" methodname="RainController_SetRain_Thunderstorm_UsesFallbackParticlesAndMaxWetness" classname="GameScriptsTests" runstate="Runnable" seed="2126419463" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.005281" asserts="0">
+        <test-case id="1182" name="PassengerManager_GetProfit_SubtractsFuelCostFromIncome" fullname="GameScriptsTests.PassengerManager_GetProfit_SubtractsFuelCostFromIncome" methodname="PassengerManager_GetProfit_SubtractsFuelCostFromIncome" classname="GameScriptsTests" runstate="Runnable" seed="337931205" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001386" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1150" name="ScoreTracker_AggregatesCategoryScores_AndReturnsExpectedStarRating" fullname="GameScriptsTests.ScoreTracker_AggregatesCategoryScores_AndReturnsExpectedStarRating" methodname="ScoreTracker_AggregatesCategoryScores_AndReturnsExpectedStarRating" classname="GameScriptsTests" runstate="Runnable" seed="1150627745" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.007401" asserts="0">
+        <test-case id="1203" name="PassengerManager_ProcessAlighting_QueuesExitAnimation_AndClearsStopRequest" fullname="GameScriptsTests.PassengerManager_ProcessAlighting_QueuesExitAnimation_AndClearsStopRequest" methodname="PassengerManager_ProcessAlighting_QueuesExitAnimation_AndClearsStopRequest" classname="GameScriptsTests" runstate="Runnable" seed="78562092" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006992" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1204" name="PassengerManager_RecalculateDwellTime_WheelchairBoarding_AddsExtraTimeAndArmsReset" fullname="GameScriptsTests.PassengerManager_RecalculateDwellTime_WheelchairBoarding_AddsExtraTimeAndArmsReset" methodname="PassengerManager_RecalculateDwellTime_WheelchairBoarding_AddsExtraTimeAndArmsReset" classname="GameScriptsTests" runstate="Runnable" seed="2045805251" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004441" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1201" name="PassengerSpawner_BuildRandomStopsFromRoadGraph_CreatesSyntheticStopsFromGraphNodes" fullname="GameScriptsTests.PassengerSpawner_BuildRandomStopsFromRoadGraph_CreatesSyntheticStopsFromGraphNodes" methodname="PassengerSpawner_BuildRandomStopsFromRoadGraph_CreatesSyntheticStopsFromGraphNodes" classname="GameScriptsTests" runstate="Runnable" seed="1255867794" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006281" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1202" name="PassengerSpawner_GetDensityMultiplierForCurrentTime_HitsRushHourPeak" fullname="GameScriptsTests.PassengerSpawner_GetDensityMultiplierForCurrentTime_HitsRushHourPeak" methodname="PassengerSpawner_GetDensityMultiplierForCurrentTime_HitsRushHourPeak" classname="GameScriptsTests" runstate="Runnable" seed="1354633576" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004617" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1205" name="PedestrianSpawner_BuildRandomCrossingsFromRoadGraph_GeneratesRuntimeCrossings" fullname="GameScriptsTests.PedestrianSpawner_BuildRandomCrossingsFromRoadGraph_GeneratesRuntimeCrossings" methodname="PedestrianSpawner_BuildRandomCrossingsFromRoadGraph_GeneratesRuntimeCrossings" classname="GameScriptsTests" runstate="Runnable" seed="1990711416" result="Failed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.012915" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Expected: same as <TrafficLight (TrafficLight)>
+  But was:  null
+]]></message>
+            <stack-trace><![CDATA[at GameScriptsTests.PedestrianSpawner_BuildRandomCrossingsFromRoadGraph_GeneratesRuntimeCrossings () [0x00119] in /home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs:904
+]]></stack-trace>
+          </failure>
+        </test-case>
+        <test-case id="1274" name="RainController_SetRain_Clear_DisablesWipersAndStopsAudio" fullname="GameScriptsTests.RainController_SetRain_Clear_DisablesWipersAndStopsAudio" methodname="RainController_SetRain_Clear_DisablesWipersAndStopsAudio" classname="GameScriptsTests" runstate="Runnable" seed="1287802177" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.025990" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1272" name="RainController_SetRain_LightRain_UpdatesAudioWetnessAndWipers" fullname="GameScriptsTests.RainController_SetRain_LightRain_UpdatesAudioWetnessAndWipers" methodname="RainController_SetRain_LightRain_UpdatesAudioWetnessAndWipers" classname="GameScriptsTests" runstate="Runnable" seed="554858879" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.007073" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1273" name="RainController_SetRain_Thunderstorm_UsesFallbackParticlesAndMaxWetness" fullname="GameScriptsTests.RainController_SetRain_Thunderstorm_UsesFallbackParticlesAndMaxWetness" methodname="RainController_SetRain_Thunderstorm_UsesFallbackParticlesAndMaxWetness" classname="GameScriptsTests" runstate="Runnable" seed="1114945435" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006537" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1286" name="SaveManager_ApplySaveData_RestoresXpBusSelectionAndEconomyState" fullname="GameScriptsTests.SaveManager_ApplySaveData_RestoresXpBusSelectionAndEconomyState" methodname="SaveManager_ApplySaveData_RestoresXpBusSelectionAndEconomyState" classname="GameScriptsTests" runstate="Runnable" seed="339670632" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.018203" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1287" name="SaveManager_RecordMissionResult_AppendsMissionHistory_AndWritesLocalSave" fullname="GameScriptsTests.SaveManager_RecordMissionResult_AppendsMissionHistory_AndWritesLocalSave" methodname="SaveManager_RecordMissionResult_AppendsMissionHistory_AndWritesLocalSave" classname="GameScriptsTests" runstate="Runnable" seed="347589562" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.011214" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1157" name="ScheduleManager_ReportsArrivalDeltaLatePenaltyAndEarlyWaitInSeconds" fullname="GameScriptsTests.ScheduleManager_ReportsArrivalDeltaLatePenaltyAndEarlyWaitInSeconds" methodname="ScheduleManager_ReportsArrivalDeltaLatePenaltyAndEarlyWaitInSeconds" classname="GameScriptsTests" runstate="Runnable" seed="480242795" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.009357" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Schedule set: 3 stops over 20 mins
+Stop 1: Early (diff: -1.5 min)
+Stop 2: Late (diff: +1.5 min)
+]]></output>
+        </test-case>
+        <test-case id="1158" name="ScoreTracker_AggregatesCategoryScores_AndReturnsExpectedStarRating" fullname="GameScriptsTests.ScoreTracker_AggregatesCategoryScores_AndReturnsExpectedStarRating" methodname="ScoreTracker_AggregatesCategoryScores_AndReturnsExpectedStarRating" classname="GameScriptsTests" runstate="Runnable" seed="677056944" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006346" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -187,64 +415,72 @@ Session ended — Distance: 0.00 km, Time: 0s
 Red light! Safety score: 75
 ]]></output>
         </test-case>
-        <test-case id="1161" name="ScoreTracker_GetScoreSummary_FormatsRoundedCategoryValues" fullname="GameScriptsTests.ScoreTracker_GetScoreSummary_FormatsRoundedCategoryValues" methodname="ScoreTracker_GetScoreSummary_FormatsRoundedCategoryValues" classname="GameScriptsTests" runstate="Runnable" seed="2002729122" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001363" asserts="0">
+        <test-case id="1176" name="ScoreTracker_ApplyDynamicEventImpact_ReducesExpectedCategories" fullname="GameScriptsTests.ScoreTracker_ApplyDynamicEventImpact_ReducesExpectedCategories" methodname="ScoreTracker_ApplyDynamicEventImpact_ReducesExpectedCategories" classname="GameScriptsTests" runstate="Runnable" seed="524599263" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003807" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Dynamic event non-compliance: CHECKPOINT | safety 6 | punctuality 4
+]]></output>
+        </test-case>
+        <test-case id="1169" name="ScoreTracker_GetScoreSummary_FormatsRoundedCategoryValues" fullname="GameScriptsTests.ScoreTracker_GetScoreSummary_FormatsRoundedCategoryValues" methodname="ScoreTracker_GetScoreSummary_FormatsRoundedCategoryValues" classname="GameScriptsTests" runstate="Runnable" seed="343900467" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001485" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-suite type="ParameterizedMethod" id="1159" name="ScoreTracker_GetStarRating_UsesExpectedThresholds" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.020038" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-suite type="ParameterizedMethod" id="1167" name="ScoreTracker_GetStarRating_UsesExpectedThresholds" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.017950" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-case id="1151" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(90.0f,5)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(90.0f,5)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1401339877" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001552" asserts="0">
+          <test-case id="1159" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(90.0f,5)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(90.0f,5)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1648595972" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002084" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1152" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(89.99f,4)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(89.99f,4)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1341180429" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000646" asserts="0">
+          <test-case id="1160" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(89.99f,4)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(89.99f,4)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="55456143" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001396" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1153" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(75.0f,4)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(75.0f,4)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="382802804" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000680" asserts="0">
+          <test-case id="1161" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(75.0f,4)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(75.0f,4)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1332974433" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001357" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1154" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(74.99f,3)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(74.99f,3)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="399655079" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000748" asserts="0">
+          <test-case id="1162" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(74.99f,3)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(74.99f,3)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="833366498" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.000951" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1155" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(60.0f,3)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(60.0f,3)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1857643267" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000882" asserts="0">
+          <test-case id="1163" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(60.0f,3)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(60.0f,3)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="144087761" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.000945" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1156" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(59.99f,2)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(59.99f,2)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="579132139" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000806" asserts="0">
+          <test-case id="1164" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(59.99f,2)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(59.99f,2)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1872369722" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.000932" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1157" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(40.0f,2)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(40.0f,2)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1173990249" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000752" asserts="0">
+          <test-case id="1165" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(40.0f,2)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(40.0f,2)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="412669139" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.000934" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1158" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(39.99f,1)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(39.99f,1)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="1276186995" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000882" asserts="0">
+          <test-case id="1166" name="ScoreTracker_GetStarRating_UsesExpectedThresholds(39.99f,1)" fullname="GameScriptsTests.ScoreTracker_GetStarRating_UsesExpectedThresholds(39.99f,1)" methodname="ScoreTracker_GetStarRating_UsesExpectedThresholds" classname="GameScriptsTests" runstate="Runnable" seed="352483657" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001265" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
         </test-suite>
-        <test-case id="1162" name="ScoreTracker_Penalties_DoNotDropBelowZero" fullname="GameScriptsTests.ScoreTracker_Penalties_DoNotDropBelowZero" methodname="ScoreTracker_Penalties_DoNotDropBelowZero" classname="GameScriptsTests" runstate="Runnable" seed="821475155" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.038768" asserts="0">
+        <test-case id="1170" name="ScoreTracker_Penalties_DoNotDropBelowZero" fullname="GameScriptsTests.ScoreTracker_Penalties_DoNotDropBelowZero" methodname="ScoreTracker_Penalties_DoNotDropBelowZero" classname="GameScriptsTests" runstate="Runnable" seed="2096713351" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.029501" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -271,13 +507,13 @@ Collision! Safety score: 0
 Red light! Safety score: 0
 ]]></output>
         </test-case>
-        <test-case id="1160" name="ScoreTracker_UpdateEfficiencyScore_ClampsToExpectedRange" fullname="GameScriptsTests.ScoreTracker_UpdateEfficiencyScore_ClampsToExpectedRange" methodname="ScoreTracker_UpdateEfficiencyScore_ClampsToExpectedRange" classname="GameScriptsTests" runstate="Runnable" seed="1787997883" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001460" asserts="0">
+        <test-case id="1168" name="ScoreTracker_UpdateEfficiencyScore_ClampsToExpectedRange" fullname="GameScriptsTests.ScoreTracker_UpdateEfficiencyScore_ClampsToExpectedRange" methodname="ScoreTracker_UpdateEfficiencyScore_ClampsToExpectedRange" classname="GameScriptsTests" runstate="Runnable" seed="246261082" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001731" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1149" name="SetupSchedule_ReplacesPreviousSchedule_AndUnknownStopDefaultsToOnTime" fullname="GameScriptsTests.SetupSchedule_ReplacesPreviousSchedule_AndUnknownStopDefaultsToOnTime" methodname="SetupSchedule_ReplacesPreviousSchedule_AndUnknownStopDefaultsToOnTime" classname="GameScriptsTests" runstate="Runnable" seed="1101836793" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.012377" asserts="0">
+        <test-case id="1156" name="SetupSchedule_ReplacesPreviousSchedule_AndUnknownStopDefaultsToOnTime" fullname="GameScriptsTests.SetupSchedule_ReplacesPreviousSchedule_AndUnknownStopDefaultsToOnTime" methodname="SetupSchedule_ReplacesPreviousSchedule_AndUnknownStopDefaultsToOnTime" classname="GameScriptsTests" runstate="Runnable" seed="271866725" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006095" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -286,7 +522,7 @@ Red light! Safety score: 0
 Schedule set: 2 stops over 15 mins
 ]]></output>
         </test-case>
-        <test-case id="1148" name="SetupSchedule_SpacesStopsEvenly_AndArrivalThresholdsMatchExpectedBands" fullname="GameScriptsTests.SetupSchedule_SpacesStopsEvenly_AndArrivalThresholdsMatchExpectedBands" methodname="SetupSchedule_SpacesStopsEvenly_AndArrivalThresholdsMatchExpectedBands" classname="GameScriptsTests" runstate="Runnable" seed="1963425183" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.013280" asserts="0">
+        <test-case id="1155" name="SetupSchedule_SpacesStopsEvenly_AndArrivalThresholdsMatchExpectedBands" fullname="GameScriptsTests.SetupSchedule_SpacesStopsEvenly_AndArrivalThresholdsMatchExpectedBands" methodname="SetupSchedule_SpacesStopsEvenly_AndArrivalThresholdsMatchExpectedBands" classname="GameScriptsTests" runstate="Runnable" seed="1401003269" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.010471" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -298,58 +534,70 @@ Stop 3: Late (diff: +2.5 min)
 Stop 0: SeverelyLate (diff: +35.0 min)
 ]]></output>
         </test-case>
-        <test-case id="1248" name="SkyController_SetSky_Blizzard_UpdatesPrivateTargets" fullname="GameScriptsTests.SkyController_SetSky_Blizzard_UpdatesPrivateTargets" methodname="SkyController_SetSky_Blizzard_UpdatesPrivateTargets" classname="GameScriptsTests" runstate="Runnable" seed="104263976" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.003152" asserts="0">
+        <test-case id="1279" name="SkyController_SetSky_Blizzard_UpdatesPrivateTargets" fullname="GameScriptsTests.SkyController_SetSky_Blizzard_UpdatesPrivateTargets" methodname="SkyController_SetSky_Blizzard_UpdatesPrivateTargets" classname="GameScriptsTests" runstate="Runnable" seed="766226282" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.005015" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1249" name="SkyController_SetSky_Clear_UsesClearTargets" fullname="GameScriptsTests.SkyController_SetSky_Clear_UsesClearTargets" methodname="SkyController_SetSky_Clear_UsesClearTargets" classname="GameScriptsTests" runstate="Runnable" seed="2082367731" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001595" asserts="0">
+        <test-case id="1281" name="SkyController_SetSky_Clear_UsesClearTargets" fullname="GameScriptsTests.SkyController_SetSky_Clear_UsesClearTargets" methodname="SkyController_SetSky_Clear_UsesClearTargets" classname="GameScriptsTests" runstate="Runnable" seed="207892621" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002145" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1244" name="SnowController_SetSnow_Blizzard_AccumulatesSnowAndSetsAudio" fullname="GameScriptsTests.SnowController_SetSnow_Blizzard_AccumulatesSnowAndSetsAudio" methodname="SnowController_SetSnow_Blizzard_AccumulatesSnowAndSetsAudio" classname="GameScriptsTests" runstate="Runnable" seed="230019861" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.006297" asserts="0">
+        <test-case id="1275" name="SnowController_SetSnow_Blizzard_AccumulatesSnowAndSetsAudio" fullname="GameScriptsTests.SnowController_SetSnow_Blizzard_AccumulatesSnowAndSetsAudio" methodname="SnowController_SetSnow_Blizzard_AccumulatesSnowAndSetsAudio" classname="GameScriptsTests" runstate="Runnable" seed="578105301" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.005210" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1245" name="SnowController_SetSnow_Clear_StopsAudio" fullname="GameScriptsTests.SnowController_SetSnow_Clear_StopsAudio" methodname="SnowController_SetSnow_Clear_StopsAudio" classname="GameScriptsTests" runstate="Runnable" seed="1296887713" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.002814" asserts="0">
+        <test-case id="1276" name="SnowController_SetSnow_Clear_StopsAudio" fullname="GameScriptsTests.SnowController_SetSnow_Clear_StopsAudio" methodname="SnowController_SetSnow_Clear_StopsAudio" classname="GameScriptsTests" runstate="Runnable" seed="538297605" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003535" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1180" name="TrafficLight_AdvanceState_CyclesRedGreenAmberAndQueriesMatch" fullname="GameScriptsTests.TrafficLight_AdvanceState_CyclesRedGreenAmberAndQueriesMatch" methodname="TrafficLight_AdvanceState_CyclesRedGreenAmberAndQueriesMatch" classname="GameScriptsTests" runstate="Runnable" seed="1607955857" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.003219" asserts="0">
+        <test-case id="1280" name="TimeOfDaySystem_ApplyTimeOfDayImmediate_ActivatesNightLightsAndObjects_AfterSunset" fullname="GameScriptsTests.TimeOfDaySystem_ApplyTimeOfDayImmediate_ActivatesNightLightsAndObjects_AfterSunset" methodname="TimeOfDaySystem_ApplyTimeOfDayImmediate_ActivatesNightLightsAndObjects_AfterSunset" classname="GameScriptsTests" runstate="Runnable" seed="133854487" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.007517" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-suite type="ParameterizedMethod" id="1184" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.010318" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-case id="1209" name="TrafficLight_AdvanceState_CyclesRedGreenAmberAndQueriesMatch" fullname="GameScriptsTests.TrafficLight_AdvanceState_CyclesRedGreenAmberAndQueriesMatch" methodname="TrafficLight_AdvanceState_CyclesRedGreenAmberAndQueriesMatch" classname="GameScriptsTests" runstate="Runnable" seed="1456538259" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002566" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1214" name="TrafficLight_ApplyPhaseOffset_CanAdvanceAcrossMultipleStates" fullname="GameScriptsTests.TrafficLight_ApplyPhaseOffset_CanAdvanceAcrossMultipleStates" methodname="TrafficLight_ApplyPhaseOffset_CanAdvanceAcrossMultipleStates" classname="GameScriptsTests" runstate="Runnable" seed="213979313" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002708" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="1213" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.008748" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-case id="1181" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Red,45.0f)" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Red,45.0f)" methodname="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" seed="428527126" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.003436" asserts="0">
+          <test-case id="1210" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Red,45.0f)" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Red,45.0f)" methodname="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" seed="10396531" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002491" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1182" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Green,35.0f)" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Green,35.0f)" methodname="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" seed="1888257744" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000909" asserts="0">
+          <test-case id="1211" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Green,35.0f)" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Green,35.0f)" methodname="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" seed="1503703075" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001279" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1183" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Amber,5.0f)" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Amber,5.0f)" methodname="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" seed="59560432" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000802" asserts="0">
+          <test-case id="1212" name="TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Amber,5.0f)" fullname="GameScriptsTests.TrafficLight_GetStateDuration_ReturnsConfiguredDuration(Amber,5.0f)" methodname="TrafficLight_GetStateDuration_ReturnsConfiguredDuration" classname="GameScriptsTests" runstate="Runnable" seed="114803959" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001221" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
         </test-suite>
-        <test-case id="1185" name="TrafficLight_UpdateVisuals_LightsOnlyTheActiveRenderer" fullname="GameScriptsTests.TrafficLight_UpdateVisuals_LightsOnlyTheActiveRenderer" methodname="TrafficLight_UpdateVisuals_LightsOnlyTheActiveRenderer" classname="GameScriptsTests" runstate="Runnable" seed="183029577" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.035781" asserts="0">
+        <test-case id="1215" name="TrafficLight_UpdateVisuals_LightsOnlyTheActiveRenderer" fullname="GameScriptsTests.TrafficLight_UpdateVisuals_LightsOnlyTheActiveRenderer" methodname="TrafficLight_UpdateVisuals_LightsOnlyTheActiveRenderer" classname="GameScriptsTests" runstate="Runnable" seed="890544504" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.026704" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -359,13 +607,48 @@ Instantiating material due to calling renderer.material during edit mode. This w
 Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
 ]]></output>
         </test-case>
-        <test-case id="1190" name="UITheme_Helpers_ReturnExpectedColorsAndFontFallback" fullname="GameScriptsTests.UITheme_Helpers_ReturnExpectedColorsAndFontFallback" methodname="UITheme_Helpers_ReturnExpectedColorsAndFontFallback" classname="GameScriptsTests" runstate="Runnable" seed="1756037268" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.006943" asserts="0">
+        <test-case id="1220" name="UITheme_Helpers_ReturnExpectedColorsAndFontFallback" fullname="GameScriptsTests.UITheme_Helpers_ReturnExpectedColorsAndFontFallback" methodname="UITheme_Helpers_ReturnExpectedColorsAndFontFallback" classname="GameScriptsTests" runstate="Runnable" seed="93376389" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.006151" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-case id="1215" name="WeatherSystem_ApplySimulatedWeather_FallsBackToClear_WhenCityMissing" fullname="GameScriptsTests.WeatherSystem_ApplySimulatedWeather_FallsBackToClear_WhenCityMissing" methodname="WeatherSystem_ApplySimulatedWeather_FallsBackToClear_WhenCityMissing" classname="GameScriptsTests" runstate="Runnable" seed="1088940133" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.007355" asserts="0">
+        <test-case id="1285" name="UnlockManager_GetRoutesForCity_AddsGrandTour_AfterAllBaseRoutesAreCompleted" fullname="GameScriptsTests.UnlockManager_GetRoutesForCity_AddsGrandTour_AfterAllBaseRoutesAreCompleted" methodname="UnlockManager_GetRoutesForCity_AddsGrandTour_AfterAllBaseRoutesAreCompleted" classname="GameScriptsTests" runstate="Runnable" seed="611614739" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.010867" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1206" name="VehiclePool_UpdateSimulationTiers_PromotesAdditionalNearbyVehiclesUpToCap_WhenBusMovesCloser" fullname="GameScriptsTests.VehiclePool_UpdateSimulationTiers_PromotesAdditionalNearbyVehiclesUpToCap_WhenBusMovesCloser" methodname="VehiclePool_UpdateSimulationTiers_PromotesAdditionalNearbyVehiclesUpToCap_WhenBusMovesCloser" classname="GameScriptsTests" runstate="Runnable" seed="814400898" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.066858" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[VehiclePool] Warmed pool: 20/20 vehicles created (roadGraphNodes=20).
+[VehiclePool] Activated vehicle 'VehiclePrefab(Clone)' tier=FullAI type=Car lane=1.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+]]></output>
+        </test-case>
+        <test-case id="1245" name="WeatherSystem_ApplySimulatedWeather_FallsBackToClear_WhenCityMissing" fullname="GameScriptsTests.WeatherSystem_ApplySimulatedWeather_FallsBackToClear_WhenCityMissing" methodname="WeatherSystem_ApplySimulatedWeather_FallsBackToClear_WhenCityMissing" classname="GameScriptsTests" runstate="Runnable" seed="1168542299" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.008305" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -373,7 +656,7 @@ Instantiating material due to calling renderer.material during edit mode. This w
           <output><![CDATA[WeatherSystem: Clear | Intensity: 0.00 | Temp: 20.0°C
 ]]></output>
         </test-case>
-        <test-case id="1214" name="WeatherSystem_ApplyWeather_UpdatesCurrentStateFields" fullname="GameScriptsTests.WeatherSystem_ApplyWeather_UpdatesCurrentStateFields" methodname="WeatherSystem_ApplyWeather_UpdatesCurrentStateFields" classname="GameScriptsTests" runstate="Runnable" seed="1841648016" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.003140" asserts="0">
+        <test-case id="1244" name="WeatherSystem_ApplyWeather_UpdatesCurrentStateFields" fullname="GameScriptsTests.WeatherSystem_ApplyWeather_UpdatesCurrentStateFields" methodname="WeatherSystem_ApplyWeather_UpdatesCurrentStateFields" classname="GameScriptsTests" runstate="Runnable" seed="1963942663" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.003727" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -381,121 +664,127 @@ Instantiating material due to calling renderer.material during edit mode. This w
           <output><![CDATA[WeatherSystem: HeavyRain | Intensity: 0.85 | Temp: 14.0°C
 ]]></output>
         </test-case>
-        <test-case id="1224" name="WeatherSystem_ExtractHelpers_ParseNumbersAndFallbackToZero" fullname="GameScriptsTests.WeatherSystem_ExtractHelpers_ParseNumbersAndFallbackToZero" methodname="WeatherSystem_ExtractHelpers_ParseNumbersAndFallbackToZero" classname="GameScriptsTests" runstate="Runnable" seed="463340583" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.004412" asserts="0">
+        <test-case id="1271" name="WeatherSystem_CurrentCompositeWeatherLabel_AppendsNight_WhenTimeOfDayReportsNight" fullname="GameScriptsTests.WeatherSystem_CurrentCompositeWeatherLabel_AppendsNight_WhenTimeOfDayReportsNight" methodname="WeatherSystem_CurrentCompositeWeatherLabel_AppendsNight_WhenTimeOfDayReportsNight" classname="GameScriptsTests" runstate="Runnable" seed="726287965" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001988" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
         </test-case>
-        <test-suite type="ParameterizedMethod" id="1240" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.014005" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-case id="1254" name="WeatherSystem_ExtractHelpers_ParseNumbersAndFallbackToZero" fullname="GameScriptsTests.WeatherSystem_ExtractHelpers_ParseNumbersAndFallbackToZero" methodname="WeatherSystem_ExtractHelpers_ParseNumbersAndFallbackToZero" classname="GameScriptsTests" runstate="Runnable" seed="1354907281" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.004070" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-suite type="ParameterizedMethod" id="1270" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:41Z" duration="0.021640" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-case id="1233" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(LightRain,0.85f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(LightRain,0.85f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="225414152" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001580" asserts="0">
+          <test-case id="1263" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(LightRain,0.85f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(LightRain,0.85f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="295269307" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.002636" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1234" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(HeavyRain,0.7f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(HeavyRain,0.7f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="502269714" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000890" asserts="0">
+          <test-case id="1264" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(HeavyRain,0.7f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(HeavyRain,0.7f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="441900420" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:40Z" duration="0.001491" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1235" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Thunderstorm,0.65f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Thunderstorm,0.65f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="2069143334" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001174" asserts="0">
+          <test-case id="1265" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Thunderstorm,0.65f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Thunderstorm,0.65f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="666155360" result="Passed" start-time="2026-05-06 09:39:40Z" end-time="2026-05-06 09:39:41Z" duration="0.001254" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1236" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Snow,0.5f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Snow,0.5f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="61317438" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000842" asserts="0">
+          <test-case id="1266" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Snow,0.5f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Snow,0.5f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1854389598" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001681" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1237" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Blizzard,0.35f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Blizzard,0.35f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1214960933" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000726" asserts="0">
+          <test-case id="1267" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Blizzard,0.35f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Blizzard,0.35f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="875184722" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001128" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1238" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Fog,0.9f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Fog,0.9f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="2104262097" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000711" asserts="0">
+          <test-case id="1268" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Fog,0.9f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Fog,0.9f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1752206154" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001410" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1239" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Clear,1.0f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Clear,1.0f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1430400970" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001047" asserts="0">
+          <test-case id="1269" name="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Clear,1.0f)" fullname="GameScriptsTests.WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues(Clear,1.0f)" methodname="WeatherSystem_GetRoadGripMultiplier_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="243641920" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001041" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
         </test-suite>
-        <test-suite type="ParameterizedMethod" id="1213" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.020219" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-suite type="ParameterizedMethod" id="1243" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.020987" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-case id="1203" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Clear,0.0f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Clear,0.0f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="173571751" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.002264" asserts="0">
+          <test-case id="1233" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Clear,0.0f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Clear,0.0f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1838306006" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.002560" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1204" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(PartlyCloudy,0.2f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(PartlyCloudy,0.2f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="793523206" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001117" asserts="0">
+          <test-case id="1234" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(PartlyCloudy,0.2f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(PartlyCloudy,0.2f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="22104919" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001123" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1205" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Overcast,0.4f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Overcast,0.4f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1302536537" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001000" asserts="0">
+          <test-case id="1235" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Overcast,0.4f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Overcast,0.4f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="946558008" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001036" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1206" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Fog,0.7f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Fog,0.7f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1635418024" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000968" asserts="0">
+          <test-case id="1236" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Fog,0.7f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Fog,0.7f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1464651756" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001111" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1207" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Drizzle,0.3f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Drizzle,0.3f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1167997351" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000936" asserts="0">
+          <test-case id="1237" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Drizzle,0.3f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Drizzle,0.3f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="996119482" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001523" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1208" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(LightRain,0.5f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(LightRain,0.5f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="235644687" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001113" asserts="0">
+          <test-case id="1238" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(LightRain,0.5f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(LightRain,0.5f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="829597879" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001077" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1209" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(HeavyRain,0.85f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(HeavyRain,0.85f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1220261368" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000880" asserts="0">
+          <test-case id="1239" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(HeavyRain,0.85f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(HeavyRain,0.85f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="250314742" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001132" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1210" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Thunderstorm,1.0f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Thunderstorm,1.0f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1880254265" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000943" asserts="0">
+          <test-case id="1240" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Thunderstorm,1.0f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Thunderstorm,1.0f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="90673100" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001367" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1211" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Snow,0.6f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Snow,0.6f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="193332057" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000820" asserts="0">
+          <test-case id="1241" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Snow,0.6f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Snow,0.6f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="1182131237" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001281" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1212" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Blizzard,1.0f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Blizzard,1.0f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="587887032" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000813" asserts="0">
+          <test-case id="1242" name="WeatherSystem_IntensityMapping_ReturnsExpectedValues(Blizzard,1.0f)" fullname="GameScriptsTests.WeatherSystem_IntensityMapping_ReturnsExpectedValues(Blizzard,1.0f)" methodname="WeatherSystem_IntensityMapping_ReturnsExpectedValues" classname="GameScriptsTests" runstate="Runnable" seed="420922128" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001183" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
         </test-suite>
-        <test-case id="1222" name="WeatherSystem_ParseAndApplyWeather_DowngradesSnow_WhenCityOutOfSeason" fullname="GameScriptsTests.WeatherSystem_ParseAndApplyWeather_DowngradesSnow_WhenCityOutOfSeason" methodname="WeatherSystem_ParseAndApplyWeather_DowngradesSnow_WhenCityOutOfSeason" classname="GameScriptsTests" runstate="Runnable" seed="537742156" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.005805" asserts="0">
+        <test-case id="1252" name="WeatherSystem_ParseAndApplyWeather_DowngradesSnow_WhenCityOutOfSeason" fullname="GameScriptsTests.WeatherSystem_ParseAndApplyWeather_DowngradesSnow_WhenCityOutOfSeason" methodname="WeatherSystem_ParseAndApplyWeather_DowngradesSnow_WhenCityOutOfSeason" classname="GameScriptsTests" runstate="Runnable" seed="1402698859" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.004365" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -503,7 +792,7 @@ Instantiating material due to calling renderer.material during edit mode. This w
           <output><![CDATA[WeatherSystem: HeavyRain | Intensity: 0.85 | Temp: 5.0°C
 ]]></output>
         </test-case>
-        <test-case id="1223" name="WeatherSystem_ParseAndApplyWeather_KeepsSnow_WhenCityInSeason" fullname="GameScriptsTests.WeatherSystem_ParseAndApplyWeather_KeepsSnow_WhenCityInSeason" methodname="WeatherSystem_ParseAndApplyWeather_KeepsSnow_WhenCityInSeason" classname="GameScriptsTests" runstate="Runnable" seed="1668535005" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.004535" asserts="0">
+        <test-case id="1253" name="WeatherSystem_ParseAndApplyWeather_KeepsSnow_WhenCityInSeason" fullname="GameScriptsTests.WeatherSystem_ParseAndApplyWeather_KeepsSnow_WhenCityInSeason" methodname="WeatherSystem_ParseAndApplyWeather_KeepsSnow_WhenCityInSeason" classname="GameScriptsTests" runstate="Runnable" seed="504981243" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.003506" asserts="0">
           <properties>
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
@@ -511,152 +800,184 @@ Instantiating material due to calling renderer.material during edit mode. This w
           <output><![CDATA[WeatherSystem: Snow | Intensity: 0.60 | Temp: -2.5°C
 ]]></output>
         </test-case>
-        <test-suite type="ParameterizedMethod" id="1232" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.019873" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-suite type="ParameterizedMethod" id="1262" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.016153" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-case id="1225" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Drizzle,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Drizzle,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1253333435" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.002200" asserts="0">
+          <test-case id="1255" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Drizzle,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Drizzle,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1774152382" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.002895" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1226" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(LightRain,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(LightRain,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1578749564" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001019" asserts="0">
+          <test-case id="1256" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(LightRain,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(LightRain,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1924487861" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001141" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1227" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(HeavyRain,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(HeavyRain,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1260332137" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000825" asserts="0">
+          <test-case id="1257" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(HeavyRain,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(HeavyRain,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1439202722" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001076" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1228" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Thunderstorm,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Thunderstorm,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="338863610" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001413" asserts="0">
+          <test-case id="1258" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Thunderstorm,True,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Thunderstorm,True,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="853508878" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001218" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1229" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Snow,False,True)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Snow,False,True)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1546932503" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001251" asserts="0">
+          <test-case id="1259" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Snow,False,True)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Snow,False,True)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1451654420" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001599" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1230" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Blizzard,False,True)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Blizzard,False,True)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1915155677" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001376" asserts="0">
+          <test-case id="1260" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Blizzard,False,True)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Blizzard,False,True)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1668077325" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001222" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1231" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Clear,False,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Clear,False,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="1667617375" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001327" asserts="0">
+          <test-case id="1261" name="WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Clear,False,False)" fullname="GameScriptsTests.WeatherSystem_PrecipitationFlags_MatchCurrentWeather(Clear,False,False)" methodname="WeatherSystem_PrecipitationFlags_MatchCurrentWeather" classname="GameScriptsTests" runstate="Runnable" seed="664371101" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001041" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
         </test-suite>
-        <test-suite type="ParameterizedMethod" id="1221" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.020972" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-suite type="ParameterizedMethod" id="1251" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.014872" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-case id="1216" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Desert,False,False,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Desert,False,False,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="1923454209" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.004405" asserts="0">
+          <test-case id="1246" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Desert,False,False,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Desert,False,False,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="1347243342" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.003615" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1217" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Temperate,False,True,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Temperate,False,True,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="903050048" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.002105" asserts="0">
+          <test-case id="1247" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Temperate,False,True,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Temperate,False,True,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="2104320919" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001353" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1218" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,True,False,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,True,False,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="1425601637" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001525" asserts="0">
+          <test-case id="1248" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,True,False,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,True,False,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="839455364" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001831" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1219" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,False,False,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,False,False,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="1627667351" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001924" asserts="0">
+          <test-case id="1249" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,False,False,False)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Tropical,False,False,False)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="1423624648" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001521" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1220" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Subtropical,True,False,True)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Subtropical,True,False,True)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="1801115340" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001510" asserts="0">
+          <test-case id="1250" name="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Subtropical,True,False,True)" fullname="GameScriptsTests.WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules(Subtropical,True,False,True)" methodname="WeatherSystem_SimulateWeatherForCity_ReturnsOnlyAllowedStatesForItsClimateRules" classname="GameScriptsTests" runstate="Runnable" seed="1634006180" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001283" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
         </test-suite>
-        <test-suite type="ParameterizedMethod" id="1202" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.029882" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-suite type="ParameterizedMethod" id="1232" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.025482" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-case id="1191" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(0,Clear)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(0,Clear)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="983608581" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.002132" asserts="0">
+          <test-case id="1221" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(0,Clear)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(0,Clear)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="2083825724" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.002195" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1192" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(2,PartlyCloudy)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(2,PartlyCloudy)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1089616582" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001349" asserts="0">
+          <test-case id="1222" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(2,PartlyCloudy)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(2,PartlyCloudy)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="834746876" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001448" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1193" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(3,Overcast)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(3,Overcast)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="299296322" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000866" asserts="0">
+          <test-case id="1223" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(3,Overcast)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(3,Overcast)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1688990626" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001202" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1194" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(45,Fog)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(45,Fog)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1141770504" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000926" asserts="0">
+          <test-case id="1224" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(45,Fog)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(45,Fog)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="970013414" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001563" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1195" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(53,Drizzle)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(53,Drizzle)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1656798131" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001039" asserts="0">
+          <test-case id="1225" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(53,Drizzle)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(53,Drizzle)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1459202499" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001253" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1196" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(62,LightRain)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(62,LightRain)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="502432492" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001015" asserts="0">
+          <test-case id="1226" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(62,LightRain)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(62,LightRain)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="2110075226" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001960" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1197" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(65,HeavyRain)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(65,HeavyRain)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1304998786" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000973" asserts="0">
+          <test-case id="1227" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(65,HeavyRain)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(65,HeavyRain)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1292413531" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001621" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1198" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(73,Snow)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(73,Snow)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="410501854" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.001057" asserts="0">
+          <test-case id="1228" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(73,Snow)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(73,Snow)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="2126596545" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001383" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1199" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(81,LightRain)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(81,LightRain)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="579617684" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000866" asserts="0">
+          <test-case id="1229" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(81,LightRain)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(81,LightRain)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="2034802603" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001292" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1200" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(96,Thunderstorm)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(96,Thunderstorm)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="1506562179" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000884" asserts="0">
+          <test-case id="1230" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(96,Thunderstorm)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(96,Thunderstorm)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="475332844" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001242" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
           </test-case>
-          <test-case id="1201" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(999,Clear)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(999,Clear)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="676746730" result="Passed" start-time="2026-04-02 13:13:45Z" end-time="2026-04-02 13:13:45Z" duration="0.000808" asserts="0">
+          <test-case id="1231" name="WeatherSystem_WmoCodeMapping_ReturnsExpectedState(999,Clear)" fullname="GameScriptsTests.WeatherSystem_WmoCodeMapping_ReturnsExpectedState(999,Clear)" methodname="WeatherSystem_WmoCodeMapping_ReturnsExpectedState" classname="GameScriptsTests" runstate="Runnable" seed="524801634" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001150" asserts="0">
             <properties>
               <property name="retryIteration" value="0" />
               <property name="repeatIteration" value="0" />
             </properties>
-            <output><![CDATA[[Code Coverage] Code Coverage results for visited sequence points were saved in /home/vng370/Documents/coding/python/My-project/TestResults/Coverage/My-project-opencov/EditMode/TestCoverageResults_0001.xml
+          </test-case>
+        </test-suite>
+        <test-case id="1284" name="XPSystem_DefaultDefinitions_CoverTenRanks_AndExposeThresholds" fullname="GameScriptsTests.XPSystem_DefaultDefinitions_CoverTenRanks_AndExposeThresholds" methodname="XPSystem_DefaultDefinitions_CoverTenRanks_AndExposeThresholds" classname="GameScriptsTests" runstate="Runnable" seed="2072260477" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.001944" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1288" name="RoadGraphTests" fullname="RoadGraphTests" classname="RoadGraphTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.027992" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-case id="1289" name="OverpassQueryBuilder_RoadsQuery_IncludesBboxAndHighwayFilter" fullname="RoadGraphTests.OverpassQueryBuilder_RoadsQuery_IncludesBboxAndHighwayFilter" methodname="OverpassQueryBuilder_RoadsQuery_IncludesBboxAndHighwayFilter" classname="RoadGraphTests" runstate="Runnable" seed="1963027915" result="Failed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.002701" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <failure>
+            <message><![CDATA[  Expected: String containing "(-1,36,-0.9,36.1)"
+  But was:  "[out:json][timeout:120];way[highway~"motorway|trunk|primary|secondary|tertiary|residential|unclassified|service"](-1.0000000,36.0000000,-0.9000000,36.1000000);out geom;"
+]]></message>
+            <stack-trace><![CDATA[at RoadGraphTests.OverpassQueryBuilder_RoadsQuery_IncludesBboxAndHighwayFilter () [0x0003e] in /home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Tests/Editor/RoadGraphTests.cs:11
+]]></stack-trace>
+          </failure>
+        </test-case>
+        <test-case id="1290" name="RoadGraph_BuildFromOverpassWays_CreatesConnectivityForSimpleWay" fullname="RoadGraphTests.RoadGraph_BuildFromOverpassWays_CreatesConnectivityForSimpleWay" methodname="RoadGraph_BuildFromOverpassWays_CreatesConnectivityForSimpleWay" classname="RoadGraphTests" runstate="Runnable" seed="1798601701" result="Passed" start-time="2026-05-06 09:39:41Z" end-time="2026-05-06 09:39:41Z" duration="0.021526" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[Code Coverage] Code Coverage results for visited sequence points were saved in /home/vng370/Documents/coding/python/My-project/TestResults/Coverage/My-project-opencov/EditMode/TestCoverageResults_0001.xml
 [Code Coverage] Code Coverage Report was generated in /home/vng370/Documents/coding/python/My-project/TestResults/Coverage/Report
 Included Assemblies: GameScripts,GameScripts.Editor
 Excluded Assemblies: GameScriptsTests.Editor
@@ -664,8 +985,7 @@ Included Paths: <Not specified>
 Excluded Paths: <Not specified>
 Saving results to: /home/vng370/Documents/coding/python/My-project/TestResults/editmode-results.xml
 ]]></output>
-          </test-case>
-        </test-suite>
+        </test-case>
       </test-suite>
     </test-suite>
   </test-suite>

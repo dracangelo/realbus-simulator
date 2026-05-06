@@ -18,6 +18,7 @@ public class CitySelectUI : MonoBehaviour
 
     void Start()
     {
+        UnlockManager.EnsureExists();
         ApplyTheme();
         EnsureCityGridLayout();
         SetupButtons();
@@ -123,7 +124,16 @@ public class CitySelectUI : MonoBehaviour
 
         // Update subtitle with country name
         if (subtitleText)
-            subtitleText.text = $"{country.countryName} — {cities.Length} {(cities.Length == 1 ? "city" : "cities")}";
+        {
+            int unlockedCount = 0;
+            for (int i = 0; i < cities.Length; i++)
+            {
+                if (cities[i] != null && (UnlockManager.Instance == null || UnlockManager.Instance.IsCityUnlocked(cities[i])))
+                    unlockedCount++;
+            }
+
+            subtitleText.text = $"{country.countryName} — {unlockedCount}/{cities.Length} unlocked";
+        }
 
         foreach (var city in cities)
             if (city != null)
@@ -158,6 +168,10 @@ public class CitySelectUI : MonoBehaviour
 
     void CreateCityCard(CityDefinition city)
     {
+        bool unlocked = UnlockManager.Instance == null || UnlockManager.Instance.IsCityUnlocked(city);
+        int requiredRank = UnlockManager.Instance != null ? UnlockManager.Instance.GetRequiredRank(city) : 1;
+        string tooltip = UnlockManager.Instance != null ? UnlockManager.Instance.GetCityLockTooltip(city) : "Unlocked";
+
         // Card root
         GameObject card = new GameObject($"Card_{city.cityCode}");
         card.transform.SetParent(cityListContainer, false);
@@ -170,14 +184,15 @@ public class CitySelectUI : MonoBehaviour
         layout.preferredHeight = 160f;
 
         var img = card.AddComponent<Image>();
-        img.color = UITheme.Surface;
+        img.color = unlocked ? UITheme.Surface : UITheme.WithAlpha(UITheme.SurfaceHigh, 0.92f);
 
         var btn = card.AddComponent<Button>();
         var cols = btn.colors;
-        cols.normalColor = UITheme.Surface;
-        cols.highlightedColor = UITheme.SurfaceHigh;
-        cols.pressedColor = UITheme.WithAlpha(UITheme.Surface, 0.6f);
+        cols.normalColor = img.color;
+        cols.highlightedColor = unlocked ? UITheme.SurfaceHigh : img.color;
+        cols.pressedColor = unlocked ? UITheme.WithAlpha(UITheme.Surface, 0.6f) : img.color;
         btn.colors = cols;
+        btn.interactable = unlocked;
 
         // Top accent bar (full width, 5px tall at top)
         GameObject accentBar = new GameObject("AccentBar");
@@ -188,7 +203,7 @@ public class CitySelectUI : MonoBehaviour
         barRect.sizeDelta = new Vector2(0f, 5f);
         barRect.anchoredPosition = new Vector2(0f, -2.5f);
         var barImg = accentBar.AddComponent<Image>();
-        barImg.color = UITheme.GetContinentColor(city.country);
+        barImg.color = unlocked ? UITheme.GetContinentColor(city.country) : UITheme.Outline;
 
         // City name — upper center
         GameObject nameObj = new GameObject("Text_CityName");
@@ -198,7 +213,7 @@ public class CitySelectUI : MonoBehaviour
         nameTmp.fontSize = 18;
         nameTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         nameTmp.fontStyle = FontStyles.Bold;
-        nameTmp.color = UITheme.TextPrimary;
+        nameTmp.color = unlocked ? UITheme.TextPrimary : UITheme.TextMuted;
         nameTmp.alignment = TextAlignmentOptions.Center;
         nameTmp.overflowMode = TextOverflowModes.Ellipsis;
         nameTmp.textWrappingMode = TextWrappingModes.Normal;
@@ -215,7 +230,7 @@ public class CitySelectUI : MonoBehaviour
         countryTmp.text = city.country;
         countryTmp.fontSize = 13;
         countryTmp.font = UITheme.GetFont(UITheme.FontWeight.Regular);
-        countryTmp.color = UITheme.TextSecondary;
+        countryTmp.color = unlocked ? UITheme.TextSecondary : UITheme.TextMuted;
         countryTmp.alignment = TextAlignmentOptions.Center;
         countryTmp.overflowMode = TextOverflowModes.Ellipsis;
         countryTmp.textWrappingMode = TextWrappingModes.Normal;
@@ -225,12 +240,64 @@ public class CitySelectUI : MonoBehaviour
         countryRect.offsetMin = new Vector2(8f, 0f);
         countryRect.offsetMax = new Vector2(-8f, 0f);
 
+        if (!unlocked)
+        {
+            GameObject lockObj = new GameObject("Text_Lock");
+            lockObj.transform.SetParent(card.transform, false);
+            var lockTmp = lockObj.AddComponent<TextMeshProUGUI>();
+            lockTmp.text = "LOCKED";
+            lockTmp.fontSize = 12f;
+            lockTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+            lockTmp.color = UITheme.Error;
+            lockTmp.alignment = TextAlignmentOptions.Center;
+            var lockRect = lockObj.GetComponent<RectTransform>();
+            lockRect.anchorMin = new Vector2(0f, 0.74f);
+            lockRect.anchorMax = new Vector2(1f, 0.92f);
+            lockRect.offsetMin = new Vector2(8f, 0f);
+            lockRect.offsetMax = new Vector2(-8f, 0f);
+
+            GameObject tooltipObj = new GameObject("Text_Tooltip");
+            tooltipObj.transform.SetParent(card.transform, false);
+            var tooltipTmp = tooltipObj.AddComponent<TextMeshProUGUI>();
+            tooltipTmp.text = $"{tooltip.ToUpper()}  •  LOCKED";
+            tooltipTmp.fontSize = 11f;
+            tooltipTmp.font = UITheme.GetFont(UITheme.FontWeight.Medium);
+            tooltipTmp.color = UITheme.TextSecondary;
+            tooltipTmp.alignment = TextAlignmentOptions.Center;
+            tooltipTmp.enableWordWrapping = true;
+            var tooltipRect = tooltipObj.GetComponent<RectTransform>();
+            tooltipRect.anchorMin = new Vector2(0f, 0f);
+            tooltipRect.anchorMax = new Vector2(1f, 0.2f);
+            tooltipRect.offsetMin = new Vector2(10f, 8f);
+            tooltipRect.offsetMax = new Vector2(-10f, -6f);
+        }
+        else
+        {
+            float completion = UnlockManager.Instance != null ? UnlockManager.Instance.GetCityCompletion01(city) : 0f;
+            GameObject statusObj = new GameObject("Text_Status");
+            statusObj.transform.SetParent(card.transform, false);
+            var statusTmp = statusObj.AddComponent<TextMeshProUGUI>();
+            statusTmp.text = completion >= 0.999f ? "GRAND TOUR READY" : $"{Mathf.RoundToInt(completion * 100f)}% ROUTES COMPLETE";
+            statusTmp.fontSize = 11f;
+            statusTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+            statusTmp.color = completion >= 0.999f ? UITheme.Accent : UITheme.TextSecondary;
+            statusTmp.alignment = TextAlignmentOptions.Center;
+            var statusRect = statusObj.GetComponent<RectTransform>();
+            statusRect.anchorMin = new Vector2(0f, 0f);
+            statusRect.anchorMax = new Vector2(1f, 0.2f);
+            statusRect.offsetMin = new Vector2(10f, 8f);
+            statusRect.offsetMax = new Vector2(-10f, -6f);
+        }
+
         var capturedCity = city;
         btn.onClick.AddListener(() => OnCitySelected(capturedCity));
     }
 
     void OnCitySelected(CityDefinition city)
     {
+        if (city == null || (UnlockManager.Instance != null && !UnlockManager.Instance.IsCityUnlocked(city)))
+            return;
+
         Debug.Log($"City selected: {city.cityName}");
         if (GameState.Instance != null) GameState.Instance.SelectCity(city);
         if (CityManager.Instance != null) CityManager.Instance.SetActiveCity(city);

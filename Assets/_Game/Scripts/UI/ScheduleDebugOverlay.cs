@@ -34,7 +34,9 @@ public class ScheduleDebugOverlay : MonoBehaviour
             string scheduledLabel = FormatMinutes(scheduled);
             string actualLabel = schedule.HasActualArrival(i) ? FormatMinutes(schedule.GetActualArrival(i)) : "--:--";
             string status = schedule.HasActualArrival(i) ? schedule.GetStatusLabel(i) : "Pending";
-            text += $"{i + 1}. {mission.currentRoute.stops[i].stopName} | ETA {scheduledLabel} | ACT {actualLabel} | {status}\n";
+            string delta = schedule.HasActualArrival(i) ? $"{schedule.GetArrivalDeltaSeconds(i):+0;-0;0}s" : "--";
+            string penalty = schedule.HasActualArrival(i) ? $"{schedule.GetLatePenaltyPercent(i):0}%" : "--";
+            text += $"{i + 1}. {mission.currentRoute.stops[i].stopName} | ETA {scheduledLabel} | ACT {actualLabel} | Δ {delta} | {status} | Pen {penalty}\n";
         }
 
         overlayText.text = text.TrimEnd();

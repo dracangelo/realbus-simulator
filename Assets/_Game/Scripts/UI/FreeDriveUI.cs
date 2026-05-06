@@ -30,9 +30,17 @@ public class FreeDriveUI : MonoBehaviour
     [Header("GPS")]
     public TextMeshProUGUI gpsText;
 
+    [Header("Photo Mode")]
+    public Button photoModeButton;
+    public TextMeshProUGUI photoModeButtonText;
+    public Button screenshotButton;
+    public TextMeshProUGUI screenshotButtonText;
+    public TextMeshProUGUI photoModeStatusText;
+
     void Start()
     {
         ApplyTheme();
+        SetupButtons();
     }
 
     void ApplyTheme()
@@ -93,6 +101,31 @@ public class FreeDriveUI : MonoBehaviour
             gpsText.color = UITheme.TextMuted;
             gpsText.fontSize = 14;
         }
+        if (photoModeButtonText)
+        {
+            photoModeButtonText.text = "PHOTO MODE";
+            photoModeButtonText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
+            photoModeButtonText.color = UITheme.TextPrimary;
+        }
+        if (screenshotButtonText)
+        {
+            screenshotButtonText.text = "SCREENSHOT";
+            screenshotButtonText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
+            screenshotButtonText.color = UITheme.TextPrimary;
+        }
+        if (photoModeStatusText)
+        {
+            photoModeStatusText.font = UITheme.GetFont(UITheme.FontWeight.Regular);
+            photoModeStatusText.color = UITheme.TextMuted;
+        }
+    }
+
+    void SetupButtons()
+    {
+        if (photoModeButton != null)
+            photoModeButton.onClick.AddListener(TogglePhotoMode);
+        if (screenshotButton != null)
+            screenshotButton.onClick.AddListener(CaptureScreenshot);
     }
 
     void Update()
@@ -133,43 +166,31 @@ public class FreeDriveUI : MonoBehaviour
         }
 
         if (distanceText)
-            distanceText.text = $"{session.distanceDrivenKm:F2} km";
+            distanceText.text = $"ODO {session.distanceDrivenKm:F2} km";
 
         if (timeText)
-            timeText.text = session.GetFormattedTime();
+            timeText.text = PhotoModeController.Instance != null && PhotoModeController.Instance.IsPhotoModeActive
+                ? "PHOTO MODE"
+                : string.Empty;
 
         if (gpsText)
-        {
-            string eventSuffix = DynamicEventSystem.Instance != null && DynamicEventSystem.Instance.ActiveEvent != null
-                ? $" • {DynamicEventSystem.Instance.ActiveEvent.title}"
-                : "";
-            string diversionSuffix = MissionManager.Instance != null && MissionManager.Instance.HasActiveDiversion
-                ? " • DETOUR"
-                : "";
-            gpsText.text = $"{session.GetCurrentGPSString()}{eventSuffix}{diversionSuffix}";
-        }
+            gpsText.text = $"GPS {session.GetCurrentGPSString()}";
 
-        if (passengerText && PassengerManager.Instance != null)
-        {
-            string stopRequestSuffix = PassengerManager.Instance.stopRequestActive
-                ? PassengerManager.Instance.stopRequestAcknowledged ? " • STOP ACK" : " • STOP REQ"
-                : "";
-            passengerText.text =
-                $"{PassengerManager.Instance.currentPassengers} PAX{stopRequestSuffix}";
-        }
+        if (passengerText)
+            passengerText.text = string.Empty;
 
-        if (clockText && ScheduleManager.Instance != null)
-            clockText.text = ScheduleManager.Instance.currentTimeString;
+        if (clockText)
+            clockText.text = string.Empty;
 
-        if (scoreText && ScoreTracker.Instance != null)
+        if (scoreText)
+            scoreText.text = string.Empty;
+
+        if (photoModeStatusText != null)
         {
-            string violationSuffix = ExtendedTrafficViolationSystem.Instance != null && ExtendedTrafficViolationSystem.Instance.TotalViolationCount > 0
-                ? $" • V{ExtendedTrafficViolationSystem.Instance.TotalViolationCount}"
-                : "";
-            string eventSuffix = DynamicEventSystem.Instance != null && DynamicEventSystem.Instance.ActiveEvent != null
-                ? $" • {DynamicEventSystem.Instance.ActiveEvent.title}"
-                : "";
-            scoreText.text = $"{ScoreTracker.Instance.totalScore:F0}%{violationSuffix}{eventSuffix}";
+            if (PhotoModeController.Instance != null && PhotoModeController.Instance.IsPhotoModeActive)
+                photoModeStatusText.text = "WASD MOVE • RMB LOOK • F12 SCREENSHOT • F10 EXIT";
+            else
+                photoModeStatusText.text = "F10 PHOTO MODE • F12 QUICK SHOT";
         }
     }
 
@@ -177,5 +198,21 @@ public class FreeDriveUI : MonoBehaviour
     {
         if (fuelSystem == null)
             fuelSystem = FindFirstObjectByType<FuelSystem>();
+    }
+
+    void TogglePhotoMode()
+    {
+        if (PhotoModeController.Instance == null)
+            return;
+
+        if (PhotoModeController.Instance.IsPhotoModeActive)
+            PhotoModeController.Instance.ExitPhotoMode();
+        else
+            PhotoModeController.Instance.EnterPhotoMode();
+    }
+
+    void CaptureScreenshot()
+    {
+        PhotoModeController.Instance?.CaptureScreenshot();
     }
 }

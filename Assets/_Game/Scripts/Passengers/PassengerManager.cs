@@ -61,13 +61,21 @@ public class PassengerManager : MonoBehaviour
     public Vector3 doorLocalPosition = new Vector3(0.9f, 1.05f, -2.4f);
     public Vector3 platformLocalPosition = new Vector3(1.7f, 0f, -2.8f);
 
+    [Header("Door & Bell")]
+    public AudioSource bellAudioSource;
+    public AudioClip bellClip;
+    public float bellVolume = 1f;
+
     private BusController busController;
     private readonly List<PassengerAgent> onboardPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> waitingPassengers = new List<PassengerAgent>();
+    private readonly List<PassengerAgent> alightingPassengers = new List<PassengerAgent>();
     private float lastSpeedKmh = 0f;
     private float longitudinalAcceleration = 0f;
     private float currentLongitudinalG = 0f;
     private bool hadElderlyBoarding = false;
+    private float accessibilityResetTimer = -1f;
+    private float lastAlightingTimeUnits = 0f;
 
     void Awake()
     {
@@ -86,8 +94,10 @@ public class PassengerManager : MonoBehaviour
         TrackBusAcceleration();
         UpdateOnboardPassengerDynamics();
         UpdatePassengerAnimationState();
+        UpdateAccessibilityReset();
         UpdatePatience();
         HandleStopRequestAcknowledgeInput();
+        HandleDoorOpenInput();
     }
 
     void TrackDistance()
@@ -148,6 +158,23 @@ public class PassengerManager : MonoBehaviour
             if (!passenger.isBoarding && !passenger.isAlighting)
                 passenger.busLocalPosition = Vector3.Lerp(passenger.busLocalPosition, target, Time.deltaTime * 4f);
         }
+
+        for (int i = alightingPassengers.Count - 1; i >= 0; i--)
+        {
+            var passenger = alightingPassengers[i];
+            if (passenger == null)
+            {
+                alightingPassengers.RemoveAt(i);
+                continue;
+            }
+
+            passenger.TickAlightingAnimation(Time.deltaTime, doorLocalPosition, alightingAnimationSpeed);
+            if (!passenger.HasReachedExit(doorLocalPosition))
+                continue;
+
+            passenger.MarkExited();
+            alightingPassengers.RemoveAt(i);
+        }
     }
 
     void UpdatePatience()
@@ -157,6 +184,20 @@ public class PassengerManager : MonoBehaviour
         float dt = Time.deltaTime;
         for (int i = 0; i < waitingPassengers.Count; i++)
             waitingPassengers[i].TickPatience(dt);
+    }
+
+    void UpdateAccessibilityReset()
+    {
+        if (accessibilityResetTimer < 0f)
+            return;
+
+        accessibilityResetTimer -= Time.deltaTime;
+        if (accessibilityResetTimer > 0f)
+            return;
+
+        accessibilityResetTimer = -1f;
+        if (busController != null)
+            busController.RequestKneelingSuspension(false);
     }
 
     public int GetMaxCapacity()
@@ -292,6 +333,25 @@ public class PassengerManager : MonoBehaviour
         stopRequestAcknowledged = true;
     }
 
+    public void ResetForFreeDriveMode()
+    {
+        onboardPassengers.Clear();
+        waitingPassengers.Clear();
+        alightingPassengers.Clear();
+        currentPassengers = 0;
+        waitingAtCurrentStop = 0;
+        lastAlightingCount = 0;
+        lastBoardingCount = 0;
+        doorsOpen = false;
+        latestRequiredDwellSeconds = 0f;
+        stopRequestActive = false;
+        stopRequestAcknowledged = false;
+        upcomingStopIndex = -1;
+        hadWheelchairBoarding = false;
+        accessibilityResetTimer = -1f;
+        lastAlightingTimeUnits = 0f;
+    }
+
     int ProcessAlighting(int stopIndex)
     {
         if (!useAdvancedPassengerSimulation || onboardPassengers.Count == 0 || stopIndex < 0)
@@ -307,14 +367,19 @@ public class PassengerManager : MonoBehaviour
         }
 
         int alighting = 0;
+        lastAlightingTimeUnits = 0f;
         for (int i = onboardPassengers.Count - 1; i >= 0; i--)
         {
             var p = onboardPassengers[i];
             if (p == null) continue;
             if (p.destinationStopIndex == stopIndex)
             {
+                p.ClearStopRequest();
                 p.MarkAlightingToDoor();
+                if (!alightingPassengers.Contains(p))
+                    alightingPassengers.Add(p);
                 onboardPassengers.RemoveAt(i);
+                lastAlightingTimeUnits += p.GetAlightingTimeMultiplier();
                 alighting++;
             }
         }
@@ -407,7 +472,7 @@ public class PassengerManager : MonoBehaviour
 
     void RecalculateSatisfaction()
     {
-        if (onboardPassengers.Count == 0 && waitingPassengers.Count == 0)
+        if (onboardPassengers.Count == 0 && waitingPassengers.Count == 0 && alightingPassengers.Count == 0)
         {
             averageSatisfaction = 1f;
             return;
@@ -422,6 +487,12 @@ public class PassengerManager : MonoBehaviour
             count++;
         }
         foreach (var p in waitingPassengers)
+        {
+            if (p == null) continue;
+            sum += p.satisfaction;
+            count++;
+        }
+        foreach (var p in alightingPassengers)
         {
             if (p == null) continue;
             sum += p.satisfaction;
@@ -444,7 +515,7 @@ public class PassengerManager : MonoBehaviour
             boardingTime += boardingTimePerPassenger * passenger.GetBoardingTimeMultiplier();
         }
 
-        float alightingTime = alightingTimePerPassenger * lastAlightingCount;
+        float alightingTime = alightingTimePerPassenger * Mathf.Max(lastAlightingCount, lastAlightingTimeUnits);
         latestRequiredDwellSeconds = Mathf.Max(2f, boardingTime + alightingTime);
 
         if (hadWheelchairBoarding)
@@ -452,19 +523,27 @@ public class PassengerManager : MonoBehaviour
             latestRequiredDwellSeconds += extraWheelchairDwellSeconds;
             if (busController != null)
                 busController.RequestKneelingSuspension(true);
+            ArmAccessibilityReset(latestRequiredDwellSeconds);
         }
         if (hadElderlyBoarding)
         {
             latestRequiredDwellSeconds = Mathf.Max(latestRequiredDwellSeconds, 10f);
             if (busController != null)
                 busController.RequestKneelingSuspension(true);
+            ArmAccessibilityReset(latestRequiredDwellSeconds);
         }
-        else if (busController != null)
+        else if (!hadWheelchairBoarding && busController != null)
         {
+            accessibilityResetTimer = -1f;
             busController.RequestKneelingSuspension(false);
         }
 
         hadElderlyBoarding = false;
+    }
+
+    void ArmAccessibilityReset(float seconds)
+    {
+        accessibilityResetTimer = Mathf.Max(accessibilityResetTimer, Mathf.Max(0.1f, seconds));
     }
 
     void PrepareAccessibilityBoarding()
@@ -543,12 +622,12 @@ public class PassengerManager : MonoBehaviour
         passenger.PressStopRequest();
         stopRequestActive = true;
         stopRequestAcknowledged = false;
+        RingBell();
         Debug.Log("[Passenger] Stop request bell pressed.");
     }
 
     void ClearStopRequestsAtStop(int stopIndex)
     {
-        bool fulfilled = false;
         for (int i = 0; i < onboardPassengers.Count; i++)
         {
             var passenger = onboardPassengers[i];
@@ -556,17 +635,23 @@ public class PassengerManager : MonoBehaviour
                 continue;
 
             if (passenger.destinationStopIndex == stopIndex)
-            {
                 passenger.ClearStopRequest();
-                fulfilled = true;
+        }
+
+        bool anyOutstandingRequest = false;
+        for (int i = 0; i < onboardPassengers.Count; i++)
+        {
+            var passenger = onboardPassengers[i];
+            if (passenger != null && passenger.stopRequested)
+            {
+                anyOutstandingRequest = true;
+                break;
             }
         }
 
-        if (fulfilled || currentPassengers == 0)
-        {
-            stopRequestActive = false;
+        stopRequestActive = anyOutstandingRequest;
+        if (!anyOutstandingRequest || currentPassengers == 0)
             stopRequestAcknowledged = false;
-        }
     }
 
     void HandleStopRequestAcknowledgeInput()
@@ -574,5 +659,23 @@ public class PassengerManager : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard != null && keyboard.bKey.wasPressedThisFrame)
             AcknowledgeStopRequest();
+    }
+
+    void HandleDoorOpenInput()
+    {
+        var keyboard = Keyboard.current;
+        if (keyboard == null || !keyboard.oKey.wasPressedThisFrame)
+            return;
+
+        RingBell();
+
+        if (MissionManager.Instance != null && MissionManager.Instance.routeActive)
+            MissionManager.Instance.TryOpenDoorsAtCurrentStop();
+    }
+
+    void RingBell()
+    {
+        if (bellAudioSource != null && bellClip != null)
+            bellAudioSource.PlayOneShot(bellClip, bellVolume);
     }
 }

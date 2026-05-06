@@ -104,6 +104,18 @@ public class PassengerAgent
             Mathf.Max(0.1f, moveSpeed) * deltaTime);
     }
 
+    public bool HasReachedExit(Vector3 doorLocalPosition, float threshold = 0.08f)
+    {
+        return Vector3.Distance(busLocalPosition, doorLocalPosition) <= Mathf.Max(0.01f, threshold);
+    }
+
+    public void MarkExited()
+    {
+        isAlighting = false;
+        preparingToAlight = false;
+        stopRequested = false;
+    }
+
     public void RegisterHarshAcceleration()
     {
         satisfaction = Mathf.Clamp01(satisfaction - 0.04f);

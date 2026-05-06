@@ -48,6 +48,7 @@
     <Analyzer Include="/home/vng370/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Tools/BuildPipeline/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets/_Game/Scripts/Map/OsmCityPopulationSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusSpec.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AmbulanceBehaviour.cs" />
     <Compile Include="Assets/_Game/Scripts/City/CityDefinition.cs" />
@@ -101,6 +102,7 @@
     <Compile Include="Assets/_Game/Scripts/Map/DockingZone.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/MaintenanceSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/SkyController.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/PhotoModeController.cs" />
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeOsmPoiVisualizer.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficStressTest.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MapOrigin.cs" />
@@ -151,6 +153,7 @@
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeEnvironmentSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DriverShiftSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/StopTrigger.cs" />
+    <Compile Include="Assets/_Game/Scripts/Progress/SaveManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Progress/UnlockManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AIRoadGraph.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs" />

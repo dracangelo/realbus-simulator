@@ -7,7 +7,7 @@ public class ScheduleManager : MonoBehaviour
 
     [Header("Schedule Settings")]
     public float gameStartTimeMinutes = 480f; // 08:00
-    public float secondsPerGameMinute = 1f;   // 1 real second = 1 game minute
+    public float secondsPerGameMinute = 60f;   // 1 real minute = 1 game minute
 
     [Header("State")]
     public float currentTimeMinutes = 480f;
@@ -50,7 +50,13 @@ public class ScheduleManager : MonoBehaviour
         scheduledArrivals.Clear();
         actualArrivals.Clear();
 
-        float interval = durationMins / (route.stops.Length - 1);
+        if (route == null || route.stops == null || route.stops.Length == 0)
+            return;
+
+        currentTimeMinutes = departureMins;
+        float interval = route.stops.Length > 1
+            ? durationMins / (route.stops.Length - 1)
+            : 0f;
         for (int i = 0; i < route.stops.Length; i++)
             scheduledArrivals[i] = departureMins + (i * interval);
 
@@ -100,6 +106,17 @@ public class ScheduleManager : MonoBehaviour
             return 0f;
 
         return actualArrivals[stopIndex] - scheduledArrivals[stopIndex];
+    }
+
+    public float GetArrivalDeltaSeconds(int stopIndex)
+    {
+        return GetArrivalDeltaMinutes(stopIndex) * 60f;
+    }
+
+    public float GetLatePenaltyPercent(int stopIndex)
+    {
+        float lateSeconds = Mathf.Max(0f, GetArrivalDeltaSeconds(stopIndex));
+        return Mathf.Floor(lateSeconds / 30f) * 2f;
     }
 
     public float GetEarlyWaitSecondsRequired(int stopIndex)

@@ -17,6 +17,7 @@ public class ScoreTracker : MonoBehaviour
     public float satisfactionScore = 100f;
     private float hardBrakingPenalty = 0f;
     private float sharpCornerPenalty = 0f;
+    private float harshAccelerationPenalty = 0f;
 
     [Header("Safety (25%)")]
     public float safetyScore = 100f;
@@ -67,7 +68,7 @@ public class ScoreTracker : MonoBehaviour
         if (decelerationG > 0.4f)
         {
             hardBrakingPenalty += decelerationG * Time.deltaTime * 2f;
-            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty);
+            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty);
         }
 
         // Sharp cornering — lateral G > 0.3g
@@ -75,7 +76,14 @@ public class ScoreTracker : MonoBehaviour
         if (Mathf.Abs(lateralG) > 0.3f)
         {
             sharpCornerPenalty += Mathf.Abs(lateralG) * Time.deltaTime * 1.5f;
-            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty);
+            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty);
+        }
+
+        float accelerationG = Vector3.Dot(acceleration, busRigidbody.transform.forward) / 9.81f;
+        if (accelerationG > 0.35f)
+        {
+            harshAccelerationPenalty += accelerationG * Time.deltaTime * 1.25f;
+            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty);
         }
     }
 
@@ -83,6 +91,11 @@ public class ScoreTracker : MonoBehaviour
     /// Call when bus arrives at a stop — update punctuality score.
     /// </summary>
     public void RecordStopArrival(PunctualityStatus status)
+    {
+        RecordStopArrival(status, 0f);
+    }
+
+    public void RecordStopArrival(PunctualityStatus status, float arrivalDeltaSeconds)
     {
         stopsCompleted++;
 
@@ -101,6 +114,9 @@ public class ScoreTracker : MonoBehaviour
                 punctualityScore = Mathf.Max(0f, punctualityScore - 20f);
                 break;
         }
+
+        if (arrivalDeltaSeconds > 0f)
+            punctualityScore = Mathf.Max(0f, punctualityScore - (Mathf.Floor(arrivalDeltaSeconds / 30f) * 2f));
     }
 
     public void RecordCollision()
@@ -181,5 +197,13 @@ public class ScoreTracker : MonoBehaviour
                $"Satisfaction: {satisfactionScore:F0}% | " +
                $"Safety: {safetyScore:F0}% | " +
                $"Efficiency: {efficiencyScore:F0}%";
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision == null || collision.relativeVelocity.sqrMagnitude < 4f)
+            return;
+
+        RecordCollision();
     }
 }

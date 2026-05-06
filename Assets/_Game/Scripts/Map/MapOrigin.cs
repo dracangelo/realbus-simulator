@@ -23,9 +23,14 @@ public class MapOrigin : ScriptableObject
     public void SetFromCity(CityDefinition city)
     {
         if (city == null) return;
-        originLat   = city.centreLat;
-        originLon   = city.centreLon;
-        originLabel = city.cityName;
+        SetOrigin(city.centreLat, city.centreLon, city.cityName);
+    }
+
+    public void SetOrigin(double latitude, double longitude, string label = null)
+    {
+        originLat = latitude;
+        originLon = longitude;
+        originLabel = string.IsNullOrWhiteSpace(label) ? "Runtime Origin" : label;
         isInitialised = true;
     }
 

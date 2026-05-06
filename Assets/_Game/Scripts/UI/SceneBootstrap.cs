@@ -11,12 +11,15 @@ public class SceneBootstrap : MonoBehaviour
     [SerializeField] bool redirectIfNoManagers = true;
     [SerializeField] SceneCatalog sceneCatalog;
     [Header("Direct Play Runtime")]
+    [SerializeField] bool autoPopulateCityFromOsm = true;
     [SerializeField] bool spawnSupplementalWorldProps = false;
+    [SerializeField] bool spawnDebugPoiMarkers = false;
     [SerializeField] bool spawnOnlyFirstStopPropsAtMissionStart = false;
     [SerializeField] bool attachMainCameraToBusForDirectPlay = true;
     [SerializeField] bool disableCinemachineVirtualCamerasForDirectPlay = true;
     [SerializeField] bool disableCinemachineBrainForDirectPlay = true;
     [SerializeField] bool forceClearVisibilityForDirectPlay = true;
+    [SerializeField] bool suppressBuildingsForCurrentPhase = false;
     [SerializeField] Vector3 directPlayCameraLocalPosition = new Vector3(0f, 3.2f, -7.5f);
     [SerializeField] Vector3 directPlayCameraLocalEuler = new Vector3(14f, 0f, 0f);
     [Header("Gameplay Fallbacks")]
@@ -138,6 +141,8 @@ public class SceneBootstrap : MonoBehaviour
         EnsureVehicleSupportSystems(missionManager.busController);
 
         EnsureGpsManager();
+        EnsureGpsTracking(missionManager.busController);
+        EnsurePhotoMode(missionManager.busController);
         DisableCinemachineVirtualCamerasForDirectPlay();
         EnsureMainCameraForDirectPlay(missionManager.busController);
         ConfigureRoadGraphBackedSystems(routeToUse);
@@ -148,7 +153,10 @@ public class SceneBootstrap : MonoBehaviour
         EnsureTarmacApplier();
         EnsureWeatherSystems();
         EnsureRuntimeRoadSystems();
+        EnsureRoadSurfaceRuntime(missionManager.busController);
+        ConfigureOptionalTileStreaming(missionManager.busController);
         EnsureBuildingSystems();
+        EnsureOsmCityPopulation();
         EnsurePoiVisualizer();
         EnsureTrafficViolationSystem();
         EnsureDynamicEventSystem();
@@ -157,8 +165,10 @@ public class SceneBootstrap : MonoBehaviour
         if (spawnSupplementalWorldProps)
         {
             EnsureEnvironmentSpawner();
-            EnsureGasStationSpawner();
         }
+
+        if (autoPopulateCityFromOsm)
+            EnsureGasStationSpawner();
 
         EnsureClearVisibility();
         ApplyBusScaleFromMap();
@@ -171,6 +181,8 @@ public class SceneBootstrap : MonoBehaviour
 
         if (busController.GetComponent<MaintenanceSystem>() == null)
             busController.gameObject.AddComponent<MaintenanceSystem>();
+        if (busController.GetComponent<FuelSystem>() == null && busController.GetComponent<BatterySystem>() == null)
+            busController.gameObject.AddComponent<FuelSystem>();
     }
 
     void ApplySelectedBusSpec(BusController busController)
@@ -231,6 +243,38 @@ public class SceneBootstrap : MonoBehaviour
         go.AddComponent<GPSManager>();
     }
 
+    void EnsureGpsTracking(BusController busController)
+    {
+        if (busController == null)
+            return;
+
+        var tracker = FindObjectOfType<GpsTracker>();
+        if (tracker == null)
+        {
+            var go = new GameObject("GpsTracker");
+            tracker = go.AddComponent<GpsTracker>();
+        }
+
+        tracker.busTransform = busController.transform;
+        if (tracker.converter == null)
+            tracker.converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+    }
+
+    void EnsurePhotoMode(BusController busController)
+    {
+        var photoMode = FindObjectOfType<PhotoModeController>();
+        if (photoMode == null)
+        {
+            var go = new GameObject("PhotoModeController");
+            photoMode = go.AddComponent<PhotoModeController>();
+        }
+
+        if (photoMode.targetCamera == null)
+            photoMode.targetCamera = Camera.main != null ? Camera.main : FindObjectOfType<Camera>();
+        if (photoMode.busTransform == null && busController != null)
+            photoMode.busTransform = busController.transform;
+    }
+
     void EnsureRuntimeRoadSystems()
     {
         var osmLoader = FindObjectOfType<OSMLoader>();
@@ -263,6 +307,41 @@ public class SceneBootstrap : MonoBehaviour
             mapLoader.tileMipMapBias = -0.75f;
             mapLoader.preferLabelFreeSatellite = true;
         }
+    }
+
+    void EnsureRoadSurfaceRuntime(BusController busController)
+    {
+        if (busController == null)
+            return;
+
+        var detector = busController.GetComponent<RoadSurfaceDetector>();
+        if (detector == null)
+            detector = busController.gameObject.AddComponent<RoadSurfaceDetector>();
+        detector.busController = busController;
+
+        var friction = busController.GetComponent<RoadSurfaceFrictionController>();
+        if (friction == null)
+            friction = busController.gameObject.AddComponent<RoadSurfaceFrictionController>();
+        friction.busController = busController;
+        friction.surfaceDetector = detector;
+    }
+
+    void ConfigureOptionalTileStreaming(BusController busController)
+    {
+        var streaming = FindObjectOfType<TileStreamManager>();
+        if (streaming == null)
+            return;
+
+        streaming.busController = busController;
+        streaming.busTransform = busController != null ? busController.transform : null;
+        if (streaming.converter == null)
+            streaming.converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+        if (streaming.cache == null)
+            streaming.cache = OfflineCacheManager.Instance ?? FindFirstObjectByType<OfflineCacheManager>();
+        if (streaming.gpsTracker == null)
+            streaming.gpsTracker = GpsTracker.Instance ?? FindFirstObjectByType<GpsTracker>();
+        if (streaming.mapTileLoader == null)
+            streaming.mapTileLoader = FindObjectOfType<MapTileLoader>();
     }
 
     void EnsureTrafficViolationSystem()
@@ -322,6 +401,7 @@ public class SceneBootstrap : MonoBehaviour
 
         pool.roadGraph = graph;
         pool.allowAutoResolveRoadGraph = true;
+        ConfigureVehiclePoolPrefabs(pool);
 
         var busSpawner = FindObjectOfType<AIBusScheduleSpawner>();
         if (busSpawner == null)
@@ -329,6 +409,13 @@ public class SceneBootstrap : MonoBehaviour
             var go = new GameObject("AIBusScheduleSpawner");
             busSpawner = go.AddComponent<AIBusScheduleSpawner>();
         }
+
+        if (busSpawner.aiBusPrefab == null)
+            busSpawner.aiBusPrefab = LoadFirstResourcePrefab(
+                "BussimAssets/bus-models/White Modern Coach Bus",
+                "BussimAssets/bus-models/Laksana",
+                "BussimAssets/bus-models/LUXURY BUS",
+                "BussimAssets/bus-models/Indonesian Bus AdiPutro JetBus");
 
         if (busSpawner.routes == null || busSpawner.routes.Length == 0)
         {
@@ -357,18 +444,38 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureWeatherSystems()
     {
+        var skyController = FindObjectOfType<SkyController>();
+        if (skyController == null)
+        {
+            var skyGo = new GameObject("SkyController");
+            skyController = skyGo.AddComponent<SkyController>();
+            skyController.sunLight = RenderSettings.sun;
+        }
+
+        var rainController = FindObjectOfType<RainController>();
+        if (rainController == null)
+            rainController = new GameObject("RainController").AddComponent<RainController>();
+
+        var fogController = FindObjectOfType<FogController>();
+        if (fogController == null)
+            fogController = new GameObject("FogController").AddComponent<FogController>();
+
         var weatherSystem = FindObjectOfType<WeatherSystem>();
         if (weatherSystem == null)
         {
             var go = new GameObject("WeatherSystem");
             weatherSystem = go.AddComponent<WeatherSystem>();
         }
+        weatherSystem.skyController = skyController;
+        weatherSystem.rainController = rainController;
+        weatherSystem.fogController = fogController;
 
         if (FindObjectOfType<TimeOfDaySystem>() == null)
         {
             var go = new GameObject("TimeOfDaySystem");
             var timeSystem = go.AddComponent<TimeOfDaySystem>();
-            timeSystem.skyController = FindObjectOfType<SkyController>();
+            timeSystem.skyController = skyController;
+            timeSystem.directionalSun = RenderSettings.sun;
         }
     }
 
@@ -491,6 +598,12 @@ public class SceneBootstrap : MonoBehaviour
         var existing = FindObjectOfType<PedestrianSpawner>();
         if (existing != null)
         {
+            if (existing.pedestrianPrefab == null)
+                existing.pedestrianPrefab = LoadFirstResourcePrefab(
+                    "BussimAssets/passenger/Realistic man",
+                    "BussimAssets/passenger/uploads_files_2460380_Marina_1276",
+                    "BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx",
+                    "BussimAssets/passenger/Man_in_black_dress_0227");
             if (existing.roadGraph == null)
                 existing.useRandomGeneratedCrossings = false;
             return;
@@ -500,6 +613,11 @@ public class SceneBootstrap : MonoBehaviour
         var spawner = go.AddComponent<PedestrianSpawner>();
         spawner.roadGraph = FindUsableRoadGraph();
         spawner.useRandomGeneratedCrossings = spawner.roadGraph != null;
+        spawner.pedestrianPrefab = LoadFirstResourcePrefab(
+            "BussimAssets/passenger/Realistic man",
+            "BussimAssets/passenger/uploads_files_2460380_Marina_1276",
+            "BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx",
+            "BussimAssets/passenger/Man_in_black_dress_0227");
     }
 
     void EnsureEnvironmentSpawner()
@@ -545,10 +663,31 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureBuildingSystems()
     {
+        if (suppressBuildingsForCurrentPhase && !autoPopulateCityFromOsm)
+        {
+            var buildingLoader = FindObjectOfType<OSMBuildingLoader>();
+            if (buildingLoader != null)
+                buildingLoader.enabled = false;
+
+            var buildingBuilder = FindObjectOfType<OSMBuildingMeshBuilder>();
+            if (buildingBuilder != null)
+                buildingBuilder.enabled = false;
+
+            var existingBuildings = GameObject.Find("OSM_Buildings");
+            if (existingBuildings != null)
+                existingBuildings.SetActive(false);
+
+            return;
+        }
+
         if (FindObjectOfType<OSMBuildingLoader>() == null)
         {
             var loaderGo = new GameObject("OSMBuildingLoader");
             loaderGo.AddComponent<OSMBuildingLoader>();
+        }
+        else
+        {
+            FindObjectOfType<OSMBuildingLoader>().enabled = true;
         }
 
         var builder = FindObjectOfType<OSMBuildingMeshBuilder>();
@@ -557,19 +696,111 @@ public class SceneBootstrap : MonoBehaviour
             var builderGo = new GameObject("OSMBuildingMeshBuilder");
             builder = builderGo.AddComponent<OSMBuildingMeshBuilder>();
         }
+        else
+        {
+            builder.enabled = true;
+        }
 
         var mapLoader = FindObjectOfType<MapTileLoader>();
         if (mapLoader != null)
             builder.buildingBaseYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.2f);
+
+        builder.maxBuildingsPerFrame = Mathf.Max(builder.maxBuildingsPerFrame, 500);
+        builder.enableDistanceCulling = false;
+        builder.drawFootprints = false;
+
+        var activeBuildingsRoot = GameObject.Find("OSM_Buildings");
+        if (activeBuildingsRoot != null)
+            activeBuildingsRoot.SetActive(true);
+    }
+
+    void EnsureOsmCityPopulation()
+    {
+        if (!autoPopulateCityFromOsm)
+            return;
+
+        var populator = FindObjectOfType<OsmCityPopulationSystem>();
+        if (populator == null)
+        {
+            var go = new GameObject("OsmCityPopulationSystem");
+            populator = go.AddComponent<OsmCityPopulationSystem>();
+        }
+
+        populator.populateOnStart = true;
+        populator.logSpawns = true;
     }
 
     void EnsurePoiVisualizer()
     {
+        if (!spawnDebugPoiMarkers)
+            return;
+
         if (FindObjectOfType<RuntimeOsmPoiVisualizer>() != null)
             return;
 
         var go = new GameObject("RuntimeOsmPoiVisualizer");
         go.AddComponent<RuntimeOsmPoiVisualizer>();
+    }
+
+    void ConfigureVehiclePoolPrefabs(VehiclePool pool)
+    {
+        if (pool == null)
+            return;
+
+        if (pool.prefabs != null && pool.prefabs.Length > 0)
+            return;
+
+        var entries = new List<VehiclePool.VehiclePrefabEntry>();
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Car, 0.16f, "BussimAssets/aitraffic/Van");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Car, 0.12f, "BussimAssets/aitraffic/uploads_files_1862674_Beetle+-+FBX");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Car, 0.12f, "BussimAssets/aitraffic/uploads_files_5836120_Fortuner");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Car, 0.12f, "BussimAssets/aitraffic/uploads_files_5844339_Palisade2024");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Truck, 0.08f, "BussimAssets/aitraffic/uploads_files_5533688_pickup+test2");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Truck, 0.08f, "BussimAssets/aitraffic/uploads_files_4076767_SCANIA");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Motorcycle, 0.07f, "BussimAssets/aitraffic/uploads_files_901612_bike");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Emergency, 0.05f, "BussimAssets/aitraffic/uploads_files_4560086_FireEngine");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Emergency, 0.05f, "BussimAssets/aitraffic/uploads_files_6375847_ambulance");
+        AddVehiclePrefab(entries, AIVehicleController.VehicleType.Bus, 0.15f, "BussimAssets/bus-models/White Modern Coach Bus");
+
+        if (entries.Count == 0)
+            return;
+
+        pool.prefabs = entries.ToArray();
+        pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, 64);
+        pool.debugForceActiveCount = Mathf.Max(pool.debugForceActiveCount, 10);
+        pool.logSpawnEvents = false;
+    }
+
+    void AddVehiclePrefab(List<VehiclePool.VehiclePrefabEntry> entries, AIVehicleController.VehicleType type, float weight, string resourcePath)
+    {
+        var prefab = LoadFirstResourcePrefab(resourcePath);
+        if (prefab == null)
+            return;
+
+        entries.Add(new VehiclePool.VehiclePrefabEntry
+        {
+            type = type,
+            prefab = prefab,
+            weight = weight
+        });
+    }
+
+    GameObject LoadFirstResourcePrefab(params string[] resourcePaths)
+    {
+        if (resourcePaths == null)
+            return null;
+
+        for (int i = 0; i < resourcePaths.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(resourcePaths[i]))
+                continue;
+
+            var prefab = Resources.Load<GameObject>(resourcePaths[i]);
+            if (prefab != null)
+                return prefab;
+        }
+
+        return null;
     }
 
     void EnsureClearVisibility()
@@ -678,6 +909,8 @@ public class SceneBootstrap : MonoBehaviour
     void ConfigureRoadGraphBackedSystems(BusRoute route)
     {
         var usableGraph = FindUsableRoadGraph(route);
+        if (usableGraph == null)
+            usableGraph = TryRebuildAlignedRoadGraph(route);
 
         var vehiclePool = FindObjectOfType<VehiclePool>();
         if (vehiclePool != null)
@@ -698,15 +931,148 @@ public class SceneBootstrap : MonoBehaviour
         }
     }
 
+    AIRoadGraph TryRebuildAlignedRoadGraph(BusRoute route)
+    {
+        var city = GameState.Instance?.selectedCity ?? CityManager.Instance?.activeCity;
+        if (city == null)
+            return null;
+
+        string roadsPath = ResolveRoadsJsonPath(city);
+        if (string.IsNullOrWhiteSpace(roadsPath) || !File.Exists(roadsPath))
+            return null;
+
+        try
+        {
+            string roadsJson = File.ReadAllText(roadsPath);
+            var response = OverpassResponse.Deserialize(roadsJson);
+            if (response == null || response.elements == null || response.elements.Count == 0)
+                return null;
+
+            var converterGo = new GameObject("CoordinateConverter_RuntimeGraphTemp");
+            var converter = converterGo.AddComponent<CoordinateConverter>();
+            converter.mapOrigin = ScriptableObject.CreateInstance<MapOrigin>();
+            converter.mapOrigin.SetFromCity(city);
+
+            var roadGraph = RoadGraph.BuildFromOverpassWays(response, converter);
+            Destroy(converterGo);
+
+            if (roadGraph == null || roadGraph.nodes == null || roadGraph.nodes.Count == 0)
+                return null;
+
+            var airGraph = FindFirstObjectByType<AIRoadGraph>();
+            if (airGraph == null)
+            {
+                var graphGo = new GameObject("AIRoadGraph");
+                airGraph = graphGo.AddComponent<AIRoadGraph>();
+            }
+
+            RebuildAirRoadGraph(airGraph, roadGraph);
+
+            var alignedGraph = FindUsableRoadGraph(route);
+            if (alignedGraph != null)
+            {
+                Debug.Log(
+                    $"SceneBootstrap: Rebuilt AIRoadGraph for {city.cityName} from {Path.GetFileName(roadsPath)} " +
+                    $"({alignedGraph.NodeCount} nodes).");
+            }
+
+            return alignedGraph;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"SceneBootstrap: Failed to rebuild AIRoadGraph for {city.cityName}. {ex.Message}");
+            return null;
+        }
+    }
+
+    string ResolveRoadsJsonPath(CityDefinition city)
+    {
+        if (city == null || string.IsNullOrWhiteSpace(city.cityCode))
+            return null;
+
+        string cityDir = Path.Combine(Application.streamingAssetsPath, "Cities", city.cityCode);
+        string preferredJson = Path.Combine(cityDir, "roads.json");
+        if (File.Exists(preferredJson))
+            return preferredJson;
+
+        string configuredPath = city.GetRoadsPath();
+        if (!string.IsNullOrWhiteSpace(configuredPath) && File.Exists(configuredPath))
+            return configuredPath;
+
+        if (!string.IsNullOrWhiteSpace(configuredPath))
+        {
+            string configuredJson = Path.ChangeExtension(configuredPath, "json");
+            if (File.Exists(configuredJson))
+                return configuredJson;
+        }
+
+        return null;
+    }
+
+    void RebuildAirRoadGraph(AIRoadGraph target, RoadGraph source)
+    {
+        if (target == null || source == null || source.nodes == null)
+            return;
+
+        for (int i = target.transform.childCount - 1; i >= 0; i--)
+            Destroy(target.transform.GetChild(i).gameObject);
+
+        var nodes = new AIRoadGraph.RoadNode[source.nodes.Count];
+        for (int i = 0; i < source.nodes.Count; i++)
+        {
+            var sourceNode = source.nodes[i];
+            var pointGo = new GameObject($"Node_{i:0000}");
+            pointGo.transform.SetParent(target.transform, false);
+            pointGo.transform.position = new Vector3(sourceNode.world.x, 0.1f, sourceNode.world.z);
+
+            float speedLimit = 30f;
+            if (sourceNode.edges != null)
+            {
+                for (int edgeIndex = 0; edgeIndex < sourceNode.edges.Count; edgeIndex++)
+                    speedLimit = Mathf.Max(speedLimit, sourceNode.edges[edgeIndex].speedLimitKmh);
+            }
+
+            int[] nextNodeIndices = sourceNode.edges != null
+                ? new int[sourceNode.edges.Count]
+                : System.Array.Empty<int>();
+
+            if (sourceNode.edges != null)
+            {
+                for (int edgeIndex = 0; edgeIndex < sourceNode.edges.Count; edgeIndex++)
+                    nextNodeIndices[edgeIndex] = sourceNode.edges[edgeIndex].to;
+            }
+
+            nodes[i] = new AIRoadGraph.RoadNode
+            {
+                id = $"N{i:0000}",
+                point = pointGo.transform,
+                laneCount = 2,
+                laneWidth = 3.3f,
+                speedLimitKmh = speedLimit,
+                trafficLight = null,
+                nextNodeIndices = nextNodeIndices
+            };
+        }
+
+        target.nodes = nodes;
+    }
+
     AIRoadGraph FindUsableRoadGraph(BusRoute route = null)
     {
-        var graph = FindObjectOfType<AIRoadGraph>();
-        if (graph == null || graph.NodeCount == 0)
+        var graphs = FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        if (graphs == null || graphs.Length == 0)
             return null;
 
         var city = GameState.Instance?.selectedCity ?? CityManager.Instance?.activeCity;
         if (city == null)
-            return graph;
+        {
+            for (int i = 0; i < graphs.Length; i++)
+            {
+                if (graphs[i] != null && graphs[i].NodeCount > 0)
+                    return graphs[i];
+            }
+            return null;
+        }
 
         BusStopData referenceStop = null;
         if (route != null && route.stops != null && route.stops.Length > 0)
@@ -716,11 +1082,27 @@ public class SceneBootstrap : MonoBehaviour
             ? CoordinateConverter.LocalOriginGeoToWorld(referenceStop.latitude, referenceStop.longitude, city.centreLat, city.centreLon)
             : CoordinateConverter.LocalOriginGeoToWorld(city.spawnLat, city.spawnLon, city.centreLat, city.centreLon);
 
-        int nearest = graph.GetNearestNodeIndex(referenceWorld);
-        if (!graph.IsValidNode(nearest))
-            return null;
+        AIRoadGraph bestGraph = null;
+        float bestDistance = float.MaxValue;
 
-        float distance = Vector3.Distance(referenceWorld, graph.GetNodePosition(nearest));
-        return distance <= 500f ? graph : null;
+        for (int i = 0; i < graphs.Length; i++)
+        {
+            var graph = graphs[i];
+            if (graph == null || graph.NodeCount == 0)
+                continue;
+
+            int nearest = graph.GetNearestNodeIndex(referenceWorld);
+            if (!graph.IsValidNode(nearest))
+                continue;
+
+            float distance = Vector3.Distance(referenceWorld, graph.GetNodePosition(nearest));
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestGraph = graph;
+            }
+        }
+
+        return bestDistance <= 500f ? bestGraph : null;
     }
 }

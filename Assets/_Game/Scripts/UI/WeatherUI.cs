@@ -13,7 +13,7 @@ public class WeatherUI : MonoBehaviour
             return;
 
         string icon = WeatherToIcon(WeatherSystem.Instance.currentWeather);
-        string nightSuffix = TimeOfDaySystem.Instance != null && TimeOfDaySystem.Instance.IsNight ? " NIGHT" : string.Empty;
+        string nightSuffix = TimeOfDaySystem.Instance != null && TimeOfDaySystem.Instance.IsNight ? " ☾" : string.Empty;
 
         if (weatherText != null)
             weatherText.text = $"{icon}{nightSuffix}";

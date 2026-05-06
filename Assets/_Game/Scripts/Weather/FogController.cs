@@ -28,31 +28,37 @@ public class FogController : MonoBehaviour
 
     [Header("Transition Speed")]
     public float lerpSpeed = 0.4f;
+    public float maxFogDensity = 0.03f;
 
     private float targetFogStart;
     private float targetFogEnd;
+    private float targetFogDensity;
     private Color targetFogColor;
-    private bool  _fogShouldBeOn;
+    private bool fogActive;
 
     void Start()
     {
         RenderSettings.fog     = false;
         RenderSettings.fogMode = FogMode.Linear;
 
-        targetFogStart = 0f;
-        targetFogEnd   = clearVisibility;
+        targetFogStart = clearFogStart;
+        targetFogEnd   = clearFogEnd;
+        targetFogDensity = 0f;
         targetFogColor = clearFogColor;
     }
 
     void Update()
     {
-        if (!_fogShouldBeOn) return;
+        if (!fogActive) return;
 
         RenderSettings.fogStartDistance = Mathf.Lerp(
             RenderSettings.fogStartDistance, targetFogStart, Time.deltaTime * lerpSpeed);
 
         RenderSettings.fogEndDistance = Mathf.Lerp(
             RenderSettings.fogEndDistance,   targetFogEnd,   Time.deltaTime * lerpSpeed);
+
+        RenderSettings.fogDensity = Mathf.Lerp(
+            RenderSettings.fogDensity, targetFogDensity, Time.deltaTime * lerpSpeed);
 
         RenderSettings.fogColor = Color.Lerp(
             RenderSettings.fogColor, targetFogColor, Time.deltaTime * lerpSpeed * 0.5f);
@@ -63,6 +69,10 @@ public class FogController : MonoBehaviour
         switch (state)
         {
             case WeatherState.Clear:
+                targetFogStart = clearFogStart;
+                targetFogEnd = clearFogEnd;
+                targetFogDensity = 0f;
+                targetFogColor = clearFogColor;
                 StartCoroutine(FadeOutFog(3f));
                 return;
 
@@ -112,13 +122,14 @@ public class FogController : MonoBehaviour
 
     void SetLinear(float visibility, Color color)
     {
-        _fogShouldBeOn = true;
+        fogActive = true;
         RenderSettings.fog     = true;
         RenderSettings.fogMode = FogMode.Linear;
 
         // Fog starts at 10% of visibility, ends at 100%
         targetFogStart = visibility * 0.10f;
         targetFogEnd   = visibility;
+        targetFogDensity = Mathf.Lerp(0.001f, maxFogDensity, Mathf.InverseLerp(clearVisibility, heavyFogVisibility, visibility));
         targetFogColor = color;
     }
 
@@ -135,7 +146,11 @@ public class FogController : MonoBehaviour
             yield return null;
         }
 
-        _fogShouldBeOn = false;
+        fogActive = false;
+        RenderSettings.fogStartDistance = clearFogStart;
+        RenderSettings.fogEndDistance = clearFogEnd;
+        RenderSettings.fogColor = clearFogColor;
+        RenderSettings.fogDensity = 0f;
         RenderSettings.fog = false;
     }
 }

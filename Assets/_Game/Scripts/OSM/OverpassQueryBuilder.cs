@@ -130,6 +130,18 @@ public static class OverpassQueryBuilder
                "out body;";
     }
 
+    /// <summary>Queries traffic signal nodes in the bbox.</summary>
+    public static string TrafficSignalsQuery(
+        double minLat, double minLon,
+        double maxLat, double maxLon,
+        int timeoutSeconds = 60)
+    {
+        string bbox = FormatBbox(minLat, minLon, maxLat, maxLon);
+        return Header(timeoutSeconds) +
+               $"node[highway=traffic_signals]({bbox});" +
+               "out body;";
+    }
+
     // ── Convenience overloads ──────────────────────────────────────────
 
     /// <summary>Road query centred on a GPS point with half-extent in metres.</summary>

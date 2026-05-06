@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class RainController : MonoBehaviour
 {
@@ -15,56 +16,86 @@ public class RainController : MonoBehaviour
 
     [Header("Wet Road")]
     public Material roadMaterial;
+    public Material[] roadMaterials;
+    public Renderer[] wetRoadRenderers;
+    public Material wetSpecularMaterial;
     public string wetBlendProperty = "_WetBlend";
 
     [Header("Windscreen")]
     public GameObject windscreenWipers;
+    public Animator wiperAnimator;
+    public string wiperSpeedParameter = "WiperSpeed";
+    public float minWiperSpeed = 0.75f;
+    public float maxWiperSpeed = 2.25f;
 
     private float currentWetness = 0f;
+    private WeatherState currentRainState = WeatherState.Clear;
+    private Coroutine dryRoadRoutine;
+    private Coroutine thunderRoutine;
+    private MaterialPropertyBlock wetRoadPropertyBlock;
 
     void Start()
     {
+        if (wetRoadPropertyBlock == null)
+            wetRoadPropertyBlock = new MaterialPropertyBlock();
         StopAll();
     }
 
     public void SetRain(WeatherState state, float intensity)
     {
-        StopAll();
+        intensity = Mathf.Clamp01(intensity);
+        currentRainState = state;
+
+        if (dryRoadRoutine != null && IsRainState(state))
+        {
+            StopCoroutine(dryRoadRoutine);
+            dryRoadRoutine = null;
+        }
+
+        StopThunderIfInactive(state);
 
         switch (state)
         {
             case WeatherState.Drizzle:
+                StopInactiveParticles(drizzleParticles);
                 SetParticles(drizzleParticles, intensity * 0.5f);
                 SetAudio(lightRainClip, intensity * 0.3f);
                 SetWetRoad(intensity * 0.3f);
-                SetWipers(false);
+                SetWipers(intensity > 0.15f, intensity * 0.6f);
                 break;
 
             case WeatherState.LightRain:
+                StopInactiveParticles(rainParticles);
                 SetParticles(rainParticles, intensity * 0.6f);
                 SetAudio(lightRainClip, intensity * 0.6f);
                 SetWetRoad(intensity * 0.6f);
-                SetWipers(true);
+                SetWipers(true, intensity);
                 break;
 
             case WeatherState.HeavyRain:
+                StopInactiveParticles(rainParticles);
                 SetParticles(rainParticles, intensity);
                 SetAudio(heavyRainClip, intensity * 0.8f);
                 SetWetRoad(intensity);
-                SetWipers(true);
+                SetWipers(true, intensity);
                 break;
 
             case WeatherState.Thunderstorm:
+                StopInactiveParticles(thunderstormParticles ?? rainParticles);
                 SetParticles(thunderstormParticles ?? rainParticles, 1f);
                 SetAudio(heavyRainClip, 1f);
                 SetWetRoad(1f);
-                SetWipers(true);
-                StartCoroutine(ThunderEffect());
+                SetWipers(true, 1f);
+                EnsureThunderEffect();
                 break;
 
             default:
-                // Gradually dry the road
-                StartCoroutine(DryRoad());
+                StopAllParticles();
+                StopLoopingRainAudio();
+                SetWipers(false, 0f);
+                if (dryRoadRoutine != null)
+                    StopCoroutine(dryRoadRoutine);
+                dryRoadRoutine = StartCoroutine(DryRoad());
                 break;
         }
     }
@@ -72,44 +103,91 @@ public class RainController : MonoBehaviour
     void SetParticles(ParticleSystem ps, float intensity)
     {
         if (ps == null) return;
+        StopParticlesExcept(ps);
         var emission = ps.emission;
         emission.rateOverTime = Mathf.Lerp(0, 500, intensity);
-        ps.Play();
+        if (intensity > 0.001f)
+        {
+            if (!ps.isPlaying)
+                ps.Play();
+        }
+        else
+        {
+            ps.Stop();
+        }
     }
 
     void SetAudio(AudioClip clip, float volume)
     {
         if (rainAudio == null || clip == null) return;
-        rainAudio.clip = clip;
-        rainAudio.volume = volume;
+        if (rainAudio.clip != clip)
+            rainAudio.clip = clip;
+        rainAudio.volume = Mathf.Clamp01(volume);
         rainAudio.loop = true;
-        rainAudio.Play();
+        if (!rainAudio.isPlaying)
+            rainAudio.Play();
     }
 
     void SetWetRoad(float wetness)
     {
         currentWetness = wetness;
-        if (roadMaterial != null &&
-            roadMaterial.HasProperty(wetBlendProperty))
-            roadMaterial.SetFloat(wetBlendProperty, wetness);
+        ApplyWetnessToMaterial(roadMaterial, wetness);
+
+        if (roadMaterials != null)
+        {
+            for (int i = 0; i < roadMaterials.Length; i++)
+                ApplyWetnessToMaterial(roadMaterials[i], wetness);
+        }
+
+        if (wetRoadRenderers != null)
+        {
+            if (wetRoadPropertyBlock == null)
+                wetRoadPropertyBlock = new MaterialPropertyBlock();
+
+            for (int i = 0; i < wetRoadRenderers.Length; i++)
+            {
+                var rendererRef = wetRoadRenderers[i];
+                if (rendererRef == null)
+                    continue;
+
+                rendererRef.GetPropertyBlock(wetRoadPropertyBlock);
+                wetRoadPropertyBlock.SetFloat(wetBlendProperty, wetness);
+                if (wetSpecularMaterial != null)
+                {
+                    if (wetSpecularMaterial.HasProperty("_Color"))
+                        wetRoadPropertyBlock.SetColor("_WetColor", wetSpecularMaterial.color);
+                    if (wetSpecularMaterial.HasProperty("_Glossiness"))
+                        wetRoadPropertyBlock.SetFloat("_WetGlossiness", wetSpecularMaterial.GetFloat("_Glossiness"));
+                }
+                rendererRef.SetPropertyBlock(wetRoadPropertyBlock);
+            }
+        }
     }
 
-    void SetWipers(bool active)
+    void SetWipers(bool active, float intensity)
     {
         if (windscreenWipers != null)
             windscreenWipers.SetActive(active);
+        if (wiperAnimator != null)
+        {
+            wiperAnimator.enabled = active;
+            wiperAnimator.speed = active
+                ? Mathf.Lerp(minWiperSpeed, maxWiperSpeed, Mathf.Clamp01(intensity))
+                : 0f;
+            if (!string.IsNullOrWhiteSpace(wiperSpeedParameter))
+                wiperAnimator.SetFloat(wiperSpeedParameter, wiperAnimator.speed);
+        }
     }
 
     void StopAll()
     {
-        if (rainParticles != null) rainParticles.Stop();
-        if (drizzleParticles != null) drizzleParticles.Stop();
-        if (thunderstormParticles != null) thunderstormParticles.Stop();
-        if (rainAudio != null) rainAudio.Stop();
-        SetWipers(false);
+        StopAllParticles();
+        StopLoopingRainAudio();
+        SetWipers(false, 0f);
+        StopThunderIfInactive(WeatherState.Clear);
     }
 
-    System.Collections.IEnumerator DryRoad()
+    IEnumerator DryRoad()
     {
         float start = currentWetness;
         float elapsed = 0f;
@@ -122,9 +200,12 @@ public class RainController : MonoBehaviour
             SetWetRoad(wetness);
             yield return null;
         }
+
+        SetWetRoad(0f);
+        dryRoadRoutine = null;
     }
 
-    System.Collections.IEnumerator ThunderEffect()
+    IEnumerator ThunderEffect()
     {
         while (WeatherSystem.Instance != null &&
                WeatherSystem.Instance.currentWeather == WeatherState.Thunderstorm)
@@ -142,6 +223,73 @@ public class RainController : MonoBehaviour
             {
                 rainAudio.PlayOneShot(thunderClip, 0.8f);
             }
+        }
+
+        thunderRoutine = null;
+    }
+
+    void EnsureThunderEffect()
+    {
+        if (thunderRoutine == null)
+            thunderRoutine = StartCoroutine(ThunderEffect());
+    }
+
+    void StopThunderIfInactive(WeatherState state)
+    {
+        if (state == WeatherState.Thunderstorm)
+            return;
+
+        if (thunderRoutine != null)
+        {
+            StopCoroutine(thunderRoutine);
+            thunderRoutine = null;
+        }
+    }
+
+    void StopLoopingRainAudio()
+    {
+        if (rainAudio != null && rainAudio.isPlaying && rainAudio.loop)
+            rainAudio.Stop();
+    }
+
+    void StopAllParticles()
+    {
+        if (rainParticles != null) rainParticles.Stop();
+        if (drizzleParticles != null) drizzleParticles.Stop();
+        if (thunderstormParticles != null) thunderstormParticles.Stop();
+    }
+
+    void StopParticlesExcept(ParticleSystem keep)
+    {
+        if (rainParticles != null && rainParticles != keep) rainParticles.Stop();
+        if (drizzleParticles != null && drizzleParticles != keep) drizzleParticles.Stop();
+        if (thunderstormParticles != null && thunderstormParticles != keep) thunderstormParticles.Stop();
+    }
+
+    void StopInactiveParticles(ParticleSystem activeParticles)
+    {
+        StopParticlesExcept(activeParticles);
+    }
+
+    void ApplyWetnessToMaterial(Material material, float wetness)
+    {
+        if (material == null || !material.HasProperty(wetBlendProperty))
+            return;
+
+        material.SetFloat(wetBlendProperty, wetness);
+    }
+
+    bool IsRainState(WeatherState state)
+    {
+        switch (state)
+        {
+            case WeatherState.Drizzle:
+            case WeatherState.LightRain:
+            case WeatherState.HeavyRain:
+            case WeatherState.Thunderstorm:
+                return true;
+            default:
+                return false;
         }
     }
 }

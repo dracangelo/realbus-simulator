@@ -355,6 +355,8 @@ public class VehiclePool : MonoBehaviour
     {
         int fullUsed = 0;
         int clampedCap = Mathf.Clamp(maxFullAiVehicles, 15, 20);
+        var reservedFull = new HashSet<PooledVehicle>();
+        var candidates = new List<(PooledVehicle vehicle, float distance)>(pooled.Count);
 
         // Keep existing full-AI vehicles if still within hysteresis, then fill remaining budget.
         for (int i = 0; i < pooled.Count; i++)
@@ -371,20 +373,23 @@ public class VehiclePool : MonoBehaviour
             if (keepFull && fullUsed < clampedCap)
             {
                 fullUsed++;
+                reservedFull.Add(pv);
                 ApplyTierIfNeeded(pv, SimulationTier.FullAI);
-            }
-        }
-
-        for (int i = 0; i < pooled.Count; i++)
-        {
-            var pv = pooled[i];
-            if (!pv.enabledByDensity)
-            {
-                ApplyTierIfNeeded(pv, SimulationTier.Dormant);
                 continue;
             }
 
-            float dist = GetDistanceToBus(pv.go.transform.position);
+            candidates.Add((pv, dist));
+        }
+
+        candidates.Sort((a, b) => a.distance.CompareTo(b.distance));
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var pv = candidates[i].vehicle;
+            float dist = candidates[i].distance;
+            if (reservedFull.Contains(pv))
+                continue;
+
             if (dist <= fullAiRadiusMeters && fullUsed < clampedCap)
             {
                 fullUsed++;

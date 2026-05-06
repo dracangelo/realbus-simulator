@@ -21,27 +21,67 @@ public class CoordinateConverterTests
     [Test]
     public void LocalOrigin_RoundTrip_GeoToWorldToGeo_IsAccurateWithinPointOneMeters()
     {
-        double originLat = -1.2864;
-        double originLon = 36.8172;
-
-        // Test a few offsets around the origin (small local-area usage).
-        var points = new (double lat, double lon)[]
+        var testCases = new (double originLat, double originLon, (double lat, double lon)[] points)[]
         {
-            (originLat, originLon),
-            (originLat + 0.0005, originLon + 0.0005),
-            (originLat - 0.0008, originLon + 0.0012),
-            (originLat + 0.0020, originLon - 0.0015),
+            (
+                -1.2864, 36.8172,
+                new[]
+                {
+                    (-1.2864, 36.8172),
+                    (-1.2859, 36.8177),
+                    (-1.2872, 36.8184),
+                    (-1.2844, 36.8157)
+                }
+            ),
+            (
+                51.5074, -0.1278,
+                new[]
+                {
+                    (51.5074, -0.1278),
+                    (51.5083, -0.1254),
+                    (51.5052, -0.1301),
+                    (51.5111, -0.1219)
+                }
+            ),
         };
 
-        for (int i = 0; i < points.Length; i++)
+        for (int caseIndex = 0; caseIndex < testCases.Length; caseIndex++)
         {
-            var p = points[i];
-            Vector3 w = CoordinateConverter.LocalOriginGeoToWorld(p.lat, p.lon, originLat, originLon);
-            var back = CoordinateConverter.LocalOriginWorldToGeo(w, originLat, originLon);
+            var testCase = testCases[caseIndex];
+            for (int pointIndex = 0; pointIndex < testCase.points.Length; pointIndex++)
+            {
+                var point = testCase.points[pointIndex];
+                Vector3 world = CoordinateConverter.LocalOriginGeoToWorld(
+                    point.lat, point.lon, testCase.originLat, testCase.originLon);
+                var back = CoordinateConverter.LocalOriginWorldToGeo(
+                    world, testCase.originLat, testCase.originLon);
 
-            double error = DistanceMeters(p.lat, p.lon, back.lat, back.lon);
-            Assert.That(error, Is.LessThanOrEqualTo(0.1), $"Round-trip error too high: {error:0.000}m for point {p}");
+                double error = DistanceMeters(point.lat, point.lon, back.lat, back.lon);
+                Assert.That(
+                    error,
+                    Is.LessThanOrEqualTo(0.1),
+                    $"Round-trip error too high: {error:0.000}m for origin ({testCase.originLat}, {testCase.originLon}) point {point}");
+            }
         }
     }
-}
 
+    [Test]
+    public void Instance_UsesAssignedMapOrigin_WhenNoMapboxOrTileLoaderIsPresent()
+    {
+        var go = new GameObject("CoordinateConverter_Test");
+        var converter = go.AddComponent<CoordinateConverter>();
+        var origin = ScriptableObject.CreateInstance<MapOrigin>();
+
+        origin.SetOrigin(-1.2864, 36.8172, "Nairobi");
+        converter.mapOrigin = origin;
+
+        Vector3 world = converter.GeoToWorldPosition(-1.2859, 36.8177);
+        var back = converter.WorldToGeoPosition(world);
+        double error = DistanceMeters(-1.2859, 36.8177, back.lat, back.lon);
+
+        Assert.That(error, Is.LessThanOrEqualTo(0.1));
+
+        Object.DestroyImmediate(go);
+        Object.DestroyImmediate(origin);
+    }
+}

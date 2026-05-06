@@ -59,6 +59,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     public int roadLayer = 0;
     public string roadTag = "Road";
     public PhysicsMaterial roadPhysicMaterial;
+    public float roadStaticFriction = 0.7f;
+    public float roadDynamicFriction = 0.6f;
     public float maxColliderSegmentLength = 100f;
     public bool renderRoadSurface = true;
     public bool drawCenterLines = true;
@@ -74,6 +76,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     private bool hasRoadVisualBounds;
     private GameObject medianBarrierPrefab;
     private bool medianBarrierLoadAttempted;
+    private PhysicsMaterial runtimeRoadPhysicMaterial;
 
     void Awake()
     {
@@ -98,6 +101,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     void BuildRoads(OSMData data)
     {
+        var colliderMaterial = ResolveRoadPhysicsMaterial();
+
         if (roadsParent != null)
             Destroy(roadsParent);
 
@@ -136,8 +141,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
             var mc = roadObj.AddComponent<MeshCollider>();
             mc.sharedMesh = mesh;
-            if (roadPhysicMaterial != null)
-                mc.sharedMaterial = roadPhysicMaterial;
+            if (colliderMaterial != null)
+                mc.sharedMaterial = colliderMaterial;
 
             if (ShouldUseRoadModelVisuals())
             {
@@ -168,6 +173,26 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
         roadsBuilt = true;
         Debug.Log($"OSM: Built {roadCount} road segments!");
+    }
+
+    PhysicsMaterial ResolveRoadPhysicsMaterial()
+    {
+        if (roadPhysicMaterial != null)
+            return roadPhysicMaterial;
+
+        if (runtimeRoadPhysicMaterial == null)
+        {
+            runtimeRoadPhysicMaterial = new PhysicsMaterial("RoadPhysics_Runtime")
+            {
+                staticFriction = roadStaticFriction,
+                dynamicFriction = roadDynamicFriction,
+                bounciness = 0f,
+                frictionCombine = PhysicsMaterialCombine.Average,
+                bounceCombine = PhysicsMaterialCombine.Minimum
+            };
+        }
+
+        return runtimeRoadPhysicMaterial;
     }
 
     public void SetRoadSurfaceVisible(bool visible)

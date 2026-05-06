@@ -226,6 +226,25 @@ public class XPSystem : MonoBehaviour
         return result;
     }
 
+    public void SetTotalXP(int value, bool saveLocalBackup = true, bool pushCloud = false)
+    {
+        EnsureInitialized();
+
+        int clampedValue = Mathf.Max(0, value);
+        if (clampedValue == totalXP)
+            return;
+
+        totalXP = clampedValue;
+
+        if (saveLocalBackup)
+            SaveLocalBackup();
+
+        if (pushCloud)
+            PushToCloud();
+
+        XPChanged?.Invoke(GetProgressSnapshot());
+    }
+
     public RankDefinition GetRankDefinition(int rank)
     {
         EnsureInitialized();
