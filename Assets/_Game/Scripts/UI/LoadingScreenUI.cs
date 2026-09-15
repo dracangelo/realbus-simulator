@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class LoadingScreenUI : MonoBehaviour
@@ -28,8 +29,23 @@ public class LoadingScreenUI : MonoBehaviour
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this; DontDestroyOnLoad(gameObject); Build(); Hide();
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        Build();
+        Hide();
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    // The loading canvas persists between scenes. Always dismiss it from the
+    // sceneLoaded event as a safety net, even if the loading coroutine is
+    // interrupted while Unity activates the destination scene.
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Hide();
 
     public void Show()
     {

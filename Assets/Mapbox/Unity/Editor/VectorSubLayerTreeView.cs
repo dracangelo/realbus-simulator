@@ -7,11 +7,11 @@
 	using UnityEditor;
 	using Mapbox.Unity.Map;
 
-	public class VectorSubLayerTreeView : TreeView
+	public class VectorSubLayerTreeView : TreeView<int>
 	{
 		public SerializedProperty Layers;
 
-		public VectorSubLayerTreeView(TreeViewState state)
+		public VectorSubLayerTreeView(TreeViewState<int> state)
 			: base(state)
 		{
 			showAlternatingRowBackgrounds = true;
@@ -19,12 +19,12 @@
 			Reload();
 		}
 
-		protected override TreeViewItem BuildRoot()
+		protected override TreeViewItem<int> BuildRoot()
 		{
 			// The root item is required to have a depth of -1, and the rest of the items increment from that.
-			var root = new TreeViewItem { id = -1, depth = -1, displayName = "Root" };
+			var root = new TreeViewItem<int> { id = -1, depth = -1, displayName = "Root" };
 
-			var items = new List<TreeViewItem>();
+			var items = new List<TreeViewItem<int>>();
 			var index = 0;
 
 			if (Layers != null)
@@ -32,7 +32,7 @@
 				for (int i = 0; i < Layers.arraySize; i++)
 				{
 					var name = Layers.GetArrayElementAtIndex(i).FindPropertyRelative("coreOptions.sublayerName").stringValue;
-					items.Add(new TreeViewItem { id = index, depth = 0, displayName = name });
+					items.Add(new TreeViewItem<int> { id = index, depth = 0, displayName = name });
 					index++;
 				}
 			}
@@ -44,7 +44,7 @@
 			return root;
 		}
 
-		protected override bool CanRename(TreeViewItem item)
+		protected override bool CanRename(TreeViewItem<int> item)
 		{
 			return true;
 		}

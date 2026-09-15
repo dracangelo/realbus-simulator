@@ -11,6 +11,7 @@ public class StopPropSpawner : MonoBehaviour
         "BussimAssets/stops/StopSign",
         "BussimAssets/stops/bus_stopEU"
     };
+    public string generatedStopResourceFolder = "BusStopsGenerated";
 
     [Header("Placement")]
     public float lateralOffset = 3f;
@@ -55,7 +56,10 @@ public class StopPropSpawner : MonoBehaviour
             return;
         }
 
-        if (stopPropResourcePaths == null || stopPropResourcePaths.Length == 0)
+        GameObject[] generatedStopPrefabs = string.IsNullOrWhiteSpace(generatedStopResourceFolder)
+            ? System.Array.Empty<GameObject>()
+            : Resources.LoadAll<GameObject>(generatedStopResourceFolder);
+        if (generatedStopPrefabs.Length == 0 && (stopPropResourcePaths == null || stopPropResourcePaths.Length == 0))
         {
             if (logSpawns)
                 Debug.LogWarning("[StopPropSpawner] No stop prop resource paths configured.");
@@ -71,8 +75,18 @@ public class StopPropSpawner : MonoBehaviour
             Vector3 stopPos = GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude);
             stopPos.y = 0f;
 
-            var propPath = stopPropResourcePaths[Random.Range(0, stopPropResourcePaths.Length)];
-            var prefab = Resources.Load<GameObject>(propPath);
+            string propPath = string.Empty;
+            GameObject prefab;
+            if (generatedStopPrefabs.Length > 0)
+            {
+                prefab = generatedStopPrefabs[Random.Range(0, generatedStopPrefabs.Length)];
+                propPath = generatedStopResourceFolder + "/" + prefab.name;
+            }
+            else
+            {
+                propPath = stopPropResourcePaths[Random.Range(0, stopPropResourcePaths.Length)];
+                prefab = Resources.Load<GameObject>(propPath);
+            }
             if (prefab == null)
             {
                 if (logSpawns)

@@ -119,7 +119,7 @@ public class SaveConflictPrompt : MonoBehaviour
         text.fontSize = size;
         text.color = color;
         text.font = UITheme.GetFont(weight);
-        text.enableWordWrapping = true;
+        text.textWrappingMode = TextWrappingModes.Normal;
         return text;
     }
 

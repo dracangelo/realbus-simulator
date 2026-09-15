@@ -199,7 +199,7 @@ public class XPBar : MonoBehaviour
         text.fontSize = fontSize;
         text.color = color;
         text.font = UITheme.GetFont(weight);
-        text.enableWordWrapping = true;
+        text.textWrappingMode = TextWrappingModes.Normal;
         return text;
     }
 

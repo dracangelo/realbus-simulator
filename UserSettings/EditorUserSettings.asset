@@ -3,31 +3,40 @@
 --- !u!162 &1
 EditorUserSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 4
+  serializedVersion: 5
   m_ConfigSettings:
+    QuickInstaller_com.unity.purchasing_installRecorded:
+      value: 37434103
+      flags: 0
+    QuickInstaller_com.unity.services.levelplay_installRecorded:
+      value: 2550581500
+      flags: 0
+    QuickInstaller_com.unity.services.vivox_installRecorded:
+      value: 2550581500
+      flags: 0
     RecentlyUsedSceneGuid-0:
-      value: 57545705530458585b5e557116270a464e4f482f292e24352c2d1c36bab0366f
-      flags: 0
-    RecentlyUsedSceneGuid-1:
-      value: 51060150070c5d080858597b15720b15404e407a757f7e33742c4f32e3b73268
-      flags: 0
-    RecentlyUsedSceneGuid-2:
       value: 0055055f530c5a5d5b5b0a72127b0741134f4f7f2d7c73362b7b4837e3b56160
       flags: 0
-    RecentlyUsedSceneGuid-3:
+    RecentlyUsedSceneGuid-1:
       value: 0608550704000d0c545e5e2713775e4041151a7e2e792062747b4e30e3e63760
       flags: 0
-    RecentlyUsedSceneGuid-4:
+    RecentlyUsedSceneGuid-2:
       value: 00545657070d0c0b0e58087012730c46434e1e2f7b7074687e701c63e3b4616f
       flags: 0
-    RecentlyUsedSceneGuid-5:
+    RecentlyUsedSceneGuid-3:
       value: 5703525004545e5808590d744077594140161c2f7f797f667b7a1b67b4e3313a
       flags: 0
+    RecentlyUsedSceneGuid-4:
+      value: 0000055704045f0a0e5c097741270c4342151b727e7a7e357b7f4e31b3b7366a
+      flags: 0
+    RecentlyUsedSceneGuid-5:
+      value: 5004520354505d090c575f7144225b15144e417d2f7c71677f2c1860b6b53268
+      flags: 0
     RecentlyUsedSceneGuid-6:
-      value: 5b525202550d580c5b0a592642200c424616407e757077647c704866b7e56060
+      value: 5b5003075d040a095b0c082316255c49134e487f757c73612b2c4f6ab0e1373b
       flags: 0
     RecentlyUsedSceneGuid-7:
-      value: 0000055704045f0a0e5c097741270c4342151b727e7a7e357b7f4e31b3b7366a
+      value: 5b525202550d580c5b0a592642200c424616407e757077647c704866b7e56060
       flags: 0
     RecentlyUsedSceneGuid-8:
       value: 550050555c055d0d5859557747265c161215482b2a7d7f6679714e32e0e43639
@@ -55,3 +64,4 @@ EditorUserSettings:
   m_VCScanLocalPackagesOnConnect: 1
   m_ArtifactGarbageCollection: 1
   m_CompressAssetsOnImport: 1
+  m_VCAutoRevertUnchangedFiles: 0

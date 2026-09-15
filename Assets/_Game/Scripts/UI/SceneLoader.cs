@@ -116,18 +116,16 @@ public class SceneLoader : MonoBehaviour
 
     bool HasCountrySelection()
     {
-        return GameState.Instance?.selectedCountry != null
-            || CityManager.Instance?.activeCountry != null;
+        return GameState.Instance?.selectedCountry != null;
     }
 
     bool HasCitySelection()
     {
-        return GameState.Instance?.selectedCity != null
-            || CityManager.Instance?.activeCity != null;
+        return HasCountrySelection() && GameState.Instance?.selectedCity != null;
     }
 
     bool HasRouteSelection()
     {
-        return GameState.Instance?.selectedRoute != null;
+        return HasCitySelection() && GameState.Instance?.selectedRoute != null;
     }
 }

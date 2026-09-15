@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-04-29T11:04:55Z",
+    "timestamp_osm_base": "2026-09-15T11:07:06Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -370,17 +370,6 @@
 },
 {
   "type": "node",
-  "id": 275554473,
-  "lat": -1.2637747,
-  "lon": 36.8119684,
-  "tags": {
-    "amenity": "hospital",
-    "healthcare": "hospital",
-    "name": "M. P. Shah Hospital"
-  }
-},
-{
-  "type": "node",
   "id": 291526914,
   "lat": -1.2639042,
   "lon": 36.8245353,
@@ -421,11 +410,11 @@
 {
   "type": "node",
   "id": 295829498,
-  "lat": -1.2592124,
-  "lon": 36.8185515,
+  "lat": -1.2592501,
+  "lon": 36.8185583,
   "tags": {
     "amenity": "fuel",
-    "created_by": "Potlatch 0.10b",
+    "brand": "Shell",
     "name": "Shell"
   }
 },
@@ -504,7 +493,7 @@
 {
   "type": "node",
   "id": 490741522,
-  "lat": -1.3077371,
+  "lat": -1.3077428,
   "lon": 36.8036695,
   "tags": {
     "addr:city": "Nairobi",
@@ -2257,8 +2246,8 @@
 {
   "type": "node",
   "id": 612008576,
-  "lat": -1.3158218,
-  "lon": 36.8023282,
+  "lat": -1.3158225,
+  "lon": 36.8023081,
   "tags": {
     "accessibility": "big_vehicles",
     "amenity": "school",
@@ -4219,6 +4208,26 @@
 },
 {
   "type": "node",
+  "id": 696542681,
+  "lat": -1.3112945,
+  "lon": 36.7888564,
+  "tags": {
+    "amenity": "hospital",
+    "contact:phone": "0710230824",
+    "health_facility:referals": "Woodly Health Center/Kenyatta",
+    "health_facility:type": "Midwife",
+    "media:video_device_number": "8",
+    "media:video_number": "7 of 7",
+    "medical_service:antenatal_care": "yes",
+    "medical_staff:midwife": "1",
+    "name": "Mama Sofi mkunga/Bibi",
+    "opening_hours": "24/7",
+    "operational_status": "operational",
+    "operator:type": "private"
+  }
+},
+{
+  "type": "node",
   "id": 696543032,
   "lat": -1.3133393,
   "lon": 36.7985247,
@@ -4349,6 +4358,29 @@
     "operational_status": "operational",
     "operational_status:electricity": "never",
     "operator:type": "private"
+  }
+},
+{
+  "type": "node",
+  "id": 698525855,
+  "lat": -1.3114286,
+  "lon": 36.7878445,
+  "tags": {
+    "contact:phone": "0722415187",
+    "health_facility:referals": "Mbagadhi district hospital/Vipawa medical clinic",
+    "health_facility:type": "chemist_dispensing",
+    "media:video_device_number": "8",
+    "media:video_number": "16",
+    "medical_service:condom_distribution": "yes",
+    "medical_service:family_planning": "yes",
+    "medical_service:outpatient": "yes",
+    "medical_service:vct_hiv_counselling_test": "yes",
+    "medical_staff:pharm_tech": "1",
+    "name": "Dawa Chemist",
+    "opening_hours": "08:00-20:00",
+    "operational_status": "operational",
+    "operator:type": "private",
+    "shop": "chemist"
   }
 },
 {
@@ -4762,6 +4794,17 @@
 },
 {
   "type": "node",
+  "id": 701797823,
+  "lat": -1.3146374,
+  "lon": 36.7919426,
+  "tags": {
+    "name": "community chemist",
+    "operational_status": "closed",
+    "shop": "chemist"
+  }
+},
+{
+  "type": "node",
   "id": 701797825,
   "lat": -1.3114452,
   "lon": 36.7902544,
@@ -5001,26 +5044,6 @@
     "amenity": "pharmacy",
     "healthcare": "pharmacy",
     "name": "Nairobi West Childrens Clinic"
-  }
-},
-{
-  "type": "node",
-  "id": 720900823,
-  "lat": -1.3135510,
-  "lon": 36.8190204,
-  "tags": {
-    "amenity": "school",
-    "name": "Moi Educational Center"
-  }
-},
-{
-  "type": "node",
-  "id": 744432249,
-  "lat": -1.3007033,
-  "lon": 36.7873227,
-  "tags": {
-    "name": "Nakumatt Prestige",
-    "shop": "supermarket"
   }
 },
 {
@@ -5796,8 +5819,8 @@
 {
   "type": "node",
   "id": 752223310,
-  "lat": -1.3154868,
-  "lon": 36.8020590,
+  "lat": -1.3154761,
+  "lon": 36.8020945,
   "tags": {
     "accessibility": "big_vehicles",
     "amenity": "school",
@@ -5991,8 +6014,8 @@
 {
   "type": "node",
   "id": 762025979,
-  "lat": -1.2816587,
-  "lon": 36.8169366,
+  "lat": -1.2816641,
+  "lon": 36.8170291,
   "tags": {
     "brand": "Carrefour",
     "brand:wikidata": "Q217599",
@@ -6193,8 +6216,8 @@
 {
   "type": "node",
   "id": 929941887,
-  "lat": -1.2783270,
-  "lon": 36.8113459,
+  "lat": -1.2784617,
+  "lon": 36.8112595,
   "tags": {
     "name": "Tuck shop",
     "shop": "convenience"
@@ -6243,6 +6266,16 @@
 },
 {
   "type": "node",
+  "id": 940073791,
+  "lat": -1.2740995,
+  "lon": 36.8049703,
+  "tags": {
+    "amenity": "university",
+    "name": "Department of Microbilogy and Biotechnology"
+  }
+},
+{
+  "type": "node",
   "id": 968570105,
   "lat": -1.2627477,
   "lon": 36.8023065,
@@ -6282,8 +6315,8 @@
 {
   "type": "node",
   "id": 1101638832,
-  "lat": -1.2668842,
-  "lon": 36.8452639,
+  "lat": -1.2667568,
+  "lon": 36.8452894,
   "tags": {
     "amenity": "fuel",
     "brand": "TotalEnergies",
@@ -6312,8 +6345,8 @@
 {
   "type": "node",
   "id": 1110239839,
-  "lat": -1.2658062,
-  "lon": 36.8434362,
+  "lat": -1.2658303,
+  "lon": 36.8433276,
   "tags": {
     "amenity": "school",
     "education:type": "primary",
@@ -6349,8 +6382,8 @@
 {
   "type": "node",
   "id": 1110239847,
-  "lat": -1.2656463,
-  "lon": 36.8455975,
+  "lat": -1.2656570,
+  "lon": 36.8456404,
   "tags": {
     "name": "Wa Caro",
     "shop": "supermarket"
@@ -6451,7 +6484,7 @@
   "type": "node",
   "id": 1110239854,
   "lat": -1.2657407,
-  "lon": 36.8450669,
+  "lon": 36.8450803,
   "tags": {
     "amenity": "school",
     "education:type": "pre_primary",
@@ -6558,8 +6591,8 @@
 {
   "type": "node",
   "id": 1147234418,
-  "lat": -1.2673638,
-  "lon": 36.8174495,
+  "lat": -1.2673738,
+  "lon": 36.8174196,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Parklands Road",
@@ -6610,20 +6643,6 @@
     "amenity": "hospital",
     "check_date": "2023-05-23",
     "name": "Jamko health clinic"
-  }
-},
-{
-  "type": "node",
-  "id": 1295903338,
-  "lat": -1.2870250,
-  "lon": 36.8239656,
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:postcode": "00100",
-    "addr:street": "Taifa Road",
-    "amenity": "marketplace",
-    "name": "Maasai market",
-    "shop": "gift"
   }
 },
 {
@@ -6789,21 +6808,9 @@
 },
 {
   "type": "node",
-  "id": 1419821932,
-  "lat": -1.2817574,
-  "lon": 36.8183031,
-  "tags": {
-    "name": "Nakumatt Lifestyle",
-    "opening_hours": "24/7",
-    "shop": "supermarket",
-    "website": "http://www.nakumatt.co.ke/"
-  }
-},
-{
-  "type": "node",
   "id": 1419821933,
-  "lat": -1.2801664,
-  "lon": 36.8189488,
+  "lat": -1.2801490,
+  "lon": 36.8188207,
   "tags": {
     "amenity": "college",
     "building": "commercial",
@@ -6855,8 +6862,8 @@
 {
   "type": "node",
   "id": 1453526242,
-  "lat": -1.3160692,
-  "lon": 36.8346284,
+  "lat": -1.3160389,
+  "lon": 36.8345757,
   "tags": {
     "name": "Baby Shop",
     "shop": "clothes"
@@ -6864,23 +6871,12 @@
 },
 {
   "type": "node",
-  "id": 1453526377,
-  "lat": -1.3163854,
-  "lon": 36.8341854,
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Mombasa Road",
-    "name": "White Rose Drycleaners",
-    "shop": "laundry"
-  }
-},
-{
-  "type": "node",
   "id": 1453526846,
-  "lat": -1.3158117,
-  "lon": 36.8346498,
+  "lat": -1.3157016,
+  "lon": 36.8345608,
   "tags": {
     "amenity": "hospital",
+    "healthcare": "hospital",
     "name": "Meridian Medical Centre"
   }
 },
@@ -6938,8 +6934,8 @@
 {
   "type": "node",
   "id": 1456685413,
-  "lat": -1.3137058,
-  "lon": 36.8464248,
+  "lat": -1.3137541,
+  "lon": 36.8463611,
   "tags": {
     "amenity": "fast_food",
     "name": "early bird hotel",
@@ -7000,8 +6996,8 @@
 {
   "type": "node",
   "id": 1483304294,
-  "lat": -1.3066821,
-  "lon": 36.8404177,
+  "lat": -1.3066737,
+  "lon": 36.8404140,
   "tags": {
     "amenity": "school",
     "name": "Bright star Secondary and Primary school"
@@ -7010,8 +7006,8 @@
 {
   "type": "node",
   "id": 1483304295,
-  "lat": -1.3088212,
-  "lon": 36.8406344,
+  "lat": -1.3088054,
+  "lon": 36.8406264,
   "tags": {
     "amenity": "school",
     "name": "Brine Academy"
@@ -7030,8 +7026,8 @@
 {
   "type": "node",
   "id": 1483304301,
-  "lat": -1.3089639,
-  "lon": 36.8397143,
+  "lat": -1.3089726,
+  "lon": 36.8397109,
   "tags": {
     "amenity": "school",
     "name": "Poters academy"
@@ -7040,8 +7036,8 @@
 {
   "type": "node",
   "id": 1483304303,
-  "lat": -1.3092411,
-  "lon": 36.8404741,
+  "lat": -1.3092334,
+  "lon": 36.8404687,
   "tags": {
     "amenity": "school",
     "name": "Sauth B Baptist Academy"
@@ -7103,8 +7099,8 @@
 {
   "type": "node",
   "id": 1493484802,
-  "lat": -1.3116862,
-  "lon": 36.8461004,
+  "lat": -1.3116855,
+  "lon": 36.8461084,
   "tags": {
     "amenity": "school",
     "name": "Evano computer training services"
@@ -7232,8 +7228,8 @@
 {
   "type": "node",
   "id": 1499916424,
-  "lat": -1.3077646,
-  "lon": 36.8367337,
+  "lat": -1.3078846,
+  "lon": 36.8365238,
   "tags": {
     "amenity": "school",
     "name": "mama vicky"
@@ -7242,8 +7238,8 @@
 {
   "type": "node",
   "id": 1499916425,
-  "lat": -1.3090112,
-  "lon": 36.8384070,
+  "lat": -1.3090400,
+  "lon": 36.8383527,
   "tags": {
     "amenity": "school",
     "name": "mama victor pre school"
@@ -7369,8 +7365,8 @@
 {
   "type": "node",
   "id": 1507584919,
-  "lat": -1.2878173,
-  "lon": 36.8224207,
+  "lat": -1.2878153,
+  "lon": 36.8224052,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "City Hall Way",
@@ -7616,8 +7612,8 @@
 {
   "type": "node",
   "id": 1580140423,
-  "lat": -1.3163044,
-  "lon": 36.8347047,
+  "lat": -1.3161195,
+  "lon": 36.8347255,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Mombasa Road",
@@ -7627,9 +7623,21 @@
 },
 {
   "type": "node",
+  "id": 1580141908,
+  "lat": -1.3163640,
+  "lon": 36.8351544,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:street": "Mombasa Road",
+    "name": "Capital Centre Bakery",
+    "shop": "bakery"
+  }
+},
+{
+  "type": "node",
   "id": 1580148504,
-  "lat": -1.3159773,
-  "lon": 36.8346940,
+  "lat": -1.3158229,
+  "lon": 36.8344816,
   "tags": {
     "name": "Apollo Golden Ornaments",
     "shop": "gift"
@@ -7638,8 +7646,8 @@
 {
   "type": "node",
   "id": 1580151696,
-  "lat": -1.3162561,
-  "lon": 36.8348710,
+  "lat": -1.3160037,
+  "lon": 36.8347823,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Mombasa Road",
@@ -7716,8 +7724,8 @@
 {
   "type": "node",
   "id": 1720711114,
-  "lat": -1.2832546,
-  "lon": 36.8231612,
+  "lat": -1.2832764,
+  "lon": 36.8231430,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Moi Avenue",
@@ -8037,6 +8045,16 @@
 },
 {
   "type": "node",
+  "id": 1865385825,
+  "lat": -1.2632578,
+  "lon": 36.7929631,
+  "tags": {
+    "name": "Appleton Resort",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
   "id": 1865392460,
   "lat": -1.2618828,
   "lon": 36.7953647,
@@ -8197,6 +8215,16 @@
 },
 {
   "type": "node",
+  "id": 1999910161,
+  "lat": -1.3119540,
+  "lon": 36.8471461,
+  "tags": {
+    "dispensing": "Tiriki chemist",
+    "shop": "chemist"
+  }
+},
+{
+  "type": "node",
   "id": 1999910181,
   "lat": -1.3119465,
   "lon": 36.8464646,
@@ -8238,8 +8266,8 @@
 {
   "type": "node",
   "id": 2001001141,
-  "lat": -1.3121783,
-  "lon": 36.8453087,
+  "lat": -1.3121813,
+  "lon": 36.8453107,
   "tags": {
     "amenity": "school",
     "name": "Hekima primary schoo"
@@ -8268,8 +8296,8 @@
 {
   "type": "node",
   "id": 2001001150,
-  "lat": -1.3121852,
-  "lon": 36.8337338,
+  "lat": -1.3122227,
+  "lon": 36.8326824,
   "tags": {
     "amenity": "school",
     "name": "Nairobi south primary school"
@@ -8327,11 +8355,21 @@
 {
   "type": "node",
   "id": 2001001177,
-  "lat": -1.3124796,
-  "lon": 36.8456942,
+  "lat": -1.3124830,
+  "lon": 36.8456969,
   "tags": {
     "amenity": "school",
     "name": "Talent academy"
+  }
+},
+{
+  "type": "node",
+  "id": 2001001207,
+  "lat": -1.3125503,
+  "lon": 36.8444225,
+  "tags": {
+    "dispensing": "Imara centre chemist",
+    "shop": "chemist"
   }
 },
 {
@@ -8347,8 +8385,8 @@
 {
   "type": "node",
   "id": 2001079018,
-  "lat": -1.3090852,
-  "lon": 36.8405127,
+  "lat": -1.3091010,
+  "lon": 36.8405110,
   "tags": {
     "amenity": "school",
     "name": "Brine academy"
@@ -8387,8 +8425,8 @@
 {
   "type": "node",
   "id": 2001079036,
-  "lat": -1.3087679,
-  "lon": 36.8383475,
+  "lat": -1.3087652,
+  "lon": 36.8383301,
   "tags": {
     "amenity": "school",
     "name": "Shalom primary school/church"
@@ -8402,6 +8440,16 @@
   "tags": {
     "name": "Softec digital systems",
     "shop": "electronics"
+  }
+},
+{
+  "type": "node",
+  "id": 2001079045,
+  "lat": -1.3097170,
+  "lon": 36.8413574,
+  "tags": {
+    "dispensing": "Grace chemist (not functional)",
+    "shop": "chemist"
   }
 },
 {
@@ -8454,51 +8502,106 @@
 },
 {
   "type": "node",
-  "id": 2115330631,
-  "lat": -1.3087658,
-  "lon": 36.8014763,
+  "id": 2105460696,
+  "lat": -1.2653263,
+  "lon": 36.8471910,
   "tags": {
-    "accessibility": "big_vehicles",
+    "accessibility": "small_cars,big_vehicles,foot",
     "amenity": "school",
-    "building:levels": "0",
-    "building:material": "concrete",
-    "building:roof": "iron_sheet",
-    "contact:address": "P O Box 43687-00100, Nairobi",
-    "contact:email": "reginahmuia@gmail.com",
-    "contact:phone": "0721246109",
+    "barrier": "gate",
+    "barrier:security_fence": "yes",
+    "building:blocks": "3",
+    "building:classrooms": "12",
+    "building:levels": "1",
+    "building:library": "yes",
+    "building:material": "cement_block,concrete",
+    "building:roof": "concrete",
+    "condition": "good",
+    "contact:address": "P O Box 71417_00622, Nairobi",
+    "contact:email": "st.teresasgirlssecondary@yahoo.com",
+    "contact:phone": "0202402094",
+    "education:bom_employed": "yes",
+    "education:bom_how_many": "1",
     "education:curriculum": "8_4_4",
     "education:exam_center": "yes",
+    "education:extra_agriculture_club": "yes",
     "education:extra_drama": "yes",
     "education:extra_music": "yes",
+    "education:extra_other": "St John's ambulance provide first Aid training",
     "education:extra_scouts": "yes",
     "education:extra_sports": "yes",
-    "education:gender_type": "mixed",
+    "education:extra_woodwork": "yes",
+    "education:fees": "yes",
+    "education:fees_admission": "0",
+    "education:fees_exam": "0",
+    "education:fees_level4": "25000",
+    "education:fees_lunch": "0",
+    "education:fees_other": "School has a vote head of boarding equipment and supplies which carters for all",
+    "education:fees_per_term": "53000",
+    "education:fees_per_year": "35000",
+    "education:fees_trip": "0",
+    "education:gender_type": "girls",
+    "education:government_grants": "yes",
     "education:government_registered": "moe",
     "education:management_committee": "yes",
+    "education:nemis_code": "yes",
+    "education:num_classes": "12",
+    "education:operate_as": "boarding_school",
     "education:program_counselling": "yes",
-    "education:program_feeding": "fees",
-    "education:program_sanitary_towel": "yes",
+    "education:program_feeding": "yes",
+    "education:program_feeding_description": "school_fees",
+    "education:program_orphans": "yes",
+    "education:program_sanitary_towel": "no",
+    "education:program_special_needs": "no",
     "education:pta": "yes",
-    "education:school_head": "Reginah muia",
-    "education:students": "1099",
-    "education:students_female": "567",
-    "education:students_male": "532",
-    "education:teachers": "30",
-    "education:teachers_female": "28",
-    "education:teachers_male": "2",
-    "education:teachers_trained": "30",
-    "education:tsc_employed": "30",
-    "education:type": "primary",
-    "electricity:operational_status": "often",
-    "image:classroom": "https://0079f04f78208eb6dbf00f4be735c0a32d71c3ad.googledrive.com/host/0B8cIVKWxH2-6Ynk0MDZJUnNpdUU/Joshua/Schools/Mbagathi%20Road%20Primary%20School/classroom.JPG",
-    "image:compound": "https://0079f04f78208eb6dbf00f4be735c0a32d71c3ad.googledrive.com/host/0B8cIVKWxH2-6Ynk0MDZJUnNpdUU/Joshua/Schools/Mbagathi%20Road%20Primary%20School/compound.JPG",
-    "image:other": "https://0079f04f78208eb6dbf00f4be735c0a32d71c3ad.googledrive.com/host/0B8cIVKWxH2-6Ynk0MDZJUnNpdUU/Joshua/Schools/Mbagathi%20Road%20Primary%20School/other.JPG",
-    "image:outside": "https://0079f04f78208eb6dbf00f4be735c0a32d71c3ad.googledrive.com/host/0B8cIVKWxH2-6Ynk0MDZJUnNpdUU/Joshua/Schools/Mbagathi%20Road%20Primary%20School/outside.JPG",
-    "name": "Mbagathi Road Primary.",
-    "operational_status:electricity": "often",
-    "operator:name": "Government",
+    "education:school_head": "Mary Karanja",
+    "education:sponsored_by": "loreto_sisters",
+    "education:students": "513",
+    "education:students_female": "513",
+    "education:students_male": "0",
+    "education:supported_by": "cdf,local_ngos,cbos,donors,foundations",
+    "education:teachers": "28",
+    "education:teachers_male": "9",
+    "education:teachers_trained": "28",
+    "education:teachers_tsc_registered": "28",
+    "education:teachers_under_going_training": "0",
+    "education:teachers_untrained": "0",
+    "education:tsc_employed": "yes",
+    "education:tsc_how_many": "28",
+    "education:type": "secondary",
+    "electricity:operational_status": "always",
+    "government:registered": "government registered",
+    "image": "https://kc.humanitarianresponse.info/attachment/original?media_file=mapkibera/attachments/1590477157386.jpg",
+    "image:classroom": "https://kc.humanitarianresponse.info/attachment/original?media_file=mapkibera/attachments/1626252102514.jpg",
+    "image:compound": "https://kc.humanitarianresponse.info/attachment/original?media_file=mapkibera/attachments/1626252176139.jpg",
+    "image:outside": "https://kc.humanitarianresponse.info/attachment/original?media_file=mapkibera/attachments/1626252479863.jpg",
+    "internet_access": "yes",
+    "laboratory": "science,computer",
+    "laboratory:equipment": "yes",
+    "leisure": "playground",
+    "name": "St Teresa's Girls' Secondary School",
+    "operational_status:electricity": "always",
+    "operator:description": "County Government of Nairobi",
+    "operator:funding": "Catholic Church",
     "operator:type": "government",
-    "toilet:present": "yes"
+    "polling_station:accessibility": "big_cars",
+    "polling_station:election_year": "2013",
+    "polling_station:nearest_health_centre": "Depot police camp",
+    "polling_station:nearest_police_station": "Blue house",
+    "polling_station:source": "map_kibera_trust",
+    "polling_station:type_description": "public_school",
+    "registered_voters": "12,300",
+    "room:kitchen": "yes",
+    "room:staff": "yes",
+    "start_date": "1952",
+    "toilet:present": "yes",
+    "toilet:teachers": "10",
+    "toilets:female": "15",
+    "toilets:handwashing": "yes",
+    "toilets:male": "0",
+    "toilets:teachers": "2",
+    "waste:garbage_disposal": "never",
+    "water_source": "water_tank"
   }
 },
 {
@@ -8555,9 +8658,21 @@
 },
 {
   "type": "node",
+  "id": 2145330232,
+  "lat": -1.3163694,
+  "lon": 36.8348020,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:street": "Mombasa Road",
+    "name": "East West Fashions",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "node",
   "id": 2145331451,
-  "lat": -1.3162911,
-  "lon": 36.8345536,
+  "lat": -1.3162169,
+  "lon": 36.8344622,
   "tags": {
     "name": "Apollo Golden Ornaments",
     "shop": "jewelry"
@@ -8566,8 +8681,8 @@
 {
   "type": "node",
   "id": 2145333868,
-  "lat": -1.3163812,
-  "lon": 36.8344232,
+  "lat": -1.3162592,
+  "lon": 36.8341491,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Mombasa Road",
@@ -8578,8 +8693,8 @@
 {
   "type": "node",
   "id": 2145338842,
-  "lat": -1.3163678,
-  "lon": 36.8345895,
+  "lat": -1.3161572,
+  "lon": 36.8350623,
   "tags": {
     "name": "Rehebeam Agencies Ltd",
     "shop": "books"
@@ -8588,8 +8703,8 @@
 {
   "type": "node",
   "id": 2145339867,
-  "lat": -1.3161695,
-  "lon": 36.8349572,
+  "lat": -1.3158557,
+  "lon": 36.8348584,
   "tags": {
     "name": "Crayon Fashions",
     "shop": "clothes"
@@ -8640,28 +8755,15 @@
 },
 {
   "type": "node",
-  "id": 2296746212,
-  "lat": -1.3093466,
-  "lon": 36.8406570,
+  "id": 2298028770,
+  "lat": -1.3123839,
+  "lon": 36.8458185,
   "tags": {
     "amenity": "school",
-    "contact:email": "southb.baptist@yahoo.com",
-    "contact:mobile": "0724302578",
-    "cost": "free",
-    "fee": "no",
-    "media:camera_number": "141",
-    "name": "South_b_baptist_academy",
-    "watsan:cleaner": "operator",
-    "watsan:connection": "none",
-    "watsan:hand_washing": "none",
-    "watsan:operational_status": "operational",
-    "watsan:operator": "group",
-    "watsan:toilet_type": "ventilated_improved_pit",
-    "watsan:toilet_type_description": "church",
-    "watsan:towel_bin": "no",
-    "watsan:type": "private_toilet",
-    "watsan:users_per_day": "not_sure",
-    "watsan:water_availability": "piped"
+    "contact:mobile": "0721385788",
+    "cost": "5/=per 20lt",
+    "media:camera_number": "4",
+    "name": "Phlista Kadongo"
   }
 },
 {
@@ -8869,6 +8971,17 @@
 },
 {
   "type": "node",
+  "id": 2613334025,
+  "lat": -1.2825081,
+  "lon": 36.8148000,
+  "tags": {
+    "amenity": "university",
+    "name": "Kenya Institute of Management",
+    "website": "https://www.kim.ac.ke/"
+  }
+},
+{
+  "type": "node",
   "id": 2680561388,
   "lat": -1.3077386,
   "lon": 36.8209947,
@@ -8896,6 +9009,16 @@
   "tags": {
     "amenity": "school",
     "name": "Logos Christian School"
+  }
+},
+{
+  "type": "node",
+  "id": 2705279006,
+  "lat": -1.2659635,
+  "lon": 36.8225278,
+  "tags": {
+    "amenity": "school",
+    "name": "Aga Khan Academy School"
   }
 },
 {
@@ -9009,8 +9132,8 @@
 {
   "type": "node",
   "id": 2923089741,
-  "lat": -1.3144999,
-  "lon": 36.7909774,
+  "lat": -1.3144617,
+  "lon": 36.7909794,
   "tags": {
     "accessibility": "foot",
     "amenity": "school",
@@ -11032,8 +11155,8 @@
 {
   "type": "node",
   "id": 3856033695,
-  "lat": -1.3082400,
-  "lon": 36.8373980,
+  "lat": -1.3082403,
+  "lon": 36.8374230,
   "tags": {
     "amenity": "school",
     "name": "Grace Junior Academy"
@@ -11042,8 +11165,8 @@
 {
   "type": "node",
   "id": 3856033696,
-  "lat": -1.3087100,
-  "lon": 36.8362910,
+  "lat": -1.3087127,
+  "lon": 36.8363192,
   "tags": {
     "amenity": "clinic",
     "name": "Imara Clinic"
@@ -11052,8 +11175,8 @@
 {
   "type": "node",
   "id": 3856033697,
-  "lat": -1.3091810,
-  "lon": 36.8370769,
+  "lat": -1.3091797,
+  "lon": 36.8370454,
   "tags": {
     "amenity": "clinic",
     "name": "Kwa Kioko Clinic"
@@ -11072,8 +11195,8 @@
 {
   "type": "node",
   "id": 3856033701,
-  "lat": -1.3092329,
-  "lon": 36.8366889,
+  "lat": -1.3092210,
+  "lon": 36.8366827,
   "tags": {
     "amenity": "school",
     "name": "PCEA School"
@@ -11102,8 +11225,8 @@
 {
   "type": "node",
   "id": 3856033708,
-  "lat": -1.3078470,
-  "lon": 36.8368060,
+  "lat": -1.3079020,
+  "lon": 36.8366618,
   "tags": {
     "amenity": "school",
     "name": "Victory Academy"
@@ -11142,8 +11265,8 @@
 {
   "type": "node",
   "id": 3856040859,
-  "lat": -1.3083660,
-  "lon": 36.8399419,
+  "lat": -1.3083352,
+  "lon": 36.8399479,
   "tags": {
     "amenity": "school",
     "name": "sauti ya bwana primary school"
@@ -11233,8 +11356,8 @@
 {
   "type": "node",
   "id": 3856047789,
-  "lat": -1.3125927,
-  "lon": 36.8444239,
+  "lat": -1.3124928,
+  "lon": 36.8442616,
   "tags": {
     "amenity": "school",
     "name": "All Nation Academy"
@@ -11284,8 +11407,8 @@
 {
   "type": "node",
   "id": 3856068147,
-  "lat": -1.3066239,
-  "lon": 36.8404546,
+  "lat": -1.3066219,
+  "lon": 36.8404345,
   "tags": {
     "amenity": "school",
     "name": "Neema Junior"
@@ -11294,8 +11417,8 @@
 {
   "type": "node",
   "id": 3856068148,
-  "lat": -1.3081209,
-  "lon": 36.8411516,
+  "lat": -1.3081316,
+  "lon": 36.8411436,
   "tags": {
     "amenity": "school",
     "name": "Upendo rescue centre"
@@ -11334,8 +11457,8 @@
 {
   "type": "node",
   "id": 3856101439,
-  "lat": -1.3124681,
-  "lon": 36.8435459,
+  "lat": -1.3124379,
+  "lon": 36.8435124,
   "tags": {
     "amenity": "clinic",
     "name": "Imara Clinic"
@@ -11344,8 +11467,8 @@
 {
   "type": "node",
   "id": 3856101440,
-  "lat": -1.3125655,
-  "lon": 36.8443729,
+  "lat": -1.3124475,
+  "lon": 36.8442549,
   "tags": {
     "amenity": "school",
     "name": "Songa Mbele Children Centre"
@@ -11354,8 +11477,8 @@
 {
   "type": "node",
   "id": 3856130258,
-  "lat": -1.3067447,
-  "lon": 36.8403990,
+  "lat": -1.3067313,
+  "lon": 36.8404138,
   "tags": {
     "amenity": "school",
     "name": "St Graville Primary and Secondary School"
@@ -11364,8 +11487,8 @@
 {
   "type": "node",
   "id": 3856130358,
-  "lat": -1.3068840,
-  "lon": 36.8411301,
+  "lat": -1.3068679,
+  "lon": 36.8411435,
   "tags": {
     "amenity": "pharmacy",
     "name": "Afya Medical Clinic"
@@ -11374,8 +11497,8 @@
 {
   "type": "node",
   "id": 3856130361,
-  "lat": -1.3080626,
-  "lon": 36.8411708,
+  "lat": -1.3080599,
+  "lon": 36.8411628,
   "tags": {
     "amenity": "clinic",
     "name": "fema medical clinic"
@@ -11384,8 +11507,8 @@
 {
   "type": "node",
   "id": 3856130657,
-  "lat": -1.3068336,
-  "lon": 36.8404875,
+  "lat": -1.3068262,
+  "lon": 36.8404872,
   "tags": {
     "amenity": "school",
     "name": "Child Rock Pimary and Legion Maria Church"
@@ -11394,8 +11517,8 @@
 {
   "type": "node",
   "id": 3856130659,
-  "lat": -1.3070668,
-  "lon": 36.8407155,
+  "lat": -1.3069582,
+  "lon": 36.8405479,
   "tags": {
     "amenity": "school",
     "name": "Little Friends Schools"
@@ -11434,8 +11557,8 @@
 {
   "type": "node",
   "id": 3856130957,
-  "lat": -1.3072140,
-  "lon": 36.8412319,
+  "lat": -1.3072415,
+  "lon": 36.8411762,
   "tags": {
     "amenity": "school",
     "name": "bright star primary and secondary and KG"
@@ -11454,8 +11577,8 @@
 {
   "type": "node",
   "id": 3856131559,
-  "lat": -1.3089837,
-  "lon": 36.8397704,
+  "lat": -1.3089954,
+  "lon": 36.8397674,
   "tags": {
     "amenity": "school",
     "name": "porters house school"
@@ -11464,8 +11587,8 @@
 {
   "type": "node",
   "id": 3856131560,
-  "lat": -1.3090440,
-  "lon": 36.8384506,
+  "lat": -1.3090504,
+  "lon": 36.8384573,
   "tags": {
     "amenity": "school",
     "name": "wordwide school"
@@ -11533,8 +11656,8 @@
 {
   "type": "node",
   "id": 4252183491,
-  "lat": -1.2847433,
-  "lon": 36.8208550,
+  "lat": -1.2845231,
+  "lon": 36.8207444,
   "tags": {
     "check_date": "2023-05-11",
     "name": "samsung dealership",
@@ -11631,8 +11754,8 @@
 {
   "type": "node",
   "id": 4418027289,
-  "lat": -1.2867227,
-  "lon": 36.8202232,
+  "lat": -1.2867669,
+  "lon": 36.8202581,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Cardinal Otunga Street",
@@ -11655,26 +11778,6 @@
     "phone": "0780168168",
     "tourism": "hotel",
     "website": "https://lotos.co.ke/"
-  }
-},
-{
-  "type": "node",
-  "id": 4432760654,
-  "lat": -1.2701166,
-  "lon": 36.8188247,
-  "tags": {
-    "amenity": "school",
-    "name": "Parklands Primary School"
-  }
-},
-{
-  "type": "node",
-  "id": 4433872628,
-  "lat": -1.2695746,
-  "lon": 36.8177977,
-  "tags": {
-    "amenity": "school",
-    "name": "Dr. Ribeiro Parklands Boys' High School"
   }
 },
 {
@@ -11834,8 +11937,8 @@
 {
   "type": "node",
   "id": 4763583044,
-  "lat": -1.2861407,
-  "lon": 36.8162132,
+  "lat": -1.2861544,
+  "lon": 36.8161938,
   "tags": {
     "historic": "monument"
   }
@@ -12095,8 +12198,8 @@
 {
   "type": "node",
   "id": 4974963309,
-  "lat": -1.2863529,
-  "lon": 36.8271991,
+  "lat": -1.2863308,
+  "lon": 36.8272112,
   "tags": {
     "name": "Arkland Palace Hotel",
     "tourism": "hotel"
@@ -12112,6 +12215,18 @@
     "check_date": "2026-03-20",
     "name": "Eron Hotel",
     "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4992148929,
+  "lat": -1.2850089,
+  "lon": 36.8241922,
+  "tags": {
+    "artwork_type": "statue",
+    "memorial": "statue",
+    "name": "Dedan Kimathi Statue",
+    "tourism": "artwork"
   }
 },
 {
@@ -12136,18 +12251,6 @@
     "historic": "monument",
     "name": "Cross",
     "name:en": "Cross"
-  }
-},
-{
-  "type": "node",
-  "id": 5003136921,
-  "lat": -1.2869096,
-  "lon": 36.8203058,
-  "tags": {
-    "name": "Catholic Bookstore",
-    "name:en": "Catholic Bookstore",
-    "name:it": "Catholic",
-    "shop": "books"
   }
 },
 {
@@ -12182,8 +12285,8 @@
 {
   "type": "node",
   "id": 5070531026,
-  "lat": -1.2843341,
-  "lon": 36.8236558,
+  "lat": -1.2842347,
+  "lon": 36.8235292,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Kimathi Street",
@@ -12194,8 +12297,8 @@
 {
   "type": "node",
   "id": 5070531028,
-  "lat": -1.2846328,
-  "lon": 36.8240180,
+  "lat": -1.2846460,
+  "lon": 36.8240550,
   "tags": {
     "shop": "electronics"
   }
@@ -12439,8 +12542,8 @@
 {
   "type": "node",
   "id": 5328512330,
-  "lat": -1.2607430,
-  "lon": 36.8042889,
+  "lat": -1.2605061,
+  "lon": 36.8044119,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Ring Road Parklands",
@@ -12730,8 +12833,8 @@
 {
   "type": "node",
   "id": 5340544879,
-  "lat": -1.2608766,
-  "lon": 36.8015645,
+  "lat": -1.2608880,
+  "lon": 36.8015281,
   "tags": {
     "name": "Monty's Wines & Spirits",
     "shop": "wine"
@@ -12827,11 +12930,15 @@
 {
   "type": "node",
   "id": 5340998426,
-  "lat": -1.2574780,
-  "lon": 36.8274568,
+  "lat": -1.2573385,
+  "lon": 36.8272990,
   "tags": {
-    "name": "Swiss International Airlines",
-    "shop": "travel_agency"
+    "addr:housename": "Regal Plaza, 1st floor",
+    "addr:street": "Limuru Road",
+    "name": "Swiss Airlines",
+    "opening_hours": "24/7",
+    "shop": "ticket",
+    "website": "https://www.swiss.com/ke/en/homepage"
   }
 },
 {
@@ -12892,8 +12999,8 @@
 {
   "type": "node",
   "id": 5353011125,
-  "lat": -1.2608306,
-  "lon": 36.8041605,
+  "lat": -1.2607213,
+  "lon": 36.8042516,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Ring Road Parklands",
@@ -12915,16 +13022,19 @@
 {
   "type": "node",
   "id": 5355368216,
-  "lat": -1.2652335,
-  "lon": 36.8019166,
+  "lat": -1.2654050,
+  "lon": 36.8016937,
   "tags": {
     "addr:city": "NAIROBI",
+    "addr:housename": "One Africa Place, 14th floor",
     "addr:postcode": "00100",
     "addr:street": "Waiyaki Way",
     "currency:KES": "yes",
     "currency:USD": "yes",
     "name": "Qatar Airways",
-    "shop": "travel_agency"
+    "opening_hours": "Mo-Fr 08:30-16:30; sat 09:00-12:00",
+    "shop": "ticket",
+    "website": "https://www.qatarairways.com/en/homepage.html/"
   }
 },
 {
@@ -12961,6 +13071,7 @@
     "addr:city": "Nairobi",
     "addr:street": "Murang'a Road",
     "amenity": "fuel",
+    "brand": "OLA Energy",
     "check_date": "2023-05-11",
     "name": "OLA Energy"
   }
@@ -13689,6 +13800,19 @@
 },
 {
   "type": "node",
+  "id": 5414008469,
+  "lat": -1.3009900,
+  "lon": 36.7873623,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:street": "Ngong Road",
+    "check_date": "2023-04-15",
+    "name": "Black Forest House",
+    "shop": "pastry"
+  }
+},
+{
+  "type": "node",
   "id": 5414008478,
   "lat": -1.3017099,
   "lon": 36.7873561,
@@ -14308,6 +14432,7 @@
     "addr:city": "Nairobi",
     "addr:street": "Tom Mboya Street",
     "amenity": "fuel",
+    "brand": "OLA Energy",
     "name": "OLA Energy"
   }
 },
@@ -14378,28 +14503,14 @@
 {
   "type": "node",
   "id": 5536006826,
-  "lat": -1.2833954,
-  "lon": 36.8176357,
+  "lat": -1.2834463,
+  "lon": 36.8176330,
   "tags": {
     "addr:city": "Nairobi",
     "addr:housenumber": "Pension Towers,",
     "addr:street": "Loita Street",
     "amenity": "college",
     "name": "Institute of Advanced Technology IAT Pension Towers Campus"
-  }
-},
-{
-  "type": "node",
-  "id": 5536013005,
-  "lat": -1.2842570,
-  "lon": 36.8186353,
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Koinage Street",
-    "amenity": "fuel",
-    "brand": "TotalEnergies",
-    "brand:wikidata": "Q154037",
-    "name": "Total"
   }
 },
 {
@@ -14590,8 +14701,8 @@
 {
   "type": "node",
   "id": 5552467930,
-  "lat": -1.2829500,
-  "lon": 36.8185402,
+  "lat": -1.2830559,
+  "lon": 36.8184919,
   "tags": {
     "addr:city": "Nairobi",
     "addr:housenumber": "Yala Towers,",
@@ -14603,8 +14714,8 @@
 {
   "type": "node",
   "id": 5552467939,
-  "lat": -1.2805821,
-  "lon": 36.8189083,
+  "lat": -1.2806330,
+  "lon": 36.8190498,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Monrovia Street",
@@ -14657,8 +14768,8 @@
 {
   "type": "node",
   "id": 5555072684,
-  "lat": -1.2855918,
-  "lon": 36.8246166,
+  "lat": -1.2854926,
+  "lon": 36.8247279,
   "tags": {
     "addr:city": "Nairobi",
     "addr:housenumber": "Hilton House,",
@@ -14673,8 +14784,8 @@
 {
   "type": "node",
   "id": 5555072685,
-  "lat": -1.2856864,
-  "lon": 36.8242539,
+  "lat": -1.2857146,
+  "lon": 36.8242472,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "City Hall Way",
@@ -14700,13 +14811,14 @@
 {
   "type": "node",
   "id": 5555072716,
-  "lat": -1.2857856,
-  "lon": 36.8236289,
+  "lat": -1.2857982,
+  "lon": 36.8239617,
   "tags": {
     "addr:city": "Nairobi",
+    "addr:housename": "International House, mezzanine 1 floor",
     "addr:street": "City Hall Way",
     "name": "Rwanda Air",
-    "shop": "travel_agency"
+    "shop": "ticket"
   }
 },
 {
@@ -14824,8 +14936,11 @@
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "City Hall Way",
+    "museum": "history",
     "name": "The Judiciary Museum",
-    "tourism": "museum"
+    "operator:type": "government",
+    "tourism": "museum",
+    "website": "https://judiciary.go.ke/museum/"
   }
 },
 {
@@ -14897,8 +15012,8 @@
 {
   "type": "node",
   "id": 5555097014,
-  "lat": -1.2844071,
-  "lon": 36.8237952,
+  "lat": -1.2844744,
+  "lon": 36.8238265,
   "tags": {
     "addr:city": "Nairobi",
     "addr:housenumber": "Ground Floor, Old Mutual Building,",
@@ -15023,6 +15138,7 @@
     "addr:city": "Nairobi",
     "addr:street": "Bunyala Road",
     "amenity": "fuel",
+    "brand": "OLA Energy",
     "name": "OLA Energy"
   }
 },
@@ -15062,8 +15178,8 @@
 {
   "type": "node",
   "id": 5563456287,
-  "lat": -1.2872417,
-  "lon": 36.8244096,
+  "lat": -1.2871967,
+  "lon": 36.8243485,
   "tags": {
     "addr:city": "Nairobi",
     "addr:housenumber": "Reinsurance Plaza,",
@@ -15308,8 +15424,8 @@
 {
   "type": "node",
   "id": 5924128589,
-  "lat": -1.2888006,
-  "lon": 36.8228831,
+  "lat": -1.2887558,
+  "lon": 36.8231244,
   "tags": {
     "name": "Tower",
     "shop": "ticket"
@@ -15608,32 +15724,6 @@
 },
 {
   "type": "node",
-  "id": 5953218907,
-  "lat": -1.2593339,
-  "lon": 36.7974043,
-  "tags": {
-    "accessibility": "small_cars,big_vehicles,foot",
-    "amenity": "school",
-    "building:material": "cement_block",
-    "building:roof": "iron_sheet",
-    "education:bom_employed": "yes",
-    "education:fees": "free_education",
-    "education:gender_type": "mixed",
-    "education:government_grants": "yes",
-    "education:government_registered": "moe",
-    "education:type": "primary",
-    "name": "Westlands Primary School",
-    "operator": "Government of Kenya",
-    "operator:description": "Government of Kenya",
-    "operator:short": "GOK",
-    "operator:type": "public",
-    "operator:wikidata": "Q21022441",
-    "toilet:present": "yes",
-    "toilets:handwashing": "yes"
-  }
-},
-{
-  "type": "node",
   "id": 5953218908,
   "lat": -1.2605106,
   "lon": 36.7963839,
@@ -15859,8 +15949,8 @@
 {
   "type": "node",
   "id": 6126743580,
-  "lat": -1.2698240,
-  "lon": 36.8072609,
+  "lat": -1.2697627,
+  "lon": 36.8073579,
   "tags": {
     "addr:city": "Nairobi",
     "addr:housenumber": "Mirage Tower,",
@@ -16232,8 +16322,8 @@
 {
   "type": "node",
   "id": 6445077915,
-  "lat": -1.2655958,
-  "lon": 36.8455018,
+  "lat": -1.2656387,
+  "lon": 36.8454562,
   "tags": {
     "accessibility": "foot",
     "amenity": "school",
@@ -16286,8 +16376,8 @@
 {
   "type": "node",
   "id": 6445111416,
-  "lat": -1.2661730,
-  "lon": 36.8460950,
+  "lat": -1.2661207,
+  "lon": 36.8460400,
   "tags": {
     "accessibility": "small_cars,foot,big_vehicles",
     "amenity": "school",
@@ -16329,8 +16419,8 @@
 {
   "type": "node",
   "id": 6445111417,
-  "lat": -1.2649060,
-  "lon": 36.8457240,
+  "lat": -1.2649355,
+  "lon": 36.8456972,
   "tags": {
     "accessibility": "small_cars,foot,big_vehicles",
     "amenity": "school",
@@ -16375,8 +16465,8 @@
 {
   "type": "node",
   "id": 6445111421,
-  "lat": -1.2657696,
-  "lon": 36.8453607,
+  "lat": -1.2658340,
+  "lon": 36.8453781,
   "tags": {
     "accessibility": "foot,big_vehicles,small_cars",
     "amenity": "school",
@@ -16460,8 +16550,8 @@
 {
   "type": "node",
   "id": 6445129690,
-  "lat": -1.2665386,
-  "lon": 36.8459172,
+  "lat": -1.2665560,
+  "lon": 36.8458877,
   "tags": {
     "accessibility": "big_vehicles",
     "amenity": "school",
@@ -16545,8 +16635,8 @@
 {
   "type": "node",
   "id": 6445132395,
-  "lat": -1.2644080,
-  "lon": 36.8451550,
+  "lat": -1.2643611,
+  "lon": 36.8451456,
   "tags": {
     "accessibility": "foot",
     "amenity": "school",
@@ -16781,6 +16871,7 @@
     "addr:city": "Nairobi",
     "addr:street": "Lusaka Road",
     "amenity": "fuel",
+    "brand": "OLA Energy",
     "name": "OLA Energy"
   }
 },
@@ -16850,8 +16941,8 @@
 {
   "type": "node",
   "id": 6969796486,
-  "lat": -1.2604187,
-  "lon": 36.8022815,
+  "lat": -1.2606306,
+  "lon": 36.8013498,
   "tags": {
     "amenity": "pharmacy",
     "healthcare": "pharmacy",
@@ -16882,8 +16973,8 @@
 {
   "type": "node",
   "id": 6969796690,
-  "lat": -1.2643882,
-  "lon": 36.8110606,
+  "lat": -1.2643563,
+  "lon": 36.8110469,
   "tags": {
     "amenity": "pharmacy"
   }
@@ -17204,8 +17295,8 @@
 {
   "type": "node",
   "id": 7930812997,
-  "lat": -1.3144067,
-  "lon": 36.7915567,
+  "lat": -1.3143940,
+  "lon": 36.7915487,
   "tags": {
     "amenity": "clinic",
     "condition": "good",
@@ -17720,8 +17811,8 @@
 {
   "type": "node",
   "id": 7952200591,
-  "lat": -1.2665167,
-  "lon": 36.8464083,
+  "lat": -1.2665301,
+  "lon": 36.8462956,
   "tags": {
     "amenity": "clinic",
     "condition": "fair",
@@ -17755,7 +17846,7 @@
 {
   "type": "node",
   "id": 7952200597,
-  "lat": -1.2655567,
+  "lat": -1.2655969,
   "lon": 36.8432683,
   "tags": {
     "amenity": "clinic",
@@ -17773,8 +17864,8 @@
 {
   "type": "node",
   "id": 7952200599,
-  "lat": -1.2653500,
-  "lon": 36.8454817,
+  "lat": -1.2653661,
+  "lon": 36.8456467,
   "tags": {
     "amenity": "clinic",
     "condition": "good",
@@ -17808,8 +17899,8 @@
 {
   "type": "node",
   "id": 7952200601,
-  "lat": -1.2650367,
-  "lon": 36.8450250,
+  "lat": -1.2650783,
+  "lon": 36.8450277,
   "tags": {
     "amenity": "hospital",
     "condition": "good",
@@ -17829,8 +17920,8 @@
 {
   "type": "node",
   "id": 7952200604,
-  "lat": -1.2657317,
-  "lon": 36.8454883,
+  "lat": -1.2657826,
+  "lon": 36.8455084,
   "tags": {
     "amenity": "hospital",
     "condition": "fair",
@@ -17849,8 +17940,8 @@
 {
   "type": "node",
   "id": 7952200606,
-  "lat": -1.2653167,
-  "lon": 36.8453350,
+  "lat": -1.2652604,
+  "lon": 36.8453793,
   "tags": {
     "amenity": "hospital",
     "condition": "good",
@@ -17870,8 +17961,8 @@
 {
   "type": "node",
   "id": 7952200609,
-  "lat": -1.2657683,
-  "lon": 36.8465500,
+  "lat": -1.2657857,
+  "lon": 36.8460954,
   "tags": {
     "amenity": "clinic",
     "condition": "fair",
@@ -17906,8 +17997,8 @@
 {
   "type": "node",
   "id": 7952200614,
-  "lat": -1.2661717,
-  "lon": 36.8454450,
+  "lat": -1.2660591,
+  "lon": 36.8453940,
   "tags": {
     "amenity": "clinic",
     "condition": "fair",
@@ -17962,8 +18053,8 @@
 {
   "type": "node",
   "id": 7952200621,
-  "lat": -1.2646083,
-  "lon": 36.8453567,
+  "lat": -1.2646230,
+  "lon": 36.8454130,
   "tags": {
     "amenity": "clinic",
     "condition": "good",
@@ -18008,8 +18099,8 @@
 {
   "type": "node",
   "id": 8100967919,
-  "lat": -1.2653666,
-  "lon": 36.8442100,
+  "lat": -1.2653237,
+  "lon": 36.8442502,
   "tags": {
     "addr:street": "Muratina Street",
     "amenity": "hospital",
@@ -18113,8 +18204,8 @@
 {
   "type": "node",
   "id": 8128702910,
-  "lat": -1.2661150,
-  "lon": 36.8436533,
+  "lat": -1.2660319,
+  "lon": 36.8436667,
   "tags": {
     "amenity": "school",
     "condition": "fair",
@@ -18127,7 +18218,7 @@
 {
   "type": "node",
   "id": 8128746631,
-  "lat": -1.2661133,
+  "lat": -1.2659993,
   "lon": 36.8437083,
   "tags": {
     "amenity": "school",
@@ -18185,8 +18276,8 @@
 {
   "type": "node",
   "id": 8128866092,
-  "lat": -1.2650483,
-  "lon": 36.8454517,
+  "lat": -1.2650563,
+  "lon": 36.8455255,
   "tags": {
     "amenity": "school",
     "condition": "good",
@@ -18199,8 +18290,8 @@
 {
   "type": "node",
   "id": 8128894421,
-  "lat": -1.2651450,
-  "lon": 36.8447100,
+  "lat": -1.2651946,
+  "lon": 36.8447087,
   "tags": {
     "amenity": "school",
     "condition": "fair",
@@ -18227,8 +18318,8 @@
 {
   "type": "node",
   "id": 8129000931,
-  "lat": -1.2657300,
-  "lon": 36.8456817,
+  "lat": -1.2654699,
+  "lon": 36.8460304,
   "tags": {
     "amenity": "school",
     "condition": "good",
@@ -18241,8 +18332,8 @@
 {
   "type": "node",
   "id": 8129001741,
-  "lat": -1.2657917,
-  "lon": 36.8457450,
+  "lat": -1.2655302,
+  "lon": 36.8460494,
   "tags": {
     "amenity": "school",
     "condition": "fair",
@@ -18254,26 +18345,13 @@
 },
 {
   "type": "node",
-  "id": 8164646791,
-  "lat": -1.2824691,
-  "lon": 36.8159837,
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Uhuru Highway",
-    "brand": "Naivas",
-    "brand:wikidata": "Q18379067",
-    "name": "Naivas",
-    "shop": "supermarket"
-  }
-},
-{
-  "type": "node",
   "id": 8193894409,
   "lat": -1.2672304,
   "lon": 36.8449395,
   "tags": {
     "addr:street": "Kirongothi Street",
     "amenity": "fuel",
+    "brand": "OLA Energy",
     "name": "OLA Energy"
   }
 },
@@ -18437,23 +18515,6 @@
     "healthcare:speciality": "gynaecology",
     "name": "Bliss GVS Health Care (college House)",
     "opening_hours": "Mo-Fr 08:00-17:00",
-    "operational_status": "operational",
-    "operator:type": "private"
-  }
-},
-{
-  "type": "node",
-  "id": 8415981918,
-  "lat": -1.2861561,
-  "lon": 36.8174704,
-  "tags": {
-    "amenity": "clinic",
-    "beds": "0",
-    "check_date": "2023-05-11",
-    "healthcare": "clinic",
-    "healthcare:speciality": "paediatrics",
-    "name": "Bliss GVS Health Care (Teleposta Clinic)",
-    "opening_hours": "24/7",
     "operational_status": "operational",
     "operator:type": "private"
   }
@@ -18724,8 +18785,8 @@
 {
   "type": "node",
   "id": 8429583019,
-  "lat": -1.3118039,
-  "lon": 36.8446562,
+  "lat": -1.3118073,
+  "lon": 36.8446564,
   "tags": {
     "amenity": "clinic",
     "beds": "0",
@@ -18838,8 +18899,8 @@
 {
   "type": "node",
   "id": 8916714747,
-  "lat": -1.3021368,
-  "lon": 36.8256227,
+  "lat": -1.3021797,
+  "lon": 36.8256076,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Uhuru Highway",
@@ -19186,8 +19247,8 @@
 {
   "type": "node",
   "id": 9114034896,
-  "lat": -1.3141334,
-  "lon": 36.7972625,
+  "lat": -1.3141274,
+  "lon": 36.7972746,
   "tags": {
     "amenity": "school",
     "check_date": "2023-04-03",
@@ -19678,8 +19739,8 @@
 {
   "type": "node",
   "id": 9122826241,
-  "lat": -1.3154070,
-  "lon": 36.8019368,
+  "lat": -1.3153929,
+  "lon": 36.8019381,
   "tags": {
     "amenity": "school",
     "education:bom_employed": "yes",
@@ -19708,8 +19769,8 @@
 {
   "type": "node",
   "id": 9122841548,
-  "lat": -1.3157446,
-  "lon": 36.8023354,
+  "lat": -1.3157674,
+  "lon": 36.8023575,
   "tags": {
     "amenity": "school",
     "check_date": "2023-03-27",
@@ -19739,8 +19800,8 @@
 {
   "type": "node",
   "id": 9122878493,
-  "lat": -1.3152708,
-  "lon": 36.8021597,
+  "lat": -1.3152212,
+  "lon": 36.8021932,
   "tags": {
     "amenity": "school",
     "check_date": "2023-04-03",
@@ -19768,8 +19829,8 @@
 {
   "type": "node",
   "id": 9122892721,
-  "lat": -1.3158330,
-  "lon": 36.8023491,
+  "lat": -1.3158484,
+  "lon": 36.8023799,
   "tags": {
     "amenity": "school",
     "check_date": "2023-03-27",
@@ -19946,8 +20007,8 @@
 {
   "type": "node",
   "id": 9134741817,
-  "lat": -1.2666319,
-  "lon": 36.8432736,
+  "lat": -1.2666064,
+  "lon": 36.8432924,
   "tags": {
     "accessibility": "small_cars,foot",
     "amenity": "school",
@@ -20016,8 +20077,8 @@
 {
   "type": "node",
   "id": 9134851417,
-  "lat": -1.2654978,
-  "lon": 36.8442704,
+  "lat": -1.2654294,
+  "lon": 36.8443388,
   "tags": {
     "accessibility": "big_vehicles,small_cars,foot",
     "amenity": "school",
@@ -20083,8 +20144,8 @@
 {
   "type": "node",
   "id": 9134893317,
-  "lat": -1.2654689,
-  "lon": 36.8442388,
+  "lat": -1.2654367,
+  "lon": 36.8442643,
   "tags": {
     "accessibility": "foot,big_vehicles,small_cars",
     "amenity": "school",
@@ -20868,8 +20929,8 @@
 {
   "type": "node",
   "id": 9154643490,
-  "lat": -1.2649085,
-  "lon": 36.8453317,
+  "lat": -1.2648803,
+  "lon": 36.8453196,
   "tags": {
     "accessibility": "small_cars,big_vehicles,foot",
     "amenity": "school",
@@ -20946,8 +21007,8 @@
 {
   "type": "node",
   "id": 9154742397,
-  "lat": -1.2647137,
-  "lon": 36.8468203,
+  "lat": -1.2643571,
+  "lon": 36.8468820,
   "tags": {
     "accessibility": "small_cars,big_vehicles,foot",
     "amenity": "school",
@@ -21238,27 +21299,6 @@
 },
 {
   "type": "node",
-  "id": 9507652859,
-  "lat": -1.3092305,
-  "lon": 36.8014124,
-  "tags": {
-    "amenity": "school",
-    "boundary_type:Ward_boundary": "yes",
-    "name": "Mbagathi Road Primary Polling Station",
-    "operational_status:electricity": "often",
-    "polling_station": "yes",
-    "polling_station:accessibility": "motor_bikes,small_cars,big_cars.tractors",
-    "polling_station:election_year": "2013",
-    "polling_station:nearest_health_centre": "Mbagathi hospital",
-    "polling_station:nearest_police_station": "Kenyatta police post",
-    "polling_station:registered_voters": "4,086",
-    "polling_station:source": "map_kibera_trust",
-    "polling_station:type": "school",
-    "polling_station:type_description": "Its a public school"
-  }
-},
-{
-  "type": "node",
   "id": 9587521823,
   "lat": -1.2930205,
   "lon": 36.7928528,
@@ -21335,8 +21375,8 @@
 {
   "type": "node",
   "id": 10019164417,
-  "lat": -1.2837128,
-  "lon": 36.8240240,
+  "lat": -1.2836709,
+  "lon": 36.8240126,
   "tags": {
     "name": "Good person",
     "tourism": "attraction"
@@ -21432,8 +21472,8 @@
 {
   "type": "node",
   "id": 10566930309,
-  "lat": -1.2954069,
-  "lon": 36.7979274,
+  "lat": -1.2954532,
+  "lon": 36.7979924,
   "tags": {
     "amenity": "clinic",
     "check_date": "2023-05-11",
@@ -21478,10 +21518,9 @@
     "addr:city": "Nairobi",
     "addr:postcode": "00100",
     "addr:street": "Moi Avenue",
-    "alt_name": "Quickmart Pioneer",
     "brand": "QuickMart",
     "brand:wikidata": "Q113012659",
-    "name": "QuickMart",
+    "name": "QuickMart Pioneer",
     "phone": "+254 719 225511",
     "shop": "supermarket"
   }
@@ -21500,8 +21539,8 @@
 {
   "type": "node",
   "id": 10651644416,
-  "lat": -1.2777022,
-  "lon": 36.8294554,
+  "lat": -1.2775963,
+  "lon": 36.8295774,
   "tags": {
     "check_date": "2023-05-11",
     "description": "Rooms from 1000 KSH/night (02/2023)",
@@ -21592,8 +21631,8 @@
 {
   "type": "node",
   "id": 10780885565,
-  "lat": -1.3141502,
-  "lon": 36.7972707,
+  "lat": -1.3141395,
+  "lon": 36.7973062,
   "tags": {
     "amenity": "school",
     "check_date": "2023-03-20",
@@ -21603,8 +21642,8 @@
 {
   "type": "node",
   "id": 10780885566,
-  "lat": -1.3141904,
-  "lon": 36.7972654,
+  "lat": -1.3142031,
+  "lon": 36.7972520,
   "tags": {
     "amenity": "school",
     "check_date": "2023-03-20",
@@ -21624,8 +21663,8 @@
 {
   "type": "node",
   "id": 10780885593,
-  "lat": -1.3145680,
-  "lon": 36.7909834,
+  "lat": -1.3145807,
+  "lon": 36.7909700,
   "tags": {
     "amenity": "school",
     "check_date": "2023-03-15",
@@ -21635,8 +21674,8 @@
 {
   "type": "node",
   "id": 10780885594,
-  "lat": -1.3144561,
-  "lon": 36.7915413,
+  "lat": -1.3144186,
+  "lon": 36.7915192,
   "tags": {
     "amenity": "hospital",
     "check_date": "2023-03-15",
@@ -21755,18 +21794,6 @@
     "amenity": "school",
     "check_date": "2023-03-15",
     "name": "ushirika primary school"
-  }
-},
-{
-  "type": "node",
-  "id": 10780953126,
-  "lat": -1.3010924,
-  "lon": 36.8085992,
-  "tags": {
-    "amenity": "hospital",
-    "check_date": "2023-03-16",
-    "healthcare": "hospital",
-    "name": "kenyatta national hospital"
   }
 },
 {
@@ -22276,8 +22303,8 @@
 {
   "type": "node",
   "id": 11483308984,
-  "lat": -1.2651964,
-  "lon": 36.8019052,
+  "lat": -1.2652224,
+  "lon": 36.8019144,
   "tags": {
     "brand": "BMW",
     "brand:wikidata": "Q26678",
@@ -22367,8 +22394,8 @@
 {
   "type": "node",
   "id": 11801760317,
-  "lat": -1.2654133,
-  "lon": 36.8450167,
+  "lat": -1.2654683,
+  "lon": 36.8450288,
   "tags": {
     "altitude": "1593.4",
     "amenity": "school",
@@ -22384,8 +22411,8 @@
 {
   "type": "node",
   "id": 11801760323,
-  "lat": -1.2655548,
-  "lon": 36.8461078,
+  "lat": -1.2654636,
+  "lon": 36.8460837,
   "tags": {
     "altitude": "1616.631",
     "amenity": "school",
@@ -22402,8 +22429,8 @@
 {
   "type": "node",
   "id": 11801760325,
-  "lat": -1.2655808,
-  "lon": 36.8450693,
+  "lat": -1.2656317,
+  "lon": 36.8450787,
   "tags": {
     "altitude": "1648.2",
     "amenity": "school",
@@ -22437,8 +22464,8 @@
 {
   "type": "node",
   "id": 11801760334,
-  "lat": -1.2658475,
-  "lon": 36.8438792,
+  "lat": -1.2657925,
+  "lon": 36.8438323,
   "tags": {
     "altitude": "1637.3",
     "amenity": "school",
@@ -22519,6 +22546,39 @@
   "lon": 36.8173827,
   "tags": {
     "shop": "model"
+  }
+},
+{
+  "type": "node",
+  "id": 12075947816,
+  "lat": -1.2725160,
+  "lon": 36.8151320,
+  "tags": {
+    "stop_id": "0810MSM",
+    "tourism": "museum"
+  }
+},
+{
+  "type": "node",
+  "id": 12075947842,
+  "lat": -1.2648200,
+  "lon": 36.8112560,
+  "tags": {
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Mp Shah",
+    "stop_id": "0800MPS"
+  }
+},
+{
+  "type": "node",
+  "id": 12075947853,
+  "lat": -1.2640750,
+  "lon": 36.8101850,
+  "tags": {
+    "name": "Impala Hotel",
+    "stop_id": "0800IMP",
+    "tourism": "hotel"
   }
 },
 {
@@ -22643,8 +22703,8 @@
 {
   "type": "node",
   "id": 12155448822,
-  "lat": -1.2887160,
-  "lon": 36.8232056,
+  "lat": -1.2886893,
+  "lon": 36.8231185,
   "tags": {
     "ele": "105",
     "name": "KICC Observation Plattform",
@@ -22688,8 +22748,8 @@
 {
   "type": "node",
   "id": 12157721102,
-  "lat": -1.2816266,
-  "lon": 36.8168080,
+  "lat": -1.2817647,
+  "lon": 36.8168254,
   "tags": {
     "amenity": "pharmacy",
     "check_date": "2024-09-05",
@@ -23197,26 +23257,6 @@
 },
 {
   "type": "node",
-  "id": 12759020307,
-  "lat": -1.2841900,
-  "lon": 36.8175830,
-  "tags": {
-    "addr:constituency": "Starehe",
-    "addr:district": "Starehe",
-    "addr:division": "Starehe",
-    "addr:location": "Starehe",
-    "amenity": "school",
-    "description": "general_education",
-    "isced:level": "4",
-    "name": "Nyayo House Adult Ed Centre",
-    "note:code": "Adult Education Centre",
-    "operator": "public",
-    "operator:type": "central_government_deb",
-    "school:gender": "mixed"
-  }
-},
-{
-  "type": "node",
   "id": 12759020314,
   "lat": -1.3106440,
   "lon": 36.8447070,
@@ -23335,6 +23375,19 @@
     "operator": "public",
     "operator:type": "central_government_deb",
     "school:gender": "mixed"
+  }
+},
+{
+  "type": "node",
+  "id": 12771059766,
+  "lat": -1.2848522,
+  "lon": 36.8243297,
+  "tags": {
+    "description": "Camera Stuff Kenya – Your one-stop shop for cameras, lenses, and professional repairs in Nairobi. We sell new & pre-owned gear from Canon, Nikon, Sony, and more. Expert advice, affordable services, and workshops to fuel your passion. Visit us today!",
+    "image": "https://camerastuffkenya.com/wp-content/uploads/2024/01/Website-logo-favi.png",
+    "name": "Camera Stuff Kenya",
+    "shop": "yes",
+    "website": "https://camerastuffkenya.com/"
   }
 },
 {
@@ -23618,8 +23671,8 @@
 {
   "type": "node",
   "id": 12803556178,
-  "lat": -1.3056940,
-  "lon": 36.8016951,
+  "lat": -1.3056752,
+  "lon": 36.8016803,
   "tags": {
     "addr:constituency": "Dagoretti",
     "addr:district": "Dagoretti",
@@ -23829,50 +23882,6 @@
     "gender": "male",
     "isced:level": "1",
     "name": "St Teresa'S Boys Primary",
-    "note:code": "Primary School",
-    "operator": "public",
-    "operator:type": "local_government_authority"
-  }
-},
-{
-  "type": "node",
-  "id": 12803611026,
-  "lat": -1.2653626,
-  "lon": 36.8465113,
-  "tags": {
-    "addr:constituency": "Kamukunji",
-    "addr:district": "Pumwani",
-    "addr:division": "Pumwani",
-    "addr:location": "Eastleigh North",
-    "addr:postcode": "77120-00611 Nrb",
-    "amenity": "school",
-    "capacity": "1049",
-    "description": "general_education",
-    "gender": "mixed",
-    "isced:level": "1",
-    "name": "Moi Airbase Academy Primary School",
-    "note:code": "Primary School",
-    "operator": "public",
-    "operator:type": "local_government_authority"
-  }
-},
-{
-  "type": "node",
-  "id": 12803970799,
-  "lat": -1.2566642,
-  "lon": 36.7878850,
-  "tags": {
-    "addr:constituency": "Westlands",
-    "addr:district": "Westlands",
-    "addr:division": "Westlands",
-    "addr:location": "Parklands",
-    "addr:postcode": "42153-00100 Nbi",
-    "amenity": "school",
-    "capacity": "512",
-    "description": "general_education",
-    "gender": "mixed",
-    "isced:level": "1",
-    "name": "Muguga Primary School",
     "note:code": "Primary School",
     "operator": "public",
     "operator:type": "local_government_authority"
@@ -24098,28 +24107,6 @@
 },
 {
   "type": "node",
-  "id": 12816654342,
-  "lat": -1.2865043,
-  "lon": 36.8191715,
-  "tags": {
-    "addr:constituency": "Starehe",
-    "addr:district": "Starehe",
-    "addr:division": "Starehe",
-    "addr:location": "Starehe",
-    "addr:postcode": "47154-00100",
-    "amenity": "school",
-    "capacity": "630",
-    "description": "general_education",
-    "isced:level": "1",
-    "name": "Catholic Parochial Primary School",
-    "note:code": "Primary School",
-    "operator": "public",
-    "operator:type": "local_government_authority",
-    "school:gender": "mixed"
-  }
-},
-{
-  "type": "node",
   "id": 12816654348,
   "lat": -1.2672810,
   "lon": 36.8177550,
@@ -24207,28 +24194,6 @@
 },
 {
   "type": "node",
-  "id": 12816654358,
-  "lat": -1.3046350,
-  "lon": 36.8313980,
-  "tags": {
-    "addr:constituency": "Makadara",
-    "addr:district": "Makadara",
-    "addr:division": "Makadara",
-    "addr:location": "South B",
-    "addr:postcode": "17837 Nairobi",
-    "amenity": "school",
-    "capacity": "836",
-    "description": "general_education",
-    "isced:level": "1",
-    "name": "St. Catherines School - Primary",
-    "note:code": "Primary School",
-    "operator": "public",
-    "operator:type": "central_government_deb",
-    "school:gender": "mixed"
-  }
-},
-{
-  "type": "node",
   "id": 12816654369,
   "lat": -1.2990974,
   "lon": 36.8462247,
@@ -24294,14 +24259,158 @@
 },
 {
   "type": "node",
+  "id": 12886264362,
+  "lat": -1.3095130,
+  "lon": 36.7907485,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Kibera",
+    "name": "Kichinjio",
+    "shop": "butcher"
+  }
+},
+{
+  "type": "node",
+  "id": 12886281771,
+  "lat": -1.3013438,
+  "lon": 36.8306164,
+  "tags": {
+    "addr:location": "Starehe",
+    "name": "Dunga Close",
+    "shop": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 12886281781,
+  "lat": -1.3080375,
+  "lon": 36.8240723,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Langata",
+    "amenity": "hospital",
+    "name": "Meridian Hospital"
+  }
+},
+{
+  "type": "node",
   "id": 12886281787,
-  "lat": -1.3154691,
-  "lon": 36.8032269,
+  "lat": -1.3154631,
+  "lon": 36.8032014,
   "tags": {
     "addr:county": "Nairobi",
     "addr:location": "Langata",
     "name": "Highrise",
-    "shop": "yes"
+    "shop": "kiosk"
+  }
+},
+{
+  "type": "node",
+  "id": 12886379617,
+  "lat": -1.3054706,
+  "lon": 36.8378192,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Starehe",
+    "name": "Automach Diessel Ltd",
+    "shop": "car_parts"
+  }
+},
+{
+  "type": "node",
+  "id": 12886379618,
+  "lat": -1.3059814,
+  "lon": 36.8386764,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Starehe",
+    "name": "Novel Paints",
+    "shop": "paint"
+  }
+},
+{
+  "type": "node",
+  "id": 12886379619,
+  "lat": -1.3045475,
+  "lon": 36.8358239,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Starehe",
+    "name": "Butere 35",
+    "shop": "hardware"
+  }
+},
+{
+  "type": "node",
+  "id": 12886379620,
+  "lat": -1.3045274,
+  "lon": 36.8353571,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Starehe",
+    "name": "United Tools",
+    "shop": "hardware"
+  }
+},
+{
+  "type": "node",
+  "id": 12886379621,
+  "lat": -1.3040573,
+  "lon": 36.8339252,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Starehe",
+    "name": "Nanak",
+    "shop": "hardware"
+  }
+},
+{
+  "type": "node",
+  "id": 12886379626,
+  "lat": -1.2947447,
+  "lon": 36.8329269,
+  "tags": {
+    "addr:county": "Nakuru",
+    "addr:location": "Starehe",
+    "name": "Jalesh Auto Commercial",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 12886664045,
+  "lat": -1.2925866,
+  "lon": 36.8439770,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Makadara",
+    "amenity": "fuel",
+    "name": "Highland Garage"
+  }
+},
+{
+  "type": "node",
+  "id": 12886664055,
+  "lat": -1.2987616,
+  "lon": 36.8375535,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Makadara",
+    "name": "CFAO Motors",
+    "shop": "car"
+  }
+},
+{
+  "type": "node",
+  "id": 12886675729,
+  "lat": -1.3061328,
+  "lon": 36.8220483,
+  "tags": {
+    "addr:county": "Nairobi",
+    "addr:location": "Lang'ata",
+    "amenity": "fuel",
+    "brand": "Rubis",
+    "name": "Rubis"
   }
 },
 {
@@ -24649,6 +24758,828 @@
   }
 },
 {
+  "type": "node",
+  "id": 13782490501,
+  "lat": -1.3138000,
+  "lon": 36.7872000,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:country": "KE",
+    "addr:suburb": "Kibera",
+    "check_date:currency:XBT": "2026-04-30",
+    "currency:XBT": "yes",
+    "name": "Fridah",
+    "opening_hours": "Mo-Fr 08:00-21:00",
+    "payment:lightning": "yes",
+    "payment:lightning:companion_app_url": "https://btcpay.afribit.africa",
+    "payment:lightning_contactless": "yes",
+    "payment:onchain": "yes",
+    "shop": "convenience",
+    "survey:date": "2026-04-30"
+  }
+},
+{
+  "type": "node",
+  "id": 13782490701,
+  "lat": -1.3149000,
+  "lon": 36.7893000,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:country": "KE",
+    "addr:suburb": "Kibera",
+    "check_date:currency:XBT": "2026-04-30",
+    "currency:XBT": "yes",
+    "name": "Grace",
+    "opening_hours": "Mo-Fr 07:00-21:00",
+    "payment:lightning": "yes",
+    "payment:lightning:companion_app_url": "https://btcpay.afribit.africa",
+    "payment:lightning_contactless": "yes",
+    "payment:onchain": "yes",
+    "shop": "greengrocer",
+    "survey:date": "2026-04-30"
+  }
+},
+{
+  "type": "node",
+  "id": 13912292381,
+  "lat": -1.2784017,
+  "lon": 36.8004490,
+  "tags": {
+    "amenity": "bench",
+    "armrest": "yes",
+    "backrest": "yes",
+    "colour": "brown",
+    "historic": "memorial",
+    "inscription": "In memory of Theo Hanegraaf",
+    "material": "wood",
+    "memorial": "bench",
+    "panoramax": "db40e78a-8505-4b64-9991-6c9f0da8c07b",
+    "seats:separated": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 13917129381,
+  "lat": -1.2864906,
+  "lon": 36.8228531,
+  "tags": {
+    "addr:street": "City Hall Way, Wabera Street",
+    "level": "6",
+    "name": "Magnificent Outdoors",
+    "opening_hours": "Mo-Fr 08:30-17:30; Sa 08:30-17:00",
+    "phone": "+254 71 0720523",
+    "shop": "outdoor"
+  }
+},
+{
+  "type": "node",
+  "id": 13931404826,
+  "lat": -1.2977616,
+  "lon": 36.7926605,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:postcode": "00200",
+    "addr:street": "Kindaruma Road",
+    "contact:facebook": "https://www.facebook.com/profile.php?id=61586384050644",
+    "contact:instagram": "https://www.instagram.com/allqueenswellnessspa/",
+    "currency:KES": "yes",
+    "email": "sashavaileth55@gmail.com",
+    "mobile": "0740 719035",
+    "name": "All Queens Wellness Spa - Massage Spa Kilimani, Nairobi",
+    "official_name": "All Queens Wellness Spa",
+    "opening_hours": "24/7",
+    "operator": "All Queens Wellness Spa - Massage Spa Kilimani, Nairobi",
+    "payment:account_cards": "yes",
+    "payment:alipay": "yes",
+    "payment:american_express": "yes",
+    "payment:app": "yes",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "payment:cheque": "yes",
+    "payment:coins": "yes",
+    "payment:contactless": "yes",
+    "payment:credit_cards": "yes",
+    "payment:cryptocurrencies": "yes",
+    "payment:debit_cards": "yes",
+    "payment:electronic_purses": "yes",
+    "payment:notes": "yes",
+    "payment:prepaid_ticket": "yes",
+    "payment:telephone_cards": "yes",
+    "phone": "0740 719035",
+    "shop": "massage",
+    "short_name": "All Queens Wellness Spa",
+    "website": "https://allqueenswellnessspa.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 13953631101,
+  "lat": -1.2579454,
+  "lon": 36.8061484,
+  "tags": {
+    "check_date": "2026-06-20",
+    "name": "Coda Jewellery",
+    "shop": "jewelry"
+  }
+},
+{
+  "type": "node",
+  "id": 13953822101,
+  "lat": -1.2745593,
+  "lon": 36.7929492,
+  "tags": {
+    "addr:street": "Mandera Road",
+    "internet_access": "wlan",
+    "opening_hours": "24/7",
+    "phone": "0726 052574",
+    "tourism": "guest_house"
+  }
+},
+{
+  "type": "node",
+  "id": 13953822201,
+  "lat": -1.2745647,
+  "lon": 36.7929587,
+  "tags": {
+    "addr:street": "Mandera Road",
+    "internet_access": "wlan",
+    "opening_hours": "24/7",
+    "phone": "0726 052574",
+    "tourism": "guest_house"
+  }
+},
+{
+  "type": "node",
+  "id": 13953822301,
+  "lat": -1.2745737,
+  "lon": 36.7929461,
+  "tags": {
+    "addr:street": "Mandera Road",
+    "internet_access": "wlan",
+    "opening_hours": "24/7",
+    "phone": "0726 052574",
+    "tourism": "guest_house"
+  }
+},
+{
+  "type": "node",
+  "id": 13974623144,
+  "lat": -1.2580152,
+  "lon": 36.8300326,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:postcode": "00100",
+    "addr:street": "City Park Drive",
+    "brand": "Rollin Total Fitness Supplement Brand in partner with other brands",
+    "contact:facebook": "https://www.facebook.com/RollinTotalFitness/",
+    "contact:instagram": "https://www.instagram.com/rollin_total_fitness/",
+    "description": "Rollin Total Fitness is a premier health and fitness consultant and supplements store located in Parklands, Nairobi, committed to helping individuals achieve real, long-lasting fitness and wellness results through expert guidance and personalized support.",
+    "email": "rollintotalfitness1@gmail.com",
+    "image": "https://lh3.googleusercontent.com/Tgdnq0YOqmdHKWnTzUcBKWmo4QGwEIF-mwCNcdSKYZzxet7iXGzrdaGWmUzp_f0NjPVIeewlNwhHxxquoA=w1265",
+    "mobile": "0759 978859",
+    "name": "Rollin Total Fitness-Health and Fitness Consultant & Supplements Store Parklands, Nairobi",
+    "official_name": "Rollin Total Fitness",
+    "opening_hours": "Mo-Fri 09:00-18:00, Sat 09:00 - 14:00, Sun Closed",
+    "operator": "Rollin Total Fitness",
+    "payment:account_cards": "yes",
+    "payment:app": "yes",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "payment:visa_debit": "yes",
+    "phone": "0722 905223",
+    "shop": "nutrition_supplements",
+    "website": "https://rollintotalfitness.com/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 14028866720,
+  "lat": -1.2684452,
+  "lon": 36.8088664,
+  "tags": {
+    "addr:housename": "The Citadel, 4th floor",
+    "addr:housenumber": "The Citadel 4th floor",
+    "addr:street": "Muthithi Road",
+    "level": "4",
+    "name": "British Airways",
+    "opening_hours": "Mo-Fr 08:00-17:00; sa 08:00-12:00",
+    "shop": "ticket",
+    "website": "https://www.britishairways.com/travel/home/public/en_us/"
+  }
+},
+{
+  "type": "node",
+  "id": 14028866721,
+  "lat": -1.2860885,
+  "lon": 36.8204082,
+  "tags": {
+    "addr:housename": "Bruce House",
+    "addr:street": "Muindi Mbingu street",
+    "name": "Ethopian Airlines",
+    "shop": "ticket",
+    "website": "https://www.ethiopianairlines.com/ke"
+  }
+},
+{
+  "type": "node",
+  "id": 14028891970,
+  "lat": -1.2695482,
+  "lon": 36.7939993,
+  "tags": {
+    "addr:housename": "Merchant Square, Block A, 1st floor",
+    "addr:street": "Riverside Drive",
+    "name": "Air france-KLM",
+    "opening_hours": "24/7",
+    "shop": "ticket",
+    "website": "https://www.airfranceklm.com/en"
+  }
+},
+{
+  "type": "node",
+  "id": 14028940536,
+  "lat": -1.2710406,
+  "lon": 36.8084568,
+  "tags": {
+    "addr:housename": "Global Trade Center, Office Tower, 2nd floor",
+    "addr:street": "Chiromo Road",
+    "name": "Etihad Airways",
+    "operator": "ITVAR Travel",
+    "shop": "ticket"
+  }
+},
+{
+  "type": "node",
+  "id": 14028940538,
+  "lat": -1.2857976,
+  "lon": 36.8236935,
+  "tags": {
+    "addr:housename": "International House, 10th floor",
+    "addr:street": "Mama Ngina street",
+    "level": "10",
+    "name": "Turkish Airlines",
+    "opening_hours": "Mo-Fr 10:00-16:00",
+    "shop": "ticket",
+    "website": "https://www.turkishairlines.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14031589640,
+  "lat": -1.2609669,
+  "lon": 36.8040831,
+  "tags": {
+    "addr:housename": "Kenrail Towers, 2nd floor",
+    "addr:street": "Ring Road Parklands",
+    "name": "Saudia Airlines",
+    "opening_hours": "Mo-Fr 09:00-17:00",
+    "shop": "ticket",
+    "website": "https://www.saudia.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14031589641,
+  "lat": -1.2699385,
+  "lon": 36.8074358,
+  "tags": {
+    "name": "China southern Airlines",
+    "shop": "ticket",
+    "website": "https://csair.com"
+  }
+},
+{
+  "type": "node",
+  "id": 14031623892,
+  "lat": -1.2846391,
+  "lon": 36.8173982,
+  "tags": {
+    "addr:housename": "Barclays plaza, 7th floor",
+    "addr:street": "Loita street",
+    "name": "Jambojet",
+    "opening_hours": "Mo-Fr 08:00-18:00; Sat 08:30-13:00",
+    "shop": "ticket",
+    "website": "https://www.jambojet.com/en-us"
+  }
+},
+{
+  "type": "node",
+  "id": 14031696076,
+  "lat": -1.2666170,
+  "lon": 36.7992106,
+  "tags": {
+    "addr:housename": "New Rehema House",
+    "addr:street": "Rhapta Road",
+    "name": "Air Arabia",
+    "opening_hours": "Mo-Fr 09:00-17:00",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "payment:mpesa": "yes",
+    "payment:visa": "yes",
+    "shop": "ticket",
+    "website": "https://www.airarabia.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14031696077,
+  "lat": -1.2857009,
+  "lon": 36.8238388,
+  "tags": {
+    "addr:housename": "International House, Mezzanine floor",
+    "addr:street": "Mama Ngina street",
+    "name": "South African Airways",
+    "opening_hours": "Mo-Fr 08:30-17:00; Sa 09:00-13:00",
+    "shop": "ticket",
+    "website": "https://www.flysaa.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14031696078,
+  "lat": -1.2860337,
+  "lon": 36.8238015,
+  "tags": {
+    "addr:housename": "International House, ground floor",
+    "addr:street": "City Hall Way",
+    "level": "1",
+    "name": "EgyptAir",
+    "opening_hours": "Mo-Fr 09:00-17:00",
+    "shop": "ticket"
+  }
+},
+{
+  "type": "node",
+  "id": 14031696081,
+  "lat": -1.2706191,
+  "lon": 36.8129056,
+  "tags": {
+    "addr:housename": "Broadwalk mall, 1st floor",
+    "addr:street": "Ojijo Road",
+    "name": "IndiGo",
+    "opening_hours": "Mo-Su 09:00-18:00; sat 09:00-14:00",
+    "shop": "ticket",
+    "website": "https://www.goindigo.in/"
+  }
+},
+{
+  "type": "node",
+  "id": 14031696083,
+  "lat": -1.2700440,
+  "lon": 36.7959377,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:housename": "THE CUBE",
+    "addr:street": "Riverside Drive",
+    "name": "fly emirates",
+    "opening_hours": "Mo-Fr 08:30-16:45; Sa 09:00-12:00",
+    "shop": "ticket",
+    "website": "https://www.emirates.com/us/english/help/offices/nbo/nairobi/"
+  }
+},
+{
+  "type": "node",
+  "id": 14039698626,
+  "lat": -1.2604088,
+  "lon": 36.8009551,
+  "tags": {
+    "addr:housename": "Sarit Center, Lower Grnd floor",
+    "addr:street": "off waiyaki way",
+    "name": "Kenya Airways",
+    "opening_hours": "Mo-Fr 09:00-18:00; Sat 09:00-15:00",
+    "shop": "ticket",
+    "website": "https://kenya-airways.com"
+  }
+},
+{
+  "type": "node",
+  "id": 14039698627,
+  "lat": -1.2849065,
+  "lon": 36.8175304,
+  "tags": {
+    "addr:housename": "Barclays plaza, Ground floor",
+    "addr:street": "Loita street",
+    "name": "Kenya Airways",
+    "opening_hours": "Mo-Fr 08:00-18:00; Sat 08:30-13:00",
+    "shop": "ticket",
+    "website": "https://kenya-airways.com"
+  }
+},
+{
+  "type": "node",
+  "id": 14045535621,
+  "lat": -1.2694388,
+  "lon": 36.7939959,
+  "tags": {
+    "addr:housename": "Merchant Square, Block A",
+    "addr:street": "100 Riverside Drive",
+    "name": "Lufthansa",
+    "shop": "ticket",
+    "website": "https://www.lufthansa.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14045625719,
+  "lat": -1.2697965,
+  "lon": 36.8071855,
+  "tags": {
+    "opening_hours": "Mo-Fr 08:30-17:00",
+    "shop": "ticket",
+    "website": "https://www.delta.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14049686001,
+  "lat": -1.2839233,
+  "lon": 36.8210371,
+  "tags": {
+    "addr:street": "Banda Street",
+    "name": "Geco Café",
+    "shop": "bakery"
+  }
+},
+{
+  "type": "node",
+  "id": 14050766877,
+  "lat": -1.3117390,
+  "lon": 36.8071308,
+  "tags": {
+    "name": "Montezuma Monalisa funeral home",
+    "shop": "funeral_directors"
+  }
+},
+{
+  "type": "node",
+  "id": 14050766878,
+  "lat": -1.3113085,
+  "lon": 36.8063836,
+  "tags": {
+    "name": "Umash funeral home",
+    "shop": "funeral_directors",
+    "website": "https://umash.or.ke/"
+  }
+},
+{
+  "type": "node",
+  "id": 14088431813,
+  "lat": -1.2837192,
+  "lon": 36.8236629,
+  "tags": {
+    "name": "Nairobi Sports House",
+    "shop": "sports",
+    "website": "https://nairobisportshouse.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14088432201,
+  "lat": -1.2994879,
+  "lon": 36.7968434,
+  "tags": {
+    "name": "China Square",
+    "shop": "supermarket",
+    "website": "https://chinamall.co.ke/"
+  }
+},
+{
+  "type": "node",
+  "id": 14103794038,
+  "lat": -1.2587416,
+  "lon": 36.8157693,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:street": "3rd Parklands Avenue",
+    "brand": "Suzuki",
+    "brand:wikidata": "Q181642",
+    "name": "Sohansons Ltd. Suzuki Kenya",
+    "opening_hours": "Mo-Fr 08:00-17:00; sa 09:00-12:30",
+    "shop": "motorcycle",
+    "website": "https://www.suzukikenya.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14109629041,
+  "lat": -1.2841622,
+  "lon": 36.8167337,
+  "tags": {
+    "addr:city": "Nairobi",
+    "addr:street": "Market Street",
+    "internet_access": "yes",
+    "name": "Iconic Plaza",
+    "phone": "0254709008700",
+    "stars": "5",
+    "tourism": "hotel",
+    "website": "https://iconicplazahotels.com"
+  }
+},
+{
+  "type": "node",
+  "id": 14133696991,
+  "lat": -1.2855612,
+  "lon": 36.8245802,
+  "tags": {
+    "amenity": "pharmacy",
+    "name": "Goodlife pharmacy",
+    "website": "https://www.goodlifepharm.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14133696992,
+  "lat": -1.2856314,
+  "lon": 36.8244218,
+  "tags": {
+    "name": "Healthy U",
+    "shop": "health_food"
+  }
+},
+{
+  "type": "node",
+  "id": 14133767248,
+  "lat": -1.2827048,
+  "lon": 36.8237409,
+  "tags": {
+    "name": "Mic-Touch computers",
+    "shop": "computer"
+  }
+},
+{
+  "type": "node",
+  "id": 14135552990,
+  "lat": -1.2836148,
+  "lon": 36.8253446,
+  "tags": {
+    "brand": "Quickmart",
+    "name": "Quickmart",
+    "opening_hours": "24/7",
+    "shop": "supermarket"
+  }
+},
+{
+  "type": "node",
+  "id": 14135696147,
+  "lat": -1.2987362,
+  "lon": 36.8008481,
+  "tags": {
+    "name": "Wheels of Africa Ltd",
+    "shop": "bicycle"
+  }
+},
+{
+  "type": "node",
+  "id": 14135721302,
+  "lat": -1.2606548,
+  "lon": 36.8023766,
+  "tags": {
+    "name": "Cycle land Ltd",
+    "shop": "bicycle"
+  }
+},
+{
+  "type": "node",
+  "id": 14141713998,
+  "lat": -1.2865314,
+  "lon": 36.8210376,
+  "tags": {
+    "amenity": "university",
+    "education": "university",
+    "name": "Kenya Institute of Security and Criminal Justice",
+    "wikidata": "Q104438578",
+    "wikipedia": "en:Kenya Institute of Security and Criminal Justice"
+  }
+},
+{
+  "type": "node",
+  "id": 14142626084,
+  "lat": -1.2845540,
+  "lon": 36.8233437,
+  "tags": {
+    "name": "Ebraim electronics",
+    "shop": "electronics"
+  }
+},
+{
+  "type": "node",
+  "id": 14148865674,
+  "lat": -1.2872579,
+  "lon": 36.8243753,
+  "tags": {
+    "amenity": "pharmacy",
+    "healthcare": "pharmacy",
+    "name": "Malibu pharmacy"
+  }
+},
+{
+  "type": "node",
+  "id": 14157155396,
+  "lat": -1.2854797,
+  "lon": 36.8201831,
+  "tags": {
+    "name": "Hotpoint",
+    "shop": "houseware",
+    "website": "https://hotpoint.co.ke/"
+  }
+},
+{
+  "type": "node",
+  "id": 14157155397,
+  "lat": -1.2853658,
+  "lon": 36.8204179,
+  "tags": {
+    "name": "Lintons",
+    "shop": "beauty",
+    "website": "https://www.lintonsbeauty.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14157155398,
+  "lat": -1.2854224,
+  "lon": 36.8202971,
+  "tags": {
+    "name": "Text Book Centre",
+    "shop": "books"
+  }
+},
+{
+  "type": "node",
+  "id": 14157155399,
+  "lat": -1.2852922,
+  "lon": 36.8205761,
+  "tags": {
+    "brand": "Bata",
+    "brand:wikidata": "Q688082",
+    "name": "Bata",
+    "shop": "shoes",
+    "website": "http://bata.com/",
+    "wikipedia": "en:Bata Corporation"
+  }
+},
+{
+  "type": "node",
+  "id": 14159530680,
+  "lat": -1.2634071,
+  "lon": 36.8062169,
+  "tags": {
+    "name": "Tyrex Westlands",
+    "shop": "car_parts"
+  }
+},
+{
+  "type": "node",
+  "id": 14163633622,
+  "lat": -1.2855165,
+  "lon": 36.8231195,
+  "tags": {
+    "brand": "Vivo",
+    "brand:wikidata": "Q18301787",
+    "name": "Vivo",
+    "shop": "mobile_phone"
+  }
+},
+{
+  "type": "node",
+  "id": 14163633623,
+  "lat": -1.2855527,
+  "lon": 36.8230243,
+  "tags": {
+    "name": "Lintons",
+    "shop": "beauty",
+    "website": "https://www.lintonsbeauty.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14174992628,
+  "lat": -1.2822068,
+  "lon": 36.8176773,
+  "tags": {
+    "brand": "KIA",
+    "name": "KIA",
+    "shop": "car"
+  }
+},
+{
+  "type": "node",
+  "id": 14174992629,
+  "lat": -1.2823925,
+  "lon": 36.8177953,
+  "tags": {
+    "name": "Ted Joe mens wear",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "node",
+  "id": 14174992630,
+  "lat": -1.2824837,
+  "lon": 36.8178383,
+  "tags": {
+    "name": "Airtel",
+    "shop": "mobile_phone"
+  }
+},
+{
+  "type": "node",
+  "id": 14175197872,
+  "lat": -1.2834530,
+  "lon": 36.8182513,
+  "tags": {
+    "amenity": "pharmacy",
+    "name": "The Chemist"
+  }
+},
+{
+  "type": "node",
+  "id": 14175197874,
+  "lat": -1.2836863,
+  "lon": 36.8184216,
+  "tags": {
+    "name": "Victoria furnitures Ltd",
+    "shop": "furniture"
+  }
+},
+{
+  "type": "node",
+  "id": 14175197877,
+  "lat": -1.2842562,
+  "lon": 36.8186925,
+  "tags": {
+    "name": "Manix",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "node",
+  "id": 14175197878,
+  "lat": -1.2841275,
+  "lon": 36.8186416,
+  "tags": {
+    "name": "Beauty Box by Lintons",
+    "shop": "beauty",
+    "website": "https://www.lintonsbeauty.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14175211571,
+  "lat": -1.2804839,
+  "lon": 36.8180917,
+  "tags": {
+    "shop": "tyres",
+    "website": "https://www.kingswaytyres.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14177478223,
+  "lat": -1.2843701,
+  "lon": 36.8240556,
+  "tags": {
+    "amenity": "clinic",
+    "name": "Penda Medical Centre"
+  }
+},
+{
+  "type": "node",
+  "id": 14177478224,
+  "lat": -1.2843594,
+  "lon": 36.8238880,
+  "tags": {
+    "brand": "realme",
+    "brand:wikidata": "Q56275466",
+    "name": "realme",
+    "shop": "mobile_phone"
+  }
+},
+{
+  "type": "node",
+  "id": 14177478226,
+  "lat": -1.2842307,
+  "lon": 36.8237177,
+  "tags": {
+    "brand": "Oppo",
+    "brand:wikidata": "Q2084900",
+    "name": "Oppo",
+    "shop": "mobile_phone"
+  }
+},
+{
+  "type": "node",
+  "id": 14177478227,
+  "lat": -1.2841382,
+  "lon": 36.8235996,
+  "tags": {
+    "brand": "Sony",
+    "brand:wikidata": "Q41187",
+    "name": "Sony",
+    "shop": "electronics"
+  }
+},
+{
   "type": "way",
   "id": 25473029,
   "bounds": {
@@ -24724,9 +25655,12 @@
     "description": "offers counselling services on monday to Friday from 8am -5pm ,closed on saturdays and sundays 3000 - 6000 Ksh per person",
     "fee": "yes",
     "healthcare": "counselling",
+    "hospital:level": "5",
     "name": "Aga Khan University Hospital",
-    "operator:type": "private",
-    "phone": "+254 111 011 888",
+    "operator": "Aga Khan Health Services",
+    "operator:type": "private_non_profit",
+    "operator:wikidata": "Q4690927",
+    "phone": "+254 111 011888",
     "website": "https://hospitals.aku.edu/",
     "wikidata": "Q4690949",
     "wikipedia": "en:Aga Khan University Hospital"
@@ -25190,10 +26124,12 @@
     "addr:city": "Nairobi",
     "addr:street": "Tom Mboya Street",
     "building": "yes",
-    "building:levels": "2",
+    "building:colour": "#DEC88C",
+    "building:levels": "3",
     "museum": "history",
     "name": "Kenya National Archives",
     "opening_hours": "Mo-Fr 08:00-17:00",
+    "roof:colour": "#4C853D",
     "tourism": "museum",
     "wikidata": "Q6392606"
   }
@@ -25444,10 +26380,10 @@
   "type": "way",
   "id": 95636755,
   "bounds": {
-    "minlat": -1.3171542,
+    "minlat": -1.3171314,
     "minlon": 36.8340243,
     "maxlat": -1.3156629,
-    "maxlon": 36.8353381
+    "maxlon": 36.8352469
   },
   "nodes": [
     1108902378,
@@ -25491,12 +26427,12 @@
     { "lat": -1.3166478, "lon": 36.8344130 },
     { "lat": -1.3165574, "lon": 36.8344719 },
     { "lat": -1.3169357, "lon": 36.8350521 },
-    { "lat": -1.3170211, "lon": 36.8349964 },
-    { "lat": -1.3171542, "lon": 36.8352004 },
-    { "lat": -1.3169432, "lon": 36.8353381 },
-    { "lat": -1.3168790, "lon": 36.8352396 },
-    { "lat": -1.3167721, "lon": 36.8353093 },
-    { "lat": -1.3164332, "lon": 36.8352993 },
+    { "lat": -1.3170348, "lon": 36.8349884 },
+    { "lat": -1.3171314, "lon": 36.8351286 },
+    { "lat": -1.3169489, "lon": 36.8352424 },
+    { "lat": -1.3168915, "lon": 36.8351576 },
+    { "lat": -1.3167630, "lon": 36.8352398 },
+    { "lat": -1.3164150, "lon": 36.8352469 },
     { "lat": -1.3162441, "lon": 36.8350264 },
     { "lat": -1.3161430, "lon": 36.8350923 },
     { "lat": -1.3160415, "lon": 36.8349366 },
@@ -25594,6 +26530,39 @@
     "name": "Classic Ironmongers Ltd",
     "shop": "hardware",
     "source": "Bing"
+  }
+},
+{
+  "type": "way",
+  "id": 100138880,
+  "bounds": {
+    "minlat": -1.2818193,
+    "minlon": 36.8166960,
+    "maxlat": -1.2814674,
+    "maxlon": 36.8170845
+  },
+  "nodes": [
+    14174840825,
+    14174840823,
+    14174840822,
+    14174840824,
+    14174840826,
+    14174840827,
+    14174840825
+  ],
+  "geometry": [
+    { "lat": -1.2814674, "lon": 36.8169583 },
+    { "lat": -1.2815756, "lon": 36.8170121 },
+    { "lat": -1.2815669, "lon": 36.8170292 },
+    { "lat": -1.2816783, "lon": 36.8170845 },
+    { "lat": -1.2818193, "lon": 36.8168094 },
+    { "lat": -1.2815988, "lon": 36.8166960 },
+    { "lat": -1.2814674, "lon": 36.8169583 }
+  ],
+  "tags": {
+    "building": "commercial",
+    "name": "Comet Mall",
+    "shop": "mall"
   }
 },
 {
@@ -25853,7 +26822,10 @@
   ],
   "tags": {
     "amenity": "university",
+    "isced:level": "5;6;7;8",
     "name": "Strathmore University",
+    "operator": "strathmore education trust",
+    "operator:type": "private_non_profit",
     "website": "https://strathmore.edu/",
     "wheelchair": "limited"
   }
@@ -26010,7 +26982,9 @@
   ],
   "tags": {
     "amenity": "school",
-    "name": "Visa Oshwal Primary School"
+    "isced:level": "0;1;2",
+    "name": "Visa Oshwal Primary School",
+    "operator:type": "private"
   }
 },
 {
@@ -26043,11 +27017,14 @@
     "addr:street": "Shivachi Road",
     "amenity": "hospital",
     "description": "offers counselling services on monday and Friday from 8am -4pm and on saturday from 8am- 12:30pm, 2500 - 5000Ksh per person",
+    "emergency": "yes",
     "fee": "yes",
     "healthcare": "counselling",
+    "hospital:level": "4",
     "name": "MP Shah Hospital",
     "operator:type": "private",
-    "phone": "+254 111 000 600"
+    "phone": "+254 111 000 600",
+    "website": "https://mpshahhosp.org/"
   }
 },
 {
@@ -26282,10 +27259,10 @@
   "type": "way",
   "id": 123247750,
   "bounds": {
-    "minlat": -1.2882142,
-    "minlon": 36.8279927,
-    "maxlat": -1.2880942,
-    "maxlon": 36.8281539
+    "minlat": -1.2882180,
+    "minlon": 36.8279946,
+    "maxlat": -1.2880910,
+    "maxlon": 36.8281487
   },
   "nodes": [
     1375074114,
@@ -26297,18 +27274,19 @@
     1375074114
   ],
   "geometry": [
-    { "lat": -1.2880942, "lon": 36.8281126 },
+    { "lat": -1.2880910, "lon": 36.8281153 },
     { "lat": -1.2881258, "lon": 36.8280515 },
-    { "lat": -1.2881561, "lon": 36.8279927 },
-    { "lat": -1.2882142, "lon": 36.8280274 },
-    { "lat": -1.2881854, "lon": 36.8280877 },
-    { "lat": -1.2881537, "lon": 36.8281539 },
-    { "lat": -1.2880942, "lon": 36.8281126 }
+    { "lat": -1.2881568, "lon": 36.8279946 },
+    { "lat": -1.2882180, "lon": 36.8280280 },
+    { "lat": -1.2881855, "lon": 36.8280877 },
+    { "lat": -1.2881523, "lon": 36.8281487 },
+    { "lat": -1.2880910, "lon": 36.8281153 }
   ],
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Tom Mboya Street",
     "amenity": "fuel",
+    "brand": "OLA Energy",
     "building": "roof",
     "layer": "1",
     "name": "OLA Energy"
@@ -26511,6 +27489,7 @@
     1375622745,
     6573879252,
     6573879253,
+    14135552989,
     1375622697
   ],
   "geometry": [
@@ -26518,15 +27497,16 @@
     { "lat": -1.2840988, "lon": 36.8262227 },
     { "lat": -1.2838739, "lon": 36.8259357 },
     { "lat": -1.2840334, "lon": 36.8258106 },
+    { "lat": -1.2841296, "lon": 36.8259333 },
     { "lat": -1.2842583, "lon": 36.8260977 }
   ],
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Tom Mboya Street",
     "building": "yes",
-    "name": "Tusky's Supermaket",
+    "name": "Simara Mall",
     "name:it": "Tusky's",
-    "shop": "supermarket",
+    "shop": "mall",
     "smoking": "no"
   }
 },
@@ -27864,71 +28844,42 @@
 },
 {
   "type": "way",
-  "id": 125141099,
-  "bounds": {
-    "minlat": -1.2803473,
-    "minlon": 36.8187560,
-    "maxlat": -1.2800788,
-    "maxlon": 36.8190052
-  },
-  "nodes": [
-    1390642252,
-    1390642269,
-    1376379151,
-    1390642249,
-    9473075375,
-    1390642252
-  ],
-  "geometry": [
-    { "lat": -1.2802697, "lon": 36.8190052 },
-    { "lat": -1.2803473, "lon": 36.8188533 },
-    { "lat": -1.2801548, "lon": 36.8187560 },
-    { "lat": -1.2800788, "lon": 36.8189083 },
-    { "lat": -1.2801359, "lon": 36.8189363 },
-    { "lat": -1.2802697, "lon": 36.8190052 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Moi Avenue",
-    "building": "yes",
-    "name": "Delta Hotel",
-    "tourism": "hotel"
-  }
-},
-{
-  "type": "way",
   "id": 125141100,
   "bounds": {
-    "minlat": -1.2807932,
-    "minlon": 36.8186704,
-    "maxlat": -1.2805909,
-    "maxlon": 36.8188291
+    "minlat": -1.2808700,
+    "minlon": 36.8186577,
+    "maxlat": -1.2805694,
+    "maxlon": 36.8188435
   },
   "nodes": [
     1390642270,
     6570257576,
-    6570257593,
-    6570257594,
-    6570257595,
-    6570257596,
     6570257577,
     6570257597,
-    6570257592,
-    1390642235,
+    14175211546,
+    14175211547,
+    14175211548,
+    14175211549,
+    14175211545,
+    14175211543,
+    14175211542,
+    14175211544,
     1390642270
   ],
   "geometry": [
-    { "lat": -1.2806196, "lon": 36.8186704 },
-    { "lat": -1.2805909, "lon": 36.8187307 },
-    { "lat": -1.2806257, "lon": 36.8187473 },
-    { "lat": -1.2806162, "lon": 36.8187674 },
-    { "lat": -1.2806950, "lon": 36.8188049 },
-    { "lat": -1.2807051, "lon": 36.8187999 },
-    { "lat": -1.2807665, "lon": 36.8188291 },
-    { "lat": -1.2807932, "lon": 36.8187729 },
-    { "lat": -1.2807435, "lon": 36.8187492 },
-    { "lat": -1.2807512, "lon": 36.8187330 },
-    { "lat": -1.2806196, "lon": 36.8186704 }
+    { "lat": -1.2806008, "lon": 36.8186577 },
+    { "lat": -1.2805694, "lon": 36.8187200 },
+    { "lat": -1.2808196, "lon": 36.8188435 },
+    { "lat": -1.2808515, "lon": 36.8187823 },
+    { "lat": -1.2808700, "lon": 36.8187451 },
+    { "lat": -1.2808520, "lon": 36.8187025 },
+    { "lat": -1.2808121, "lon": 36.8186827 },
+    { "lat": -1.2807802, "lon": 36.8187469 },
+    { "lat": -1.2807220, "lon": 36.8187179 },
+    { "lat": -1.2807312, "lon": 36.8186994 },
+    { "lat": -1.2806702, "lon": 36.8186691 },
+    { "lat": -1.2806610, "lon": 36.8186876 },
+    { "lat": -1.2806008, "lon": 36.8186577 }
   ],
   "tags": {
     "addr:city": "Nairobi",
@@ -29535,68 +30486,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Lusaka Road",
     "building": "industrial",
-    "name": "DT Dobie",
-    "shop": "car_repair"
-  }
-},
-{
-  "type": "way",
-  "id": 133146039,
-  "bounds": {
-    "minlat": -1.2980702,
-    "minlon": 36.8360742,
-    "maxlat": -1.2971032,
-    "maxlon": 36.8367264
-  },
-  "nodes": [
-    1465021957,
-    1465021884,
-    1465022146,
-    1465021883,
-    1465021986,
-    1465021895,
-    1465021978,
-    1465021888,
-    1465021971,
-    1465021962,
-    13015791120,
-    13015791116,
-    13015791119,
-    13015791118,
-    13015791117,
-    1465022025,
-    1465021908,
-    1465021913,
-    1465022097,
-    1465021957
-  ],
-  "geometry": [
-    { "lat": -1.2972989, "lon": 36.8361793 },
-    { "lat": -1.2971136, "lon": 36.8364956 },
-    { "lat": -1.2971585, "lon": 36.8365190 },
-    { "lat": -1.2971032, "lon": 36.8366250 },
-    { "lat": -1.2971269, "lon": 36.8366373 },
-    { "lat": -1.2971463, "lon": 36.8366001 },
-    { "lat": -1.2972238, "lon": 36.8366405 },
-    { "lat": -1.2972109, "lon": 36.8366652 },
-    { "lat": -1.2973282, "lon": 36.8367264 },
-    { "lat": -1.2976152, "lon": 36.8362045 },
-    { "lat": -1.2978796, "lon": 36.8363364 },
-    { "lat": -1.2978951, "lon": 36.8363054 },
-    { "lat": -1.2979988, "lon": 36.8363558 },
-    { "lat": -1.2979837, "lon": 36.8363981 },
-    { "lat": -1.2980285, "lon": 36.8364174 },
-    { "lat": -1.2980461, "lon": 36.8363765 },
-    { "lat": -1.2980702, "lon": 36.8363260 },
-    { "lat": -1.2975539, "lon": 36.8360742 },
-    { "lat": -1.2974515, "lon": 36.8362588 },
-    { "lat": -1.2972989, "lon": 36.8361793 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Lusaka Road",
-    "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
   }
 },
@@ -29627,7 +30516,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Lusaka Road",
     "building": "industrial",
-    "name": "DT Dobie Company",
     "shop": "car_repair"
   }
 },
@@ -29695,7 +30583,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Enterprise Road",
     "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
   }
 },
@@ -29726,7 +30613,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Lusaka Road",
     "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
   }
 },
@@ -29757,73 +30643,7 @@
     "addr:city": "Nairobi",
     "addr:street": "Lusaka Road",
     "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
-  }
-},
-{
-  "type": "way",
-  "id": 133146048,
-  "bounds": {
-    "minlat": -1.2987538,
-    "minlon": 36.8360775,
-    "maxlat": -1.2973085,
-    "maxlon": 36.8374345
-  },
-  "nodes": [
-    13015791106,
-    13015791104,
-    13015791103,
-    13015791105,
-    13015791102,
-    13015791113,
-    13015791107,
-    13015791108,
-    13015791110,
-    13015791109,
-    13015791111,
-    13015791112,
-    13015791114,
-    13015778181,
-    13015791115,
-    1465021885,
-    13015786000,
-    13015785999,
-    13015785998,
-    13015785997,
-    13015791101,
-    13015791106
-  ],
-  "geometry": [
-    { "lat": -1.2976073, "lon": 36.8362343 },
-    { "lat": -1.2978923, "lon": 36.8363549 },
-    { "lat": -1.2979062, "lon": 36.8363220 },
-    { "lat": -1.2979896, "lon": 36.8363573 },
-    { "lat": -1.2979717, "lon": 36.8364021 },
-    { "lat": -1.2980364, "lon": 36.8364294 },
-    { "lat": -1.2980946, "lon": 36.8363138 },
-    { "lat": -1.2976872, "lon": 36.8361258 },
-    { "lat": -1.2977116, "lon": 36.8360775 },
-    { "lat": -1.2984331, "lon": 36.8363890 },
-    { "lat": -1.2983649, "lon": 36.8365334 },
-    { "lat": -1.2982542, "lon": 36.8364866 },
-    { "lat": -1.2982285, "lon": 36.8365381 },
-    { "lat": -1.2983378, "lon": 36.8365844 },
-    { "lat": -1.2983851, "lon": 36.8366204 },
-    { "lat": -1.2984259, "lon": 36.8366818 },
-    { "lat": -1.2983382, "lon": 36.8369624 },
-    { "lat": -1.2986332, "lon": 36.8371099 },
-    { "lat": -1.2987538, "lon": 36.8372682 },
-    { "lat": -1.2985474, "lon": 36.8374345 },
-    { "lat": -1.2973085, "lon": 36.8368269 },
-    { "lat": -1.2976073, "lon": 36.8362343 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Enterprise Road",
-    "building": "industrial",
-    "name": "DT Dobie Company",
-    "shop": "car"
   }
 },
 {
@@ -29859,7 +30679,6 @@
   ],
   "tags": {
     "building": "industrial",
-    "name": "DT Dobie Company",
     "shop": "car_repair"
   }
 },
@@ -29888,7 +30707,6 @@
   ],
   "tags": {
     "building": "industrial",
-    "name": "DT Dobie Company",
     "shop": "car_repair"
   }
 },
@@ -29923,7 +30741,9 @@
     "addr:city": "Nairobi",
     "addr:street": "Enterprise Road",
     "amenity": "fuel",
-    "name": "OLA Energy"
+    "brand": "OLA Energy",
+    "name": "OLA Energy",
+    "wikidata": "Q126916526"
   }
 },
 {
@@ -29957,7 +30777,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Enterprise Road",
     "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
   }
 },
@@ -29988,7 +30807,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Lusaka Road",
     "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
   }
 },
@@ -30017,7 +30835,6 @@
   ],
   "tags": {
     "building": "industrial",
-    "name": "DT Dobie Company",
     "shop": "car_repair"
   }
 },
@@ -30052,7 +30869,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Enterprise Road",
     "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
   }
 },
@@ -30083,7 +30899,6 @@
     "addr:city": "Nairobi",
     "addr:street": "Lusaka Road",
     "building": "industrial",
-    "name": "DT Dobie",
     "shop": "car_repair"
   }
 },
@@ -30091,10 +30906,10 @@
   "type": "way",
   "id": 133147262,
   "bounds": {
-    "minlat": -1.2971233,
-    "minlon": 36.8354937,
-    "maxlat": -1.2965071,
-    "maxlon": 36.8359741
+    "minlat": -1.2971184,
+    "minlon": 36.8354579,
+    "maxlat": -1.2965228,
+    "maxlon": 36.8359158
   },
   "nodes": [
     1465049986,
@@ -30104,15 +30919,14 @@
     1465049986
   ],
   "geometry": [
-    { "lat": -1.2965071, "lon": 36.8357141 },
-    { "lat": -1.2966211, "lon": 36.8354937 },
-    { "lat": -1.2971233, "lon": 36.8357537 },
-    { "lat": -1.2970093, "lon": 36.8359741 },
-    { "lat": -1.2965071, "lon": 36.8357141 }
+    { "lat": -1.2965228, "lon": 36.8356644 },
+    { "lat": -1.2966241, "lon": 36.8354579 },
+    { "lat": -1.2971184, "lon": 36.8356970 },
+    { "lat": -1.2970177, "lon": 36.8359158 },
+    { "lat": -1.2965228, "lon": 36.8356644 }
   ],
   "tags": {
     "building": "industrial",
-    "name": "DT Dobie Company",
     "shop": "car_repair"
   }
 },
@@ -30354,14 +31168,82 @@
     "fee": "yes",
     "healthcare": "counselling",
     "healthcare:speciality": "gynaecology;paediatrics;radiology",
+    "hospital:level": "5",
     "medical_service:palliative_care": "yes",
     "name": "Nairobi Hospital",
     "note": "palliative care handled by Nairobi Hospice",
+    "old_name": "Nairobi European Hospital;European Hospital",
     "opening_hours": "24/7",
-    "operator": "operational",
+    "operator": "Kenya Hospital Association",
     "operator:type": "private",
+    "start_date": "1954-04-09",
+    "website": "https://thenairobihosp.org/",
     "wheelchair": "yes",
     "wikidata": "Q6959787"
+  }
+},
+{
+  "type": "way",
+  "id": 143792128,
+  "bounds": {
+    "minlat": -1.3184385,
+    "minlon": 36.8299791,
+    "maxlat": -1.3160449,
+    "maxlon": 36.8338354
+  },
+  "nodes": [
+    1573489303,
+    9354794726,
+    9354794727,
+    9354794728,
+    9354794729,
+    9354794730,
+    9354794731,
+    9354794732,
+    9354794735,
+    1573489304,
+    9354794736,
+    1573489306,
+    1573489307,
+    9354794737,
+    1573489305,
+    9354794738,
+    9354794733,
+    9354794734,
+    1573489302,
+    9354794739,
+    1573489303
+  ],
+  "geometry": [
+    { "lat": -1.3165386, "lon": 36.8300082 },
+    { "lat": -1.3165963, "lon": 36.8303331 },
+    { "lat": -1.3160449, "lon": 36.8304343 },
+    { "lat": -1.3162899, "lon": 36.8317778 },
+    { "lat": -1.3162933, "lon": 36.8318113 },
+    { "lat": -1.3163114, "lon": 36.8319252 },
+    { "lat": -1.3163422, "lon": 36.8320961 },
+    { "lat": -1.3163695, "lon": 36.8322591 },
+    { "lat": -1.3164184, "lon": 36.8324242 },
+    { "lat": -1.3166646, "lon": 36.8326125 },
+    { "lat": -1.3171483, "lon": 36.8332185 },
+    { "lat": -1.3176734, "lon": 36.8338354 },
+    { "lat": -1.3184385, "lon": 36.8332766 },
+    { "lat": -1.3183925, "lon": 36.8330343 },
+    { "lat": -1.3179181, "lon": 36.8323363 },
+    { "lat": -1.3180558, "lon": 36.8322169 },
+    { "lat": -1.3176566, "lon": 36.8301564 },
+    { "lat": -1.3176457, "lon": 36.8300862 },
+    { "lat": -1.3167653, "lon": 36.8302792 },
+    { "lat": -1.3167071, "lon": 36.8299791 },
+    { "lat": -1.3165386, "lon": 36.8300082 }
+  ],
+  "tags": {
+    "amenity": "college",
+    "isced:level": "4",
+    "name": "Nationial Criminal Investigations Academy",
+    "old_name": "CID Training School",
+    "operator": "Kenya Police",
+    "website": "https://www.dci.go.ke/national-criminal-investigations-academy"
   }
 },
 {
@@ -30608,23 +31490,25 @@
   "type": "way",
   "id": 235253868,
   "bounds": {
-    "minlat": -1.2616149,
-    "minlon": 36.8390569,
-    "maxlat": -1.2609070,
-    "maxlon": 36.8401203
+    "minlat": -1.2616465,
+    "minlon": 36.8390486,
+    "maxlat": -1.2608961,
+    "maxlon": 36.8401388
   },
   "nodes": [
     2433371763,
     12339101676,
+    14074723118,
     2433371766,
+    14074723117,
     2433371768,
     2433371770,
     2433371773,
     2433371775,
-    2433371776,
-    2433371778,
+    14074723116,
+    14074723115,
     2433371780,
-    2433371782,
+    14074723119,
     2433371783,
     2433371784,
     2433371785,
@@ -30636,36 +31520,36 @@
     2433371797,
     2433371799,
     2433371801,
-    2433371803,
     2433371805,
     2433371763
   ],
   "geometry": [
-    { "lat": -1.2609391, "lon": 36.8392071 },
-    { "lat": -1.2609146, "lon": 36.8392181 },
-    { "lat": -1.2613842, "lon": 36.8401203 },
-    { "lat": -1.2615425, "lon": 36.8400426 },
-    { "lat": -1.2615076, "lon": 36.8399755 },
-    { "lat": -1.2616149, "lon": 36.8399219 },
-    { "lat": -1.2615505, "lon": 36.8397931 },
-    { "lat": -1.2614459, "lon": 36.8398360 },
-    { "lat": -1.2613574, "lon": 36.8396536 },
+    { "lat": -1.2609258, "lon": 36.8392027 },
+    { "lat": -1.2609027, "lon": 36.8392142 },
+    { "lat": -1.2613270, "lon": 36.8400704 },
+    { "lat": -1.2613481, "lon": 36.8400600 },
+    { "lat": -1.2613868, "lon": 36.8401388 },
+    { "lat": -1.2615671, "lon": 36.8400503 },
+    { "lat": -1.2615396, "lon": 36.8399943 },
+    { "lat": -1.2616465, "lon": 36.8399419 },
+    { "lat": -1.2615595, "lon": 36.8397642 },
+    { "lat": -1.2614237, "lon": 36.8398306 },
+    { "lat": -1.2613440, "lon": 36.8396675 },
     { "lat": -1.2614272, "lon": 36.8396268 },
-    { "lat": -1.2614486, "lon": 36.8395893 },
+    { "lat": -1.2614546, "lon": 36.8395816 },
     { "lat": -1.2614727, "lon": 36.8395383 },
     { "lat": -1.2614727, "lon": 36.8394820 },
     { "lat": -1.2614459, "lon": 36.8394391 },
     { "lat": -1.2613977, "lon": 36.8393935 },
     { "lat": -1.2613360, "lon": 36.8393908 },
-    { "lat": -1.2612502, "lon": 36.8394283 },
-    { "lat": -1.2611751, "lon": 36.8393130 },
-    { "lat": -1.2613092, "lon": 36.8392379 },
-    { "lat": -1.2612126, "lon": 36.8390569 },
-    { "lat": -1.2610692, "lon": 36.8391333 },
-    { "lat": -1.2610424, "lon": 36.8390836 },
-    { "lat": -1.2609660, "lon": 36.8391186 },
-    { "lat": -1.2609070, "lon": 36.8391467 },
-    { "lat": -1.2609391, "lon": 36.8392071 }
+    { "lat": -1.2612326, "lon": 36.8394426 },
+    { "lat": -1.2611663, "lon": 36.8393102 },
+    { "lat": -1.2613101, "lon": 36.8392382 },
+    { "lat": -1.2612153, "lon": 36.8390486 },
+    { "lat": -1.2610737, "lon": 36.8391194 },
+    { "lat": -1.2610477, "lon": 36.8390674 },
+    { "lat": -1.2608961, "lon": 36.8391431 },
+    { "lat": -1.2609258, "lon": 36.8392027 }
   ],
   "tags": {
     "addr:city": "Nairobi",
@@ -30765,8 +31649,10 @@
     "addr:street": "Muthaiga Road",
     "amenity": "hospital",
     "description": "offers counselling services on monday to Friday from 8am -7pm ,Saturdays 9am -8pm, Sundays 10am -9pm, 2150 - 4000Ksh per Child",
+    "emergency": "yes",
     "fee": "yes",
     "healthcare": "counselling",
+    "hospital:level": "5",
     "name": "Gertrude's Children Hospital",
     "operator:type": "private",
     "url": "http://www.gerties.org/",
@@ -30778,30 +31664,64 @@
   "id": 238852394,
   "bounds": {
     "minlat": -1.2575288,
-    "minlon": 36.8025707,
-    "maxlat": -1.2565516,
-    "maxlon": 36.8036618
+    "minlon": 36.8025611,
+    "maxlat": -1.2561877,
+    "maxlon": 36.8039052
   },
   "nodes": [
     2466520954,
     2466520955,
     2466520956,
+    14089452014,
+    14089452013,
+    14089452012,
+    14089452011,
+    14089452010,
+    14089452009,
+    14089452008,
+    14089452007,
+    14089452006,
+    14089452005,
+    14089452004,
+    14089452003,
+    14089452002,
     2466520957,
     2466520958,
     2466520959,
     2466520960,
     2466520961,
+    14089452018,
+    14089452017,
+    14089452016,
+    14089452015,
     2466520954
   ],
   "geometry": [
     { "lat": -1.2565516, "lon": 36.8028614 },
     { "lat": -1.2565918, "lon": 36.8029236 },
     { "lat": -1.2565626, "lon": 36.8029425 },
-    { "lat": -1.2570173, "lon": 36.8036460 },
+    { "lat": -1.2565248, "lon": 36.8028949 },
+    { "lat": -1.2565100, "lon": 36.8029063 },
+    { "lat": -1.2564736, "lon": 36.8028402 },
+    { "lat": -1.2561877, "lon": 36.8030167 },
+    { "lat": -1.2562367, "lon": 36.8031010 },
+    { "lat": -1.2562549, "lon": 36.8030908 },
+    { "lat": -1.2563335, "lon": 36.8032161 },
+    { "lat": -1.2561877, "lon": 36.8033083 },
+    { "lat": -1.2565829, "lon": 36.8039052 },
+    { "lat": -1.2566535, "lon": 36.8038607 },
+    { "lat": -1.2566353, "lon": 36.8038323 },
+    { "lat": -1.2569166, "lon": 36.8036398 },
+    { "lat": -1.2569349, "lon": 36.8036671 },
+    { "lat": -1.2570526, "lon": 36.8035834 },
     { "lat": -1.2570713, "lon": 36.8036111 },
     { "lat": -1.2571040, "lon": 36.8036618 },
     { "lat": -1.2575288, "lon": 36.8033871 },
     { "lat": -1.2570012, "lon": 36.8025707 },
+    { "lat": -1.2569417, "lon": 36.8026090 },
+    { "lat": -1.2569109, "lon": 36.8025611 },
+    { "lat": -1.2565886, "lon": 36.8027787 },
+    { "lat": -1.2566159, "lon": 36.8028186 },
     { "lat": -1.2565516, "lon": 36.8028614 }
   ],
   "tags": {
@@ -31381,7 +32301,11 @@
     "addr:street": "School Lane",
     "amenity": "school",
     "check_date": "2023-05-17",
-    "name": "Westlands Primary School"
+    "isced:level": "0;1;2",
+    "name": "Westlands Primary School",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -31414,6 +32338,7 @@
     "description": "We offer counselling services to patients (outpatients and Inpatients), families, caregivers and staff",
     "fee": "no",
     "healthcare": "counselling",
+    "hospital:level": "5",
     "name": "Nairobi Women's Hospital",
     "operator": "Private",
     "operator:type": "private",
@@ -31494,7 +32419,12 @@
   ],
   "tags": {
     "amenity": "school",
+    "denomination": "catholic",
+    "isced:level": "0;1;2",
     "name": "St Cathrines Mukuru Primary School",
+    "operator": "Mukuru Promotion Center",
+    "operator:type": "religious",
+    "religion": "christian",
     "website": "http://www.mukurupromotioncentre.org/education/index.cfm?loadref=3"
   }
 },
@@ -31610,7 +32540,9 @@
   "tags": {
     "addr:street": "1st Parklands Avenue",
     "amenity": "school",
+    "isced:level": "3",
     "name": "Oshwal High School",
+    "operator:type": "private",
     "wikidata": "Q7106668"
   }
 },
@@ -31679,15 +32611,18 @@
     "emergency": "yes",
     "fax": "+254 272 5272",
     "fee": "yes",
-    "healthcare": "counselling",
-    "healthcare:speciality": "gynaecology;paediatrics;radiology",
+    "healthcare": "hospital",
+    "healthcare:speciality": "gynaecology;paediatrics;radiology;general;surgery;trauma;emergency;humanistic;psychiatry;oncology;cardiology;orthopaedics;intensive;internal;infectious_diseases",
+    "hospital:level": "6",
     "name": "Kenyatta National Hospital",
     "name:en": "Kenyatta National Hospital",
     "name:sw": "Hospitali ya Taifa ya Kenyatta",
+    "old_name": "Native Civil Hospital;King George VI Hospital",
     "opening_hours": "24/7",
     "operational_status": "operational",
-    "operator": "Government",
-    "operator:type": "public",
+    "operator": "Ministry of Health",
+    "operator:type": "government",
+    "operator:wikidata": "Q25182829",
     "phone": "+254 272 6300 9",
     "tag": "healthcare:counselling=antenatal",
     "website": "https://knh.or.ke/",
@@ -31787,92 +32722,6 @@
   "tags": {
     "historic": "memorial",
     "name": "Murumbi Peace Memorial"
-  }
-},
-{
-  "type": "way",
-  "id": 247137428,
-  "bounds": {
-    "minlat": -1.3075104,
-    "minlon": 36.8338229,
-    "maxlat": -1.3068372,
-    "maxlon": 36.8349883
-  },
-  "nodes": [
-    2540746465,
-    2540746466,
-    2540746467,
-    2540746468,
-    2540746469,
-    2540746470,
-    2540746471,
-    2540746472,
-    2540746473,
-    2540746474,
-    2540746465
-  ],
-  "geometry": [
-    { "lat": -1.3073782, "lon": 36.8349868 },
-    { "lat": -1.3074954, "lon": 36.8349883 },
-    { "lat": -1.3075104, "lon": 36.8338242 },
-    { "lat": -1.3074107, "lon": 36.8338229 },
-    { "lat": -1.3074095, "lon": 36.8339234 },
-    { "lat": -1.3068417, "lon": 36.8339161 },
-    { "lat": -1.3068372, "lon": 36.8342588 },
-    { "lat": -1.3070308, "lon": 36.8342613 },
-    { "lat": -1.3070337, "lon": 36.8340362 },
-    { "lat": -1.3073903, "lon": 36.8340408 },
-    { "lat": -1.3073782, "lon": 36.8349868 }
-  ],
-  "tags": {
-    "amenity": "hospital",
-    "building": "yes",
-    "description": "All sessions generally last for about 50 minutes; this will depend on your problem. Sessions are held weekly unless the counselor or you make other arrangements.",
-    "healthcare": "hospital",
-    "name": "Mater Misericordiae Hospital",
-    "operator": "Sisters of Mercy",
-    "operator:type": "private",
-    "url": "http://materkenya.com/",
-    "website": "https://www.materkenya.com/"
-  }
-},
-{
-  "type": "way",
-  "id": 247137550,
-  "bounds": {
-    "minlat": -1.3114542,
-    "minlon": 36.8293378,
-    "maxlat": -1.3097863,
-    "maxlon": 36.8309498
-  },
-  "nodes": [
-    2540747183,
-    2540747184,
-    2540747185,
-    2540747186,
-    280794101,
-    2540747188,
-    2540747189,
-    2540747190,
-    2540747191,
-    2540747183
-  ],
-  "geometry": [
-    { "lat": -1.3104406, "lon": 36.8293378 },
-    { "lat": -1.3114542, "lon": 36.8298126 },
-    { "lat": -1.3108401, "lon": 36.8309498 },
-    { "lat": -1.3105988, "lon": 36.8308908 },
-    { "lat": -1.3099224, "lon": 36.8304238 },
-    { "lat": -1.3097863, "lon": 36.8301478 },
-    { "lat": -1.3098479, "lon": 36.8298877 },
-    { "lat": -1.3100330, "lon": 36.8295792 },
-    { "lat": -1.3102126, "lon": 36.8293888 },
-    { "lat": -1.3104406, "lon": 36.8293378 }
-  ],
-  "tags": {
-    "amenity": "college",
-    "name": "Kenya Institute of Mass Communication",
-    "wikipedia": "en:List of universities and colleges in Kenya"
   }
 },
 {
@@ -32294,16 +33143,17 @@
   "type": "way",
   "id": 249016945,
   "bounds": {
-    "minlat": -1.2893026,
-    "minlon": 36.8264966,
-    "maxlat": -1.2887007,
-    "maxlon": 36.8271580
+    "minlat": -1.2893599,
+    "minlon": 36.8265271,
+    "maxlat": -1.2886704,
+    "maxlon": 36.8271885
   },
   "nodes": [
     2557124789,
     2557124790,
     2557124816,
     2557124791,
+    14087287730,
     2557124792,
     2557124793,
     2557124794,
@@ -32311,22 +33161,27 @@
     2557124789
   ],
   "geometry": [
-    { "lat": -1.2889300, "lon": 36.8264966 },
-    { "lat": -1.2887007, "lon": 36.8269534 },
-    { "lat": -1.2890258, "lon": 36.8271148 },
-    { "lat": -1.2891129, "lon": 36.8271580 },
-    { "lat": -1.2891751, "lon": 36.8271303 },
-    { "lat": -1.2893026, "lon": 36.8268624 },
-    { "lat": -1.2890664, "lon": 36.8267507 },
-    { "lat": -1.2891396, "lon": 36.8265975 },
-    { "lat": -1.2889300, "lon": 36.8264966 }
+    { "lat": -1.2888997, "lon": 36.8265271 },
+    { "lat": -1.2886704, "lon": 36.8269839 },
+    { "lat": -1.2889955, "lon": 36.8271453 },
+    { "lat": -1.2890826, "lon": 36.8271885 },
+    { "lat": -1.2891750, "lon": 36.8271520 },
+    { "lat": -1.2892715, "lon": 36.8271155 },
+    { "lat": -1.2893599, "lon": 36.8269063 },
+    { "lat": -1.2890523, "lon": 36.8267600 },
+    { "lat": -1.2891093, "lon": 36.8266280 },
+    { "lat": -1.2888997, "lon": 36.8265271 }
   ],
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Haile Selassie Avenue",
+    "barrier": "fence",
     "historic": "memorial",
+    "leisure": "garden",
     "memorial": "war_memorial",
-    "name": "August 7th Memorial Park"
+    "name": "August 7th Memorial Park",
+    "wikidata": "Q4820629",
+    "wikipedia": "en:August 7th Memorial Park(Kenya)"
   }
 },
 {
@@ -32566,7 +33421,9 @@
   "tags": {
     "amenity": "university",
     "check_date": "2023-03-27",
+    "isced:level": "6;7;8",
     "name": "Riara University",
+    "operator:type": "private",
     "wikidata": "Q17110806"
   }
 },
@@ -33371,70 +34228,6 @@
 },
 {
   "type": "way",
-  "id": 366569025,
-  "bounds": {
-    "minlat": -1.3040751,
-    "minlon": 36.8264786,
-    "maxlat": -1.3031424,
-    "maxlon": 36.8271286
-  },
-  "nodes": [
-    11787476916,
-    3705638463,
-    11787476920,
-    3705638467,
-    3705638468,
-    3705638469,
-    3705638465,
-    3705638466,
-    11787476919,
-    3705568604,
-    3705568603,
-    11787476918,
-    11787476917,
-    11787476912,
-    11787476913,
-    11787476914,
-    11787476915,
-    3705788406,
-    3705788405,
-    11787476916
-  ],
-  "geometry": [
-    { "lat": -1.3036905, "lon": 36.8266868 },
-    { "lat": -1.3032573, "lon": 36.8264786 },
-    { "lat": -1.3031558, "lon": 36.8266900 },
-    { "lat": -1.3031649, "lon": 36.8266944 },
-    { "lat": -1.3031424, "lon": 36.8267412 },
-    { "lat": -1.3039486, "lon": 36.8271286 },
-    { "lat": -1.3040054, "lon": 36.8270104 },
-    { "lat": -1.3040751, "lon": 36.8268652 },
-    { "lat": -1.3040451, "lon": 36.8268508 },
-    { "lat": -1.3040645, "lon": 36.8268105 },
-    { "lat": -1.3038750, "lon": 36.8267194 },
-    { "lat": -1.3038547, "lon": 36.8267616 },
-    { "lat": -1.3037557, "lon": 36.8267141 },
-    { "lat": -1.3037586, "lon": 36.8267081 },
-    { "lat": -1.3037884, "lon": 36.8267224 },
-    { "lat": -1.3038089, "lon": 36.8266798 },
-    { "lat": -1.3037803, "lon": 36.8266660 },
-    { "lat": -1.3037890, "lon": 36.8266479 },
-    { "lat": -1.3037241, "lon": 36.8266167 },
-    { "lat": -1.3036905, "lon": 36.8266868 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Baricho Road",
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
-    "brand:wikipedia": "en:Toyota",
-    "building": "yes",
-    "name": "Toyota",
-    "shop": "car"
-  }
-},
-{
-  "type": "way",
   "id": 366569919,
   "bounds": {
     "minlat": -1.3035733,
@@ -33474,193 +34267,6 @@
 },
 {
   "type": "way",
-  "id": 366570723,
-  "bounds": {
-    "minlat": -1.3042269,
-    "minlon": 36.8267980,
-    "maxlat": -1.3039532,
-    "maxlon": 36.8272123
-  },
-  "nodes": [
-    11787476921,
-    11787476903,
-    11787476902,
-    3705638470,
-    11787476904,
-    11787476905,
-    3705638471,
-    11787476906,
-    3705638475,
-    3705638476,
-    11787476921
-  ],
-  "geometry": [
-    { "lat": -1.3039532, "lon": 36.8271384 },
-    { "lat": -1.3040464, "lon": 36.8271859 },
-    { "lat": -1.3040518, "lon": 36.8271753 },
-    { "lat": -1.3041243, "lon": 36.8272123 },
-    { "lat": -1.3042269, "lon": 36.8270111 },
-    { "lat": -1.3041625, "lon": 36.8269782 },
-    { "lat": -1.3041711, "lon": 36.8269614 },
-    { "lat": -1.3041471, "lon": 36.8269492 },
-    { "lat": -1.3042041, "lon": 36.8268375 },
-    { "lat": -1.3041267, "lon": 36.8267980 },
-    { "lat": -1.3039532, "lon": 36.8271384 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Lusaka Road",
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
-    "building": "yes",
-    "name": "Toyota",
-    "shop": "car"
-  }
-},
-{
-  "type": "way",
-  "id": 366570725,
-  "bounds": {
-    "minlat": -1.3042971,
-    "minlon": 36.8266566,
-    "maxlat": -1.3041267,
-    "maxlon": 36.8268375
-  },
-  "nodes": [
-    3705638477,
-    3705638481,
-    3705638476,
-    3705638475,
-    3705638478,
-    3705638477
-  ],
-  "geometry": [
-    { "lat": -1.3042286, "lon": 36.8266566 },
-    { "lat": -1.3042187, "lon": 36.8266754 },
-    { "lat": -1.3041267, "lon": 36.8267980 },
-    { "lat": -1.3042041, "lon": 36.8268375 },
-    { "lat": -1.3042971, "lon": 36.8266910 },
-    { "lat": -1.3042286, "lon": 36.8266566 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Lusaka Road",
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
-    "building": "yes",
-    "name": "Toyota",
-    "shop": "car"
-  }
-},
-{
-  "type": "way",
-  "id": 366570726,
-  "bounds": {
-    "minlat": -1.3042858,
-    "minlon": 36.8260473,
-    "maxlat": -1.3031568,
-    "maxlon": 36.8266558
-  },
-  "nodes": [
-    3705638479,
-    3705638480,
-    3705788409,
-    10130068718,
-    3705638482,
-    3705638483,
-    3705638484,
-    3705638479
-  ],
-  "geometry": [
-    { "lat": -1.3032156, "lon": 36.8260473 },
-    { "lat": -1.3031568, "lon": 36.8261708 },
-    { "lat": -1.3032947, "lon": 36.8262319 },
-    { "lat": -1.3041742, "lon": 36.8266558 },
-    { "lat": -1.3042000, "lon": 36.8266016 },
-    { "lat": -1.3042698, "lon": 36.8266349 },
-    { "lat": -1.3042858, "lon": 36.8265574 },
-    { "lat": -1.3032156, "lon": 36.8260473 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Uhuru Highway",
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
-    "building": "yes",
-    "name": "Toyota",
-    "shop": "car"
-  }
-},
-{
-  "type": "way",
-  "id": 366570727,
-  "bounds": {
-    "minlat": -1.3032688,
-    "minlon": 36.8262796,
-    "maxlat": -1.3030318,
-    "maxlon": 36.8266255
-  },
-  "nodes": [
-    3705638485,
-    3705638486,
-    3705638487,
-    3705638488,
-    10130067816,
-    3705638485
-  ],
-  "geometry": [
-    { "lat": -1.3031747, "lon": 36.8262796 },
-    { "lat": -1.3032688, "lon": 36.8263243 },
-    { "lat": -1.3031259, "lon": 36.8266255 },
-    { "lat": -1.3030318, "lon": 36.8265808 },
-    { "lat": -1.3030509, "lon": 36.8265309 },
-    { "lat": -1.3031747, "lon": 36.8262796 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Uhuru Highway",
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
-    "building": "yes",
-    "name": "Toyota",
-    "shop": "car_repair"
-  }
-},
-{
-  "type": "way",
-  "id": 366570728,
-  "bounds": {
-    "minlat": -1.3030932,
-    "minlon": 36.8265796,
-    "maxlat": -1.3029199,
-    "maxlon": 36.8267309
-  },
-  "nodes": [
-    3705638489,
-    3705638490,
-    3705638499,
-    3705638491,
-    3705638492,
-    3705638489
-  ],
-  "geometry": [
-    { "lat": -1.3030501, "lon": 36.8267309 },
-    { "lat": -1.3030932, "lon": 36.8266451 },
-    { "lat": -1.3030063, "lon": 36.8266049 },
-    { "lat": -1.3029631, "lon": 36.8265796 },
-    { "lat": -1.3029199, "lon": 36.8266654 },
-    { "lat": -1.3030501, "lon": 36.8267309 }
-  ],
-  "tags": {
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
-    "building": "yes",
-    "name": "Toyota",
-    "shop": "car_repair"
-  }
-},
-{
-  "type": "way",
   "id": 366570729,
   "bounds": {
     "minlat": -1.3031716,
@@ -33683,12 +34289,7 @@
     { "lat": -1.3030176, "lon": 36.8261696 }
   ],
   "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Uhuru Highway",
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
     "building": "yes",
-    "name": "Toyota",
     "shop": "car_repair"
   }
 },
@@ -33716,12 +34317,35 @@
     { "lat": -1.3029237, "lon": 36.8264774 }
   ],
   "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Uhuru Highway",
-    "brand": "Toyota",
-    "brand:wikidata": "Q53268",
     "building": "yes",
-    "name": "Toyota",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 366570731,
+  "bounds": {
+    "minlat": -1.3027423,
+    "minlon": 36.8259701,
+    "maxlat": -1.3023856,
+    "maxlon": 36.8264769
+  },
+  "nodes": [
+    3705638501,
+    3705638502,
+    3705638503,
+    3705638504,
+    3705638501
+  ],
+  "geometry": [
+    { "lat": -1.3025385, "lon": 36.8264769 },
+    { "lat": -1.3027423, "lon": 36.8260417 },
+    { "lat": -1.3025894, "lon": 36.8259701 },
+    { "lat": -1.3023856, "lon": 36.8264052 },
+    { "lat": -1.3025385, "lon": 36.8264769 }
+  ],
+  "tags": {
+    "building": "yes",
     "shop": "car_repair"
   }
 },
@@ -33859,27 +34483,16 @@
   "type": "way",
   "id": 382256363,
   "bounds": {
-    "minlat": -1.3067839,
-    "minlon": 36.8337302,
-    "maxlat": -1.3063901,
-    "maxlon": 36.8348564
+    "minlat": -1.3065602,
+    "minlon": 36.8338692,
+    "maxlat": -1.3064056,
+    "maxlon": 36.8344994
   },
   "nodes": [
     2540746490,
     2540746635,
     3854505503,
-    3854505508,
-    3854505513,
-    2540746491,
-    2540746492,
-    3854505515,
-    3854505511,
-    3854505505,
-    3854505502,
-    3854505500,
-    2540746493,
-    3854505496,
-    3854505492,
+    14098483720,
     3854505493,
     3854505491,
     3854505494,
@@ -33892,19 +34505,8 @@
   "geometry": [
     { "lat": -1.3064791, "lon": 36.8339410 },
     { "lat": -1.3064881, "lon": 36.8338692 },
-    { "lat": -1.3065875, "lon": 36.8337302 },
-    { "lat": -1.3066638, "lon": 36.8337356 },
-    { "lat": -1.3067249, "lon": 36.8337393 },
-    { "lat": -1.3067574, "lon": 36.8337383 },
-    { "lat": -1.3067803, "lon": 36.8346995 },
-    { "lat": -1.3067839, "lon": 36.8348506 },
-    { "lat": -1.3066934, "lon": 36.8348564 },
-    { "lat": -1.3066182, "lon": 36.8348487 },
-    { "lat": -1.3065642, "lon": 36.8348082 },
-    { "lat": -1.3065012, "lon": 36.8347629 },
-    { "lat": -1.3064692, "lon": 36.8347157 },
-    { "lat": -1.3064330, "lon": 36.8346617 },
-    { "lat": -1.3063901, "lon": 36.8345947 },
+    { "lat": -1.3065602, "lon": 36.8338783 },
+    { "lat": -1.3064826, "lon": 36.8344994 },
     { "lat": -1.3064056, "lon": 36.8344867 },
     { "lat": -1.3064143, "lon": 36.8344089 },
     { "lat": -1.3064233, "lon": 36.8343322 },
@@ -33919,6 +34521,7 @@
     "addr:street": "Mukenia Road",
     "amenity": "parking",
     "name": "Supa's Garage",
+    "parking": "street_side",
     "shop": "car_repair"
   }
 },
@@ -34163,11 +34766,12 @@
   "bounds": {
     "minlat": -1.3086095,
     "minlon": 36.8332838,
-    "maxlat": -1.3063901,
+    "maxlat": -1.3064056,
     "maxlon": 36.8360863
   },
   "nodes": [
     2540746634,
+    13966713582,
     3854505509,
     3854505506,
     2540746635,
@@ -34179,10 +34783,6 @@
     3854505494,
     3854505491,
     3854505493,
-    3854505492,
-    3854505496,
-    2540746493,
-    3854505500,
     4734041121,
     9266701306,
     9266701313,
@@ -34210,6 +34810,7 @@
   ],
   "geometry": [
     { "lat": -1.3065685, "lon": 36.8332838 },
+    { "lat": -1.3065570, "lon": 36.8333635 },
     { "lat": -1.3065411, "lon": 36.8334740 },
     { "lat": -1.3065092, "lon": 36.8337139 },
     { "lat": -1.3064881, "lon": 36.8338692 },
@@ -34221,10 +34822,6 @@
     { "lat": -1.3064233, "lon": 36.8343322 },
     { "lat": -1.3064143, "lon": 36.8344089 },
     { "lat": -1.3064056, "lon": 36.8344867 },
-    { "lat": -1.3063901, "lon": 36.8345947 },
-    { "lat": -1.3064330, "lon": 36.8346617 },
-    { "lat": -1.3064692, "lon": 36.8347157 },
-    { "lat": -1.3065012, "lon": 36.8347629 },
     { "lat": -1.3066364, "lon": 36.8349744 },
     { "lat": -1.3069362, "lon": 36.8354493 },
     { "lat": -1.3071609, "lon": 36.8357280 },
@@ -34252,14 +34849,19 @@
   ],
   "tags": {
     "addr:city": "Nairobi",
+    "alt_name": "The Mater Hospital",
     "amenity": "hospital",
     "beds": "174",
     "description": "Counselling Monday to Friday, at ksh 2,500",
+    "emergency": "yes",
     "fee": "yes",
     "healthcare": "counselling",
+    "hospital:level": "5",
     "name": "The Mater Misericordiae Hospital (Mukuru)",
-    "operator": "private",
-    "operator:type": "religious"
+    "operator": "sisters of Mercy (Ireland)",
+    "operator:type": "religious",
+    "start_date": "1962",
+    "website": "https://www.materkenya.com/"
   }
 },
 {
@@ -34303,8 +34905,8 @@
   "type": "way",
   "id": 409162258,
   "bounds": {
-    "minlat": -1.3148968,
-    "minlon": 36.8183392,
+    "minlat": -1.3169192,
+    "minlon": 36.8172360,
     "maxlat": -1.3133362,
     "maxlon": 36.8200814
   },
@@ -34321,10 +34923,18 @@
     4110596798,
     4110596799,
     4110596800,
+    14050774490,
+    14050774489,
+    14050774488,
+    14050774487,
+    14050774486,
+    14050774485,
+    14050774484,
     4110596801,
     4110596802,
     4110596806,
     4110596803,
+    14050774483,
     4110596804,
     279099179,
     4110596789
@@ -34340,20 +34950,30 @@
     { "lat": -1.3140066, "lon": 36.8198722 },
     { "lat": -1.3143444, "lon": 36.8198561 },
     { "lat": -1.3147198, "lon": 36.8199097 },
-    { "lat": -1.3148700, "lon": 36.8194484 },
-    { "lat": -1.3148968, "lon": 36.8192821 },
-    { "lat": -1.3147788, "lon": 36.8190514 },
-    { "lat": -1.3146448, "lon": 36.8188476 },
-    { "lat": -1.3145387, "lon": 36.8187189 },
-    { "lat": -1.3143927, "lon": 36.8185418 },
+    { "lat": -1.3149201, "lon": 36.8199336 },
+    { "lat": -1.3150995, "lon": 36.8192775 },
+    { "lat": -1.3156230, "lon": 36.8194024 },
+    { "lat": -1.3167347, "lon": 36.8194206 },
+    { "lat": -1.3169192, "lon": 36.8179581 },
+    { "lat": -1.3168098, "lon": 36.8177964 },
+    { "lat": -1.3164841, "lon": 36.8174912 },
+    { "lat": -1.3161333, "lon": 36.8172360 },
+    { "lat": -1.3153542, "lon": 36.8181518 },
+    { "lat": -1.3148039, "lon": 36.8188213 },
+    { "lat": -1.3147200, "lon": 36.8187155 },
+    { "lat": -1.3146321, "lon": 36.8186096 },
+    { "lat": -1.3144770, "lon": 36.8183596 },
+    { "lat": -1.3143769, "lon": 36.8182634 },
     { "lat": -1.3141775, "lon": 36.8183392 },
     { "lat": -1.3134266, "lon": 36.8189375 },
     { "lat": -1.3133469, "lon": 36.8190675 }
   ],
   "tags": {
     "amenity": "school",
-    "description": "Primary School",
-    "name": "Moi Educational Center"
+    "isced:level": "0;1;2;3",
+    "name": "Moi Educational Center",
+    "operator:type": "private",
+    "website": "https://www.moieducentre.ac.ke/"
   }
 },
 {
@@ -36176,7 +36796,12 @@
     "addr:city": "Nairobi",
     "addr:street": "Upper Hill Road",
     "amenity": "school",
-    "name": "Upper Hill School"
+    "grades": "10-12",
+    "isced:level": "3",
+    "name": "Upper Hill School",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -36514,31 +37139,43 @@
   "type": "way",
   "id": 561521481,
   "bounds": {
-    "minlat": -1.2930009,
+    "minlat": -1.2949639,
     "minlon": 36.7885414,
     "maxlat": -1.2925962,
-    "maxlon": 36.7892659
+    "maxlon": 36.7895870
   },
   "nodes": [
     5414280529,
     5414280530,
     5414280535,
+    14070825779,
+    14070825780,
+    14070825781,
     5414280559,
-    5414280532,
     5414280534,
     5414280533,
+    14070825791,
     5414280531,
+    14070825783,
+    14070825792,
+    14070825793,
     5414280529
   ],
   "geometry": [
     { "lat": -1.2925962, "lon": 36.7885414 },
     { "lat": -1.2929777, "lon": 36.7886276 },
-    { "lat": -1.2930009, "lon": 36.7886592 },
-    { "lat": -1.2929443, "lon": 36.7888316 },
-    { "lat": -1.2929226, "lon": 36.7890642 },
-    { "lat": -1.2929487, "lon": 36.7892282 },
-    { "lat": -1.2929511, "lon": 36.7892659 },
+    { "lat": -1.2944640, "lon": 36.7888539 },
+    { "lat": -1.2949639, "lon": 36.7889271 },
+    { "lat": -1.2949423, "lon": 36.7895870 },
+    { "lat": -1.2935665, "lon": 36.7893939 },
+    { "lat": -1.2931920, "lon": 36.7893377 },
+    { "lat": -1.2929399, "lon": 36.7893043 },
+    { "lat": -1.2927423, "lon": 36.7892924 },
+    { "lat": -1.2927350, "lon": 36.7892606 },
     { "lat": -1.2927276, "lon": 36.7892281 },
+    { "lat": -1.2927237, "lon": 36.7892075 },
+    { "lat": -1.2926118, "lon": 36.7886230 },
+    { "lat": -1.2926064, "lon": 36.7885947 },
     { "lat": -1.2925962, "lon": 36.7885414 }
   ],
   "tags": {
@@ -36546,8 +37183,17 @@
     "addr:housenumber": "Next to Yaya Centre,",
     "addr:street": "Argwings Kodhek Road",
     "amenity": "school",
-    "name": "Lycee Denis Diderot",
-    "wikidata": "Q19572714"
+    "barrier": "wall",
+    "isced:level": "0;1;2;3",
+    "language": "fr",
+    "name": "Lycée Français International Denis DIDEROT",
+    "name:en": "International French School of Nairobi Denis Diderot",
+    "old_name": "École française à Nairobi(1962-1989);Collège Denis Diderot(1989-1995))",
+    "short_name": "LFIDD",
+    "start_date": "1962",
+    "website": "https://diderot.ac.ke/",
+    "wikidata": "Q19572714",
+    "wikipedia": "en:Lycée Denis Diderot (Kenya)"
   }
 },
 {
@@ -36849,62 +37495,12 @@
 },
 {
   "type": "way",
-  "id": 566704071,
-  "bounds": {
-    "minlat": -1.2856750,
-    "minlon": 36.8201981,
-    "maxlat": -1.2853619,
-    "maxlon": 36.8207398
-  },
-  "nodes": [
-    5456752240,
-    6554631604,
-    6554631605,
-    5456752241,
-    6554631615,
-    6554631614,
-    5456752242,
-    9333919685,
-    5456752240
-  ],
-  "geometry": [
-    { "lat": -1.2855761, "lon": 36.8201981 },
-    { "lat": -1.2856419, "lon": 36.8202322 },
-    { "lat": -1.2856240, "lon": 36.8202667 },
-    { "lat": -1.2856750, "lon": 36.8202931 },
-    { "lat": -1.2855905, "lon": 36.8204562 },
-    { "lat": -1.2856394, "lon": 36.8204816 },
-    { "lat": -1.2855149, "lon": 36.8207398 },
-    { "lat": -1.2853619, "lon": 36.8206347 },
-    { "lat": -1.2855761, "lon": 36.8201981 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:postcode": "00100",
-    "addr:street": "Kenyatta Avenue",
-    "bar": "yes",
-    "brand": "Sentrim",
-    "building": "yes",
-    "building:levels": "12",
-    "check_date": "2023-05-11",
-    "email": "reservations680@sentrim-hotels.com",
-    "internet_access": "wlan",
-    "internet_access:fee": "no",
-    "name": "Mayhouse 680 Hotel",
-    "phone": "+254 722 207361",
-    "rooms": "237",
-    "tourism": "hotel",
-    "website": "https://sentrim-hotels.com/"
-  }
-},
-{
-  "type": "way",
   "id": 569266852,
   "bounds": {
     "minlat": -1.2777112,
     "minlon": 36.8259289,
     "maxlat": -1.2768941,
-    "maxlon": 36.8266733
+    "maxlon": 36.8268074
   },
   "nodes": [
     5475093936,
@@ -36923,9 +37519,9 @@
     { "lat": -1.2776605, "lon": 36.8259289 },
     { "lat": -1.2777112, "lon": 36.8260873 },
     { "lat": -1.2776542, "lon": 36.8261950 },
-    { "lat": -1.2774452, "lon": 36.8263724 },
-    { "lat": -1.2772298, "lon": 36.8266036 },
-    { "lat": -1.2771412, "lon": 36.8266733 },
+    { "lat": -1.2774871, "lon": 36.8263931 },
+    { "lat": -1.2773177, "lon": 36.8266250 },
+    { "lat": -1.2771851, "lon": 36.8268074 },
     { "lat": -1.2768941, "lon": 36.8261475 }
   ],
   "tags": {
@@ -36997,10 +37593,11 @@
     "grades": "10-12",
     "isced:level": "3",
     "name": "Starehe Boys' Centre and School",
-    "operator": "Ministry of Education, science and technology",
-    "operator:type": "public",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
     "operator:wikidata": "Q30285161",
     "phone": "+254 777 761213",
+    "school": "high_school",
     "website": "http://www.stareheboyscentre.ac.ke/",
     "wikidata": "Q7601804",
     "wikipedia": "en:Starehe Boys' Centre and School"
@@ -37046,11 +37643,11 @@
     "beds": "350",
     "description": "Every Monday and Friday",
     "healthcare": "birthing_centre",
+    "hospital:level": "1",
     "name": "Pumwani Maternity Hospital",
     "opening_hours": "24/7",
-    "operator": "ministry of health kenya",
+    "operator": "Nairobi city county government",
     "operator:type": "public/government",
-    "operator:wikipedia": "en.Ministry of Health (Kenya)",
     "phone": "+254 720 381038"
   }
 },
@@ -37081,7 +37678,12 @@
     "addr:city": "Nairobi",
     "addr:street": "General Waruingi Street",
     "amenity": "school",
-    "name": "Pumwani Girls Secondary School"
+    "isced:level": "3",
+    "name": "Pumwani Girls Secondary School",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161",
+    "school": "high_school"
   }
 },
 {
@@ -37592,7 +38194,10 @@
     "addr:street": "Haile Selassie Avenue",
     "amenity": "university",
     "name": "The Technical University of Kenya",
-    "wikidata": "Q7692311"
+    "old_name": "Kenya Polytechnic (1967-2005);Kenya Polytechnic University College(2005-2012)",
+    "website": "https://tukenya.ac.ke/",
+    "wikidata": "Q7692311",
+    "wikipedia": "en:Technical University of Kenya"
   }
 },
 {
@@ -37752,31 +38357,37 @@
   "type": "way",
   "id": 583707622,
   "bounds": {
-    "minlat": -1.2990063,
-    "minlon": 36.8261475,
-    "maxlat": -1.2976599,
-    "maxlon": 36.8274061
+    "minlat": -1.2991854,
+    "minlon": 36.8254100,
+    "maxlat": -1.2975989,
+    "maxlon": 36.8276166
   },
   "nodes": [
     5580373440,
+    14100539856,
     5580373441,
+    6395898896,
     5580373442,
     5580373443,
     5580373440
   ],
   "geometry": [
-    { "lat": -1.2980539, "lon": 36.8261475 },
-    { "lat": -1.2990063, "lon": 36.8266217 },
-    { "lat": -1.2986441, "lon": 36.8274061 },
-    { "lat": -1.2976599, "lon": 36.8268761 },
-    { "lat": -1.2980539, "lon": 36.8261475 }
+    { "lat": -1.2984237, "lon": 36.8254100 },
+    { "lat": -1.2991854, "lon": 36.8259941 },
+    { "lat": -1.2990007, "lon": 36.8266368 },
+    { "lat": -1.2987492, "lon": 36.8271658 },
+    { "lat": -1.2985349, "lon": 36.8276166 },
+    { "lat": -1.2975989, "lon": 36.8271043 },
+    { "lat": -1.2984237, "lon": 36.8254100 }
   ],
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Bunyala Road",
+    "barrier": "wall",
     "brand": "Peugeot",
     "brand:wikidata": "Q6742",
-    "name": "Peugeot",
+    "landuse": "retail",
+    "name": "URYSIA LIMITED Peugeot Kenya",
     "operator": "Urysia",
     "shop": "car"
   }
@@ -38601,7 +39212,8 @@
     "alt_name": "Mathari Mental Hospital",
     "amenity": "hospital",
     "healthcare": "counselling",
-    "healthcare:speciality": "psychiatry",
+    "healthcare:speciality": "psychiatry;child_psychiatry;neuropsychiatry",
+    "hospital:level": "6",
     "name": "Mathari National Teaching & Referral Hospital",
     "operational_status": "operational",
     "operator": "Government",
@@ -38777,53 +39389,6 @@
     "name": "Mbagathi District Hospital (IDH)",
     "operator": "Nairobi county government",
     "operator:type": "Nairobi county government- public"
-  }
-},
-{
-  "type": "way",
-  "id": 792126337,
-  "bounds": {
-    "minlat": -1.3106747,
-    "minlon": 36.8046369,
-    "maxlat": -1.3102688,
-    "maxlon": 36.8050032
-  },
-  "nodes": [
-    521103442,
-    7405412777,
-    7405412778,
-    7405412779,
-    7405412780,
-    7405412781,
-    7405412782,
-    7405412783,
-    7405412784,
-    7405471585,
-    7405471586,
-    521103442
-  ],
-  "geometry": [
-    { "lat": -1.3104592, "lon": 36.8046369 },
-    { "lat": -1.3102688, "lon": 36.8048503 },
-    { "lat": -1.3102956, "lon": 36.8049056 },
-    { "lat": -1.3103162, "lon": 36.8049441 },
-    { "lat": -1.3103563, "lon": 36.8049809 },
-    { "lat": -1.3103884, "lon": 36.8049973 },
-    { "lat": -1.3104261, "lon": 36.8050032 },
-    { "lat": -1.3104526, "lon": 36.8049965 },
-    { "lat": -1.3104905, "lon": 36.8049951 },
-    { "lat": -1.3106043, "lon": 36.8049326 },
-    { "lat": -1.3106747, "lon": 36.8048177 },
-    { "lat": -1.3104592, "lon": 36.8046369 }
-  ],
-  "tags": {
-    "amenity": "hospital",
-    "check_date": "2023-03-27",
-    "description": "offers hiv related councling only at a free cost",
-    "healthcare": "hospital",
-    "name": "Defence Forces Memorial Hospital",
-    "operator": "Kenya department of Defence",
-    "operator:type": "government run facility- public"
   }
 },
 {
@@ -39078,11 +39643,13 @@
     "check_date": "2023-05-11",
     "description": "Psychiatry clinic available Mondays and Thursdays from 8 am",
     "fee": "yes",
-    "healthcare": "counselling",
-    "healthcare:speciality": "neurology",
+    "healthcare": "hospital",
+    "healthcare:speciality": "occupational;physiatry;neurosurgery",
+    "hospital:level": "6",
     "name": "National Spinal Injury Referral Hospital",
     "operator": "Ministry of Health",
-    "operator:type": "public",
+    "operator:type": "government",
+    "operator:wikidata": "Q25182829",
     "wikidata": "Q110130941"
   }
 },
@@ -39123,10 +39690,12 @@
     "description": "offers counselling services during working hours, starts from 500 ksh per person",
     "emergency": "yes",
     "fee": "yes",
-    "healthcare": "counselling",
+    "healthcare": "counselling;oncology;radiology;orthopedics",
+    "hospital:level": "6B",
     "name": "The Nairobi West Hospital",
     "name:it": "Nairobi West",
-    "operator:type": "private"
+    "operator:type": "private",
+    "website": "https://nairobiwesthospital.com/"
   }
 },
 {
@@ -40091,6 +40660,7 @@
     "internet_access:ssid": "chemichemi, chemiweb",
     "isced:level": "6;7;8",
     "name": "University of Nairobi - Main Campus",
+    "old_name": "Royal Technical College of East Africa(1956-1961);Royal College of Nairobi(1961-1964);University College Nairobi(1964-1970)",
     "operator": "Ministry of Education, science and technology",
     "operator:type": "public",
     "operator:wikidata": "Q30285161",
@@ -40499,7 +41069,8 @@
     "name": "Jammhuri High School",
     "operator": "Ministry of Education",
     "operator:type": "government",
-    "operator:wikidata": "Q30285161"
+    "operator:wikidata": "Q30285161",
+    "school": "high_school"
   }
 },
 {
@@ -40538,12 +41109,11 @@
   "tags": {
     "amenity": "school",
     "check_date": "2023-05-11",
-    "grades": "0-6",
+    "grades": "0-9",
     "name": "City Primary School",
-    "operator": "Government of Kenya",
-    "operator:short": "GOK",
-    "operator:type": "public",
-    "operator:wikidata": "Q21022441"
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -40589,11 +41159,11 @@
   ],
   "tags": {
     "amenity": "school",
+    "isced:level": "0;1;2",
     "name": "Juja Road Primary School",
-    "operator": "Government of Kenya",
-    "operator:short": "GOK",
+    "operator": "Ministry of Education",
     "operator:type": "government",
-    "operator:wikidata": "Q21022441"
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -40634,37 +41204,6 @@
 },
 {
   "type": "way",
-  "id": 1144808352,
-  "bounds": {
-    "minlat": -1.3079406,
-    "minlon": 36.8034527,
-    "maxlat": -1.3075455,
-    "maxlon": 36.8037942
-  },
-  "nodes": [
-    10655219079,
-    10655219080,
-    10655219081,
-    10655219082,
-    10655219079
-  ],
-  "geometry": [
-    { "lat": -1.3076145, "lon": 36.8034527 },
-    { "lat": -1.3079406, "lon": 36.8036062 },
-    { "lat": -1.3078600, "lon": 36.8037942 },
-    { "lat": -1.3075455, "lon": 36.8036215 },
-    { "lat": -1.3076145, "lon": 36.8034527 }
-  ],
-  "tags": {
-    "amenity": "fuel",
-    "brand": "Shell",
-    "brand:wikidata": "Q110716465",
-    "compressed_air": "yes",
-    "name": "Shell"
-  }
-},
-{
-  "type": "way",
   "id": 1146451491,
   "bounds": {
     "minlat": -1.2827471,
@@ -40698,43 +41237,6 @@
     "phone": "+254112891224",
     "shop": "beauty",
     "website": "https://minoxidilkenya.com"
-  }
-},
-{
-  "type": "way",
-  "id": 1147267778,
-  "bounds": {
-    "minlat": -1.2827889,
-    "minlon": 36.8162895,
-    "maxlat": -1.2823435,
-    "maxlon": 36.8169295
-  },
-  "nodes": [
-    10675538463,
-    7139921946,
-    10675538462,
-    10675538461,
-    10675538463
-  ],
-  "geometry": [
-    { "lat": -1.2826208, "lon": 36.8162895 },
-    { "lat": -1.2827889, "lon": 36.8163721 },
-    { "lat": -1.2825292, "lon": 36.8169295 },
-    { "lat": -1.2823435, "lon": 36.8168441 },
-    { "lat": -1.2826208, "lon": 36.8162895 }
-  ],
-  "tags": {
-    "addr:housenumber": "5",
-    "addr:street": "Utalii Lane",
-    "amenity": "language_school",
-    "contact:facebook": "https://www.facebook.com/Alliance.Francaise.Nairobi/",
-    "email": "info@alliancefrnairobi.org;cultural@alliancefrnairobi.org",
-    "language:fr": "main",
-    "name": "Alliance Française de Nairobi",
-    "name:fr": "Alliance Française de Nairobi",
-    "opening_hours": "Mo-Fr 08:30-20:00; Sa 09:00-13:00",
-    "phone": "+254 20 4917000;+254 727 600622;+254 735 338888",
-    "website": "http://alliancefrnairobi.org/"
   }
 },
 {
@@ -41407,7 +41909,9 @@
   ],
   "tags": {
     "amenity": "school",
+    "isced:level": "0;1;2;3",
     "name": "Rose of Sharon Academy",
+    "operator:type": "private",
     "website": "https://rsa.ac.ke/"
   }
 },
@@ -41808,10 +42312,11 @@
   ],
   "tags": {
     "amenity": "college",
+    "education": "college",
     "isced:level": "5",
     "name": "Kenya Medical Training College- Mathari Campus",
-    "operator": "Ministry of Education, science & technology",
-    "operator:type": "public",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
     "operator:wikidata": "Q30285161",
     "short_name": "KMTC",
     "website": "https://kmtc.ac.ke/"
@@ -41948,6 +42453,693 @@
   "tags": {
     "building": "yes",
     "shop": "car_parts"
+  }
+},
+{
+  "type": "way",
+  "id": 1544750662,
+  "bounds": {
+    "minlat": -1.3105658,
+    "minlon": 36.8020463,
+    "maxlat": -1.3076568,
+    "maxlon": 36.8046068
+  },
+  "nodes": [
+    14050698035,
+    14050698034,
+    14050698033,
+    14050698032,
+    14050698031,
+    10230165084,
+    14050698030,
+    14050698029,
+    14050698028,
+    14050698027,
+    14050698026,
+    14050698025,
+    14050698024,
+    14050698023,
+    14050698022,
+    14050698021,
+    14050698020,
+    6364568891,
+    14050698019,
+    14050698018,
+    14050698017,
+    14050698016,
+    14050698015,
+    14050698014,
+    14050698035
+  ],
+  "geometry": [
+    { "lat": -1.3098346, "lon": 36.8040031 },
+    { "lat": -1.3105658, "lon": 36.8030942 },
+    { "lat": -1.3105226, "lon": 36.8028345 },
+    { "lat": -1.3104884, "lon": 36.8025133 },
+    { "lat": -1.3104087, "lon": 36.8020463 },
+    { "lat": -1.3103762, "lon": 36.8020876 },
+    { "lat": -1.3093289, "lon": 36.8020759 },
+    { "lat": -1.3084382, "lon": 36.8020714 },
+    { "lat": -1.3081466, "lon": 36.8021579 },
+    { "lat": -1.3080600, "lon": 36.8022627 },
+    { "lat": -1.3079120, "lon": 36.8025315 },
+    { "lat": -1.3076568, "lon": 36.8031420 },
+    { "lat": -1.3076819, "lon": 36.8031762 },
+    { "lat": -1.3079074, "lon": 36.8032764 },
+    { "lat": -1.3079329, "lon": 36.8032980 },
+    { "lat": -1.3084786, "lon": 36.8037730 },
+    { "lat": -1.3086637, "lon": 36.8039234 },
+    { "lat": -1.3087009, "lon": 36.8039860 },
+    { "lat": -1.3088391, "lon": 36.8040737 },
+    { "lat": -1.3086956, "lon": 36.8041717 },
+    { "lat": -1.3089325, "lon": 36.8044655 },
+    { "lat": -1.3091535, "lon": 36.8046068 },
+    { "lat": -1.3093038, "lon": 36.8045179 },
+    { "lat": -1.3094508, "lon": 36.8043573 },
+    { "lat": -1.3098346, "lon": 36.8040031 }
+  ],
+  "tags": {
+    "amenity": "hospital",
+    "hospital:level": "5",
+    "name": "Mbagathi County Referral Hospital",
+    "old_name": "Mbagathi District Hospital",
+    "operator": "Nairobi County government",
+    "website": "https://mbagathihospital.or.ke/"
+  }
+},
+{
+  "type": "way",
+  "id": 1544752632,
+  "bounds": {
+    "minlat": -1.3132174,
+    "minlon": 36.8029051,
+    "maxlat": -1.3091637,
+    "maxlon": 36.8057617
+  },
+  "nodes": [
+    14050766876,
+    14050766875,
+    14050766874,
+    14050766873,
+    14050766872,
+    14050766871,
+    14050766870,
+    14050766869,
+    14050766868,
+    14050766867,
+    14050766866,
+    14050766865,
+    14050766864,
+    14050766863,
+    14050766862,
+    14050766861,
+    14050766876
+  ],
+  "geometry": [
+    { "lat": -1.3114451, "lon": 36.8057617 },
+    { "lat": -1.3132174, "lon": 36.8052970 },
+    { "lat": -1.3122835, "lon": 36.8033653 },
+    { "lat": -1.3114998, "lon": 36.8029051 },
+    { "lat": -1.3106205, "lon": 36.8030782 },
+    { "lat": -1.3105727, "lon": 36.8031306 },
+    { "lat": -1.3098506, "lon": 36.8040111 },
+    { "lat": -1.3094209, "lon": 36.8043949 },
+    { "lat": -1.3093067, "lon": 36.8045197 },
+    { "lat": -1.3091637, "lon": 36.8046113 },
+    { "lat": -1.3097059, "lon": 36.8049160 },
+    { "lat": -1.3102128, "lon": 36.8051934 },
+    { "lat": -1.3105089, "lon": 36.8052230 },
+    { "lat": -1.3105644, "lon": 36.8052377 },
+    { "lat": -1.3105750, "lon": 36.8053266 },
+    { "lat": -1.3112162, "lon": 36.8056387 },
+    { "lat": -1.3114451, "lon": 36.8057617 }
+  ],
+  "tags": {
+    "alt_name": "Armed Forces Memorial Hospital",
+    "amenity": "hospital",
+    "landuse": "military",
+    "military_service": "army",
+    "name": "Kenya Defense Forces Memorial Hospital",
+    "opening_hours": "Mo-Fr 08:00-17:00; sa 08:00-12:00",
+    "operator": "Ministry of Defense",
+    "operator:wikidata": "Q116449234",
+    "operator:wikipedia": "en:Ministry of Defense (Kenya)"
+  }
+},
+{
+  "type": "way",
+  "id": 1544762876,
+  "bounds": {
+    "minlat": -1.3101661,
+    "minlon": 36.8003128,
+    "maxlat": -1.3096057,
+    "maxlon": 36.8010895
+  },
+  "nodes": [
+    14050958498,
+    14050958497,
+    14050958496,
+    14050958495,
+    14050958494,
+    14050958498
+  ],
+  "geometry": [
+    { "lat": -1.3101626, "lon": 36.8003583 },
+    { "lat": -1.3101490, "lon": 36.8010895 },
+    { "lat": -1.3096205, "lon": 36.8010804 },
+    { "lat": -1.3096057, "lon": 36.8006476 },
+    { "lat": -1.3101661, "lon": 36.8003128 },
+    { "lat": -1.3101626, "lon": 36.8003583 }
+  ],
+  "tags": {
+    "amenity": "school",
+    "isced:level": "3",
+    "name": "Mbagathi High school",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
+  }
+},
+{
+  "type": "way",
+  "id": 1544762877,
+  "bounds": {
+    "minlat": -1.3089063,
+    "minlon": 36.8011101,
+    "maxlat": -1.3077935,
+    "maxlon": 36.8021670
+  },
+  "nodes": [
+    14050978808,
+    14050978807,
+    14050978806,
+    14050978805,
+    14050978804,
+    14050978803,
+    14050978802,
+    14050978801,
+    14050958500,
+    14050958499,
+    14050978808
+  ],
+  "geometry": [
+    { "lat": -1.3079120, "lon": 36.8017524 },
+    { "lat": -1.3077935, "lon": 36.8019529 },
+    { "lat": -1.3078778, "lon": 36.8021670 },
+    { "lat": -1.3079234, "lon": 36.8021215 },
+    { "lat": -1.3080168, "lon": 36.8020326 },
+    { "lat": -1.3081671, "lon": 36.8019597 },
+    { "lat": -1.3083459, "lon": 36.8019165 },
+    { "lat": -1.3089063, "lon": 36.8018960 },
+    { "lat": -1.3088710, "lon": 36.8011101 },
+    { "lat": -1.3079211, "lon": 36.8016921 },
+    { "lat": -1.3079120, "lon": 36.8017524 }
+  ],
+  "tags": {
+    "amenity": "school",
+    "isced:level": "0;1;2",
+    "name": "Mbagathi Road Primary school",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
+  }
+},
+{
+  "type": "way",
+  "id": 1544781013,
+  "bounds": {
+    "minlat": -1.3102995,
+    "minlon": 36.8304154,
+    "maxlat": -1.3092101,
+    "maxlon": 36.8322859
+  },
+  "nodes": [
+    14051244901,
+    14051244902,
+    14051244903,
+    14051244904,
+    14051244905,
+    14051244906,
+    14051244907,
+    14051244901
+  ],
+  "geometry": [
+    { "lat": -1.3102773, "lon": 36.8308534 },
+    { "lat": -1.3096640, "lon": 36.8304154 },
+    { "lat": -1.3092101, "lon": 36.8310559 },
+    { "lat": -1.3096336, "lon": 36.8313730 },
+    { "lat": -1.3096454, "lon": 36.8322859 },
+    { "lat": -1.3102995, "lon": 36.8322275 },
+    { "lat": -1.3102951, "lon": 36.8311147 },
+    { "lat": -1.3102773, "lon": 36.8308534 }
+  ],
+  "tags": {
+    "amenity": "college",
+    "education": "college"
+  }
+},
+{
+  "type": "way",
+  "id": 1544781014,
+  "bounds": {
+    "minlat": -1.3111467,
+    "minlon": 36.8309526,
+    "maxlat": -1.3103994,
+    "maxlon": 36.8336375
+  },
+  "nodes": [
+    14051244908,
+    14051244909,
+    14051244910,
+    14051244911,
+    14051244912,
+    14051244913,
+    14051244914,
+    14051244908
+  ],
+  "geometry": [
+    { "lat": -1.3103994, "lon": 36.8309526 },
+    { "lat": -1.3104175, "lon": 36.8335729 },
+    { "lat": -1.3104740, "lon": 36.8336279 },
+    { "lat": -1.3110432, "lon": 36.8336375 },
+    { "lat": -1.3111190, "lon": 36.8335831 },
+    { "lat": -1.3111467, "lon": 36.8314603 },
+    { "lat": -1.3108749, "lon": 36.8312168 },
+    { "lat": -1.3103994, "lon": 36.8309526 }
+  ],
+  "tags": {
+    "amenity": "college",
+    "education": "college"
+  }
+},
+{
+  "type": "way",
+  "id": 1547762848,
+  "bounds": {
+    "minlat": -1.3044916,
+    "minlon": 36.8257626,
+    "maxlat": -1.3023571,
+    "maxlon": 36.8273606
+  },
+  "nodes": [
+    14077415417,
+    14077415416,
+    14077415415,
+    14077415414,
+    14077415413,
+    14077415412,
+    14077415411,
+    14077415410,
+    14077415417
+  ],
+  "geometry": [
+    { "lat": -1.3026840, "lon": 36.8257626 },
+    { "lat": -1.3023571, "lon": 36.8264198 },
+    { "lat": -1.3041009, "lon": 36.8272308 },
+    { "lat": -1.3040906, "lon": 36.8272718 },
+    { "lat": -1.3042865, "lon": 36.8273606 },
+    { "lat": -1.3044916, "lon": 36.8268879 },
+    { "lat": -1.3044745, "lon": 36.8266305 },
+    { "lat": -1.3043036, "lon": 36.8265052 },
+    { "lat": -1.3026840, "lon": 36.8257626 }
+  ],
+  "tags": {
+    "brand": "Toyota",
+    "brand:wikidata": "Q53268",
+    "landuse": "commercial",
+    "name": "TOYOTA Kenya",
+    "old_name": "TOYOTA East Africa",
+    "operator": "CFAO Group",
+    "service:vehicle:car_parts": "yes",
+    "service:vehicle:car_repair": "yes",
+    "shop": "car",
+    "website": "https://www.toyotakenya.ke/",
+    "wikidata": "Q2447122"
+  }
+},
+{
+  "type": "way",
+  "id": 1548946344,
+  "bounds": {
+    "minlat": -1.2998314,
+    "minlon": 36.7967205,
+    "maxlat": -1.2993579,
+    "maxlon": 36.7972182
+  },
+  "nodes": [
+    14088432205,
+    14088432206,
+    14088432207,
+    14088432208,
+    14088432211,
+    14088432209,
+    14088432210,
+    14088432204,
+    14088432202,
+    14088432213,
+    14088432214,
+    14088432215,
+    14088432216,
+    14088432217,
+    14088432218,
+    14088432219,
+    14088432212,
+    14088432203,
+    14088432230,
+    14088432222,
+    14088432223,
+    14088432224,
+    14088432225,
+    14088432226,
+    14088432227,
+    14088432228,
+    14088432229,
+    14088432232,
+    14088432231,
+    14088432221,
+    14088432220,
+    14088432205
+  ],
+  "geometry": [
+    { "lat": -1.2994552, "lon": 36.7971379 },
+    { "lat": -1.2994585, "lon": 36.7971446 },
+    { "lat": -1.2994785, "lon": 36.7971649 },
+    { "lat": -1.2995037, "lon": 36.7971781 },
+    { "lat": -1.2995318, "lon": 36.7971828 },
+    { "lat": -1.2995599, "lon": 36.7971786 },
+    { "lat": -1.2995854, "lon": 36.7971659 },
+    { "lat": -1.2995861, "lon": 36.7971652 },
+    { "lat": -1.2996784, "lon": 36.7971844 },
+    { "lat": -1.2996812, "lon": 36.7971915 },
+    { "lat": -1.2996980, "lon": 36.7972086 },
+    { "lat": -1.2997201, "lon": 36.7972180 },
+    { "lat": -1.2997442, "lon": 36.7972182 },
+    { "lat": -1.2997664, "lon": 36.7972093 },
+    { "lat": -1.2997836, "lon": 36.7971924 },
+    { "lat": -1.2997930, "lon": 36.7971703 },
+    { "lat": -1.2997932, "lon": 36.7971463 },
+    { "lat": -1.2997867, "lon": 36.7971302 },
+    { "lat": -1.2998314, "lon": 36.7969158 },
+    { "lat": -1.2997733, "lon": 36.7969037 },
+    { "lat": -1.2997876, "lon": 36.7968350 },
+    { "lat": -1.2997177, "lon": 36.7968204 },
+    { "lat": -1.2997293, "lon": 36.7967645 },
+    { "lat": -1.2995968, "lon": 36.7967368 },
+    { "lat": -1.2995933, "lon": 36.7967537 },
+    { "lat": -1.2994341, "lon": 36.7967205 },
+    { "lat": -1.2994131, "lon": 36.7968210 },
+    { "lat": -1.2994002, "lon": 36.7968183 },
+    { "lat": -1.2993604, "lon": 36.7970097 },
+    { "lat": -1.2993796, "lon": 36.7970137 },
+    { "lat": -1.2993579, "lon": 36.7971176 },
+    { "lat": -1.2994552, "lon": 36.7971379 }
+  ],
+  "tags": {
+    "building": "yes",
+    "name": "China Center Mall",
+    "shop": "mall"
+  }
+},
+{
+  "type": "way",
+  "id": 1550297838,
+  "bounds": {
+    "minlat": -1.2987833,
+    "minlon": 36.8354238,
+    "maxlat": -1.2958622,
+    "maxlon": 36.8379068
+  },
+  "nodes": [
+    14100562860,
+    14100562861,
+    14100562862,
+    14100562863,
+    14100562864,
+    14100562865,
+    14100562866,
+    14100562867,
+    14100562868,
+    14100562860
+  ],
+  "geometry": [
+    { "lat": -1.2985322, "lon": 36.8374677 },
+    { "lat": -1.2987833, "lon": 36.8372807 },
+    { "lat": -1.2985678, "lon": 36.8370013 },
+    { "lat": -1.2986015, "lon": 36.8363975 },
+    { "lat": -1.2980215, "lon": 36.8361005 },
+    { "lat": -1.2974653, "lon": 36.8358312 },
+    { "lat": -1.2966055, "lon": 36.8354238 },
+    { "lat": -1.2958622, "lon": 36.8368665 },
+    { "lat": -1.2979636, "lon": 36.8379068 },
+    { "lat": -1.2985322, "lon": 36.8374677 }
+  ],
+  "tags": {
+    "landuse": "retail",
+    "name": "CFAO Mobility Kenya",
+    "old_name": "DT Dobie",
+    "operator": "CFAO Group",
+    "shop": "car",
+    "website": "https://cfaomobility.co.ke/"
+  }
+},
+{
+  "type": "way",
+  "id": 1550328230,
+  "bounds": {
+    "minlat": -1.3031865,
+    "minlon": 36.8309744,
+    "maxlat": -1.3027973,
+    "maxlon": 36.8313744
+  },
+  "nodes": [
+    14100835581,
+    14100835580,
+    14100835579,
+    14100835578,
+    14100835581
+  ],
+  "geometry": [
+    { "lat": -1.3029474, "lon": 36.8309744 },
+    { "lat": -1.3031865, "lon": 36.8310895 },
+    { "lat": -1.3030433, "lon": 36.8313744 },
+    { "lat": -1.3027973, "lon": 36.8312548 },
+    { "lat": -1.3029474, "lon": 36.8309744 }
+  ],
+  "tags": {
+    "brand": "TVS",
+    "name": "Car & General",
+    "shop": "motorcycle",
+    "website": "https://cargen.com/",
+    "wikidata": "Q3300084"
+  }
+},
+{
+  "type": "way",
+  "id": 1551250536,
+  "bounds": {
+    "minlat": -1.3138110,
+    "minlon": 36.8336248,
+    "maxlat": -1.3119466,
+    "maxlon": 36.8349841
+  },
+  "nodes": [
+    14109456664,
+    14109456665,
+    14109456666,
+    14109456667,
+    14109456668,
+    14109456669,
+    14109456664
+  ],
+  "geometry": [
+    { "lat": -1.3137919, "lon": 36.8336295 },
+    { "lat": -1.3138110, "lon": 36.8349777 },
+    { "lat": -1.3132857, "lon": 36.8349841 },
+    { "lat": -1.3119819, "lon": 36.8349797 },
+    { "lat": -1.3119466, "lon": 36.8337446 },
+    { "lat": -1.3119532, "lon": 36.8336248 },
+    { "lat": -1.3137919, "lon": 36.8336295 }
+  ],
+  "tags": {
+    "amenity": "school",
+    "barrier": "wall",
+    "education": "school",
+    "name": "Our Lady of Mercy Primary School",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
+  }
+},
+{
+  "type": "way",
+  "id": 1554398977,
+  "bounds": {
+    "minlat": -1.3188897,
+    "minlon": 36.8352778,
+    "maxlat": -1.3159374,
+    "maxlon": 36.8386287
+  },
+  "nodes": [
+    14141468458,
+    14141468457,
+    14141468456,
+    14141468455,
+    14141468454,
+    14141468453,
+    14141468452,
+    14141468451,
+    14141468450,
+    14141468449,
+    14141468448,
+    14141468447,
+    14141468446,
+    14141468445,
+    14141468444,
+    14141468443,
+    14141468442,
+    14141468441,
+    14141468440,
+    14141468439,
+    14141468438,
+    14141468437,
+    14141468458
+  ],
+  "geometry": [
+    { "lat": -1.3166344, "lon": 36.8383827 },
+    { "lat": -1.3166299, "lon": 36.8382551 },
+    { "lat": -1.3166891, "lon": 36.8381777 },
+    { "lat": -1.3166663, "lon": 36.8373804 },
+    { "lat": -1.3166709, "lon": 36.8372506 },
+    { "lat": -1.3166754, "lon": 36.8368018 },
+    { "lat": -1.3166162, "lon": 36.8367061 },
+    { "lat": -1.3165114, "lon": 36.8366332 },
+    { "lat": -1.3164203, "lon": 36.8362961 },
+    { "lat": -1.3159465, "lon": 36.8362049 },
+    { "lat": -1.3159374, "lon": 36.8352778 },
+    { "lat": -1.3174408, "lon": 36.8352892 },
+    { "lat": -1.3177894, "lon": 36.8358723 },
+    { "lat": -1.3178236, "lon": 36.8358951 },
+    { "lat": -1.3188897, "lon": 36.8377494 },
+    { "lat": -1.3186983, "lon": 36.8382483 },
+    { "lat": -1.3184363, "lon": 36.8383941 },
+    { "lat": -1.3181653, "lon": 36.8385057 },
+    { "lat": -1.3175707, "lon": 36.8386287 },
+    { "lat": -1.3172746, "lon": 36.8385946 },
+    { "lat": -1.3167620, "lon": 36.8384693 },
+    { "lat": -1.3166322, "lon": 36.8384214 },
+    { "lat": -1.3166344, "lon": 36.8383827 }
+  ],
+  "tags": {
+    "amenity": "school",
+    "barrier": "fence",
+    "isced:level": "3",
+    "name": "Highway Secondary School",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
+  }
+},
+{
+  "type": "way",
+  "id": 1554401802,
+  "bounds": {
+    "minlat": -1.2707020,
+    "minlon": 36.8182509,
+    "maxlat": -1.2693409,
+    "maxlon": 36.8195892
+  },
+  "nodes": [
+    14141561258,
+    14141561247,
+    14141561246,
+    14141561245,
+    14141561244,
+    14141561243,
+    14141561242,
+    14141561252,
+    14141561253,
+    14141561254,
+    14141561255,
+    14141561256,
+    14141561257,
+    14141561258
+  ],
+  "geometry": [
+    { "lat": -1.2693568, "lon": 36.8186347 },
+    { "lat": -1.2693409, "lon": 36.8195892 },
+    { "lat": -1.2696643, "lon": 36.8195368 },
+    { "lat": -1.2698329, "lon": 36.8195459 },
+    { "lat": -1.2703944, "lon": 36.8190470 },
+    { "lat": -1.2706553, "lon": 36.8187965 },
+    { "lat": -1.2707020, "lon": 36.8187953 },
+    { "lat": -1.2702714, "lon": 36.8182509 },
+    { "lat": -1.2701746, "lon": 36.8183269 },
+    { "lat": -1.2702464, "lon": 36.8184342 },
+    { "lat": -1.2701564, "lon": 36.8185026 },
+    { "lat": -1.2701359, "lon": 36.8184889 },
+    { "lat": -1.2699924, "lon": 36.8185436 },
+    { "lat": -1.2693568, "lon": 36.8186347 }
+  ],
+  "tags": {
+    "amenity": "school",
+    "barrier": "wall",
+    "grades": "0-9",
+    "isced:level": "0;1;2",
+    "name": "Dr. Ribeiro parklands primary School",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
+  }
+},
+{
+  "type": "way",
+  "id": 1554401803,
+  "bounds": {
+    "minlat": -1.2702714,
+    "minlon": 36.8172212,
+    "maxlat": -1.2693568,
+    "maxlon": 36.8186347
+  },
+  "nodes": [
+    14141561259,
+    14141561258,
+    14141561257,
+    14141561256,
+    14141561255,
+    14141561254,
+    14141561253,
+    14141561252,
+    14141561251,
+    14141561250,
+    14141561249,
+    14141561248,
+    14141561259
+  ],
+  "geometry": [
+    { "lat": -1.2694069, "lon": 36.8172542 },
+    { "lat": -1.2693568, "lon": 36.8186347 },
+    { "lat": -1.2699924, "lon": 36.8185436 },
+    { "lat": -1.2701359, "lon": 36.8184889 },
+    { "lat": -1.2701564, "lon": 36.8185026 },
+    { "lat": -1.2702464, "lon": 36.8184342 },
+    { "lat": -1.2701746, "lon": 36.8183269 },
+    { "lat": -1.2702714, "lon": 36.8182509 },
+    { "lat": -1.2701495, "lon": 36.8180493 },
+    { "lat": -1.2696233, "lon": 36.8173625 },
+    { "lat": -1.2695197, "lon": 36.8172212 },
+    { "lat": -1.2694548, "lon": 36.8172224 },
+    { "lat": -1.2694069, "lon": 36.8172542 }
+  ],
+  "tags": {
+    "amenity": "school",
+    "barrier": "wall",
+    "gender": "male",
+    "grades": "10-12",
+    "isced:level": "3",
+    "name": "Dr. Ribeiro parklands Senior School",
+    "operator": "Ministry of Education",
+    "operator:type": "government",
+    "operator:wikidata": "Q30285161"
   }
 },
 {
@@ -42408,6 +43600,7 @@
     "addr:street": "Parklands Road",
     "alt_name": "University of Nairobi Parklands Campus",
     "amenity": "university",
+    "isced:level": "6;7;8",
     "name": "University Of Nairobi School of Law",
     "type": "multipolygon",
     "website": "https://law.uonbi.ac.ke/"
@@ -42479,13 +43672,81 @@
   ],
   "tags": {
     "building": "yes",
-    "building:levels": "2",
+    "building:levels": "4",
     "name": "Sarit Center",
     "shop": "mall",
     "type": "multipolygon",
     "website": "https://sarityourcity.com/",
     "wikidata": "Q7424120",
     "wikipedia": "en:Sarit Centre"
+  }
+},
+{
+  "type": "relation",
+  "id": 21147081,
+  "bounds": {
+    "minlat": -1.3114542,
+    "minlon": 36.8293378,
+    "maxlat": -1.3092101,
+    "maxlon": 36.8336375
+  },
+  "members": [
+    {
+      "type": "way",
+      "ref": 1544781014,
+      "role": "outer",
+      "geometry": [
+         { "lat": -1.3103994, "lon": 36.8309526 },
+         { "lat": -1.3104175, "lon": 36.8335729 },
+         { "lat": -1.3104740, "lon": 36.8336279 },
+         { "lat": -1.3110432, "lon": 36.8336375 },
+         { "lat": -1.3111190, "lon": 36.8335831 },
+         { "lat": -1.3111467, "lon": 36.8314603 },
+         { "lat": -1.3108749, "lon": 36.8312168 },
+         { "lat": -1.3103994, "lon": 36.8309526 }
+      ]
+    },
+    {
+      "type": "way",
+      "ref": 1544781013,
+      "role": "outer",
+      "geometry": [
+         { "lat": -1.3102773, "lon": 36.8308534 },
+         { "lat": -1.3096640, "lon": 36.8304154 },
+         { "lat": -1.3092101, "lon": 36.8310559 },
+         { "lat": -1.3096336, "lon": 36.8313730 },
+         { "lat": -1.3096454, "lon": 36.8322859 },
+         { "lat": -1.3102995, "lon": 36.8322275 },
+         { "lat": -1.3102951, "lon": 36.8311147 },
+         { "lat": -1.3102773, "lon": 36.8308534 }
+      ]
+    },
+    {
+      "type": "way",
+      "ref": 247137550,
+      "role": "outer",
+      "geometry": [
+         { "lat": -1.3104406, "lon": 36.8293378 },
+         { "lat": -1.3114542, "lon": 36.8298126 },
+         { "lat": -1.3108401, "lon": 36.8309498 },
+         { "lat": -1.3105988, "lon": 36.8308908 },
+         { "lat": -1.3099224, "lon": 36.8304238 },
+         { "lat": -1.3097863, "lon": 36.8301478 },
+         { "lat": -1.3098479, "lon": 36.8298877 },
+         { "lat": -1.3100330, "lon": 36.8295792 },
+         { "lat": -1.3102126, "lon": 36.8293888 },
+         { "lat": -1.3104406, "lon": 36.8293378 }
+      ]
+    }
+  ],
+  "tags": {
+    "amenity": "college",
+    "isced:level": "4;5",
+    "name": "Kenya Institute of Mass Communication",
+    "operator": "State Department for Information, Communication & the Digital Economy",
+    "operator:type": "government",
+    "type": "multipolygon",
+    "website": "https://kimc.ac.ke/"
   }
 }
 
