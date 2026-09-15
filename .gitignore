@@ -95,3 +95,17 @@ Thumbs.db
 # Large Textures
 *.psd
 *.tga
+
+# Phase 2 asset references require stable Unity GUIDs.
+!Assets/_Game/Scenes/PhysicsTestTrack.unity.meta
+!Assets/_Game/ScriptableObjects/Phase2*.asset.meta
+
+# Phase 3 scene and city configurations
+!Assets/_Game/Scenes/MapTest.unity.meta
+!Assets/_Game/ScriptableObjects/Phase3*.asset.meta
+
+# Phase 4 gameplay fixture
+!Assets/_Game/Scenes/GameplayTest.unity.meta
+
+!Assets/_Game/Scenes/RealismTest.unity.meta
+!Assets/_Game/Scenes/RealismStressTest.unity.meta

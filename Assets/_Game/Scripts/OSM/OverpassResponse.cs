@@ -117,23 +117,20 @@ public class OverpassResponse
             }
         }
 
-        // Stitch relation member positions.
+        var wayIndex = new Dictionary<long, Element>();
+        foreach (var elem in elements) if (elem.type == "way") wayIndex[elem.id] = elem;
         foreach (var elem in elements)
         {
             if (elem.type != "relation") continue;
             foreach (var mem in elem.members)
             {
-                if (mem.type == "node" && mem.lat == 0d && mem.lon == 0d)
-                {
-                    if (nodeIndex.TryGetValue(mem.@ref, out var node))
-                    {
-                        mem.lat = node.lat;
-                        mem.lon = node.lon;
-                        if (node.tags != null)
-                            foreach (var kv in node.tags)
-                                mem.tags.TryAdd(kv.Key, kv.Value);
-                    }
-                }
+                Element source = null;
+                if (mem.type == "node") nodeIndex.TryGetValue(mem.@ref, out source);
+                else if (mem.type == "way") wayIndex.TryGetValue(mem.@ref, out source);
+                if (source == null) continue;
+                if (mem.type == "node") { mem.lat = source.lat; mem.lon = source.lon; }
+                if (mem.geometry.Count == 0) mem.geometry.AddRange(source.geometry);
+                foreach (var tag in source.tags) mem.tags.TryAdd(tag.Key, tag.Value);
             }
         }
     }

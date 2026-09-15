@@ -88,7 +88,7 @@ public class ExtendedTrafficViolationSystem : MonoBehaviour
     {
         if (redLight)
         {
-            RecordViolation(TrafficViolationType.RedLight, 10f, "Red light violation");
+            RecordViolation(TrafficViolationType.RedLight, 500f, "Red light violation (-500 points)");
             ScoreTracker.Instance?.RecordRedLight();
         }
         else

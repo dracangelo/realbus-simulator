@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: 27ad354980bd4c1fafe948d856d0ab51, type: 3}
+  m_Name: Future City 3
+  m_EditorClassIdentifier: GameScripts::CityConfig
+  isPlaceholder: 1
+  cityName: Future City 3
+  countryName: Kenya
+  cityCode: TBD3
+  gpsCenter:
+    latitude: -1.286389
+    longitude: 36.817223
+  queryHalfExtentMeters: 2000
+  defaultZoom: 16
+  predownloadSizeMB: 16
+  loadRoutesOnDemand: 0
+  availableRoutes: []

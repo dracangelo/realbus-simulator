@@ -35,6 +35,8 @@ public class FogController : MonoBehaviour
     private float targetFogDensity;
     private Color targetFogColor;
     private bool fogActive;
+    Coroutine fadeRoutine;
+    bool blending;
 
     void Start()
     {
@@ -66,6 +68,7 @@ public class FogController : MonoBehaviour
 
     public void SetFog(WeatherState state, float intensity)
     {
+        if (fadeRoutine != null) { StopCoroutine(fadeRoutine); fadeRoutine = null; }
         switch (state)
         {
             case WeatherState.Clear:
@@ -73,7 +76,7 @@ public class FogController : MonoBehaviour
                 targetFogEnd = clearFogEnd;
                 targetFogDensity = 0f;
                 targetFogColor = clearFogColor;
-                StartCoroutine(FadeOutFog(3f));
+                if (!blending) fadeRoutine = StartCoroutine(FadeOutFog(3f));
                 return;
 
             case WeatherState.PartlyCloudy:
@@ -116,6 +119,22 @@ public class FogController : MonoBehaviour
                 SetLinear(blizzardVisibility, blizzardFogColor);
                 break;
         }
+    }
+
+    public void BlendWeather(WeatherState from, float fromIntensity, WeatherState to, float toIntensity, float t)
+    {
+        blending = true;
+        SetFog(from, fromIntensity);
+        float start = targetFogStart, end = targetFogEnd, density = targetFogDensity;
+        Color tint = targetFogColor;
+        SetFog(to, toIntensity);
+        blending = false;
+        if (fadeRoutine != null) { StopCoroutine(fadeRoutine); fadeRoutine = null; }
+        targetFogStart = Mathf.Lerp(start, targetFogStart, t);
+        targetFogEnd = Mathf.Lerp(end, targetFogEnd, t);
+        targetFogDensity = Mathf.Lerp(density, targetFogDensity, t);
+        targetFogColor = Color.Lerp(tint, targetFogColor, t);
+        fogActive = true; RenderSettings.fog = true;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

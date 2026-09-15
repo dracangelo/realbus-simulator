@@ -44,7 +44,8 @@ public class VehiclePersistentState
             : spec.energyUnitLabel;
         passengerCapacity = spec.PassengerCapacity;
         seatedCapacity = spec.SeatedCapacity;
-        fuelCapacityLitres = Mathf.Max(1f, spec.energyCapacityUnits);
+        BusUpgradeModifiers modifiers = UpgradeManager.EnsureExists().GetModifiers(spec.busId);
+        fuelCapacityLitres = Mathf.Max(1f, spec.energyCapacityUnits * modifiers.energyCapacity);
         fuelLitres = Mathf.Clamp(preservedEnergyPercent * fuelCapacityLitres, 0f, fuelCapacityLitres);
     }
 }

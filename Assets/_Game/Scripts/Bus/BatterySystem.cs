@@ -46,6 +46,7 @@ public class BatterySystem : MonoBehaviour
         if (!IsDriveActive() || busController == null)
             return;
 
+        busController.FuelDepleted = currentChargeKWh <= 0f;
         float distanceKm = (busController.currentSpeedKmh / 3600f) * Time.fixedDeltaTime;
         if (distanceKm <= 0f)
         {
@@ -78,9 +79,10 @@ public class BatterySystem : MonoBehaviour
             return;
 
         float preservedPercent = CurrentChargePercent / 100f;
-        batteryCapacityKWh = Mathf.Max(1f, spec.energyCapacityUnits);
-        cityBaseKWhPer100Km = Mathf.Max(1f, spec.cityConsumptionPer100Km);
-        motorwayBaseKWhPer100Km = Mathf.Max(1f, spec.motorwayConsumptionPer100Km);
+        BusUpgradeModifiers modifiers = UpgradeManager.EnsureExists().GetModifiers(spec.busId);
+        batteryCapacityKWh = Mathf.Max(1f, spec.energyCapacityUnits * modifiers.energyCapacity);
+        cityBaseKWhPer100Km = Mathf.Max(1f, spec.cityConsumptionPer100Km * modifiers.energyConsumption);
+        motorwayBaseKWhPer100Km = Mathf.Max(1f, spec.motorwayConsumptionPer100Km * modifiers.energyConsumption);
         motorwaySpeedThresholdKmh = Mathf.Max(1f, spec.motorwaySpeedThresholdKmh);
         optimalCruiseRpm = Mathf.Max(1f, spec.optimalCruiseRpm);
         electricityPricePerKWhKES = Mathf.Max(0f, spec.unitPriceKES);

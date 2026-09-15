@@ -43,20 +43,44 @@ public class StopApproachUI : MonoBehaviour
 
     public void ShowDocked(string stopName)
     {
+        ShowDocked(stopName, 100f, "GOLD");
+    }
+
+    public void ShowDocked(string stopName, float score, string grade)
+    {
         if (approachPanel != null)
             approachPanel.SetActive(true);
         if (stopNameText != null)
             stopNameText.text = stopName;
         if (distanceText != null)
-            distanceText.text = "STOP";
+            distanceText.text = $"{score:0}%";
         if (statusText != null)
             statusText.text = "DOCKED";
         if (guidanceText != null)
-            guidanceText.text = "ALIGN TO KERB";
+            guidanceText.text = grade + " DOCKING";
         if (directionArrow != null)
             directionArrow.localRotation = Quaternion.identity;
         if (panelBackground != null)
             panelBackground.color = new Color(0f, 0.8f, 0f, 0.85f); // green
+    }
+
+    public void ShowDockingAlignment(string stopName, float kerb, float sign, float heading, float speed,
+        float score, float kerbTolerance, float signTolerance, float headingTolerance, float speedTolerance)
+    {
+        if (approachPanel != null) approachPanel.SetActive(true);
+        if (stopNameText != null) stopNameText.text = stopName;
+        if (distanceText != null) distanceText.text = $"{score:0}%";
+        if (statusText != null) statusText.text = "ALIGNING";
+        if (guidanceText != null)
+        {
+            if (speed > speedTolerance) guidanceText.text = $"BRAKE TO {speedTolerance:0.0} KM/H";
+            else if (kerb > kerbTolerance) guidanceText.text = $"KERB {kerb:0.00} M — MOVE CLOSER";
+            else if (sign > signTolerance) guidanceText.text = $"STOP MARK {sign:0.0} M";
+            else if (heading > headingTolerance) guidanceText.text = $"STRAIGHTEN {heading:0}°";
+            else guidanceText.text = "HOLD POSITION • OPEN DOORS";
+        }
+        if (directionArrow != null) directionArrow.localRotation = Quaternion.Euler(0f, 0f, Mathf.Clamp(-heading, -45f, 45f));
+        if (panelBackground != null) panelBackground.color = score >= 85f ? UITheme.Success : score >= 60f ? UITheme.TertiaryDim : UITheme.Error;
     }
 
     public void ShowWaiting(string stopName, float waitSeconds)

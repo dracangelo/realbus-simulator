@@ -20,6 +20,8 @@ public class AIBusScheduleSpawner : MonoBehaviour
     public GameObject aiBusPrefab;
     public ScheduledAIBusRoute[] routes;
 
+    readonly Dictionary<int, int[]> routeSequences = new Dictionary<int, int[]>();
+    readonly Stack<GameObject> spare = new Stack<GameObject>();
     readonly Dictionary<int, float> nextSpawnTimeByRoute = new Dictionary<int, float>();
     readonly Dictionary<int, int> activeByRoute = new Dictionary<int, int>();
 
@@ -27,6 +29,12 @@ public class AIBusScheduleSpawner : MonoBehaviour
     {
         if (routes == null || routes.Length == 0) return;
 
+        int capacity = 0;
+        foreach (var route in routes) if (route != null) capacity += Mathf.Max(1, route.maxConcurrentBuses);
+        if (aiBusPrefab != null) for (int i = 0; i < capacity; i++)
+        {
+            var go = Instantiate(aiBusPrefab, transform); go.SetActive(false); spare.Push(go);
+        }
         float now = ScheduleManager.Instance != null ? ScheduleManager.Instance.currentTimeMinutes : 8f * 60f;
         for (int i = 0; i < routes.Length; i++)
         {
@@ -50,7 +58,7 @@ public class AIBusScheduleSpawner : MonoBehaviour
             if (activeByRoute[i] >= Mathf.Max(1, route.maxConcurrentBuses))
                 continue;
 
-            if (now >= nextSpawnTimeByRoute[i])
+            if (now >= nextSpawnTimeByRoute[i] && spare.Count > 0 && AIVehicleController.ActiveCount < 20)
             {
                 SpawnBusOnRoute(i, route, resolvedSequence);
                 nextSpawnTimeByRoute[i] = now + Mathf.Max(2f, route.headwayMinutes);
@@ -63,15 +71,20 @@ public class AIBusScheduleSpawner : MonoBehaviour
         int startNode = sequence[0];
         if (!route.graph.IsValidNode(startNode)) return;
 
-        GameObject go = Instantiate(aiBusPrefab, route.graph.GetNodePosition(startNode), Quaternion.identity, transform);
+        GameObject go = spare.Pop();
+        go.transform.position = route.graph.GetNodePosition(startNode);
+        go.transform.rotation = Quaternion.LookRotation(route.graph.GetNodePosition(sequence[1]) - go.transform.position);
+        go.SetActive(true);
         var ai = go.GetComponent<AIVehicleController>();
         if (ai == null) ai = go.AddComponent<AIVehicleController>();
         ai.Init(route.graph, startNode, 0, AIVehicleController.VehicleType.Bus);
         ai.targetNodeIndex = sequence[1];
+        ai.currentSpeedKmh = 0f;
+        if (go.GetComponent<ScheduledTrafficTier>() == null) go.AddComponent<ScheduledTrafficTier>();
 
         var runner = go.GetComponent<AIBusRouteRunner>();
         if (runner == null) runner = go.AddComponent<AIBusRouteRunner>();
-        runner.Init(sequence, () => activeByRoute[routeIndex] = Mathf.Max(0, activeByRoute[routeIndex] - 1));
+        runner.Init(sequence, () => { activeByRoute[routeIndex] = Mathf.Max(0, activeByRoute[routeIndex] - 1); if (go != null) { go.SetActive(false); spare.Push(go); } });
 
         activeByRoute[routeIndex]++;
     }
@@ -89,6 +102,7 @@ public class AIBusScheduleSpawner : MonoBehaviour
         if (route == null || route.graph == null)
             return null;
 
+        if (routeSequences.TryGetValue(routeIndex, out var cached)) return cached;
         int[] sequence = route.nodeSequence;
         if (route.useRandomGeneratedNodes)
             sequence = route.graph.BuildRandomNodeSequence(route.randomNodeCount, route.startNodeIndex);
@@ -118,6 +132,7 @@ public class AIBusScheduleSpawner : MonoBehaviour
             }
         }
 
+        routeSequences[routeIndex] = sequence;
         return sequence;
     }
 
@@ -162,18 +177,19 @@ public class AIBusRouteRunner : MonoBehaviour
         if (index >= sequence.Length - 1)
         {
             Release();
-            Destroy(gameObject);
+            gameObject.SetActive(false);
             return;
         }
 
+        var spline = GetComponent<SplineVehicle>();
+        int current = ai.enabled ? ai.currentNodeIndex : spline != null ? spline.currentNodeIndex : ai.currentNodeIndex;
         int target = sequence[index + 1];
-        if (ai.targetNodeIndex != target)
-            ai.targetNodeIndex = target;
-
-        // Advance when controller reaches this target node.
-        if (ai.currentNodeIndex == target)
-            index++;
+        if (current == target) { index++; if (index >= sequence.Length - 1) return; target = sequence[index + 1]; }
+        ai.targetNodeIndex = target;
+        if (spline != null) spline.targetNodeIndex = target;
     }
+
+    public void Despawn() { Release(); gameObject.SetActive(false); }
 
     void OnDestroy()
     {

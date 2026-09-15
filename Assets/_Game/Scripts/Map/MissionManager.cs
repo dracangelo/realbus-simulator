@@ -10,7 +10,7 @@ public class MissionManager : MonoBehaviour
     const float SpawnClearanceAboveGround = 1.2f;
     const float SpawnOffsetBehindStartStopMeters = 14f;
     const float SpawnOffsetSideMeters = 5f;
-    const float StopApproachDistanceMeters = 120f;
+    const float StopApproachDistanceMeters = 50f;
     const float WaitForRoadsTimeoutSeconds = 8f;
     const float SpawnRoadSearchRadiusMeters = 45f;
 
@@ -30,10 +30,17 @@ public class MissionManager : MonoBehaviour
     public bool routeActive = false;
 
     [Header("Countdown")]
+    public bool repositionBusOnStart = true;
+    public bool autoInitialize = true;
+    public float ElapsedSeconds { get; private set; }
+    public float DistanceDrivenKm { get; private set; }
+    public MissionResult LastResult { get; private set; }
+    public event System.Action<MissionResult> OnMissionCompleted;
     public int countdownSeconds = 5;
     [SerializeField] int currentCountdownValue;
 
     private Vector3 nextStopWorldPos;
+    bool missionStarting;
     private bool isProcessingStop = false;
     private bool pendingDoorOpenRequest = false;
     private Vector3[] activeGuidancePathPoints;
@@ -42,6 +49,7 @@ public class MissionManager : MonoBehaviour
     private string diversionLabel = string.Empty;
     private string diversionReason = string.Empty;
     private HashSet<int> blockedDiversionNodes = new HashSet<int>();
+    MissionCheckpoint pendingCheckpoint;
 
     public IReadOnlyList<Vector3> ActiveGuidancePathPoints => activeGuidancePathPoints;
     public int GuidancePathVersion => guidancePathVersion;
@@ -61,10 +69,23 @@ public class MissionManager : MonoBehaviour
 
     void Start()
     {
+        if (GetComponent<RouteRecoverySystem>() == null) gameObject.AddComponent<RouteRecoverySystem>();
         if (StopApproachUI.Instance != null)
             StopApproachUI.Instance.HideApproach();
 
-        StartCoroutine(InitNextFrame());
+        if (autoInitialize) StartCoroutine(InitNextFrame());
+    }
+
+    public bool RecalculateGuidanceFromBus()
+    {
+        if (busController == null || currentRoute == null) return false;
+        AIRoadGraph graph = FindFirstObjectByType<AIRoadGraph>();
+        if (graph != null && TryBuildGraphGuidancePath(graph, busController.transform.position, currentStopIndex,
+            diversionActive ? blockedDiversionNodes : null, out Vector3[] recalculated))
+        {
+            SetGuidancePath(recalculated); return true;
+        }
+        SetGuidancePath(BuildBaseGuidancePath()); return false;
     }
 
     IEnumerator InitNextFrame()
@@ -89,14 +110,34 @@ public class MissionManager : MonoBehaviour
 
     public void StartRoute(BusRoute route)
     {
+        if (routeActive || missionStarting || currentCountdownValue > 0 || busController == null || GPSManager.Instance == null || route == null) return;
+        if (route.busStops != null && route.busStops.Length > 0) route.SyncLegacyStopsFromBusStops();
+        if (route.stops == null || route.stops.Length < 2) return;
+        StopAllCoroutines();
+        FreeDriveSession.Instance?.EndSession();
+        PassengerManager.Instance?.ResetForFreeDriveMode();
+        LastResult = null;
+        ElapsedSeconds = DistanceDrivenKm = 0f;
+        currentStopIndex = 0;
+        isProcessingStop = pendingDoorOpenRequest = false;
         currentRoute = route;
         ResetGuidancePath();
+        missionStarting = true;
         StartCoroutine(MissionStartSequence());
+    }
+
+    public void ResumeRoute(BusRoute route, MissionCheckpoint checkpoint)
+    {
+        if (checkpoint == null || route == null) return;
+        pendingCheckpoint = checkpoint;
+        StartRoute(route);
+        if (!missionStarting) pendingCheckpoint = null;
     }
 
     IEnumerator MissionStartSequence()
     {
         SetMissionState(MissionState.Briefing);
+        busController.ServiceBrakeInterlock = true;
         busController.throttleInput = 0f;
         busController.brakeInput = 1f;
         ExtendedTrafficViolationSystem.Instance?.ResetViolationLog();
@@ -120,7 +161,7 @@ public class MissionManager : MonoBehaviour
             Debug.LogWarning("MissionManager: First route stop is outside loaded map bounds. Using city spawn instead.");
         }
 
-        yield return WaitForRoadSurfaceIfAvailable();
+        if (repositionBusOnStart) yield return WaitForRoadSurfaceIfAvailable();
 
         ApplyMissionConditions();
 
@@ -128,7 +169,16 @@ public class MissionManager : MonoBehaviour
         startPos = ApplySpawnOffsetFromRouteStart(startPos);
         startPos = SnapSpawnToNearestRoad(startPos);
         startPos.y = ResolveSpawnHeight(startPos);
-        busController.transform.position = startPos;
+        if (repositionBusOnStart)
+        {
+            if (pendingCheckpoint != null)
+                busController.transform.SetPositionAndRotation(pendingCheckpoint.busPosition, pendingCheckpoint.busRotation);
+            else
+                busController.transform.position = startPos;
+            var body = busController.GetComponent<Rigidbody>();
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
 
         Debug.Log("Mission starting...");
 
@@ -141,7 +191,10 @@ public class MissionManager : MonoBehaviour
         }
 
         currentCountdownValue = 0;
+        missionStarting = false;
         busController.brakeInput = 0f;
+        busController.ServiceBrakeInterlock = false;
+        ScoreTracker.Instance?.BeginMission(busController);
         SetMissionState(MissionState.InProgress);
         routeActive = true;
 
@@ -152,20 +205,42 @@ public class MissionManager : MonoBehaviour
                 missionData.scheduledDepartureTime,
                 missionData.targetDurationMinutes);
 
-        // Board first stop passengers
-        currentStopIndex = 0;
-        if (PassengerManager.Instance != null)
-            PassengerManager.Instance.HandleStopArrival(
-                currentRoute.stops[0], currentRoute.baseFare, 0, currentRoute.stops.Length);
-
-        // Record departure stop punctuality
-        if (ScheduleManager.Instance != null)
-            ScheduleManager.Instance.RecordArrival(0);
-
-        currentStopIndex = 1;
-        SetNextStop();
+        if (pendingCheckpoint != null)
+            RestoreMissionCheckpoint(pendingCheckpoint);
+        else
+        {
+            // Every stop, including departure, must be docked and serviced.
+            currentStopIndex = 0;
+            SetNextStop();
+        }
 
         Debug.Log($"Route started: {currentRoute.routeName}");
+    }
+
+    void RestoreMissionCheckpoint(MissionCheckpoint checkpoint)
+    {
+        currentStopIndex = Mathf.Clamp(checkpoint.stopIndex, 0, currentRoute.stops.Length - 1);
+        ElapsedSeconds = Mathf.Max(0f, checkpoint.elapsedSeconds);
+        DistanceDrivenKm = Mathf.Max(0f, checkpoint.distanceDrivenKm);
+        busController.transform.SetPositionAndRotation(checkpoint.busPosition, checkpoint.busRotation);
+        Rigidbody body = busController.GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.linearVelocity = busController.transform.forward * (Mathf.Max(0f, checkpoint.speedKmh) / 3.6f);
+            body.angularVelocity = Vector3.zero;
+        }
+        if (ScheduleManager.Instance != null && checkpoint.scheduleTimeMinutes > 0f)
+            ScheduleManager.Instance.currentTimeMinutes = checkpoint.scheduleTimeMinutes;
+        ScoreTracker.Instance?.RestoreCheckpoint(checkpoint.punctualityScore, checkpoint.satisfactionScore,
+            checkpoint.safetyScore, checkpoint.efficiencyScore, checkpoint.stopsCompleted,
+            checkpoint.pointDeductions, checkpoint.collisions, checkpoint.redLights);
+        PassengerManager.Instance?.RestoreCheckpointState(checkpoint.passengerCount, checkpoint.passengerSatisfaction,
+            checkpoint.passengersServed, checkpoint.faresCollected, checkpoint.sessionIncome,
+            checkpoint.passengerDistanceKm, currentStopIndex, currentRoute.stops.Length);
+        pendingCheckpoint = null;
+        SetNextStop();
+        RecalculateGuidanceFromBus();
+        SubtitleManager.EnsureExists().Show("Route restored", "Continue to the highlighted stop when ready.", 3f);
     }
 
     void ApplyMissionConditions()
@@ -173,7 +248,7 @@ public class MissionManager : MonoBehaviour
         if (missionData == null)
             return;
 
-        if (missionData.IsWeatherChallengeMission && WeatherSystem.Instance != null)
+        if ((missionData.IsWeatherChallengeMission || missionData.applyRequiredWeather) && WeatherSystem.Instance != null)
         {
             WeatherSystem.Instance.ApplyWeather(
                 missionData.requiredWeather,
@@ -292,6 +367,8 @@ public class MissionManager : MonoBehaviour
     {
         if (!routeActive || currentRoute == null) return;
 
+        ElapsedSeconds += Time.deltaTime;
+        DistanceDrivenKm += busController.currentSpeedKmh / 3600f * Time.deltaTime;
         distanceToNextStop = Vector3.Distance(
             busController.transform.position, nextStopWorldPos);
 
@@ -351,6 +428,8 @@ public class MissionManager : MonoBehaviour
     IEnumerator ProcessStopArrival()
     {
         isProcessingStop = true;
+        busController.ServiceBrakeInterlock = true;
+        busController.RequestKneelingSuspension(true);
 
         var stop = currentRoute.stops[currentStopIndex];
         SetMissionState(MissionState.AtStop);
@@ -392,21 +471,25 @@ public class MissionManager : MonoBehaviour
             PassengerManager.Instance.HandleStopArrival(
                 stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length);
 
+        float dwell = PassengerManager.Instance != null
+            ? PassengerManager.Instance.GetRequiredDwellTimeSeconds() : 2f;
+        yield return new WaitForSeconds(Mathf.Max(2f, dwell));
+        while (PassengerManager.Instance != null && PassengerManager.Instance.HasServiceAnimations) yield return null;
+        if (PassengerManager.Instance != null) PassengerManager.Instance.doorsOpen = false;
+        busController.RequestKneelingSuspension(false);
+        busController.ServiceBrakeInterlock = false;
         currentStopIndex++;
         pendingDoorOpenRequest = false;
-        if (diversionActive)
-            ClearTemporaryDiversion();
-        SetNextStop();
-
-        float dwell = PassengerManager.Instance != null
-            ? PassengerManager.Instance.GetRequiredDwellTimeSeconds()
-            : 2f;
-        yield return new WaitForSeconds(Mathf.Max(2f, dwell));
         isProcessingStop = false;
+        if (diversionActive) ClearTemporaryDiversion();
+        SetNextStop();
     }
 
     void RouteComplete()
     {
+        if (!routeActive) return;
+        ScoreTracker.Instance?.EndMission();
+        busController.ServiceBrakeInterlock = true;
         routeActive = false;
         SetMissionState(MissionState.Completed);
         if (StopApproachUI.Instance != null)
@@ -418,6 +501,7 @@ public class MissionManager : MonoBehaviour
 
         // Generate and show result
         var result = MissionResult.Generate(currentRoute);
+        LastResult = result;
         UnlockManager.Instance?.RecordRouteCompletion(currentRoute, GameState.Instance != null ? GameState.Instance.selectedCity : CityManager.Instance?.activeCity);
         result.SaveToPlayerPrefs();
         XPAwardResult xpAwardResult = null;
@@ -428,10 +512,24 @@ public class MissionManager : MonoBehaviour
         DriverShiftSystem.Instance?.TryApplyShiftSummary(result);
         if (MissionResultUI.Instance != null)
             MissionResultUI.Instance.ShowResult(result, xpAwardResult);
+        RealBusAudioManager.EnsureExists().PlayMissionComplete();
+        AccessibilityManager.EnsureExists().Pulse(HapticCue.MissionComplete);
+        SubtitleManager.EnsureExists().Show("Control", "Route complete. Excellent work.", 4f);
+        OnMissionCompleted?.Invoke(result);
     }
 
     public void AbortMissionForFreeDrive()
     {
+        StopAllCoroutines();
+        missionStarting = false;
+        currentCountdownValue = 0;
+        ScoreTracker.Instance?.EndMission();
+        if (busController != null)
+        {
+            busController.ServiceBrakeInterlock = false;
+            busController.RequestKneelingSuspension(false);
+        }
+        if (PassengerManager.Instance != null) PassengerManager.Instance.doorsOpen = false;
         routeActive = false;
         isProcessingStop = false;
         pendingDoorOpenRequest = false;
@@ -444,12 +542,26 @@ public class MissionManager : MonoBehaviour
         if (!routeActive || currentRoute == null || isProcessingStop)
             return false;
 
+        if (!IsReadyToProcessDockedStop(out _)) return false;
+        if (PassengerManager.Instance != null && !PassengerManager.Instance.CanOpenDoorsForStop(currentStopIndex, currentRoute.stops.Length)) return false;
         pendingDoorOpenRequest = true;
-        if (!IsReadyToProcessDockedStop(out _))
-            return false;
+        PassengerManager.Instance?.AcknowledgeStopRequest();
 
         ArrivedAtStop();
         return true;
+    }
+
+    public void FailMission(string reason)
+    {
+        if (!routeActive && currentCountdownValue == 0) return;
+        AbortMissionForFreeDrive();
+        SetMissionState(MissionState.Failed);
+        Debug.LogWarning("Mission failed: " + reason);
+    }
+
+    void OnDisable()
+    {
+        if (routeActive || missionStarting || currentCountdownValue > 0) AbortMissionForFreeDrive();
     }
 
     void ApplyMissionSettlement()
@@ -723,7 +835,7 @@ public class MissionManager : MonoBehaviour
             return string.Equals(dockingZone.stopName, currentRoute.stops[currentStopIndex].stopName, System.StringComparison.Ordinal);
         }
 
-        return distanceToNextStop <= 3f && busController.currentSpeedKmh <= 1f;
+        return false; // Correct kerb, sign and heading alignment is mandatory.
     }
 
     float GetSignedAngleToNextStop()

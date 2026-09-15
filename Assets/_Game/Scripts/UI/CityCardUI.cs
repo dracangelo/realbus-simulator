@@ -18,5 +18,7 @@ public class CityCardUI : MonoBehaviour
             routeCountText.text = $"{city.availableRoutes?.Length ?? 0} routes";
 
         selectButton?.onClick.AddListener(() => onSelect(city));
+        if (selectButton != null && selectButton.GetComponent<CityPinPulse>() == null)
+            selectButton.gameObject.AddComponent<CityPinPulse>();
     }
 }

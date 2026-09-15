@@ -49,12 +49,17 @@ public class WeatherPhysics : MonoBehaviour
         if (busController == null)
             busController = FindFirstObjectByType<BusController>();
 
-        if (busController != null)
+        if (busController != null && busController.GetComponent<RoadSurfaceFrictionController>() == null)
             CacheOriginalFriction();
     }
 
     void Update()
     {
+        if (busController != null && busController.GetComponent<RoadSurfaceFrictionController>() != null)
+        {
+            currentGripMultiplier = WeatherSystem.Instance != null ? WeatherSystem.Instance.GetRoadGripMultiplier() : 1f;
+            return;
+        }
         if (!_initialized) return;
         if (WeatherSystem.Instance == null) return;
 

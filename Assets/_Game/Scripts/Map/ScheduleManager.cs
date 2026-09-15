@@ -31,7 +31,7 @@ public class ScheduleManager : MonoBehaviour
     void Update()
     {
         // Advance game clock
-        currentTimeMinutes += (Time.deltaTime / secondsPerGameMinute);
+        currentTimeMinutes += (Time.deltaTime / Mathf.Max(0.01f, secondsPerGameMinute));
 
         // Format time string
         int hours24 = Mathf.FloorToInt(currentTimeMinutes / 60f) % 24;
@@ -68,7 +68,7 @@ public class ScheduleManager : MonoBehaviour
     /// </summary>
     public PunctualityStatus RecordArrival(int stopIndex)
     {
-        actualArrivals[stopIndex] = currentTimeMinutes;
+        if (!actualArrivals.ContainsKey(stopIndex)) actualArrivals[stopIndex] = currentTimeMinutes;
 
         if (!scheduledArrivals.ContainsKey(stopIndex))
             return PunctualityStatus.OnTime;
@@ -116,7 +116,7 @@ public class ScheduleManager : MonoBehaviour
     public float GetLatePenaltyPercent(int stopIndex)
     {
         float lateSeconds = Mathf.Max(0f, GetArrivalDeltaSeconds(stopIndex));
-        return Mathf.Floor(lateSeconds / 30f) * 2f;
+        return GameplayRules.LatePenaltyPercent(lateSeconds);
     }
 
     public float GetEarlyWaitSecondsRequired(int stopIndex)
@@ -142,16 +142,27 @@ public class ScheduleManager : MonoBehaviour
         }
     }
 
+    public PunctualityStatus GetLiveStatus(int stopIndex)
+    {
+        if (!scheduledArrivals.ContainsKey(stopIndex)) return PunctualityStatus.OnTime;
+        return ClassifyDeltaMinutes(currentTimeMinutes - scheduledArrivals[stopIndex]);
+    }
+
+    public static PunctualityStatus ClassifyDeltaMinutes(float deltaMinutes)
+    {
+        if (deltaMinutes < -1f) return PunctualityStatus.Early;
+        if (deltaMinutes <= 1f) return PunctualityStatus.OnTime;
+        if (deltaMinutes <= 3f) return PunctualityStatus.Late;
+        return PunctualityStatus.SeverelyLate;
+    }
+
     PunctualityStatus RecordArrivalPreview(int stopIndex)
     {
         if (!scheduledArrivals.ContainsKey(stopIndex) || !actualArrivals.ContainsKey(stopIndex))
             return PunctualityStatus.OnTime;
 
         float diff = actualArrivals[stopIndex] - scheduledArrivals[stopIndex];
-        if (diff < -1f) return PunctualityStatus.Early;
-        if (diff <= 1f) return PunctualityStatus.OnTime;
-        if (diff <= 3f) return PunctualityStatus.Late;
-        return PunctualityStatus.SeverelyLate;
+        return ClassifyDeltaMinutes(diff);
     }
 }
 

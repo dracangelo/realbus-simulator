@@ -24,6 +24,7 @@ public class MissionResult
     public float totalTimeMinutes;
 
     public int xpEarned;
+    public int pointDeductions;
     public int collisions;
     public int redLightViolations;
     public int totalViolations;
@@ -73,9 +74,10 @@ public class MissionResult
         }
         result.coinsEarned = Mathf.Max(0, result.netEarningsKES);
 
-        result.totalDistanceKm = FreeDriveSession.Instance?.distanceDrivenKm ?? 0f;
-        result.totalTimeMinutes = FreeDriveSession.Instance?.sessionTimeSeconds / 60f ?? 0f;
+        result.totalDistanceKm = MissionManager.Instance?.DistanceDrivenKm ?? 0f;
+        result.totalTimeMinutes = MissionManager.Instance?.ElapsedSeconds / 60f ?? 0f;
 
+        result.pointDeductions = ScoreTracker.Instance != null ? ScoreTracker.Instance.pointDeductions : 0;
         result.collisions = ScoreTracker.Instance?.CollisionCount ?? 0;
         result.redLightViolations = ScoreTracker.Instance?.RedLightViolationCount ?? 0;
 
@@ -100,14 +102,14 @@ public class MissionResult
             ? missionData.baseXP
             : routeStars * 200;
 
-        result.xpEarned = Mathf.RoundToInt(baseXp * (result.totalScore / 100f) * difficultyMultiplier);
+        result.xpEarned = GameplayRules.EarnedXP(baseXp, result.totalScore, difficultyMultiplier);
 
         if (missionData != null && result.punctualityScore >= Mathf.Clamp01(missionData.punctualityTarget) * 100f)
             result.xpEarned += Mathf.Max(0, missionData.timeBonusXP);
 
         ApplyScenarioOutcome(result, missionData);
 
-        result.xpEarned = Mathf.Max(0, result.xpEarned - (result.totalViolations * 15));
+        result.xpEarned = Mathf.Max(0, result.xpEarned);
 
         if (GameState.Instance != null && GameState.Instance.economy != null)
         {

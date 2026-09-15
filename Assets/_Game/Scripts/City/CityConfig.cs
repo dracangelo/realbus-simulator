@@ -10,7 +10,8 @@ public struct GeoCoordinate
     { latitude = lat; longitude = lon; }
 
     public bool IsValid() =>
-        System.Math.Abs(latitude) > 0.0001 || System.Math.Abs(longitude) > 0.0001;
+        !double.IsNaN(latitude) && !double.IsNaN(longitude) &&
+        System.Math.Abs(latitude) <= 90d && System.Math.Abs(longitude) <= 180d;
 
     public override string ToString() =>
         $"({latitude:F6}, {longitude:F6})";
@@ -32,6 +33,7 @@ public class CityConfig : ScriptableObject
     // ── Identity ───────────────────────────────────────────────────────
 
     [Header("Identity")]
+    public bool isPlaceholder;
     public string cityName    = "Tutorial City";
     public string countryName = "Kenya";
     [Tooltip("2–4 uppercase letters. Used as a stable key throughout the save system.")]
@@ -64,11 +66,12 @@ public class CityConfig : ScriptableObject
 
     public bool IsValid(out string reason)
     {
+        if (isPlaceholder) { reason = "City content is not configured yet"; return false; }
         if (string.IsNullOrWhiteSpace(cityName))
         { reason = "cityName is empty"; return false; }
 
         if (!gpsCenter.IsValid())
-        { reason = "gpsCenter is (0,0)"; return false; }
+        { reason = "gpsCenter is outside WGS84 bounds"; return false; }
 
         if (queryHalfExtentMeters < 200f)
         { reason = "queryHalfExtentMeters < 200 m — too small"; return false; }

@@ -131,7 +131,10 @@ public class SceneBootstrap : MonoBehaviour
                 GameState.Instance.selectedRoute = routeToUse;
         }
 
-        var missionToUse = ResolveMissionDataForRoute(routeToUse) ?? fallbackMissionData ?? missionManager.missionData;
+        DailyChallengeManager daily = DailyChallengeManager.Instance;
+        var missionToUse = daily != null && daily.AppliesTo(routeToUse)
+            ? daily.ChallengeMission
+            : ResolveMissionDataForRoute(routeToUse) ?? fallbackMissionData ?? missionManager.missionData;
         if (missionToUse != null)
             missionManager.missionData = missionToUse;
 
@@ -225,6 +228,13 @@ public class SceneBootstrap : MonoBehaviour
 
             fuelSystem.ApplyBusSpec(spec);
         }
+
+        var liveryEditor = busController.GetComponent<LiveryEditor>();
+        if (liveryEditor == null)
+            liveryEditor = busController.gameObject.AddComponent<LiveryEditor>();
+
+        Transform visualRoot = busController.modelRoot != null ? busController.modelRoot : busController.transform;
+        liveryEditor.Initialize(spec.busId, visualRoot.GetComponentsInChildren<Renderer>(true));
     }
 
     void EnsureGpsManager()

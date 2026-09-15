@@ -8,7 +8,7 @@ public class RoadGraphTests
     {
         var q = OverpassQueryBuilder.RoadsQuery(-1, 36, -0.9, 36.1);
         Assert.That(q, Does.Contain("way[highway"));
-        Assert.That(q, Does.Contain("(-1,36,-0.9,36.1)"));
+        Assert.That(q, Does.Contain("(-1.0000000,36.0000000,-0.9000000,36.1000000)"));
         Assert.That(q, Does.Contain("out geom"));
     }
 

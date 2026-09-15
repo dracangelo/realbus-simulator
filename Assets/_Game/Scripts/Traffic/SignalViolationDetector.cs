@@ -2,58 +2,37 @@ using UnityEngine;
 
 public class SignalViolationDetector : MonoBehaviour
 {
-    [Header("References")]
     public TrafficLight trafficLight;
-
-    [Header("Settings")]
     public float detectionWidth = 8f;
     public float detectionDepth = 3f;
+    public float frontBumperOffsetMeters = 6f;
+    BusController busController;
+    Vector3 previous;
+    bool sampled;
 
-    private BusController busController;
-    private bool busInZone = false;
-
-    void Start()
-    {
-        busController = FindFirstObjectByType<BusController>();
-    }
-
-    void Update()
+    void Start() { busController = FindFirstObjectByType<BusController>(); }
+    void FixedUpdate()
     {
         if (busController == null || trafficLight == null) return;
-
-        Vector3 local = transform.InverseTransformPoint(busController.transform.position);
-        bool inZone = Mathf.Abs(local.x) < detectionWidth * 0.5f
-                   && Mathf.Abs(local.z) < detectionDepth * 0.5f;
-
-        if (inZone && !busInZone)
+        Vector3 point = busController.transform.position + busController.transform.forward * frontBumperOffsetMeters;
+        Vector3 current = transform.InverseTransformPoint(point);
+        bool active = MissionManager.Instance != null && MissionManager.Instance.routeActive;
+        if (sampled && active && Mathf.Abs(current.y) < 4f &&
+            GameplayRules.CrossedStopLine(previous.x, previous.z, current.x, current.z, detectionWidth) && trafficLight.IsRed())
         {
-            busInZone = true;
-
-            if (trafficLight.IsRed() && busController.currentSpeedKmh > 5f)
-            {
-                Debug.Log("RED LIGHT VIOLATION!");
-                if (ExtendedTrafficViolationSystem.Instance != null)
-                    ExtendedTrafficViolationSystem.Instance.RecordSignalViolation(redLight: true);
-                else
-                    ScoreTracker.Instance?.RecordRedLight();
-            }
-            else if (trafficLight.currentState == TrafficLight.LightState.Amber && busController.currentSpeedKmh > 5f)
-            {
-                Debug.Log("YELLOW LIGHT VIOLATION!");
-                ExtendedTrafficViolationSystem.Instance?.RecordSignalViolation(redLight: false);
-            }
+            if (ExtendedTrafficViolationSystem.Instance != null)
+                ExtendedTrafficViolationSystem.Instance.RecordSignalViolation(true);
+            else ScoreTracker.Instance?.RecordRedLight();
         }
-
-        if (!inZone && busInZone)
-        {
-            busInZone = false;
-        }
+        previous = current;
+        sampled = true;
     }
-
+    void OnDisable() { sampled = false; }
     void OnDrawGizmos()
     {
-        Gizmos.color = new Color(1f, 0f, 0f, 0.4f);
-        Gizmos.DrawCube(transform.position,
-            new Vector3(detectionWidth, 1f, detectionDepth));
+        Gizmos.color = Color.red;
+        Gizmos.matrix = transform.localToWorldMatrix;
+        Gizmos.DrawWireCube(Vector3.zero, new Vector3(detectionWidth, 1f, 0.1f));
+        Gizmos.matrix = Matrix4x4.identity;
     }
 }

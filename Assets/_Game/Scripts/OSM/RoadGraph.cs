@@ -53,6 +53,8 @@ public class RoadGraph
     // ── Storage ────────────────────────────────────────────────────────
 
     public readonly List<Node> nodes = new();
+    float fastestSpeedMs = 25f;
+    readonly Dictionary<long, int> osmNodeIndex = new();
 
     // Deduplication key: quantised lat/lon → node index.
     readonly Dictionary<(long, long), int> _coordIndex = new();
@@ -109,38 +111,20 @@ public class RoadGraph
 
         if (nodes.Count < 2) return false;
 
-        // Start with the nearest node; only check its edges (and two rings of
-        // neighbours) rather than the entire graph — fast enough for real-time use.
-        int nearest = FindNearestNodeIndex(worldPos);
-        if (nearest < 0) return false;
-
-        var candidates = new HashSet<int> { nearest };
-        foreach (var e in nodes[nearest].edges)
+        // Inspect directed edges, including incoming-only segments and long segments
+        // whose endpoints are not the nearest node to the stop.
+        for (int a = 0; a < nodes.Count; a++)
+        foreach (var edge in nodes[a].edges)
         {
-            candidates.Add(e.to);
-            foreach (var e2 in nodes[e.to].edges)
-                candidates.Add(e2.to);
-        }
-
-        foreach (int a in candidates)
-        {
-            foreach (var edge in nodes[a].edges)
+            int b = edge.to;
+            Vector3 proj = ClosestPointOnSegment(worldPos, nodes[a].world, nodes[b].world);
+            float distance = Vector3.Distance(worldPos, proj);
+            if (distance < distanceMeters)
             {
-                int b = edge.to;
-                if (b <= a) continue; // undirected: check each pair once
-
-                Vector3 p    = nodes[a].world;
-                Vector3 q    = nodes[b].world;
-                Vector3 proj = ClosestPointOnSegment(worldPos, p, q);
-                float d      = Vector3.Distance(worldPos, proj);
-
-                if (d < distanceMeters)
-                {
-                    distanceMeters = d;
-                    projected      = proj;
-                    segA           = a;
-                    segB           = b;
-                }
+                distanceMeters = distance;
+                projected = proj;
+                segA = a;
+                segB = b;
             }
         }
 
@@ -229,7 +213,7 @@ public class RoadGraph
 
         foreach (var elem in response.elements)
         {
-            if (elem?.type != "way") continue;
+            if (elem?.type != "way" || !elem.tags.ContainsKey("highway")) continue;
             if (elem.geometry == null || elem.geometry.Count < 2) continue;
 
             var  roadType = ParseRoadType(elem.tags);
@@ -237,12 +221,15 @@ public class RoadGraph
             bool oneWay   = IsOneWay(elem.tags, roadType);
 
             int prev = -1;
-            foreach (var p in elem.geometry)
+            for (int pointIndex = 0; pointIndex < elem.geometry.Count; pointIndex++)
             {
-                int n = graph.GetOrCreateNode(p.lat, p.lon, converter);
+                var p = elem.geometry[pointIndex];
+                long nodeId = elem.nodeRefs.Count == elem.geometry.Count ? elem.nodeRefs[pointIndex] : 0;
+                int n = graph.GetOrCreateNode(p.lat, p.lon, converter, nodeId);
                 if (prev >= 0 && n != prev)
                 {
-                    graph.AddEdge(prev, n, speed, roadType);
+                    bool reverse = elem.tags.TryGetValue("oneway", out var direction) && direction == "-1";
+                    graph.AddEdge(reverse ? n : prev, reverse ? prev : n, speed, roadType);
                     if (!oneWay)
                         graph.AddEdge(n, prev, speed, roadType);
                 }
@@ -255,14 +242,14 @@ public class RoadGraph
 
     // ── Private: node management ───────────────────────────────────────
 
-    int GetOrCreateNode(double lat, double lon, CoordinateConverter converter)
+    int GetOrCreateNode(double lat, double lon, CoordinateConverter converter, long osmId = 0)
     {
         long qLat = (long)System.Math.Round(lat * 1e7);
         long qLon = (long)System.Math.Round(lon * 1e7);
         var  key  = (qLat, qLon);
 
-        if (_coordIndex.TryGetValue(key, out int idx))
-            return idx;
+        if (osmId != 0 && osmNodeIndex.TryGetValue(osmId, out int existing)) return existing;
+        if (osmId == 0 && _coordIndex.TryGetValue(key, out int idx)) return idx;
 
         var world = converter != null
             ? converter.GeoToWorldPosition(lat, lon)
@@ -276,7 +263,8 @@ public class RoadGraph
             world = world
         };
         nodes.Add(node);
-        _coordIndex[key] = node.index;
+        if (osmId != 0) osmNodeIndex[osmId] = node.index;
+        else _coordIndex[key] = node.index;
         AddToSpatialGrid(node);
         return node.index;
     }
@@ -321,6 +309,7 @@ public class RoadGraph
 
         float distM       = Vector3.Distance(nodes[from].world, nodes[to].world);
         float speedMs     = Mathf.Max(1f, speedKmh) / 3.6f;
+        fastestSpeedMs = Mathf.Max(fastestSpeedMs, speedMs);
         float travelSec   = distM / speedMs;
 
         nodes[from].edges.Add(new Edge
@@ -387,9 +376,9 @@ public class RoadGraph
     {
         if (tags == null) return false;
         if (tags.TryGetValue("oneway", out var ow))
-            return ow == "yes" || ow == "1" || ow == "true";
+            return ow == "yes" || ow == "1" || ow == "true" || ow == "-1";
         // Motorways and trunk roads are implicitly one-way per carriageway in OSM.
-        return type == RoadType.Motorway || type == RoadType.Trunk;
+        return type == RoadType.Motorway || (tags.TryGetValue("junction", out var junction) && junction == "roundabout");
     }
 
     // ── Private: A* helpers ────────────────────────────────────────────
@@ -398,7 +387,7 @@ public class RoadGraph
     {
         // Admissible: straight-line distance / fastest road speed (90 km/h = 25 m/s).
         float dist = Vector3.Distance(nodes[a].world, nodes[b].world);
-        return dist / 25f;
+        return dist / fastestSpeedMs;
     }
 
     static List<int> ReconstructPath(int[] cameFrom, int current)

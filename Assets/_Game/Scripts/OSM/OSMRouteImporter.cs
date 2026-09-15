@@ -29,6 +29,8 @@ public class OSMRouteImporter : MonoBehaviour
 
     [Header("Settings")]
     [Tooltip("Automatically fetch routes when a city is loaded.")]
+    public TextAsset localRoadsJson;
+    public TextAsset localRoutesJson;
     public bool autoImportOnStart = false;
     [Tooltip("Include synthetic return routes in output.")]
     public bool generateReturnRoutes = true;
@@ -115,17 +117,20 @@ public class OSMRouteImporter : MonoBehaviour
             yield break;
         }
 
+        _converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
         importInProgress = true;
         importComplete   = false;
         importedRoutes.Clear();
+        try
+        {
 
         // ── Step 1: Fetch road graph data ─────────────────────────────
         SetStatus($"Fetching road network for {city.cityName}…");
         string roadsQuery = OverpassQueryBuilder.RoadsQuery(
             city.minLat, city.minLon, city.maxLat, city.maxLon, roadsTimeoutSec);
 
-        string roadsJson = null;
-        yield return FetchOverpass(roadsQuery, json => roadsJson = json);
+        string roadsJson = localRoadsJson != null ? localRoadsJson.text : null;
+        if (roadsJson == null) yield return FetchOverpass(roadsQuery, json => roadsJson = json);
 
         if (string.IsNullOrEmpty(roadsJson))
         {
@@ -148,8 +153,8 @@ public class OSMRouteImporter : MonoBehaviour
         string routesQuery = OverpassQueryBuilder.BusRoutesQuery(
             city.minLat, city.minLon, city.maxLat, city.maxLon, routesTimeoutSec);
 
-        string routesJson = null;
-        yield return FetchOverpass(routesQuery, json => routesJson = json);
+        string routesJson = localRoutesJson != null ? localRoutesJson.text : null;
+        if (routesJson == null) yield return FetchOverpass(routesQuery, json => routesJson = json);
 
         if (string.IsNullOrEmpty(routesJson))
         {
@@ -168,31 +173,26 @@ public class OSMRouteImporter : MonoBehaviour
         routesFound = parsedRoutes.Count;
         Debug.Log($"[OSMRouteImporter] Parsed {routesFound} raw routes.");
 
-        // ── Step 5: Filter ────────────────────────────────────────────
-        if (applyRouteFilter)
-            parsedRoutes = BusRouteParser.FilterRoutes(parsedRoutes);
-
-        // ── Step 6: Stop snap + A* path per route ─────────────────────
-        SetStatus($"Processing {parsedRoutes.Count} routes…");
-        int processed = 0;
-
-        foreach (var pr in parsedRoutes)
+        // Validate connectivity before filtering on the actual drivable distance.
+        var accepted = new List<BusRouteParser.ParsedBusRoute>();
+        foreach (var route in parsedRoutes)
         {
-            SnapStopsToRoadGraph(pr, roadGraph);
-            RefineGeometryWithAStar(pr, roadGraph);
-            processed++;
-            if (processed % 5 == 0)
-            {
-                SetStatus($"Processing routes… {processed}/{parsedRoutes.Count}");
-                yield return null;
-            }
+            if (RoadRoutePathBuilder.TryBuild(route, roadGraph, _converter, maxSnapDistanceMeters))
+                accepted.Add(route);
+            yield return null;
         }
-
-        // ── Step 7: Generate return routes ────────────────────────────
+        parsedRoutes = applyRouteFilter ? BusRouteParser.FilterRoutes(accepted) : accepted;
         if (generateReturnRoutes)
         {
             var returns = BusRouteParser.GenerateReturnRoutes(parsedRoutes);
-            parsedRoutes.AddRange(returns);
+            accepted = new List<BusRouteParser.ParsedBusRoute>();
+            foreach (var route in returns)
+            {
+                if (RoadRoutePathBuilder.TryBuild(route, roadGraph, _converter, maxSnapDistanceMeters))
+                    accepted.Add(route);
+                yield return null;
+            }
+            parsedRoutes.AddRange(applyRouteFilter ? BusRouteParser.FilterRoutes(accepted) : accepted);
         }
 
         // ── Step 8: Convert to BusRoute ScriptableObjects ─────────────
@@ -202,6 +202,7 @@ public class OSMRouteImporter : MonoBehaviour
         foreach (var pr in parsedRoutes)
         {
             var route = CreateBusRouteAsset(pr);
+            route.sourceCityCode = city.cityCode;
             importedRoutes.Add(route);
         }
 
@@ -215,91 +216,38 @@ public class OSMRouteImporter : MonoBehaviour
         SetStatus($"Done — {routesAccepted} routes imported.");
         Debug.Log($"[OSMRouteImporter] Complete: {routesAccepted} routes for {city.cityName}.");
         OnImportComplete?.Invoke(importedRoutes);
+        }
+        finally { importInProgress = false; }
     }
 
-    // ── Section 3.7A: Stop snapping ───────────────────────────────────
-
-    void SnapStopsToRoadGraph(BusRouteParser.ParsedBusRoute route, RoadGraph graph)
+    public BusRoute CreateBusRouteAsset(BusRouteParser.ParsedBusRoute parsed)
     {
-        if (graph.nodes.Count < 2 || _converter == null) return;
-
-        foreach (var stop in route.stops)
-        {
-            Vector3 stopWorld = _converter.GeoToWorldPosition(stop.latitude, stop.longitude);
-
-            if (!graph.TryProjectToNearestSegment(
-                    stopWorld,
-                    out Vector3 snapped,
-                    out _, out _,
-                    out float dist))
-                continue;
-
-            if (dist > maxSnapDistanceMeters) continue;
-
-            var (lat, lon) = _converter.WorldToGeoPosition(snapped);
-            stop.latitude  = lat;
-            stop.longitude = lon;
-        }
+        return CreateRouteAsset(parsed, _converter);
     }
 
-    // ── Section 3.7A: A* geometry refinement ─────────────────────────
-
-    void RefineGeometryWithAStar(BusRouteParser.ParsedBusRoute route, RoadGraph graph)
+    public static BusRoute CreateRouteAsset(BusRouteParser.ParsedBusRoute parsed, CoordinateConverter converter)
     {
-        if (route.stops.Count < 2 || graph.nodes.Count < 2 || _converter == null) return;
-
-        var refined = new List<(double lat, double lon)>();
-
-        for (int i = 0; i < route.stops.Count - 1; i++)
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.name = SanitiseName($"Route_{parsed.routeRef}_{parsed.destinationName}");
+        route.generatedRouteId = parsed.osmRelationId > 0 ? "osm:" + parsed.osmRelationId + (parsed.isReturn ? ":return" : "") : parsed.routeRef;
+        route.osmRelationId = parsed.osmRelationId;
+        route.isRoadPathValidated = parsed.isRoadPathValidated;
+        route.routeNumber = parsed.routeRef;
+        route.routeName = parsed.routeName;
+        route.busStops = parsed.stops.ToArray();
+        route.SyncLegacyStopsFromBusStops();
+        route.distanceKm = parsed.lengthKm;
+        route.estimatedTimeMinutes = parsed.estimatedMinutes;
+        route.difficulty = parsed.difficulty;
+        route.geometryLatLonFlat = new double[parsed.geometry.Count * 2];
+        route.pathPoints = new Vector3[parsed.geometry.Count];
+        for (int i = 0; i < parsed.geometry.Count; i++)
         {
-            Vector3 aWorld = _converter.GeoToWorldPosition(
-                route.stops[i].latitude, route.stops[i].longitude);
-            Vector3 bWorld = _converter.GeoToWorldPosition(
-                route.stops[i + 1].latitude, route.stops[i + 1].longitude);
-
-            int startNode = graph.FindNearestNodeIndex(aWorld);
-            int goalNode  = graph.FindNearestNodeIndex(bWorld);
-
-            var path = graph.FindPathAStar(startNode, goalNode);
-
-            if (path.Count >= 2)
-            {
-                foreach (int ni in path)
-                    refined.Add((graph.nodes[ni].lat, graph.nodes[ni].lon));
-            }
-            else
-            {
-                // Fallback: straight line between stops.
-                refined.Add((route.stops[i].latitude,     route.stops[i].longitude));
-                refined.Add((route.stops[i + 1].latitude, route.stops[i + 1].longitude));
-            }
+            var point = parsed.geometry[i];
+            route.geometryLatLonFlat[i * 2] = point.lat;
+            route.geometryLatLonFlat[i * 2 + 1] = point.lon;
+            if (converter != null) route.pathPoints[i] = converter.GeoToWorldPosition(point.lat, point.lon);
         }
-
-        if (refined.Count > 0)
-            route.geometry = refined;
-    }
-
-    // ── BusRoute asset creation ────────────────────────────────────────
-
-    static BusRoute CreateBusRouteAsset(BusRouteParser.ParsedBusRoute pr)
-    {
-        var route      = ScriptableObject.CreateInstance<BusRoute>();
-        route.name     = SanitiseName($"Route_{pr.routeRef}_{pr.destinationName}");
-        route.routeName = pr.routeName;
-        route.baseFare  = 50f;
-
-        var stops = new BusStopData[pr.stops.Count];
-        for (int i = 0; i < pr.stops.Count; i++)
-        {
-            stops[i] = new BusStopData
-            {
-                stopName  = pr.stops[i].stopName,
-                latitude  = pr.stops[i].latitude,
-                longitude = pr.stops[i].longitude,
-            };
-        }
-        route.stops = stops;
-
         return route;
     }
 
@@ -307,13 +255,11 @@ public class OSMRouteImporter : MonoBehaviour
     {
         if (city == null || importedRoutes.Count == 0) return;
 
-        var existing  = city.availableRoutes ?? System.Array.Empty<BusRoute>();
-        var all       = new BusRoute[existing.Length + importedRoutes.Count];
-        existing.CopyTo(all, 0);
-        importedRoutes.CopyTo(all, existing.Length);
-        city.availableRoutes = all;
-
-        Debug.Log($"[OSMRouteImporter] City '{city.cityName}' now has {all.Length} routes.");
+        var merged = new Dictionary<string, BusRoute>();
+        foreach (var route in city.availableRoutes ?? System.Array.Empty<BusRoute>())
+            if (route != null) merged[route.GetProgressionId(city.cityCode)] = route;
+        foreach (var route in importedRoutes) merged[route.GetProgressionId(city.cityCode)] = route;
+        city.availableRoutes = new List<BusRoute>(merged.Values).ToArray();
     }
 
     // ── Overpass HTTP helper ───────────────────────────────────────────

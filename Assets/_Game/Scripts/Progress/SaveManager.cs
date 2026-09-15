@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -84,6 +85,7 @@ public class SaveManager : MonoBehaviour
     readonly HashSet<string> liveries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     readonly List<MissionHistoryEntry> missionHistory = new List<MissionHistoryEntry>();
     readonly ISaveCloudSync cloudSync = new PlayFabSaveCloudSync();
+    static readonly Regex UpdatedAtJsonPattern = new Regex(@"""updatedAtUnixSeconds"":-?[0-9]+,?", RegexOptions.CultureInvariant);
 
     SaveConflictInfo pendingConflict;
     SaveData lastAppliedSave;
@@ -177,6 +179,17 @@ public class SaveManager : MonoBehaviour
         var fleetManager = BusFleetManager.EnsureExists();
         var gameState = EnsureGameStateExists();
 
+        if (UpgradeManager.Instance != null)
+        {
+            string[] purchasedUpgradeKeys = UpgradeManager.Instance.GetPurchasedKeys();
+            for (int i = 0; i < purchasedUpgradeKeys.Length; i++)
+            {
+                string key = purchasedUpgradeKeys[i];
+                if (!activeUpgrades.ContainsKey(key))
+                    activeUpgrades[key] = "owned";
+            }
+        }
+
         string selectedCountry = string.Empty;
         if (gameState.selectedCountry != null)
             selectedCountry = !string.IsNullOrWhiteSpace(gameState.selectedCountry.countryCode)
@@ -233,6 +246,8 @@ public class SaveManager : MonoBehaviour
                     activeUpgrades[entry.key] = entry.value ?? string.Empty;
             }
         }
+
+        UpgradeManager.EnsureExists().ApplySaveEntries(saveData.activeUpgrades);
 
         liveries.Clear();
         if (saveData.liveries != null)
@@ -296,6 +311,25 @@ public class SaveManager : MonoBehaviour
         SaveNow("mission_complete");
     }
 
+    public IReadOnlyList<MissionHistoryEntry> GetMissionHistory()
+    {
+        return missionHistory;
+    }
+
+    public bool TryGetRouteHistory(string routeId, out int bestStars, out float bestScore, out long lastPlayedUnixSeconds)
+    {
+        bestStars = 0; bestScore = 0f; lastPlayedUnixSeconds = 0;
+        if (string.IsNullOrWhiteSpace(routeId)) return false;
+        bool found = false;
+        for (int i = 0; i < missionHistory.Count; i++)
+        {
+            MissionHistoryEntry entry = missionHistory[i];
+            if (entry == null || !string.Equals(entry.routeId, routeId, StringComparison.OrdinalIgnoreCase)) continue;
+            found = true; bestStars = Mathf.Max(bestStars, entry.stars); bestScore = Mathf.Max(bestScore, entry.totalScore); lastPlayedUnixSeconds = Math.Max(lastPlayedUnixSeconds, entry.completedAtUnixSeconds);
+        }
+        return found;
+    }
+
     public void RegisterUpgradePurchase(string upgradeId, string value = "owned")
     {
         if (string.IsNullOrWhiteSpace(upgradeId))
@@ -316,6 +350,44 @@ public class SaveManager : MonoBehaviour
             PersistAuxiliaryCollections();
             SaveNow("livery_unlock");
         }
+    }
+
+    public void RegisterLivery(string busId, string liveryCode)
+    {
+        if (string.IsNullOrWhiteSpace(busId) || string.IsNullOrWhiteSpace(liveryCode))
+            return;
+
+        if (!LiveryCodeCodec.TryDecode(liveryCode, out _))
+            return;
+
+        string prefix = busId.Trim() + "=";
+        liveries.RemoveWhere(value => value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        liveries.Add(prefix + LiveryCodeCodec.Normalize(liveryCode));
+        PersistAuxiliaryCollections();
+        SaveNow("livery_save");
+    }
+
+    public bool TryGetLiveryCode(string busId, out string liveryCode)
+    {
+        liveryCode = string.Empty;
+        if (string.IsNullOrWhiteSpace(busId))
+            return false;
+
+        string prefix = busId.Trim() + "=";
+        foreach (string entry in liveries)
+        {
+            if (!entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            string candidate = entry.Substring(prefix.Length);
+            if (LiveryCodeCodec.TryDecode(candidate, out _))
+            {
+                liveryCode = LiveryCodeCodec.Normalize(candidate);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void ResolvePendingConflictUsingCloud()
@@ -591,7 +663,9 @@ public class SaveManager : MonoBehaviour
         if (left == null || right == null)
             return left == right;
 
-        return JsonUtility.ToJson(left) == JsonUtility.ToJson(right);
+        string leftJson = UpdatedAtJsonPattern.Replace(JsonUtility.ToJson(left), string.Empty);
+        string rightJson = UpdatedAtJsonPattern.Replace(JsonUtility.ToJson(right), string.Empty);
+        return leftJson == rightJson;
     }
 
     static PlayerEconomyData CloneEconomy(PlayerEconomyData source)

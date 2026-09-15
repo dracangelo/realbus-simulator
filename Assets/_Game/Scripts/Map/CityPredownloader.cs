@@ -14,6 +14,19 @@ using System.Collections.Generic;
 /// </summary>
 public class CityPredownloader : MonoBehaviour
 {
+    [System.Serializable]
+    public class CityDownloadStatus
+    {
+        public string cityCode;
+        public string mapStyle;
+        public int zoom;
+        public int total;
+        public int cached;
+        public int failed;
+        public float estimatedMb;
+        public bool complete;
+        public long updatedAt;
+    }
     // ── Inspector ──────────────────────────────────────────────────────
 
     [Header("Mapbox")]
@@ -53,6 +66,7 @@ public class CityPredownloader : MonoBehaviour
     OfflineCacheManager _cache;
     long  _totalBytesObserved;
     int   _tilesWithSizeData;
+    CityDefinition _activeCity;
 
     // ── Lifecycle ──────────────────────────────────────────────────────
 
@@ -83,28 +97,16 @@ public class CityPredownloader : MonoBehaviour
         double centerLat, double centerLon,
         int zoom, float radiusMeters, float tileWorldSizeMeters)
     {
-        int cx = MapTileLoader.LonToTileX(centerLon, zoom);
-        int cy = MapTileLoader.LatToTileY(centerLat, zoom);
-        int r  = Mathf.CeilToInt(radiusMeters / Mathf.Max(1f, tileWorldSizeMeters));
-
-        var list = new List<(int x, int y, float dist)>(r * r * 4);
-        for (int dx = -r; dx <= r; dx++)
-        {
-            for (int dy = -r; dy <= r; dy++)
-            {
-                float d = Mathf.Sqrt(dx * dx + dy * dy) * tileWorldSizeMeters;
-                if (d > radiusMeters) continue;
-                list.Add((cx + dx, cy + dy, d));
-            }
-        }
-        list.Sort((a, b) => a.dist.CompareTo(b.dist));  // now resolves correctly
-        return list;
+        // Retain the legacy parameter for callers; tile size is determined by latitude and zoom.
+        return SlippyTileCoverage.InRadius(centerLat, centerLon, zoom, radiusMeters);
     }
 
     // ── Download coroutine ─────────────────────────────────────────────
 
     IEnumerator DownloadRoutine(CityDefinition city)
     {
+        _cache = OfflineCacheManager.Instance ?? FindFirstObjectByType<OfflineCacheManager>();
+        _activeCity = city;
         isDownloading   = true;
         isCancelled     = false;
         completedTiles  = 0;
@@ -119,6 +121,7 @@ public class CityPredownloader : MonoBehaviour
         // Initial estimate: 0.22 MB per @2x PNG tile (conservative)
         estimatedMB = totalTiles * 0.22f;
         OnEstimatedMbChanged?.Invoke(estimatedMB);
+        SaveStatus(city, false);
 
         Debug.Log($"[CityPredownloader] Starting: {city.cityName} — {totalTiles} tiles.");
 
@@ -127,7 +130,7 @@ public class CityPredownloader : MonoBehaviour
 
         while ((completedTiles + failedTiles) < totalTiles && !isCancelled)
         {
-            while (inFlight < maxConcurrent && index < tiles.Count && !isCancelled)
+            while (inFlight < Mathf.Max(1, maxConcurrent) && index < tiles.Count && !isCancelled)
             {
                 var tile = tiles[index++];
                 inFlight++;
@@ -159,7 +162,19 @@ public class CityPredownloader : MonoBehaviour
             yield return null;
         }
 
+        // Drain workers before allowing a new job to reuse the counters/settings.
+        while (inFlight > 0) yield return null;
+        if (!isCancelled && _cache != null)
+        {
+            // A successful response is not proof of offline availability after LRU eviction.
+            completedTiles = 0;
+            foreach (var tile in tiles)
+                if (_cache.IsTileCached(mapStyle, zoomLevel, tile.x, tile.y)) completedTiles++;
+            failedTiles = totalTiles - completedTiles;
+            FireProgress();
+        }
         isDownloading = false;
+        SaveStatus(city, !isCancelled && failedTiles == 0 && completedTiles == totalTiles);
         Debug.Log($"[CityPredownloader] Done — {completedTiles} OK, {failedTiles} failed, " +
                   $"cancelled={isCancelled}.  Total ≈ {estimatedMB:F1} MB.");
         OnComplete?.Invoke(isCancelled);
@@ -172,7 +187,7 @@ public class CityPredownloader : MonoBehaviour
         bool  success   = false;
         long  byteCount = 0;
 
-        for (int attempt = 0; attempt <= retryAttempts && !success; attempt++)
+        for (int attempt = 0; attempt <= retryAttempts && !success && !isCancelled; attempt++)
         {
             if (attempt > 0)
                 yield return new WaitForSeconds(0.5f * attempt); // back-off
@@ -185,7 +200,9 @@ public class CityPredownloader : MonoBehaviour
             {
                 // Rough byte estimate from texture dimensions (@2x PNG).
                 byteCount = (long)(tex.width * tex.height * 4 * 0.6f); // ~60 % PNG compression
-                success   = true;
+                success = _cache.IsTileCached(mapStyle, zoomLevel, x, y);
+                if (success) byteCount = new System.IO.FileInfo(_cache.GetTileCachePath(mapStyle, zoomLevel, x, y)).Length;
+                Destroy(tex);
             }
         }
 
@@ -199,6 +216,7 @@ public class CityPredownloader : MonoBehaviour
         int done  = completedTiles + failedTiles;
         float p   = totalTiles > 0 ? (float)done / totalTiles : 1f;
         OnProgress?.Invoke(p);
+        if (_activeCity != null && (done == totalTiles || done % 8 == 0)) SaveStatus(_activeCity, false);
     }
 
     void UpdateSizeEstimate(long observedBytes)
@@ -210,4 +228,59 @@ public class CityPredownloader : MonoBehaviour
         estimatedMB   = avgMB * totalTiles;
         OnEstimatedMbChanged?.Invoke(estimatedMB);
     }
+
+    public CityDownloadStatus GetStatus(CityDefinition city, bool verifyCache = true)
+    {
+        if (city == null) return null;
+        string key = StatusKey(city);
+        CityDownloadStatus status = new CityDownloadStatus { cityCode = CityKey(city), mapStyle = mapStyle, zoom = zoomLevel };
+        string json = PlayerPrefs.GetString(key, string.Empty);
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            try { JsonUtility.FromJsonOverwrite(json, status); } catch (System.Exception) { }
+        }
+        if (status.total <= 0 || status.zoom != zoomLevel || status.mapStyle != mapStyle)
+        {
+            status.mapStyle = mapStyle; status.zoom = zoomLevel;
+            status.total = GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize).Count;
+            status.estimatedMb = status.total * 0.22f;
+        }
+        if (verifyCache)
+        {
+            _cache = OfflineCacheManager.Instance ?? FindFirstObjectByType<OfflineCacheManager>();
+            if (_cache != null)
+            {
+                int cached = 0;
+                var tiles = GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize);
+                for (int i = 0; i < tiles.Count; i++) if (_cache.IsTileCached(mapStyle, zoomLevel, tiles[i].x, tiles[i].y)) cached++;
+                status.cached = cached; status.total = tiles.Count; status.complete = cached == tiles.Count && tiles.Count > 0;
+            }
+        }
+        return status;
+    }
+
+    public static long GetAvailableStorageBytes()
+    {
+        try
+        {
+            string root = System.IO.Path.GetPathRoot(Application.persistentDataPath);
+            return string.IsNullOrWhiteSpace(root) ? -1 : new System.IO.DriveInfo(root).AvailableFreeSpace;
+        }
+        catch (System.Exception) { return -1; }
+    }
+
+    void SaveStatus(CityDefinition city, bool complete)
+    {
+        if (city == null) return;
+        CityDownloadStatus status = new CityDownloadStatus
+        {
+            cityCode = CityKey(city), mapStyle = mapStyle, zoom = zoomLevel, total = totalTiles,
+            cached = completedTiles, failed = failedTiles, estimatedMb = estimatedMB, complete = complete,
+            updatedAt = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        PlayerPrefs.SetString(StatusKey(city), JsonUtility.ToJson(status)); PlayerPrefs.Save();
+    }
+
+    static string CityKey(CityDefinition city) { return !string.IsNullOrWhiteSpace(city.cityCode) ? city.cityCode : city.cityName; }
+    static string StatusKey(CityDefinition city) { return "RealBus.CityDownload.v1." + CityKey(city); }
 }

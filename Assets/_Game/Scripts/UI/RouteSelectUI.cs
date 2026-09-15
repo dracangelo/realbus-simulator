@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class RouteSelectUI : MonoBehaviour
 {
@@ -165,7 +166,7 @@ public class RouteSelectUI : MonoBehaviour
         card.transform.SetParent(routeListContainer, false);
 
         var rect = card.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(400, 170);
+        rect.sizeDelta = new Vector2(400, 198);
 
         var img = card.AddComponent<Image>();
         img.color = UITheme.SurfaceContainer;
@@ -283,6 +284,18 @@ public class RouteSelectUI : MonoBehaviour
         difficultyRect.anchorMax = new Vector2(1f, 0.2f);
         difficultyRect.offsetMin = new Vector2(0f, 0f);
         difficultyRect.offsetMax = new Vector2(-18f, 0f);
+
+        string routeId = route.GetProgressionId(activeCity != null ? activeCity.cityCode : null);
+        int bestStars; float bestScore; long lastPlayed;
+        string history = SaveManager.EnsureExists().TryGetRouteHistory(routeId, out bestStars, out bestScore, out lastPlayed)
+            ? $"BEST {bestScore:0}%  {new string('★', Mathf.Clamp(bestStars, 0, 5))}   •   LAST {DateTimeOffset.FromUnixTimeSeconds(lastPlayed).ToLocalTime():d MMM}"
+            : "BEST —   •   NOT YET DRIVEN";
+        history += "   •   " + RouteMasteryManager.EnsureExists().GetCompactLabel(routeId);
+        var historyText = CreateText("Text_History", card.transform, history, 12,
+            UITheme.GetFont(UITheme.FontWeight.Medium), UITheme.TextMuted, TextAlignmentOptions.Left);
+        var historyRect = historyText.GetComponent<RectTransform>();
+        historyRect.anchorMin = new Vector2(0f, 0f); historyRect.anchorMax = new Vector2(0.72f, 0f);
+        historyRect.pivot = new Vector2(0f, 0f); historyRect.anchoredPosition = new Vector2(20f, 8f); historyRect.sizeDelta = new Vector2(0f, 28f);
 
         var capturedRoute = route;
         btn.onClick.AddListener(() => OnRouteSelected(capturedRoute));

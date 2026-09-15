@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6de1fc47cd24858aa02b2d1d62ce0a0, type: 3}
+  m_Name: AudioProductionProfile
+  m_EditorClassIdentifier:
+  vehicleGroup: {fileID: 0}
+  cabinGroup: {fileID: 0}
+  ambienceGroup: {fileID: 0}
+  effectsGroup: {fileID: 0}
+  uiGroup: {fileID: 0}
+  engineIdle: {fileID: 0}
+  engineLoad: {fileID: 0}
+  tyreRoll: {fileID: 0}
+  tyreSqueal: {fileID: 0}
+  brakeSqueal: {fileID: 0}
+  airHiss: {fileID: 0}
+  collisionHit: {fileID: 0}
+  passengerChatter: {fileID: 0}
+  airConditioning: {fileID: 0}
+  cityAmbience: {fileID: 0}
+  uiClick: {fileID: 0}
+  dockingChime: {fileID: 0}
+  missionFanfare: {fileID: 0}
+  rankJingle: {fileID: 0}

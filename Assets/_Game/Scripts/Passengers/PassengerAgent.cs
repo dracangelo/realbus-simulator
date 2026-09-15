@@ -75,11 +75,11 @@ public class PassengerAgent
         assignedSlotIndex = slotIndex;
     }
 
-    public void UpdateStandingSway(float inverseAcceleration)
+    public void UpdateStandingSway(float inverseAcceleration, float deltaTime = 0.02f)
     {
         // Standing passengers sway opposite longitudinal acceleration.
         standingSway = Mathf.Clamp(inverseAcceleration * 0.08f, -0.35f, 0.35f);
-        satisfaction = Mathf.Clamp01(satisfaction - Mathf.Abs(standingSway) * 0.0005f);
+        satisfaction = Mathf.Clamp01(satisfaction - Mathf.Abs(standingSway) * 0.025f * deltaTime);
     }
 
     public void TickBoardingAnimation(float deltaTime, Vector3 targetBusLocalPosition, float lerpSpeed = 2.6f)
@@ -116,9 +116,9 @@ public class PassengerAgent
         stopRequested = false;
     }
 
-    public void RegisterHarshAcceleration()
+    public void RegisterHarshAcceleration(float deltaTime = 0.02f)
     {
-        satisfaction = Mathf.Clamp01(satisfaction - 0.04f);
+        satisfaction = Mathf.Clamp01(satisfaction - 0.08f * deltaTime);
     }
 
     public float GetBoardingTimeMultiplier()
@@ -144,7 +144,7 @@ public class PassengerAgent
 
     public bool RequiresKneelingForBoarding()
     {
-        return archetype == PassengerArchetype.Elderly;
+        return isWheelchairPassenger || archetype == PassengerArchetype.Elderly;
     }
 
     public void PrepareForUpcomingStop()

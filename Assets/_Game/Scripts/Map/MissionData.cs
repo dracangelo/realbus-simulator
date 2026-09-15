@@ -17,6 +17,7 @@ public class MissionData : ScriptableObject
     public MissionArchetype missionType = MissionArchetype.ScheduledRoute;
     public WeatherState requiredWeather = WeatherState.HeavyRain;
     [Range(0f, 1f)] public float requiredWeatherIntensity = 0.85f;
+    public bool applyRequiredWeather;
     [Min(0)] public int minimumDynamicEvents = 0;
     [Min(0)] public int maximumAllowedViolations = 2;
     [Range(0f, 1f)] public float minimumSafetyScore = 0.75f;
@@ -35,7 +36,8 @@ public class MissionData : ScriptableObject
     public float punctualityTarget = 0.8f; // 80% on time
 
     [Header("Rewards")]
-    public int baseXP = 200;
+    [Tooltip("0 derives 200–1000 XP from route difficulty.")]
+    public int baseXP = 0;
     public float difficultyMultiplier = 1.0f;
     public int timeBonusXP = 50;
 

@@ -39,7 +39,7 @@ public static class OverpassQueryBuilder
 
     /// <summary>Formats a bbox string in the Overpass order (S,W,N,E).</summary>
     public static string FormatBbox(double minLat, double minLon, double maxLat, double maxLon) =>
-        $"{minLat:F7},{minLon:F7},{maxLat:F7},{maxLon:F7}";
+        System.FormattableString.Invariant($"{minLat:F7},{minLon:F7},{maxLat:F7},{maxLon:F7}");
 
     // ── Section 3.6: Road network ──────────────────────────────────────
 
@@ -79,7 +79,7 @@ public static class OverpassQueryBuilder
         // the body+skel approach is more reliable across Overpass instances.
         return Header(timeoutSeconds) +
                $"relation[route=bus]({bbox});" +
-               "out body;>;out skel qt;";
+               "out body;>;out body qt;";
     }
 
     /// <summary>
@@ -110,8 +110,8 @@ public static class OverpassQueryBuilder
     {
         string bbox = FormatBbox(minLat, minLon, maxLat, maxLon);
         return Header(timeoutSeconds) +
-               $"node[highway=bus_stop]({bbox});" +
-               $"node[public_transport=stop_position]({bbox});" +
+               $"(node[highway=bus_stop]({bbox});" +
+               $"node[public_transport=stop_position]({bbox}););" +
                "out body;";
     }
 
@@ -125,8 +125,8 @@ public static class OverpassQueryBuilder
     {
         string bbox = FormatBbox(minLat, minLon, maxLat, maxLon);
         return Header(timeoutSeconds) +
-               $"node[amenity=fuel]({bbox});" +
-               $"node[amenity=charging_station]({bbox});" +
+               $"(node[amenity=fuel]({bbox});" +
+               $"node[amenity=charging_station]({bbox}););" +
                "out body;";
     }
 

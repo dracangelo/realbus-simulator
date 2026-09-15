@@ -15,6 +15,7 @@ public class FreeDriveSession : MonoBehaviour
     public static FreeDriveSession Instance { get; private set; }
 
     [Header("Session State")]
+    public bool autoStart = true;
     public bool sessionActive = false;
     public float distanceDrivenKm = 0f;
     public float sessionTimeSeconds = 0f;
@@ -40,7 +41,7 @@ public class FreeDriveSession : MonoBehaviour
         busController = FindFirstObjectByType<BusController>();
         fuelLitres = ResolveInitialFuelLitres();
         fuelLevel = Mathf.Clamp01(fuelLitres / Mathf.Max(1f, fuelCapacityLitres)) * 100f;
-        StartCoroutine(BeginSessionWhenReady());
+        if (autoStart) StartCoroutine(BeginSessionWhenReady());
     }
 
     void Update()
@@ -55,6 +56,12 @@ public class FreeDriveSession : MonoBehaviour
             float speedKmh = busController.currentSpeedKmh;
             float distanceDelta = (speedKmh / 3600f) * Time.deltaTime;
             distanceDrivenKm += distanceDelta;
+            if (busController.GetComponent<FuelSystem>() == null && busController.GetComponent<BatterySystem>() == null)
+            {
+                fuelLitres = Mathf.Max(0f, fuelLitres - distanceDelta * fuelConsumptionPer100km / 100f);
+                fuelLevel = fuelLitres / Mathf.Max(1f, fuelCapacityLitres) * 100f;
+                busController.FuelDepleted = fuelLitres <= 0f;
+            }
         }
     }
 
@@ -76,6 +83,8 @@ public class FreeDriveSession : MonoBehaviour
 
     public void StartSession()
     {
+        if (sessionActive) return;
+        if (busController == null) busController = FindFirstObjectByType<BusController>();
         MissionManager.Instance?.AbortMissionForFreeDrive();
         PassengerManager.Instance?.ResetForFreeDriveMode();
 

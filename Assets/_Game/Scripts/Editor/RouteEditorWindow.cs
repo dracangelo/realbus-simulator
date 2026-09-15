@@ -38,6 +38,8 @@ public class RouteEditorWindow : EditorWindow
         SceneView.duringSceneGui -= OnSceneGUI;
     }
 
+    TextAsset validationRoads;
+
     void OnGUI()
     {
         route = (BusRoute)EditorGUILayout.ObjectField("BusRoute", route, typeof(BusRoute), false);
@@ -51,6 +53,8 @@ public class RouteEditorWindow : EditorWindow
             return;
         }
 
+        validationRoads = (TextAsset)EditorGUILayout.ObjectField("Roads JSON for validation", validationRoads, typeof(TextAsset), false);
+        if (GUILayout.Button("Rebuild road-following path and validate")) RebuildValidatedPath();
         if (GUILayout.Button("Focus SceneView on route"))
             FocusOnRoute();
 
@@ -163,6 +167,7 @@ public class RouteEditorWindow : EditorWindow
                 stop.latitude = gps.lat;
                 stop.longitude = gps.lon;
                 route.busStops[i] = stop;
+                route.isRoadPathValidated = false;
                 EditorUtility.SetDirty(route);
             }
 
@@ -186,6 +191,40 @@ public class RouteEditorWindow : EditorWindow
         SceneView.lastActiveSceneView.Frame(bounds, false);
     }
 
+    void RebuildValidatedPath()
+    {
+        var conv = converter != null ? converter : FindFirstObjectByType<CoordinateConverter>();
+        if (route == null || validationRoads == null || conv == null || route.busStops == null)
+        {
+            EditorUtility.DisplayDialog("Route validation", "Assign a route, road JSON, and coordinate converter.", "OK");
+            return;
+        }
+        var parsed = new BusRouteParser.ParsedBusRoute { routeName = route.routeName, routeRef = route.routeNumber };
+        foreach (var stop in route.busStops)
+            parsed.stops.Add(new BusStop { stopId = stop.stopId, stopName = stop.stopName, latitude = stop.latitude,
+                longitude = stop.longitude, headingDegrees = stop.headingDegrees });
+        var graph = RoadGraph.BuildFromOverpassWays(OverpassResponse.Deserialize(validationRoads.text), conv);
+        if (!RoadRoutePathBuilder.TryBuild(parsed, graph, conv, 60f) ||
+            BusRouteParser.FilterRoutes(new List<BusRouteParser.ParsedBusRoute> { parsed }).Count == 0)
+        {
+            EditorUtility.DisplayDialog("Route validation", "Route failed: disconnected roads, stops beyond 60 m, or outside 6–40 stops / 3–25 km. Existing asset was preserved.", "OK");
+            return;
+        }
+        Undo.RecordObject(route, "Rebuild road route");
+        var generated = OSMRouteImporter.CreateRouteAsset(parsed, conv);
+        route.busStops = generated.busStops;
+        route.SyncLegacyStopsFromBusStops();
+        route.geometryLatLonFlat = generated.geometryLatLonFlat;
+        route.pathPoints = generated.pathPoints;
+        route.distanceKm = generated.distanceKm;
+        route.estimatedTimeMinutes = generated.estimatedTimeMinutes;
+        route.difficulty = generated.difficulty;
+        route.isRoadPathValidated = true;
+        DestroyImmediate(generated);
+        EditorUtility.SetDirty(route);
+        AssetDatabase.SaveAssets();
+    }
+
     void DeleteStop(int index)
     {
         var list = new List<BusStop>(route.busStops);
@@ -193,6 +232,7 @@ public class RouteEditorWindow : EditorWindow
         route.busStops = list.ToArray();
         if (selectedStopIndex == index) selectedStopIndex = -1;
         if (selectedStopIndex > index) selectedStopIndex--;
+        route.isRoadPathValidated = false;
         EditorUtility.SetDirty(route);
     }
 
@@ -203,6 +243,7 @@ public class RouteEditorWindow : EditorWindow
         arr[a] = arr[b];
         arr[b] = tmp;
         route.busStops = arr;
+        route.isRoadPathValidated = false;
         EditorUtility.SetDirty(route);
     }
 
@@ -212,6 +253,7 @@ public class RouteEditorWindow : EditorWindow
         System.Array.Reverse(arr);
         route.busStops = arr;
         selectedStopIndex = -1;
+        route.isRoadPathValidated = false;
         EditorUtility.SetDirty(route);
     }
 
@@ -268,6 +310,7 @@ public class RouteEditorWindow : EditorWindow
         list.Insert(insertIndex, stop);
         route.busStops = list.ToArray();
         selectedStopIndex = insertIndex;
+        route.isRoadPathValidated = false;
         EditorUtility.SetDirty(route);
     }
 

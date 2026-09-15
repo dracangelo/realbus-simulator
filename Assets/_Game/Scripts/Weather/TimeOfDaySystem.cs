@@ -12,7 +12,7 @@ public class TimeOfDaySystem : MonoBehaviour
     public bool followScheduleManager = true;
     public float startTimeMinutes = 480f;
     public float currentTimeMinutes = 480f;
-    public float secondsPerGameMinute = 1f;
+    public float secondsPerGameMinute = 60f;
 
     [Header("Sun")]
     public float sunriseMinutes = 360f;
@@ -71,12 +71,12 @@ public class TimeOfDaySystem : MonoBehaviour
 
     public float GetSunIntensityMultiplier()
     {
-        return sunIntensityByDayPhase != null ? Mathf.Max(0f, sunIntensityByDayPhase.Evaluate(DayPhase01)) : 1f;
+        return sunIntensityByDayPhase != null ? Mathf.Max(0f, sunIntensityByDayPhase.Evaluate(RealismRules.Daylight(currentTimeMinutes, sunriseMinutes, sunsetMinutes))) : 1f;
     }
 
     public float GetAmbientIntensityMultiplier()
     {
-        return ambientIntensityByDayPhase != null ? Mathf.Max(0f, ambientIntensityByDayPhase.Evaluate(DayPhase01)) : 1f;
+        return ambientIntensityByDayPhase != null ? Mathf.Max(0f, ambientIntensityByDayPhase.Evaluate(RealismRules.Daylight(currentTimeMinutes, sunriseMinutes, sunsetMinutes))) : 1f;
     }
 
     public float GetShadowStrength()
