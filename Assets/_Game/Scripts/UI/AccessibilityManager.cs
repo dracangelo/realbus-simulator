@@ -1,4 +1,5 @@
 using TMPro;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,6 +9,13 @@ public class AccessibilityManager : MonoBehaviour
 {
     public static AccessibilityManager Instance { get; private set; }
     float nextTextScan;
+    readonly Dictionary<TMP_Text, TextBaseline> textBaselines = new Dictionary<TMP_Text, TextBaseline>();
+
+    sealed class TextBaseline
+    {
+        public float fontSize;
+        public Color color;
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap() { EnsureExists(); }
@@ -26,7 +34,11 @@ public class AccessibilityManager : MonoBehaviour
     }
 
     void OnDestroy() { if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded; }
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode) { nextTextScan = 0f; }
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        textBaselines.Clear();
+        nextTextScan = 0f;
+    }
 
     void Update()
     {
@@ -39,11 +51,24 @@ public class AccessibilityManager : MonoBehaviour
     {
         RealBusSettings settings = SettingsManager.EnsureExists().Current;
         TMP_Text[] labels = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        float minimum = settings.largeText ? 34f : 28f;
         for (int i = 0; i < labels.Length; i++)
         {
-            if (labels[i].fontSize < minimum) labels[i].fontSize = minimum;
-            if (settings.highContrast && labels[i].color.a > 0.5f) labels[i].color = Color.white;
+            TMP_Text label = labels[i];
+            if (!label) continue;
+
+            if (!textBaselines.TryGetValue(label, out TextBaseline baseline))
+            {
+                baseline = new TextBaseline { fontSize = label.fontSize, color = label.color };
+                textBaselines[label] = baseline;
+            }
+
+            // Preserve the UI's visual hierarchy. Large Text scales each role
+            // proportionally instead of forcing captions, badges and titles to
+            // one size (which caused clipping throughout the selection screens).
+            label.fontSize = settings.largeText ? baseline.fontSize * 1.18f : baseline.fontSize;
+            label.color = settings.highContrast && baseline.color.a > 0.5f
+                ? Color.white
+                : baseline.color;
         }
     }
 

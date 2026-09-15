@@ -17,7 +17,7 @@ namespace Mapbox.Unity.Map
 
 		private TreeModel<FeatureTreeElement> treeModel;
 		[SerializeField]
-		TreeViewState m_TreeViewState;
+		TreeViewState<int> m_TreeViewState;
 
 		[SerializeField]
 		MultiColumnHeaderState m_MultiColumnHeaderState;
@@ -39,7 +39,7 @@ namespace Mapbox.Unity.Map
 
 		public void DrawUI(SerializedProperty property)
 		{
-			objectId = property.serializedObject.targetObject.GetInstanceID().ToString();
+			objectId = property.serializedObject.targetObject.GetEntityId().ToString();
 			var prefabItemArray = property.FindPropertyRelative("locationPrefabList");
 			var layersRect = EditorGUILayout.GetControlRect(GUILayout.MinHeight(Mathf.Max(prefabItemArray.arraySize + 1, 1) * _lineHeight + MultiColumnHeader.DefaultGUI.defaultHeight),
 															GUILayout.MaxHeight((prefabItemArray.arraySize + 1) * _lineHeight + MultiColumnHeader.DefaultGUI.defaultHeight));
@@ -64,7 +64,7 @@ namespace Mapbox.Unity.Map
 				treeModel = new TreeModel<FeatureTreeElement>(GetData(prefabItemArray));
 				if (m_TreeViewState == null)
 				{
-					m_TreeViewState = new TreeViewState();
+					m_TreeViewState = new TreeViewState<int>();
 				}
 
 				if (layerTreeView == null)

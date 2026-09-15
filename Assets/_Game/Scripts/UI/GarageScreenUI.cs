@@ -474,7 +474,7 @@ public class GarageScreenUI : MonoBehaviour
         text.color = color;
         text.font = UITheme.GetFont(weight);
         text.alignment = alignment;
-        text.enableWordWrapping = true;
+        text.textWrappingMode = TextWrappingModes.Normal;
         return text;
     }
 

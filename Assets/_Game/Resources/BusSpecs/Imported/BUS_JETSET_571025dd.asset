@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a28baf5b9fec101c69806825d1e9a434, type: 3}
+  m_Name: BUS+JETSET
+  m_EditorClassIdentifier: GameScripts::BusSpec
+  busId: fleet.imported.571025dd169e
+  displayName: BUS+JETSET
+  description: Imported, game-ready bus model.
+  requiredRank: 3
+  modelPrefab: {fileID: 1548905386218406846, guid: d112e679b338656db9b9cbde8437ab55, type: 3}
+  previewSprite: {fileID: 0}
+  seatedCapacity: 36
+  standingCapacity: 34
+  totalCapacity: 70
+  doorOpenCapacityLimit: 70
+  bodyLengthMeters: 12
+  energyType: 0
+  energyCapacityUnits: 300
+  energyUnitLabel: L
+  cityConsumptionPer100Km: 35
+  motorwayConsumptionPer100Km: 28
+  motorwaySpeedThresholdKmh: 62
+  optimalCruiseRpm: 1350
+  unitPriceKES: 180
+  rigidbodyMassKg: 12533.333
+  maxSteerAngle: 42
+  steerSpeed: 0.1
+  centerOfMassY: 1.3347208
+  antiRollForce: 8000
+  maxBrakeTorque: 12000
+  retarderStrength: 3000
+  dragCoefficient: 0.65
+  frontalArea: 8.5
+  airDensity: 1.225
+  engineProfile: {fileID: 11400000, guid: e62efad03e9902e418324690f55383b2, type: 2}
+  transmissionProfile: {fileID: 11400000, guid: f3a5fb6e7040f5aaabbd3cb6c624f929, type: 2}

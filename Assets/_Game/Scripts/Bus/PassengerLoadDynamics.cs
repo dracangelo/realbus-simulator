@@ -16,6 +16,10 @@ public class PassengerLoadDynamics : MonoBehaviour
     {
         body = GetComponent<Rigidbody>();
         bus = GetComponent<BusController>();
+        if (passengerManager == null)
+            passengerManager = PassengerManager.Instance != null
+                ? PassengerManager.Instance
+                : FindAnyObjectByType<PassengerManager>();
         emptyMassKg = body.mass;
         previousTotal = body.mass;
     }

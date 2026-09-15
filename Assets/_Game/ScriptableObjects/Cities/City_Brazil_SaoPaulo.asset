@@ -31,5 +31,5 @@ MonoBehaviour:
   spawnLon: -46.6333
   isDownloaded: 1
   previewImagePath: 
-  rainySeasonMonths: 0b0000000c000000010000000200000003000000
+  rainySeasonMonths: 0b0000000c000000010000000200000003000000i
   snowSeasonMonths: 

@@ -1,11 +1,13 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System.Collections;
 
 public class CitySelectUI : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("Legacy Scene References")]
     public CanvasGroup canvasGroup;
     public RectTransform contentPanel;
     public TextMeshProUGUI titleText;
@@ -16,334 +18,252 @@ public class CitySelectUI : MonoBehaviour
     public Image headerAccentLine;
     public ScrollRect scrollRect;
 
-    void Start()
+    CityDefinition[] cities = Array.Empty<CityDefinition>();
+    CityDefinition featuredCity;
+    TextMeshProUGUI heroCity;
+    TextMeshProUGUI heroDetail;
+    TextMeshProUGUI driveLabel;
+    Button driveButton;
+    readonly Dictionary<CityDefinition, Outline> cardFrames = new Dictionary<CityDefinition, Outline>();
+
+    IEnumerator Start()
     {
         UnlockManager.EnsureExists();
-        ApplyTheme();
-        EnsureCityGridLayout();
-        SetupButtons();
-        PopulateCityList();
-        StartCoroutine(AnimateIn());
-    }
-
-    void ApplyTheme()
-    {
-        var bg = GetComponent<Image>();
-        if (bg) bg.color = UITheme.Background;
-
-        if (titleText)
-        {
-            titleText.text = "SELECT CITY";
-            titleText.color = UITheme.TextPrimary;
-            titleText.characterSpacing = 6f;
-        }
-
-        if (subtitleText)
-        {
-            subtitleText.text = "where do you want to drive?";
-            subtitleText.color = UITheme.TextSecondary;
-        }
-
-        if (headerAccentLine)
-            headerAccentLine.color = UITheme.Accent;
-
-        if (backButtonText)
-        {
-            backButtonText.text = "BACK";
-            backButtonText.color = UITheme.TextSecondary;
-            backButtonText.characterSpacing = 2f;
-        }
-
-        var backImg = backButton?.GetComponent<Image>();
-        if (backImg) backImg.color = UITheme.WithAlpha(UITheme.Surface, 0.8f);
-    }
-
-    void SetupButtons()
-    {
-        backButton?.onClick.AddListener(OnBack);
-    }
-
-    void EnsureCityGridLayout()
-    {
-        if (!cityListContainer)
-            return;
-
-        var listRect = cityListContainer as RectTransform;
-        if (!listRect)
-        {
-            Debug.LogWarning("CitySelectUI: cityListContainer is not a RectTransform. Skipping grid setup.");
-            return;
-        }
-
-        var vertical = listRect.GetComponent<VerticalLayoutGroup>();
-        if (vertical)
-            Destroy(vertical);
-
-        var grid = listRect.GetComponent<GridLayoutGroup>();
-        if (!grid)
-            grid = listRect.gameObject.AddComponent<GridLayoutGroup>();
-        if (!grid)
-            return;
-
-        // Match CreateCityCard() preferred size so the grid stays 3-across.
-        grid.cellSize = new Vector2(195f, 160f);
-        grid.spacing = new Vector2(22f, 22f);
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = 3;
-        grid.startAxis = GridLayoutGroup.Axis.Horizontal;
-        grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
-        grid.childAlignment = TextAnchor.UpperCenter;
-        grid.padding = new RectOffset(0, 0, 0, 0);
-    }
-
-    void PopulateCityList()
-    {
-        if (cityListContainer == null)
-        {
-            Debug.LogError("CitySelectUI: cityListContainer is not assigned.");
-            return;
-        }
-
-        foreach (Transform child in cityListContainer)
-            Destroy(child.gameObject);
-
-        // Get cities from selected country
-        var country = CityManager.Instance?.activeCountry;
-        if (country == null)
-        {
-            Debug.LogError("CitySelectUI: No active country!");
-            return;
-        }
-
-        var cities = country.cities;
-        if (cities == null || cities.Length == 0)
-        {
-            CreateEmptyState($"No cities available for {country.countryName} yet.");
-            return;
-        }
-
-        // Update subtitle with country name
-        if (subtitleText)
-        {
-            int unlockedCount = 0;
-            for (int i = 0; i < cities.Length; i++)
-            {
-                if (cities[i] != null && (UnlockManager.Instance == null || UnlockManager.Instance.IsCityUnlocked(cities[i])))
-                    unlockedCount++;
-            }
-
-            subtitleText.text = $"{country.countryName} — {unlockedCount}/{cities.Length} unlocked";
-        }
-
-        foreach (var city in cities)
-            if (city != null)
-                CreateCityCard(city);
-
-        Debug.Log($"CitySelectUI: Created {cities.Length} city cards for {country.countryName}.");
-        RefreshListLayout();
-
-        // Layout groups + ContentSizeFitter often need one extra frame in Play Mode.
-        StartCoroutine(RebuildNextFrame());
-    }
-
-    IEnumerator RebuildNextFrame()
-    {
         yield return null;
-        RefreshListLayout();
+        ResolveCities();
+        BuildCinematicScreen();
+        SelectInitialCity();
+        if (canvasGroup)
+        {
+            canvasGroup.alpha = 0f;
+            yield return StartCoroutine(UIAnimator.FadeIn(canvasGroup, .45f));
+        }
     }
 
-    void CreateEmptyState(string message)
+    void ResolveCities()
     {
-        GameObject msgObj = new GameObject("Text_Empty");
-        msgObj.transform.SetParent(cityListContainer, false);
-        var tmp = msgObj.AddComponent<TextMeshProUGUI>();
-        tmp.text = message;
-        tmp.fontSize = 18;
-        tmp.font = UITheme.GetFont(UITheme.FontWeight.Regular);
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = UITheme.TextMuted;
-        var rect = msgObj.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(0, 120);
+        CountryDefinition country = GameState.Instance?.selectedCountry;
+        if (country && country.cities != null)
+        {
+            var valid = new List<CityDefinition>();
+            foreach (CityDefinition city in country.cities) if (city) valid.Add(city);
+            cities = valid.ToArray();
+        }
     }
 
-    void CreateCityCard(CityDefinition city)
+    void BuildCinematicScreen()
+    {
+        if (!contentPanel)
+        {
+            Debug.LogError("CitySelectUI: contentPanel is not assigned.");
+            return;
+        }
+
+        SelectionUIStyle.SetRect(contentPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        for (int i = 0; i < contentPanel.childCount; i++) contentPanel.GetChild(i).gameObject.SetActive(false);
+
+        RectTransform screen = CreateUI("CinematicCityScreen", contentPanel);
+        SelectionUIStyle.Stretch(screen, Vector2.zero, Vector2.one);
+        Sprite hero = Resources.Load<Sprite>("UI/CountrySelectHero");
+        Image background = CreateImage("DestinationHero", screen, Color.white);
+        SelectionUIStyle.Stretch(background.rectTransform, Vector2.zero, Vector2.one);
+        background.sprite = hero;
+        background.preserveAspect = false;
+        Image shade = CreateImage("CinematicShade", screen, new Color(.012f, .02f, .024f, .30f));
+        SelectionUIStyle.Stretch(shade.rectTransform, Vector2.zero, Vector2.one);
+        Image leftShade = CreateImage("CopyShade", screen, new Color(.008f, .014f, .017f, .64f));
+        SelectionUIStyle.SetRect(leftShade.rectTransform, Vector2.zero, new Vector2(.50f, 1f), Vector2.zero, Vector2.zero);
+        Image bottomShade = CreateImage("CarouselShade", screen, new Color(.008f, .014f, .017f, .76f));
+        SelectionUIStyle.SetRect(bottomShade.rectTransform, Vector2.zero, new Vector2(1f, .36f), Vector2.zero, Vector2.zero);
+        BuildBrand(screen);
+        BuildBack(screen);
+        BuildHeroCopy(screen);
+        BuildCarousel(screen, hero);
+    }
+
+    void BuildBrand(RectTransform parent)
+    {
+        TextMeshProUGUI brand = SelectionUIStyle.CreateText("Brand", parent, "REAL BUS  /  SIMULATOR", 22f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(brand.rectTransform, new Vector2(.04f, .88f), new Vector2(.38f, .96f), Vector2.zero, Vector2.zero);
+        brand.characterSpacing = 1.5f;
+        TextMeshProUGUI step = SelectionUIStyle.CreateText("Step", parent, "COUNTRY  ✓    CITY  02    ROUTE  03", 11f,
+            UITheme.FontWeight.Bold, UITheme.WithAlpha(UITheme.TextPrimary, .72f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(step.rectTransform, new Vector2(.04f, .84f), new Vector2(.45f, .89f), Vector2.zero, Vector2.zero);
+        step.characterSpacing = 1.2f;
+    }
+
+    void BuildBack(RectTransform parent)
+    {
+        Image image = CreateImage("BackButton", parent, new Color(.03f, .05f, .055f, .76f));
+        SelectionUIStyle.SetRect(image.rectTransform, new Vector2(.855f, .88f), new Vector2(.96f, .95f), Vector2.zero, Vector2.zero);
+        Button button = image.gameObject.AddComponent<Button>();
+        TextMeshProUGUI label = SelectionUIStyle.CreateText("Label", image.transform, "‹  COUNTRIES", 13f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Center);
+        SelectionUIStyle.Stretch(label.rectTransform, Vector2.zero, Vector2.one);
+        button.onClick.AddListener(() => StartCoroutine(Transition(() => SceneLoader.Instance?.LoadCountrySelect())));
+    }
+
+    void BuildHeroCopy(RectTransform parent)
+    {
+        CountryDefinition country = GameState.Instance?.selectedCountry;
+        string eyebrowText = country ? $"EXPLORE {country.countryName.ToUpperInvariant()}" : "COUNTRY REQUIRED";
+        TextMeshProUGUI eyebrow = SelectionUIStyle.CreateText("Eyebrow", parent, eyebrowText, 14f,
+            UITheme.FontWeight.Medium, UITheme.WithAlpha(UITheme.TextPrimary, .82f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(eyebrow.rectTransform, new Vector2(.04f, .68f), new Vector2(.46f, .75f), Vector2.zero, Vector2.zero);
+        eyebrow.characterSpacing = 4f;
+        heroCity = SelectionUIStyle.CreateText("FeaturedCity", parent, country ? "Choose a city" : "Choose a country first", 66f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(heroCity.rectTransform, new Vector2(.04f, .52f), new Vector2(.48f, .69f), Vector2.zero, Vector2.zero);
+        heroCity.enableAutoSizing = true;
+        heroCity.fontSizeMin = 34f;
+        heroCity.fontSizeMax = 66f;
+        heroDetail = SelectionUIStyle.CreateText("FeaturedDetail", parent, "Select an operating area below", 21f,
+            UITheme.FontWeight.Regular, UITheme.WithAlpha(UITheme.TextPrimary, .9f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(heroDetail.rectTransform, new Vector2(.04f, .46f), new Vector2(.48f, .53f), Vector2.zero, Vector2.zero);
+        Image cta = CreateImage("DriveButton", parent, UITheme.Accent);
+        SelectionUIStyle.SetRect(cta.rectTransform, new Vector2(.04f, .365f), new Vector2(.34f, .445f), Vector2.zero, Vector2.zero);
+        SelectionUIStyle.AddOutline(cta.gameObject, UITheme.WithAlpha(Color.white, .42f));
+        driveButton = cta.gameObject.AddComponent<Button>();
+        driveLabel = SelectionUIStyle.CreateText("Label", cta.transform, "CHOOSE A CITY", 18f,
+            UITheme.FontWeight.Bold, UITheme.Background, TextAlignmentOptions.Center);
+        SelectionUIStyle.Stretch(driveLabel.rectTransform, Vector2.zero, Vector2.one);
+        driveButton.interactable = false;
+        driveButton.onClick.AddListener(ConfirmCity);
+    }
+
+    void BuildCarousel(RectTransform parent, Sprite hero)
+    {
+        Image viewport = CreateImage("CityViewport", parent, Color.clear);
+        SelectionUIStyle.SetRect(viewport.rectTransform, new Vector2(.035f, .045f), new Vector2(.965f, .325f), Vector2.zero, Vector2.zero);
+        viewport.gameObject.AddComponent<RectMask2D>();
+        RectTransform content = CreateUI("CityFilmstrip", viewport.transform);
+        content.anchorMin = new Vector2(0f, 0f);
+        content.anchorMax = new Vector2(0f, 1f);
+        content.pivot = new Vector2(0f, .5f);
+        content.anchoredPosition = Vector2.zero;
+        content.sizeDelta = Vector2.zero;
+        HorizontalLayoutGroup row = content.gameObject.AddComponent<HorizontalLayoutGroup>();
+        row.padding = new RectOffset(4, 18, 4, 4);
+        row.spacing = 16f;
+        row.childAlignment = TextAnchor.MiddleLeft;
+        row.childControlWidth = true;
+        row.childControlHeight = true;
+        row.childForceExpandWidth = false;
+        row.childForceExpandHeight = true;
+        ContentSizeFitter fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+        ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
+        scroll.viewport = viewport.rectTransform;
+        scroll.content = content;
+        scroll.horizontal = true;
+        scroll.vertical = false;
+        scroll.movementType = ScrollRect.MovementType.Elastic;
+        scroll.inertia = true;
+
+        if (cities.Length == 0)
+        {
+            TextMeshProUGUI empty = SelectionUIStyle.CreateText("NoCities", content,
+                GameState.Instance?.selectedCountry ? "No cities are available for this country yet." : "Return to Countries and choose a destination.",
+                20f, UITheme.FontWeight.Medium, UITheme.TextPrimary, TextAlignmentOptions.Left);
+            empty.gameObject.AddComponent<LayoutElement>().preferredWidth = 720f;
+            return;
+        }
+        for (int i = 0; i < cities.Length; i++) CreateCityCard(content, cities[i], hero, i);
+    }
+
+    void CreateCityCard(RectTransform parent, CityDefinition city, Sprite hero, int index)
     {
         bool unlocked = UnlockManager.Instance == null || UnlockManager.Instance.IsCityUnlocked(city);
-        int requiredRank = UnlockManager.Instance != null ? UnlockManager.Instance.GetRequiredRank(city) : 1;
-        string tooltip = UnlockManager.Instance != null ? UnlockManager.Instance.GetCityLockTooltip(city) : "Unlocked";
+        Image card = CreateImage($"City_{city.cityCode}", parent, UITheme.SurfaceContainer);
+        LayoutElement layout = card.gameObject.AddComponent<LayoutElement>();
+        layout.preferredWidth = 310f;
+        layout.minWidth = 280f;
+        layout.preferredHeight = 210f;
+        Button button = card.gameObject.AddComponent<Button>();
+        button.interactable = unlocked;
+        Image photo = CreateImage("Photo", card.transform, Color.white);
+        SelectionUIStyle.Stretch(photo.rectTransform, Vector2.zero, Vector2.one);
+        photo.sprite = hero;
+        photo.color = Color.Lerp(Color.white, UITheme.GetContinentColor(city.country), .10f + (index % 4) * .035f);
+        photo.raycastTarget = false;
+        Image wash = CreateImage("PhotoWash", card.transform, new Color(.01f, .02f, .025f, unlocked ? .34f : .65f));
+        SelectionUIStyle.Stretch(wash.rectTransform, Vector2.zero, Vector2.one);
+        Image caption = CreateImage("CaptionShade", card.transform, new Color(.01f, .018f, .02f, .76f));
+        SelectionUIStyle.SetRect(caption.rectTransform, Vector2.zero, new Vector2(1f, .42f), Vector2.zero, Vector2.zero);
+        TextMeshProUGUI code = SelectionUIStyle.CreateText("Code", card.transform,
+            unlocked ? $"{city.cityCode}  ·  {city.climateZone}" : "LOCKED", 11f,
+            UITheme.FontWeight.Bold, unlocked ? UITheme.Accent : UITheme.TextMuted, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(code.rectTransform, new Vector2(.06f, .31f), new Vector2(.92f, .47f), Vector2.zero, Vector2.zero);
+        code.characterSpacing = 1.2f;
+        TextMeshProUGUI name = SelectionUIStyle.CreateText("City", card.transform, city.cityName, 24f,
+            UITheme.FontWeight.Bold, unlocked ? UITheme.TextPrimary : UITheme.TextMuted, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(name.rectTransform, new Vector2(.06f, .06f), new Vector2(.94f, .33f), Vector2.zero, Vector2.zero);
+        name.enableAutoSizing = true;
+        name.fontSizeMin = 17f;
+        name.fontSizeMax = 24f;
+        Outline frame = card.gameObject.AddComponent<Outline>();
+        frame.effectColor = UITheme.WithAlpha(UITheme.Outline, .75f);
+        frame.effectDistance = new Vector2(2f, -2f);
+        cardFrames[city] = frame;
+        CityDefinition captured = city;
+        button.onClick.AddListener(() => FeatureCity(captured));
+    }
 
-        // Card root
-        GameObject card = new GameObject($"Card_{city.cityCode}");
-        card.transform.SetParent(cityListContainer, false);
-        card.transform.localScale = Vector3.one;
+    void SelectInitialCity()
+    {
+        CityDefinition initial = GameState.Instance?.selectedCity;
+        if (!initial || Array.IndexOf(cities, initial) < 0 || !IsUnlocked(initial)) initial = Array.Find(cities, IsUnlocked);
+        FeatureCity(initial);
+    }
 
-        var rect = card.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(195, 160);
-        var layout = card.AddComponent<LayoutElement>();
-        layout.preferredWidth = 195f;
-        layout.preferredHeight = 160f;
+    bool IsUnlocked(CityDefinition city) => city && (UnlockManager.Instance == null || UnlockManager.Instance.IsCityUnlocked(city));
 
-        var img = card.AddComponent<Image>();
-        img.color = unlocked ? UITheme.Surface : UITheme.WithAlpha(UITheme.SurfaceHigh, 0.92f);
-
-        var btn = card.AddComponent<Button>();
-        var cols = btn.colors;
-        cols.normalColor = img.color;
-        cols.highlightedColor = unlocked ? UITheme.SurfaceHigh : img.color;
-        cols.pressedColor = unlocked ? UITheme.WithAlpha(UITheme.Surface, 0.6f) : img.color;
-        btn.colors = cols;
-        btn.interactable = unlocked;
-
-        // Top accent bar (full width, 5px tall at top)
-        GameObject accentBar = new GameObject("AccentBar");
-        accentBar.transform.SetParent(card.transform, false);
-        var barRect = accentBar.AddComponent<RectTransform>();
-        barRect.anchorMin = new Vector2(0f, 1f);
-        barRect.anchorMax = new Vector2(1f, 1f);
-        barRect.sizeDelta = new Vector2(0f, 5f);
-        barRect.anchoredPosition = new Vector2(0f, -2.5f);
-        var barImg = accentBar.AddComponent<Image>();
-        barImg.color = unlocked ? UITheme.GetContinentColor(city.country) : UITheme.Outline;
-
-        // City name — upper center
-        GameObject nameObj = new GameObject("Text_CityName");
-        nameObj.transform.SetParent(card.transform, false);
-        var nameTmp = nameObj.AddComponent<TextMeshProUGUI>();
-        nameTmp.text = city.cityName;
-        nameTmp.fontSize = 18;
-        nameTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-        nameTmp.fontStyle = FontStyles.Bold;
-        nameTmp.color = unlocked ? UITheme.TextPrimary : UITheme.TextMuted;
-        nameTmp.alignment = TextAlignmentOptions.Center;
-        nameTmp.overflowMode = TextOverflowModes.Ellipsis;
-        nameTmp.textWrappingMode = TextWrappingModes.Normal;
-        var nameRect = nameObj.GetComponent<RectTransform>();
-        nameRect.anchorMin = new Vector2(0f, 0.45f);
-        nameRect.anchorMax = new Vector2(1f, 0.9f);
-        nameRect.offsetMin = new Vector2(8f, 0f);
-        nameRect.offsetMax = new Vector2(-8f, 0f);
-
-        // Country — lower center
-        GameObject countryObj = new GameObject("Text_Country");
-        countryObj.transform.SetParent(card.transform, false);
-        var countryTmp = countryObj.AddComponent<TextMeshProUGUI>();
-        countryTmp.text = city.country;
-        countryTmp.fontSize = 13;
-        countryTmp.font = UITheme.GetFont(UITheme.FontWeight.Regular);
-        countryTmp.color = unlocked ? UITheme.TextSecondary : UITheme.TextMuted;
-        countryTmp.alignment = TextAlignmentOptions.Center;
-        countryTmp.overflowMode = TextOverflowModes.Ellipsis;
-        countryTmp.textWrappingMode = TextWrappingModes.Normal;
-        var countryRect = countryObj.GetComponent<RectTransform>();
-        countryRect.anchorMin = new Vector2(0f, 0.1f);
-        countryRect.anchorMax = new Vector2(1f, 0.45f);
-        countryRect.offsetMin = new Vector2(8f, 0f);
-        countryRect.offsetMax = new Vector2(-8f, 0f);
-
-        if (!unlocked)
+    void FeatureCity(CityDefinition city)
+    {
+        if (!IsUnlocked(city) || !heroCity || !heroDetail || !driveLabel || !driveButton) return;
+        featuredCity = city;
+        int routeCount = city.availableRoutes?.Length ?? 0;
+        heroCity.text = city.cityName;
+        heroDetail.text = $"{city.country}  ·  {city.climateZone} climate  ·  {routeCount} {(routeCount == 1 ? "route" : "routes")}";
+        driveLabel.text = $"DRIVE IN {city.cityName.ToUpperInvariant()}   ›";
+        driveButton.interactable = true;
+        foreach (var pair in cardFrames)
         {
-            GameObject lockObj = new GameObject("Text_Lock");
-            lockObj.transform.SetParent(card.transform, false);
-            var lockTmp = lockObj.AddComponent<TextMeshProUGUI>();
-            lockTmp.text = "LOCKED";
-            lockTmp.fontSize = 12f;
-            lockTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-            lockTmp.color = UITheme.Error;
-            lockTmp.alignment = TextAlignmentOptions.Center;
-            var lockRect = lockObj.GetComponent<RectTransform>();
-            lockRect.anchorMin = new Vector2(0f, 0.74f);
-            lockRect.anchorMax = new Vector2(1f, 0.92f);
-            lockRect.offsetMin = new Vector2(8f, 0f);
-            lockRect.offsetMax = new Vector2(-8f, 0f);
-
-            GameObject tooltipObj = new GameObject("Text_Tooltip");
-            tooltipObj.transform.SetParent(card.transform, false);
-            var tooltipTmp = tooltipObj.AddComponent<TextMeshProUGUI>();
-            tooltipTmp.text = $"{tooltip.ToUpper()}  •  LOCKED";
-            tooltipTmp.fontSize = 11f;
-            tooltipTmp.font = UITheme.GetFont(UITheme.FontWeight.Medium);
-            tooltipTmp.color = UITheme.TextSecondary;
-            tooltipTmp.alignment = TextAlignmentOptions.Center;
-            tooltipTmp.enableWordWrapping = true;
-            var tooltipRect = tooltipObj.GetComponent<RectTransform>();
-            tooltipRect.anchorMin = new Vector2(0f, 0f);
-            tooltipRect.anchorMax = new Vector2(1f, 0.2f);
-            tooltipRect.offsetMin = new Vector2(10f, 8f);
-            tooltipRect.offsetMax = new Vector2(-10f, -6f);
+            bool selected = pair.Key == city;
+            pair.Value.effectColor = selected ? UITheme.Accent : UITheme.WithAlpha(UITheme.Outline, .7f);
+            pair.Value.effectDistance = selected ? new Vector2(4f, -4f) : new Vector2(2f, -2f);
         }
-        else
-        {
-            float completion = UnlockManager.Instance != null ? UnlockManager.Instance.GetCityCompletion01(city) : 0f;
-            GameObject statusObj = new GameObject("Text_Status");
-            statusObj.transform.SetParent(card.transform, false);
-            var statusTmp = statusObj.AddComponent<TextMeshProUGUI>();
-            statusTmp.text = completion >= 0.999f ? "GRAND TOUR READY" : $"{Mathf.RoundToInt(completion * 100f)}% ROUTES COMPLETE";
-            statusTmp.fontSize = 11f;
-            statusTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-            statusTmp.color = completion >= 0.999f ? UITheme.Accent : UITheme.TextSecondary;
-            statusTmp.alignment = TextAlignmentOptions.Center;
-            var statusRect = statusObj.GetComponent<RectTransform>();
-            statusRect.anchorMin = new Vector2(0f, 0f);
-            statusRect.anchorMax = new Vector2(1f, 0.2f);
-            statusRect.offsetMin = new Vector2(10f, 8f);
-            statusRect.offsetMax = new Vector2(-10f, -6f);
-        }
-
-        var capturedCity = city;
-        btn.onClick.AddListener(() => OnCitySelected(capturedCity));
     }
 
-    void OnCitySelected(CityDefinition city)
+    void ConfirmCity()
     {
-        if (city == null || (UnlockManager.Instance != null && !UnlockManager.Instance.IsCityUnlocked(city)))
-            return;
-
-        Debug.Log($"City selected: {city.cityName}");
-        if (GameState.Instance != null) GameState.Instance.SelectCity(city);
-        if (CityManager.Instance != null) CityManager.Instance.SetActiveCity(city);
-        StartCoroutine(TransitionToRouteSelect());
+        if (!featuredCity) return;
+        GameState.Instance?.SelectCity(featuredCity);
+        CityManager.Instance?.SetActiveCity(featuredCity);
+        StartCoroutine(Transition(() => SceneLoader.Instance?.LoadRouteSelectChecked()));
     }
 
-    void OnBack()
+    IEnumerator Transition(Action load)
     {
-        StartCoroutine(TransitionToCountrySelect());
+        if (canvasGroup) yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, .25f));
+        load?.Invoke();
     }
 
-    IEnumerator AnimateIn()
+    static RectTransform CreateUI(string name, Transform parent)
     {
-        if (canvasGroup) canvasGroup.alpha = 0f;
-        yield return new WaitForSeconds(0.05f);
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeIn(canvasGroup, 0.4f));
-        if (contentPanel)
-            yield return StartCoroutine(
-                UIAnimator.SlideInFromBottom(contentPanel, 0.35f, 30f));
+        GameObject obj = new GameObject(name, typeof(RectTransform));
+        obj.transform.SetParent(parent, false);
+        return obj.GetComponent<RectTransform>();
     }
 
-        
-    IEnumerator TransitionToCountrySelect()
+    static Image CreateImage(string name, Transform parent, Color color)
     {
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
-
-        SceneLoader.Instance?.LoadCountrySelect();
-    }
-
-    IEnumerator TransitionToRouteSelect()
-    {
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
-
-        SceneLoader.Instance?.LoadRouteSelect();
-    }
-
-    void RefreshListLayout()
-    {
-        var listRect = cityListContainer as RectTransform;
-        if (listRect == null) return;
-
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(listRect);
-        Canvas.ForceUpdateCanvases();
+        GameObject obj = new GameObject(name, typeof(RectTransform), typeof(Image));
+        obj.transform.SetParent(parent, false);
+        Image image = obj.GetComponent<Image>();
+        image.color = color;
+        return image;
     }
 }

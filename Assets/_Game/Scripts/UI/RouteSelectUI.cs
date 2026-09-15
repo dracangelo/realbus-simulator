@@ -1,13 +1,13 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class RouteSelectUI : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("Legacy Scene References")]
     public CanvasGroup canvasGroup;
     public RectTransform contentPanel;
     public TextMeshProUGUI titleText;
@@ -19,331 +19,237 @@ public class RouteSelectUI : MonoBehaviour
     public Image backgroundPanel;
 
     CityDefinition activeCity;
+    readonly List<BusRoute> routes = new List<BusRoute>();
+    readonly Dictionary<BusRoute, Outline> cardFrames = new Dictionary<BusRoute, Outline>();
+    BusRoute featuredRoute;
+    TextMeshProUGUI heroRoute;
+    TextMeshProUGUI heroDetail;
+    TextMeshProUGUI routeMetrics;
+    TextMeshProUGUI driveLabel;
+    Button driveButton;
 
-    void Start()
+    IEnumerator Start()
     {
         UnlockManager.EnsureExists();
-        ApplyTheme();
-        SetupButtons();
-        PopulateRouteList();
-        StartCoroutine(AnimateIn());
+        yield return null;
+        ResolveRoutes();
+        BuildCinematicScreen();
+        SelectInitialRoute();
+        if (canvasGroup)
+        {
+            canvasGroup.alpha = 0f;
+            yield return StartCoroutine(UIAnimator.FadeIn(canvasGroup, .45f));
+        }
     }
 
-    void ApplyTheme()
+    void ResolveRoutes()
     {
-        if (backgroundPanel)
-            backgroundPanel.color = UITheme.Background;
-
-        if (titleText)
-        {
-            titleText.text = "ROUTE BOARD";
-            titleText.color = UITheme.TextPrimary;
-            titleText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-            titleText.characterSpacing = 6f;
-        }
-
-        if (accentLine)
-            accentLine.color = UITheme.Accent;
-
-        // City name from selection
-        var city = ResolveActiveCity();
-
-        if (cityNameText)
-        {
-            cityNameText.text = city != null
-                ? $"CITY OPERATIONS — {city.cityName}, {city.country}"
-                : "Select a city first";
-            cityNameText.color = UITheme.TextSecondary;
-            cityNameText.font = UITheme.GetFont(UITheme.FontWeight.Regular);
-        }
-
-        if (backButtonText)
-        {
-            backButtonText.text = "BACK TO CITY";
-            backButtonText.color = UITheme.TextSecondary;
-            backButtonText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
-            backButtonText.characterSpacing = 2f;
-        }
-
-        var backImg = backButton?.GetComponent<Image>();
-        if (backImg) backImg.color = UITheme.SurfaceContainer;
+        activeCity = GameState.Instance?.selectedCity;
+        if (!activeCity) return;
+        List<BusRoute> available = UnlockManager.Instance != null
+            ? UnlockManager.Instance.GetRoutesForCity(activeCity)
+            : new List<BusRoute>(activeCity.availableRoutes ?? Array.Empty<BusRoute>());
+        if (available == null) return;
+        foreach (BusRoute route in available) if (route) routes.Add(route);
     }
 
-    void SetupButtons()
+    void BuildCinematicScreen()
     {
-        backButton?.onClick.AddListener(OnBack);
-    }
-
-    void PopulateRouteList()
-    {
-        foreach (Transform child in routeListContainer)
-            Destroy(child.gameObject);
-
-        var city = ResolveActiveCity();
-
-        Debug.Log($"RouteSelect: city={city?.cityName}, routes={city?.availableRoutes?.Length ?? 0}");
-
-        if (city == null)
+        if (!contentPanel)
         {
-            CreateEmptyState("No city selected.");
+            Debug.LogError("RouteSelectUI: contentPanel is not assigned.");
             return;
         }
+        SelectionUIStyle.SetRect(contentPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        for (int i = 0; i < contentPanel.childCount; i++) contentPanel.GetChild(i).gameObject.SetActive(false);
 
-        activeCity = city;
-        List<BusRoute> routes = UnlockManager.Instance != null
-            ? UnlockManager.Instance.GetRoutesForCity(city)
-            : new List<BusRoute>(city.availableRoutes);
+        RectTransform screen = CreateUI("CinematicRouteScreen", contentPanel);
+        SelectionUIStyle.Stretch(screen, Vector2.zero, Vector2.one);
+        Sprite hero = Resources.Load<Sprite>("UI/CountrySelectHero");
+        Image background = CreateImage("DestinationHero", screen, Color.white);
+        SelectionUIStyle.Stretch(background.rectTransform, Vector2.zero, Vector2.one);
+        background.sprite = hero;
+        background.preserveAspect = false;
+        Image shade = CreateImage("CinematicShade", screen, new Color(.012f, .02f, .024f, .34f));
+        SelectionUIStyle.Stretch(shade.rectTransform, Vector2.zero, Vector2.one);
+        Image leftShade = CreateImage("CopyShade", screen, new Color(.008f, .014f, .017f, .68f));
+        SelectionUIStyle.SetRect(leftShade.rectTransform, Vector2.zero, new Vector2(.52f, 1f), Vector2.zero, Vector2.zero);
+        Image bottomShade = CreateImage("CarouselShade", screen, new Color(.008f, .014f, .017f, .78f));
+        SelectionUIStyle.SetRect(bottomShade.rectTransform, Vector2.zero, new Vector2(1f, .36f), Vector2.zero, Vector2.zero);
+        BuildBrand(screen);
+        BuildBack(screen);
+        BuildHeroCopy(screen);
+        BuildCarousel(screen, hero);
+    }
 
-        if (routes == null || routes.Count == 0)
+    void BuildBrand(RectTransform parent)
+    {
+        TextMeshProUGUI brand = SelectionUIStyle.CreateText("Brand", parent, "REAL BUS  /  SIMULATOR", 22f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(brand.rectTransform, new Vector2(.04f, .88f), new Vector2(.38f, .96f), Vector2.zero, Vector2.zero);
+        brand.characterSpacing = 1.5f;
+        TextMeshProUGUI step = SelectionUIStyle.CreateText("Step", parent, "COUNTRY  ✓    CITY  ✓    ROUTE  03", 11f,
+            UITheme.FontWeight.Bold, UITheme.WithAlpha(UITheme.TextPrimary, .72f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(step.rectTransform, new Vector2(.04f, .84f), new Vector2(.45f, .89f), Vector2.zero, Vector2.zero);
+        step.characterSpacing = 1.2f;
+    }
+
+    void BuildBack(RectTransform parent)
+    {
+        Image image = CreateImage("BackButton", parent, new Color(.03f, .05f, .055f, .76f));
+        SelectionUIStyle.SetRect(image.rectTransform, new Vector2(.875f, .88f), new Vector2(.96f, .95f), Vector2.zero, Vector2.zero);
+        Button button = image.gameObject.AddComponent<Button>();
+        TextMeshProUGUI label = SelectionUIStyle.CreateText("Label", image.transform, "‹  CITIES", 13f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Center);
+        SelectionUIStyle.Stretch(label.rectTransform, Vector2.zero, Vector2.one);
+        button.onClick.AddListener(() => StartCoroutine(Transition(() => SceneLoader.Instance?.LoadCitySelectChecked())));
+    }
+
+    void BuildHeroCopy(RectTransform parent)
+    {
+        string eyebrowText = activeCity ? $"SERVICES IN {activeCity.cityName.ToUpperInvariant()}" : "CITY REQUIRED";
+        TextMeshProUGUI eyebrow = SelectionUIStyle.CreateText("Eyebrow", parent, eyebrowText, 14f,
+            UITheme.FontWeight.Medium, UITheme.WithAlpha(UITheme.TextPrimary, .82f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(eyebrow.rectTransform, new Vector2(.04f, .69f), new Vector2(.49f, .76f), Vector2.zero, Vector2.zero);
+        eyebrow.characterSpacing = 3.5f;
+        heroRoute = SelectionUIStyle.CreateText("FeaturedRoute", parent, activeCity ? "Choose a route" : "Choose a city first", 52f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(heroRoute.rectTransform, new Vector2(.04f, .55f), new Vector2(.50f, .70f), Vector2.zero, Vector2.zero);
+        heroRoute.enableAutoSizing = true;
+        heroRoute.fontSizeMin = 28f;
+        heroRoute.fontSizeMax = 52f;
+        heroDetail = SelectionUIStyle.CreateText("FeaturedDetail", parent, "Select a service below", 20f,
+            UITheme.FontWeight.Regular, UITheme.WithAlpha(UITheme.TextPrimary, .9f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(heroDetail.rectTransform, new Vector2(.04f, .49f), new Vector2(.50f, .56f), Vector2.zero, Vector2.zero);
+        routeMetrics = SelectionUIStyle.CreateText("RouteMetrics", parent, "DISTANCE  —    TIME  —    STOPS  —", 13f,
+            UITheme.FontWeight.Bold, UITheme.Accent, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(routeMetrics.rectTransform, new Vector2(.04f, .445f), new Vector2(.50f, .50f), Vector2.zero, Vector2.zero);
+        routeMetrics.characterSpacing = 1f;
+        Image cta = CreateImage("DriveButton", parent, UITheme.Accent);
+        SelectionUIStyle.SetRect(cta.rectTransform, new Vector2(.04f, .35f), new Vector2(.34f, .43f), Vector2.zero, Vector2.zero);
+        SelectionUIStyle.AddOutline(cta.gameObject, UITheme.WithAlpha(Color.white, .42f));
+        driveButton = cta.gameObject.AddComponent<Button>();
+        driveLabel = SelectionUIStyle.CreateText("Label", cta.transform, "CHOOSE A ROUTE", 18f,
+            UITheme.FontWeight.Bold, UITheme.Background, TextAlignmentOptions.Center);
+        SelectionUIStyle.Stretch(driveLabel.rectTransform, Vector2.zero, Vector2.one);
+        driveButton.interactable = false;
+        driveButton.onClick.AddListener(ConfirmRoute);
+    }
+
+    void BuildCarousel(RectTransform parent, Sprite hero)
+    {
+        Image viewport = CreateImage("RouteViewport", parent, Color.clear);
+        SelectionUIStyle.SetRect(viewport.rectTransform, new Vector2(.035f, .045f), new Vector2(.965f, .325f), Vector2.zero, Vector2.zero);
+        viewport.gameObject.AddComponent<RectMask2D>();
+        RectTransform content = CreateUI("RouteFilmstrip", viewport.transform);
+        content.anchorMin = new Vector2(0f, 0f);
+        content.anchorMax = new Vector2(0f, 1f);
+        content.pivot = new Vector2(0f, .5f);
+        content.anchoredPosition = Vector2.zero;
+        content.sizeDelta = Vector2.zero;
+        HorizontalLayoutGroup row = content.gameObject.AddComponent<HorizontalLayoutGroup>();
+        row.padding = new RectOffset(4, 18, 4, 4);
+        row.spacing = 16f;
+        row.childAlignment = TextAnchor.MiddleLeft;
+        row.childControlWidth = true;
+        row.childControlHeight = true;
+        row.childForceExpandWidth = false;
+        row.childForceExpandHeight = true;
+        ContentSizeFitter fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+        ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
+        scroll.viewport = viewport.rectTransform;
+        scroll.content = content;
+        scroll.horizontal = true;
+        scroll.vertical = false;
+        scroll.movementType = ScrollRect.MovementType.Elastic;
+        scroll.inertia = true;
+
+        if (routes.Count == 0)
         {
-            CreateEmptyState($"No routes available for {city.cityName} yet.");
+            TextMeshProUGUI empty = SelectionUIStyle.CreateText("NoRoutes", content,
+                activeCity ? $"No routes are available for {activeCity.cityName} yet." : "Return to Cities and choose an operating area.",
+                20f, UITheme.FontWeight.Medium, UITheme.TextPrimary, TextAlignmentOptions.Left);
+            empty.gameObject.AddComponent<LayoutElement>().preferredWidth = 720f;
             return;
         }
+        for (int i = 0; i < routes.Count; i++) CreateRouteCard(content, routes[i], hero, i);
+    }
 
-        for (int i = 0; i < routes.Count; i++)
+    void CreateRouteCard(RectTransform parent, BusRoute route, Sprite hero, int index)
+    {
+        int difficulty = Mathf.Clamp(route.difficulty, 1, 5);
+        Color accent = GetServiceColor(difficulty);
+        Image card = CreateImage($"Route_{route.GetProgressionId(activeCity ? activeCity.cityCode : null)}", parent, UITheme.SurfaceContainer);
+        LayoutElement layout = card.gameObject.AddComponent<LayoutElement>();
+        layout.preferredWidth = 345f;
+        layout.minWidth = 310f;
+        layout.preferredHeight = 210f;
+        Button button = card.gameObject.AddComponent<Button>();
+        Image photo = CreateImage("Photo", card.transform, Color.Lerp(Color.white, accent, .08f + (index % 3) * .03f));
+        SelectionUIStyle.Stretch(photo.rectTransform, Vector2.zero, Vector2.one);
+        photo.sprite = hero;
+        photo.raycastTarget = false;
+        Image wash = CreateImage("PhotoWash", card.transform, new Color(.01f, .02f, .025f, .40f));
+        SelectionUIStyle.Stretch(wash.rectTransform, Vector2.zero, Vector2.one);
+        Image caption = CreateImage("CaptionShade", card.transform, new Color(.01f, .018f, .02f, .80f));
+        SelectionUIStyle.SetRect(caption.rectTransform, Vector2.zero, new Vector2(1f, .49f), Vector2.zero, Vector2.zero);
+        TextMeshProUGUI code = SelectionUIStyle.CreateText("Code", card.transform,
+            $"LINE {BuildRouteCode(route)}  ·  {GetServiceClass(difficulty).ToUpperInvariant()}", 11f,
+            UITheme.FontWeight.Bold, accent, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(code.rectTransform, new Vector2(.055f, .38f), new Vector2(.94f, .52f), Vector2.zero, Vector2.zero);
+        code.characterSpacing = 1f;
+        TextMeshProUGUI name = SelectionUIStyle.CreateText("Route", card.transform, route.routeName, 21f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(name.rectTransform, new Vector2(.055f, .15f), new Vector2(.94f, .40f), Vector2.zero, Vector2.zero);
+        name.enableAutoSizing = true;
+        name.fontSizeMin = 15f;
+        name.fontSizeMax = 21f;
+        TextMeshProUGUI stats = SelectionUIStyle.CreateText("Stats", card.transform,
+            $"{route.distanceKm:F1} KM  ·  {route.estimatedTimeMinutes:F0} MIN  ·  {route.GetStopCount()} STOPS", 10f,
+            UITheme.FontWeight.Medium, UITheme.TextSecondary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(stats.rectTransform, new Vector2(.055f, .025f), new Vector2(.94f, .17f), Vector2.zero, Vector2.zero);
+        Outline frame = card.gameObject.AddComponent<Outline>();
+        frame.effectColor = UITheme.WithAlpha(UITheme.Outline, .75f);
+        frame.effectDistance = new Vector2(2f, -2f);
+        cardFrames[route] = frame;
+        BusRoute captured = route;
+        button.onClick.AddListener(() => FeatureRoute(captured));
+    }
+
+    void SelectInitialRoute()
+    {
+        BusRoute initial = GameState.Instance?.selectedRoute;
+        if (!initial || !routes.Contains(initial)) initial = routes.Count > 0 ? routes[0] : null;
+        FeatureRoute(initial);
+    }
+
+    void FeatureRoute(BusRoute route)
+    {
+        if (!route || !heroRoute || !heroDetail || !routeMetrics || !driveLabel || !driveButton) return;
+        featuredRoute = route;
+        int difficulty = Mathf.Clamp(route.difficulty, 1, 5);
+        heroRoute.text = route.routeName;
+        heroDetail.text = $"Line {BuildRouteCode(route)}  ·  {GetServiceClass(difficulty)} service  ·  Difficulty {difficulty}/5";
+        routeMetrics.text = $"DISTANCE  {route.distanceKm:F1} KM    TIME  {route.estimatedTimeMinutes:F0} MIN    STOPS  {route.GetStopCount()}";
+        driveLabel.text = $"START LINE {BuildRouteCode(route)}   ›";
+        driveButton.interactable = true;
+        foreach (var pair in cardFrames)
         {
-            var route = routes[i];
-            if (route != null)
-                CreateRouteCard(route);
+            bool selected = pair.Key == route;
+            pair.Value.effectColor = selected ? UITheme.Accent : UITheme.WithAlpha(UITheme.Outline, .7f);
+            pair.Value.effectDistance = selected ? new Vector2(4f, -4f) : new Vector2(2f, -2f);
         }
-    }
-
-    CityDefinition ResolveActiveCity()
-    {
-        var cityManager = CityManager.Instance;
-        var gameState = GameState.Instance;
-
-        var city = gameState?.selectedCity ?? cityManager?.activeCity;
-        if (HasRoutes(city))
-            return city;
-
-        if (cityManager?.activeCountry?.cities != null)
-        {
-            for (int i = 0; i < cityManager.activeCountry.cities.Length; i++)
-            {
-                var candidate = cityManager.activeCountry.cities[i];
-                if (!HasRoutes(candidate)) continue;
-                ApplyResolvedCity(candidate);
-                return candidate;
-            }
-        }
-
-        if (cityManager?.allCities != null)
-        {
-            for (int i = 0; i < cityManager.allCities.Length; i++)
-            {
-                var candidate = cityManager.allCities[i];
-                if (!HasRoutes(candidate)) continue;
-                ApplyResolvedCity(candidate);
-                return candidate;
-            }
-        }
-
-        return city;
-    }
-
-    bool HasRoutes(CityDefinition city)
-    {
-        return city != null && city.availableRoutes != null && city.availableRoutes.Length > 0;
-    }
-
-    void ApplyResolvedCity(CityDefinition city)
-    {
-        if (city == null) return;
-
-        activeCity = city;
-
-        if (CityManager.Instance != null)
-            CityManager.Instance.activeCity = city;
-
-        if (GameState.Instance != null && GameState.Instance.selectedCity == null)
-            GameState.Instance.selectedCity = city;
-    }
-
-    void CreateRouteCard(BusRoute route)
-    {
-        GameObject card = new GameObject($"Card_{route.name}");
-        card.transform.SetParent(routeListContainer, false);
-
-        var rect = card.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(400, 198);
-
-        var img = card.AddComponent<Image>();
-        img.color = UITheme.SurfaceContainer;
-
-        var btn = card.AddComponent<Button>();
-        var cols = btn.colors;
-        cols.normalColor = UITheme.SurfaceContainer;
-        cols.highlightedColor = UITheme.SurfaceHigh;
-        cols.pressedColor = UITheme.WithAlpha(UITheme.SurfaceHigh, 0.7f);
-        btn.colors = cols;
-
-        int stopCount = route.GetStopCount();
-        string routeCode = BuildRouteCode(route);
-        string serviceClass = GetServiceClass(route.difficulty);
-        Color serviceColor = GetServiceColor(route.difficulty);
-        string difficultyStars = new string('★', Mathf.Clamp(route.difficulty, 1, 5)) + new string('☆', Mathf.Max(0, 5 - Mathf.Clamp(route.difficulty, 1, 5)));
-        float distanceKm = Mathf.Max(0f, route.distanceKm);
-        float etaMinutes = Mathf.Max(0f, route.estimatedTimeMinutes);
-        float headwayMinutes = GetHeadwayMinutes(route.difficulty);
-        int cycleMinutes = Mathf.RoundToInt(etaMinutes * 2f);
-        int revenue = Mathf.RoundToInt(route.baseFare * Mathf.Max(1, stopCount) * 0.9f);
-
-        // Left service bar
-        GameObject bar = new GameObject("AccentBar");
-        bar.transform.SetParent(card.transform, false);
-        var barRect = bar.AddComponent<RectTransform>();
-        barRect.anchorMin = new Vector2(0f, 0f);
-        barRect.anchorMax = new Vector2(0f, 1f);
-        barRect.sizeDelta = new Vector2(6f, 0f);
-        barRect.anchoredPosition = new Vector2(3f, 0f);
-        var barImg = bar.AddComponent<Image>();
-        barImg.color = serviceColor;
-
-        var headerTmp = CreateText("Text_Header", card.transform,
-            $"LINE {routeCode}  •  {stopCount} STOPS", 12,
-            UITheme.GetFont(UITheme.FontWeight.Medium), UITheme.TextSecondary,
-            TextAlignmentOptions.Left);
-        var headerRect = headerTmp.GetComponent<RectTransform>();
-        headerRect.anchorMin = new Vector2(0f, 1f);
-        headerRect.anchorMax = new Vector2(0.72f, 1f);
-        headerRect.pivot = new Vector2(0f, 1f);
-        headerRect.anchoredPosition = new Vector2(20f, -10f);
-        headerRect.sizeDelta = new Vector2(0f, 18f);
-
-        var nameTmp = CreateText("Text_Name", card.transform,
-            route.routeName, 22,
-            UITheme.GetFont(UITheme.FontWeight.Bold), UITheme.TextPrimary,
-            TextAlignmentOptions.Left);
-        nameTmp.overflowMode = TextOverflowModes.Ellipsis;
-        var nameRect = nameTmp.GetComponent<RectTransform>();
-        nameRect.anchorMin = new Vector2(0f, 0.45f);
-        nameRect.anchorMax = new Vector2(0.72f, 0.9f);
-        nameRect.offsetMin = new Vector2(20f, 0f);
-        nameRect.offsetMax = new Vector2(0f, -24f);
-
-        string metaLine = $"Distance {distanceKm:F1} km  •  Est. time {etaMinutes:F0} min  •  Cycle {cycleMinutes} min  •  Headway {headwayMinutes:F0} min";
-        var metaTmp = CreateText("Text_Meta", card.transform,
-            metaLine, 13,
-            UITheme.GetFont(UITheme.FontWeight.Regular), UITheme.TextSecondary,
-            TextAlignmentOptions.Left);
-        metaTmp.overflowMode = TextOverflowModes.Ellipsis;
-        var metaRect = metaTmp.GetComponent<RectTransform>();
-        metaRect.anchorMin = new Vector2(0f, 0.12f);
-        metaRect.anchorMax = new Vector2(0.72f, 0.45f);
-        metaRect.offsetMin = new Vector2(20f, 0f);
-        metaRect.offsetMax = new Vector2(0f, 0f);
-
-        var revenueLabel = CreateText("Text_RevenueLabel", card.transform,
-            "REVENUE / TRIP", 11,
-            UITheme.GetFont(UITheme.FontWeight.Medium), UITheme.TextMuted,
-            TextAlignmentOptions.Right);
-        var revenueLabelRect = revenueLabel.GetComponent<RectTransform>();
-        revenueLabelRect.anchorMin = new Vector2(0.72f, 0.55f);
-        revenueLabelRect.anchorMax = new Vector2(1f, 0.9f);
-        revenueLabelRect.offsetMin = new Vector2(0f, 0f);
-        revenueLabelRect.offsetMax = new Vector2(-18f, 0f);
-
-        var revenueValue = CreateText("Text_RevenueValue", card.transform,
-            $"KES {revenue:N0}", 20,
-            UITheme.GetFont(UITheme.FontWeight.Bold), UITheme.Accent,
-            TextAlignmentOptions.Right);
-        var revenueValueRect = revenueValue.GetComponent<RectTransform>();
-        revenueValueRect.anchorMin = new Vector2(0.72f, 0.2f);
-        revenueValueRect.anchorMax = new Vector2(1f, 0.55f);
-        revenueValueRect.offsetMin = new Vector2(0f, 0f);
-        revenueValueRect.offsetMax = new Vector2(-18f, 0f);
-
-        var chip = new GameObject("ServiceChip");
-        chip.transform.SetParent(card.transform, false);
-        var chipRect = chip.AddComponent<RectTransform>();
-        chipRect.anchorMin = new Vector2(1f, 1f);
-        chipRect.anchorMax = new Vector2(1f, 1f);
-        chipRect.pivot = new Vector2(1f, 1f);
-        chipRect.sizeDelta = new Vector2(120f, 24f);
-        chipRect.anchoredPosition = new Vector2(-18f, -10f);
-        var chipImg = chip.AddComponent<Image>();
-        chipImg.color = UITheme.WithAlpha(serviceColor, 0.18f);
-
-        var chipText = CreateText("Text", chip.transform,
-            serviceClass.ToUpperInvariant(), 11,
-            UITheme.GetFont(UITheme.FontWeight.Bold), serviceColor,
-            TextAlignmentOptions.Center);
-        var chipTextRect = chipText.GetComponent<RectTransform>();
-        chipTextRect.anchorMin = new Vector2(0f, 0f);
-        chipTextRect.anchorMax = new Vector2(1f, 1f);
-        chipTextRect.offsetMin = Vector2.zero;
-        chipTextRect.offsetMax = Vector2.zero;
-
-        var difficultyText = CreateText("Text_Difficulty", card.transform,
-            difficultyStars, 16,
-            UITheme.GetFont(UITheme.FontWeight.Bold), UITheme.TertiaryDim,
-            TextAlignmentOptions.Right);
-        var difficultyRect = difficultyText.GetComponent<RectTransform>();
-        difficultyRect.anchorMin = new Vector2(0.72f, 0.02f);
-        difficultyRect.anchorMax = new Vector2(1f, 0.2f);
-        difficultyRect.offsetMin = new Vector2(0f, 0f);
-        difficultyRect.offsetMax = new Vector2(-18f, 0f);
-
-        string routeId = route.GetProgressionId(activeCity != null ? activeCity.cityCode : null);
-        int bestStars; float bestScore; long lastPlayed;
-        string history = SaveManager.EnsureExists().TryGetRouteHistory(routeId, out bestStars, out bestScore, out lastPlayed)
-            ? $"BEST {bestScore:0}%  {new string('★', Mathf.Clamp(bestStars, 0, 5))}   •   LAST {DateTimeOffset.FromUnixTimeSeconds(lastPlayed).ToLocalTime():d MMM}"
-            : "BEST —   •   NOT YET DRIVEN";
-        history += "   •   " + RouteMasteryManager.EnsureExists().GetCompactLabel(routeId);
-        var historyText = CreateText("Text_History", card.transform, history, 12,
-            UITheme.GetFont(UITheme.FontWeight.Medium), UITheme.TextMuted, TextAlignmentOptions.Left);
-        var historyRect = historyText.GetComponent<RectTransform>();
-        historyRect.anchorMin = new Vector2(0f, 0f); historyRect.anchorMax = new Vector2(0.72f, 0f);
-        historyRect.pivot = new Vector2(0f, 0f); historyRect.anchoredPosition = new Vector2(20f, 8f); historyRect.sizeDelta = new Vector2(0f, 28f);
-
-        var capturedRoute = route;
-        btn.onClick.AddListener(() => OnRouteSelected(capturedRoute));
-    }
-
-    TextMeshProUGUI CreateText(string name, Transform parent, string text, int fontSize,
-        TMP_FontAsset font, Color color, TextAlignmentOptions alignment)
-    {
-        GameObject obj = new GameObject(name);
-        obj.transform.SetParent(parent, false);
-        var tmp = obj.AddComponent<TextMeshProUGUI>();
-        tmp.text = text;
-        tmp.fontSize = fontSize;
-        tmp.font = font;
-        tmp.color = color;
-        tmp.alignment = alignment;
-        return tmp;
     }
 
     string BuildRouteCode(BusRoute route)
     {
-        string cityCode = activeCity != null ? activeCity.cityCode : "CITY";
-        string number = string.IsNullOrWhiteSpace(route.routeNumber)
-            ? "R"
-            : route.routeNumber.Trim().ToUpperInvariant();
-
-        if (number == "R")
-            number = BuildFallbackCode(route.routeName);
-
-        return $"{cityCode}-{number}";
+        string code = string.IsNullOrWhiteSpace(route.routeNumber) ? "R1" : route.routeNumber.Trim().ToUpperInvariant();
+        return activeCity ? $"{activeCity.cityCode}-{code}" : code;
     }
 
-    string BuildFallbackCode(string routeName)
-    {
-        if (string.IsNullOrWhiteSpace(routeName)) return "R1";
-        string[] parts = routeName.Split(' ');
-        string code = "";
-        for (int i = 0; i < parts.Length && code.Length < 3; i++)
-        {
-            if (string.IsNullOrWhiteSpace(parts[i])) continue;
-            char c = char.ToUpperInvariant(parts[i][0]);
-            if (char.IsLetterOrDigit(c)) code += c;
-        }
-        if (code.Length == 0) code = "R";
-        return code;
-    }
-
-    string GetServiceClass(int difficulty)
+    static string GetServiceClass(int difficulty)
     {
         if (difficulty <= 1) return "Local";
         if (difficulty == 2) return "Standard";
@@ -352,7 +258,7 @@ public class RouteSelectUI : MonoBehaviour
         return "Priority";
     }
 
-    Color GetServiceColor(int difficulty)
+    static Color GetServiceColor(int difficulty)
     {
         if (difficulty <= 1) return UITheme.Secondary;
         if (difficulty == 2) return UITheme.Tertiary;
@@ -361,63 +267,32 @@ public class RouteSelectUI : MonoBehaviour
         return UITheme.Error;
     }
 
-    float GetHeadwayMinutes(int difficulty)
+    void ConfirmRoute()
     {
-        float t = Mathf.InverseLerp(1f, 5f, Mathf.Clamp(difficulty, 1, 5));
-        return Mathf.Lerp(14f, 6f, t);
+        if (!featuredRoute) return;
+        GameState.Instance?.SelectRoute(featuredRoute);
+        StartCoroutine(Transition(() => SceneLoader.Instance?.LoadGameChecked()));
     }
 
-    void CreateEmptyState(string message)
+    IEnumerator Transition(Action load)
     {
-        GameObject msgObj = new GameObject("Text_Empty");
-        msgObj.transform.SetParent(routeListContainer, false);
-        var tmp = msgObj.AddComponent<TextMeshProUGUI>();
-        tmp.text = message;
-        tmp.fontSize = 18;
-        tmp.font = UITheme.GetFont(UITheme.FontWeight.Regular);
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = UITheme.TextMuted;
-        var rect = msgObj.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(0, 120);
+        if (canvasGroup) yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, .25f));
+        load?.Invoke();
     }
 
-    void OnRouteSelected(BusRoute route)
+    static RectTransform CreateUI(string name, Transform parent)
     {
-        Debug.Log($"Route selected: {route.routeName}");
-        if (GameState.Instance != null) GameState.Instance.SelectRoute(route);
-        StartCoroutine(TransitionToGame());
+        GameObject obj = new GameObject(name, typeof(RectTransform));
+        obj.transform.SetParent(parent, false);
+        return obj.GetComponent<RectTransform>();
     }
 
-    void OnBack()
+    static Image CreateImage(string name, Transform parent, Color color)
     {
-        Debug.Log($"Back pressed — SceneLoader: {SceneLoader.Instance != null}");
-        StartCoroutine(TransitionToCitySelect());
-    }
-
-    IEnumerator AnimateIn()
-    {
-        if (canvasGroup) canvasGroup.alpha = 0f;
-        yield return new WaitForSeconds(0.05f);
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeIn(canvasGroup, 0.4f));
-        if (contentPanel)
-            yield return StartCoroutine(
-                UIAnimator.SlideInFromBottom(contentPanel, 0.35f, 30f));
-    }
-
-    IEnumerator TransitionToCitySelect()
-    {
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
-
-        SceneLoader.Instance?.LoadCitySelect();
-    }
-
-    IEnumerator TransitionToGame()
-    {
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
-
-        SceneLoader.Instance?.LoadGame();
+        GameObject obj = new GameObject(name, typeof(RectTransform), typeof(Image));
+        obj.transform.SetParent(parent, false);
+        Image image = obj.GetComponent<Image>();
+        image.color = color;
+        return image;
     }
 }

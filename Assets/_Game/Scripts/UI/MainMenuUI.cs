@@ -871,30 +871,8 @@ public class MainMenuUI : MonoBehaviour
         var loader = SceneLoader.Instance;
         if (loader == null)
             return;
-
-        var gameState = GameState.Instance;
-        if (gameState != null && gameState.selectedRoute != null)
-        {
-            loader.LoadGameChecked();
-            return;
-        }
-
-        var selectedCity = gameState != null ? gameState.selectedCity : null;
-        var activeCity = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
-        if (selectedCity != null || activeCity != null)
-        {
-            loader.LoadRouteSelectChecked();
-            return;
-        }
-
-        var selectedCountry = gameState != null ? gameState.selectedCountry : null;
-        var activeCountry = CityManager.Instance != null ? CityManager.Instance.activeCountry : null;
-        if (selectedCountry != null || activeCountry != null)
-        {
-            loader.LoadCitySelectChecked();
-            return;
-        }
-
+        // A new drive always follows the complete, predictable setup flow:
+        // Main Menu -> Country -> City -> Route -> Game.
         loader.LoadCountrySelect();
     }
 
@@ -1121,7 +1099,7 @@ public class MainMenuUI : MonoBehaviour
             customizeButtonText.text = garageScreenVisible ? "CLOSE GARAGE" : "OPEN GARAGE";
 
         if (playButtonText)
-            playButtonText.text = GetPrimaryActionLabel(route, city, country);
+            playButtonText.text = "SELECT COUNTRY";
 
         ApplyStatLabel(batteryLabelText, spec.IsElectric ? "CHARGE RESERVE" : "FUEL RESERVE");
     }
@@ -1477,17 +1455,6 @@ public class MainMenuUI : MonoBehaviour
             return $"{spec.description} {city.cityName} is live with {availableRoutes} routes ready for dispatch.";
 
         return spec.description;
-    }
-
-    string GetPrimaryActionLabel(BusRoute route, CityDefinition city, CountryDefinition country)
-    {
-        if (route != null)
-            return "CONTINUE ROUTE";
-        if (city != null)
-            return "SELECT ROUTE";
-        if (country != null)
-            return "SELECT CITY";
-        return "START DRIVING";
     }
 
     string BuildCitySummary(CityDefinition city, CountryDefinition country)

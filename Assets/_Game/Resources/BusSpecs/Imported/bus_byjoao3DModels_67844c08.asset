@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a28baf5b9fec101c69806825d1e9a434, type: 3}
+  m_Name: Bus_byjoao 3D Models
+  m_EditorClassIdentifier: GameScripts::BusSpec
+  busId: fleet.imported.67844c083594
+  displayName: Bus_byjoao 3D Models
+  description: Imported, game-ready bus model.
+  requiredRank: 4
+  modelPrefab: {fileID: 7968964896822058937, guid: 82d2b463aabbe6f1e9e32f165129d619, type: 3}
+  previewSprite: {fileID: 0}
+  seatedCapacity: 36
+  standingCapacity: 34
+  totalCapacity: 70
+  doorOpenCapacityLimit: 70
+  bodyLengthMeters: 11.999999
+  energyType: 0
+  energyCapacityUnits: 300
+  energyUnitLabel: L
+  cityConsumptionPer100Km: 35
+  motorwayConsumptionPer100Km: 28
+  motorwaySpeedThresholdKmh: 62
+  optimalCruiseRpm: 1350
+  unitPriceKES: 180
+  rigidbodyMassKg: 12533.332
+  maxSteerAngle: 42
+  steerSpeed: 0.1
+  centerOfMassY: 1.3703624
+  antiRollForce: 8000
+  maxBrakeTorque: 12000
+  retarderStrength: 3000
+  dragCoefficient: 0.65
+  frontalArea: 8.5
+  airDensity: 1.225
+  engineProfile: {fileID: 11400000, guid: e62efad03e9902e418324690f55383b2, type: 2}
+  transmissionProfile: {fileID: 11400000, guid: f3a5fb6e7040f5aaabbd3cb6c624f929, type: 2}

@@ -27,7 +27,7 @@
 			normal = new GUIStyleState() { textColor = Color.white }
 		};
 
-		public FeatureSubLayerTreeView(TreeViewState state, MultiColumnHeader multicolumnHeader, TreeModel<FeatureTreeElement> model, int uniqueIdentifier = 3000) : base(state, multicolumnHeader, model)
+		public FeatureSubLayerTreeView(TreeViewState<int> state, MultiColumnHeader multicolumnHeader, TreeModel<FeatureTreeElement> model, int uniqueIdentifier = 3000) : base(state, multicolumnHeader, model)
 		{
 			showAlternatingRowBackgrounds = true;
 			showBorder = true;
@@ -37,7 +37,7 @@
 			Reload();
 		}
 
-		protected override bool CanRename(TreeViewItem item)
+		protected override bool CanRename(TreeViewItem<int> item)
 		{
 			// Only allow rename if we can show the rename overlay with a certain width (label might be clipped by other columns)
 			Rect renameRect = GetRenameRect(treeViewRect, 0, item);
@@ -62,7 +62,7 @@
 			}
 		}
 
-		protected override Rect GetRenameRect(Rect rowRect, int row, TreeViewItem item)
+		protected override Rect GetRenameRect(Rect rowRect, int row, TreeViewItem<int> item)
 		{
 			Rect cellRect = GetCellRectForTreeFoldouts(rowRect);
 			cellRect.xMin = nameOffset;
@@ -95,14 +95,14 @@
 
 		protected override void RowGUI(RowGUIArgs args)
 		{
-			var rowItem = (TreeViewItem<FeatureTreeElement>)args.item;
+			var rowItem = (TreeViewItemWithData<FeatureTreeElement>)args.item;
 			for (int i = 0; i < args.GetNumVisibleColumns(); ++i)
 			{
 				CellGUI(args.GetCellRect(i), rowItem, (FeatureSubLayerColumns)args.GetColumn(i), ref args);
 			}
 		}
 
-		void CellGUI(Rect cellRect, TreeViewItem<FeatureTreeElement> item, FeatureSubLayerColumns column, ref RowGUIArgs args)
+		void CellGUI(Rect cellRect, TreeViewItemWithData<FeatureTreeElement> item, FeatureSubLayerColumns column, ref RowGUIArgs args)
 		{
 			// Center cell rect vertically (makes it easier to place controls, icons etc in the cells)
 			if (Layers == null || Layers.arraySize == 0)

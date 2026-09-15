@@ -196,16 +196,32 @@ public class BusFleetManager : MonoBehaviour
     {
         busSpecs.Clear();
 
+        // Keep the balanced built-in fleet even when artists add model-backed specs.
+        // Older behavior replaced the entire fleet as soon as one Resources asset existed.
+        busSpecs.AddRange(CreateDefaultSpecs());
+
         var resourceSpecs = Resources.LoadAll<BusSpec>("BusSpecs");
         if (resourceSpecs != null && resourceSpecs.Length > 0)
         {
-            Array.Sort(resourceSpecs, CompareBusSpecs);
-            busSpecs.AddRange(resourceSpecs);
+            for (int i = 0; i < resourceSpecs.Length; i++)
+            {
+                BusSpec candidate = resourceSpecs[i];
+                if (candidate == null || GetSpecIndex(candidate.busId) >= 0)
+                    continue;
+                busSpecs.Add(candidate);
+            }
         }
-        else
-        {
-            busSpecs.AddRange(CreateDefaultSpecs());
-        }
+
+        busSpecs.Sort(CompareBusSpecs);
+    }
+
+    int GetSpecIndex(string busId)
+    {
+        if (string.IsNullOrWhiteSpace(busId)) return -1;
+        for (int i = 0; i < busSpecs.Count; i++)
+            if (busSpecs[i] != null && string.Equals(busSpecs[i].busId, busId, StringComparison.OrdinalIgnoreCase))
+                return i;
+        return -1;
     }
 
     void LoadOwnedState()

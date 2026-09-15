@@ -29,7 +29,7 @@
 
 		private static string[] names;
 		[SerializeField]
-		TreeViewState m_TreeViewState;
+		TreeViewState<int> m_TreeViewState;
 
 		[SerializeField]
 		MultiColumnHeaderState m_MultiColumnHeaderState;
@@ -83,7 +83,7 @@
 		public void DrawUI(SerializedProperty property)
 		{
 
-			objectId = property.serializedObject.targetObject.GetInstanceID().ToString();
+			objectId = property.serializedObject.targetObject.GetEntityId().ToString();
 			var serializedMapObject = property.serializedObject;
 			AbstractMap mapObject = (AbstractMap)serializedMapObject.targetObject;
 			tileJSONData = mapObject.VectorData.GetTileJsonData();
@@ -207,7 +207,7 @@
 					treeModel = new TreeModel<FeatureTreeElement>(GetData(subLayerArray));
 					if (m_TreeViewState == null)
 					{
-						m_TreeViewState = new TreeViewState();
+						m_TreeViewState = new TreeViewState<int>();
 					}
 
 					if (layerTreeView == null)

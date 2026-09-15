@@ -1,13 +1,13 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class CountrySelectUI : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("Legacy Scene References")]
     public CanvasGroup canvasGroup;
     public RectTransform contentPanel;
     public TextMeshProUGUI titleText;
@@ -18,508 +18,286 @@ public class CountrySelectUI : MonoBehaviour
     public TextMeshProUGUI backButtonText;
     public Image backgroundPanel;
 
-    // Continent order
-    private readonly string[] continents = {
-        "Africa", "Europe", "Asia", "Americas", "Oceania", "Other"
-    };
+    [Header("Reliable Runtime Catalog")]
+    [Tooltip("Used when this scene starts without the Main Menu manager.")]
+    public CountryDefinition[] fallbackCountries = Array.Empty<CountryDefinition>();
+
+    CountryDefinition[] countries = Array.Empty<CountryDefinition>();
+    CountryDefinition featuredCountry;
+    TextMeshProUGUI heroCountry;
+    TextMeshProUGUI heroDetail;
+    TextMeshProUGUI driveLabel;
+    Button driveButton;
+    readonly Dictionary<CountryDefinition, Image> cardFrames = new Dictionary<CountryDefinition, Image>();
 
     IEnumerator Start()
     {
-        ApplyTheme();
-        SetupButtons();
-        yield return StartCoroutine(EnsureCountryGridLayoutReady());
-        PopulateCountryList();
-        yield return StartCoroutine(AnimateIn());
-    }
-
-    void ApplyTheme()
-    {
-        if (backgroundPanel)
-            backgroundPanel.color = UITheme.Background;
-
-        if (titleText)
-        {
-            titleText.text = "SELECT COUNTRY";
-            titleText.color = UITheme.TextPrimary;
-            titleText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-            titleText.characterSpacing = 6f;
-        }
-
-        if (subtitleText)
-        {
-            subtitleText.text = "where do you want to drive?";
-            subtitleText.color = UITheme.TextSecondary;
-            subtitleText.font = UITheme.GetFont(UITheme.FontWeight.Regular);
-        }
-
-        if (accentLine)
-            accentLine.color = UITheme.Accent;
-
-        if (backButtonText)
-        {
-            backButtonText.text = "BACK";
-            backButtonText.color = UITheme.TextSecondary;
-            backButtonText.font = UITheme.GetFont(UITheme.FontWeight.Medium);
-            backButtonText.characterSpacing = 2f;
-        }
-
-        var backImg = backButton?.GetComponent<Image>();
-        if (backImg) backImg.color = UITheme.SurfaceContainer;
-    }
-
-    void SetupButtons()
-    {
-        backButton?.onClick.AddListener(OnBack);
-    }
-
-    IEnumerator EnsureCountryGridLayoutReady()
-    {
-        if (!countryListContainer)
-            yield break;
-
-        var listRect = countryListContainer as RectTransform;
-        if (!listRect)
-        {
-            Debug.LogWarning("CountrySelectUI: countryListContainer is not a RectTransform. Skipping grid setup.");
-            yield break;
-        }
-
-        // If scene still has VerticalLayoutGroup, remove it first and wait one frame
-        // before adding GridLayoutGroup (Unity only destroys components end-of-frame).
-        var vertical = listRect.GetComponent<VerticalLayoutGroup>();
-        var grid = listRect.GetComponent<GridLayoutGroup>();
-        if (vertical && !grid)
-        {
-            Destroy(vertical);
-            yield return null;
-        }
-
-        grid = listRect.GetComponent<GridLayoutGroup>();
-        if (!grid)
-            grid = listRect.gameObject.AddComponent<GridLayoutGroup>();
-        if (!grid)
-            yield break;
-
-        // Small cards: 3 columns across.
-        grid.cellSize = new Vector2(220f, 300f);
-        grid.spacing = new Vector2(16f, 16f);
-        grid.constraint = GridLayoutGroup.Constraint.Flexible;
-        grid.constraintCount = 3;
-        grid.startAxis = GridLayoutGroup.Axis.Horizontal;
-        grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
-        grid.childAlignment = TextAnchor.UpperCenter;
-        grid.padding = new RectOffset(0, 0, 4, 12);
-    }
-
-    void PopulateCountryList()
-    {
-        if (countryListContainer == null)
-        {
-            Debug.LogError("CountrySelectUI: countryListContainer is not assigned.");
-            return;
-        }
-
-        foreach (Transform child in countryListContainer)
-            Destroy(child.gameObject);
-
-        if (CityManager.Instance == null || CityManager.Instance.allCountries == null
-            || CityManager.Instance.allCountries.Length == 0)
-        {
-            Debug.LogError("CountrySelectUI: No countries in CityManager!");
-            CreateEmptyState("No countries available. Populate CityManager.allCountries first.");
-            return;
-        }
-
-        int renderedCards = 0;
-
-        // Group by continent
-        foreach (string continent in continents)
-        {
-            var countries = GetCountriesByContinentNormalized(continent);
-            if (countries.Length == 0) continue;
-
-            // Country cards
-            foreach (var country in countries)
-                if (country != null)
-                {
-                    CreateCountryCard(country);
-                    renderedCards++;
-                }
-        }
-
-        if (renderedCards == 0)
-        {
-            Debug.LogWarning("CountrySelectUI: Countries found but none matched known continent names. Rendering uncategorized list.");
-            foreach (var country in CityManager.Instance.allCountries)
-            {
-                if (country == null) continue;
-                CreateCountryCard(country);
-                renderedCards++;
-            }
-        }
-
-        Debug.Log($"CountrySelectUI: Rendered {renderedCards} country cards (source countries: {CityManager.Instance.allCountries.Length}).");
-        RefreshListLayout();
-
-        // Layout groups + ContentSizeFitter often need one extra frame in Play Mode.
-        StartCoroutine(RebuildNextFrame());
-    }
-
-    IEnumerator RebuildNextFrame()
-    {
         yield return null;
-        RefreshListLayout();
+        countries = ResolveCountries();
+        BuildCinematicScreen();
+        SelectInitialCountry();
+        if (canvasGroup)
+        {
+            canvasGroup.alpha = 0f;
+            yield return StartCoroutine(UIAnimator.FadeIn(canvasGroup, .45f));
+        }
     }
 
-    CountryDefinition[] GetCountriesByContinentNormalized(string continent)
+    CountryDefinition[] ResolveCountries()
     {
-        var all = CityManager.Instance?.allCountries;
-        if (all == null || all.Length == 0) return Array.Empty<CountryDefinition>();
+        var manager = CityManager.Instance;
+        if (manager != null && manager.allCountries != null && manager.allCountries.Length > 0)
+            return RemoveNulls(manager.allCountries);
 
-        var result = new List<CountryDefinition>();
-        foreach (var c in all)
+        CountryDefinition[] fallback = RemoveNulls(fallbackCountries);
+        if (manager != null && fallback.Length > 0)
         {
-            if (c == null) continue;
-            if (SameLabel(c.continent, continent))
-                result.Add(c);
+            manager.allCountries = fallback;
+            var cityList = new List<CityDefinition>();
+            foreach (var country in fallback)
+                if (country.cities != null)
+                    foreach (var city in country.cities)
+                        if (city && !cityList.Contains(city)) cityList.Add(city);
+            manager.allCities = cityList.ToArray();
         }
+        return fallback;
+    }
+
+    static CountryDefinition[] RemoveNulls(CountryDefinition[] source)
+    {
+        if (source == null) return Array.Empty<CountryDefinition>();
+        var result = new List<CountryDefinition>(source.Length);
+        foreach (var item in source) if (item) result.Add(item);
         return result.ToArray();
     }
 
-    bool SameLabel(string a, string b)
+    void BuildCinematicScreen()
     {
-        if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
-        return string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
+        if (!contentPanel) return;
+        SelectionUIStyle.SetRect(contentPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        for (int i = 0; i < contentPanel.childCount; i++)
+            contentPanel.GetChild(i).gameObject.SetActive(false);
+
+        var screen = CreateUI("CinematicCountryScreen", contentPanel);
+        SelectionUIStyle.Stretch(screen, Vector2.zero, Vector2.one);
+
+        Sprite hero = Resources.Load<Sprite>("UI/CountrySelectHero");
+        var background = CreateImage("DestinationHero", screen, Color.white);
+        SelectionUIStyle.Stretch(background.rectTransform, Vector2.zero, Vector2.one);
+        background.sprite = hero;
+        background.preserveAspect = false;
+
+        var shade = CreateImage("CinematicShade", screen, new Color(.015f, .025f, .028f, .24f));
+        SelectionUIStyle.Stretch(shade.rectTransform, Vector2.zero, Vector2.one);
+        var leftShade = CreateImage("CopyShade", screen, new Color(.01f, .018f, .02f, .60f));
+        SelectionUIStyle.SetRect(leftShade.rectTransform, Vector2.zero, new Vector2(.48f, 1f), Vector2.zero, Vector2.zero);
+        var bottomShade = CreateImage("CarouselShade", screen, new Color(.01f, .018f, .02f, .72f));
+        SelectionUIStyle.SetRect(bottomShade.rectTransform, new Vector2(0f, 0f), new Vector2(1f, .36f), Vector2.zero, Vector2.zero);
+
+        BuildBrand(screen);
+        BuildBackButton(screen);
+        BuildHeroCopy(screen);
+        BuildCarousel(screen, hero);
     }
 
-    void CreateContinentHeader(string continent)
+    void BuildBrand(RectTransform parent)
     {
-        GameObject headerObj = new GameObject($"Header_{continent}");
-        headerObj.transform.SetParent(countryListContainer, false);
+        var brand = SelectionUIStyle.CreateText("Brand", parent, "REAL BUS  /  SIMULATOR", 22f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(brand.rectTransform, new Vector2(.04f, .88f), new Vector2(.38f, .96f), Vector2.zero, Vector2.zero);
+        brand.characterSpacing = 1.5f;
 
-        var rect = headerObj.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(0, 50);
-        var layout = headerObj.AddComponent<LayoutElement>();
-        layout.preferredHeight = 50f;
-        layout.flexibleWidth = 1f;
-
-        // Bottom border line
-        GameObject line = new GameObject("Line");
-        line.transform.SetParent(headerObj.transform, false);
-        var lineRect = line.AddComponent<RectTransform>();
-        lineRect.anchorMin = new Vector2(0f, 0f);
-        lineRect.anchorMax = new Vector2(1f, 0f);
-        lineRect.sizeDelta = new Vector2(0f, 1f);
-        lineRect.anchoredPosition = new Vector2(0f, 8f);
-        var lineImg = line.AddComponent<Image>();
-        lineImg.color = UITheme.OutlineVariant;
-
-        // Continent label
-        GameObject textObj = new GameObject("Text");
-        textObj.transform.SetParent(headerObj.transform, false);
-        var tmp = textObj.AddComponent<TextMeshProUGUI>();
-        tmp.text = continent.ToUpper();
-        tmp.fontSize = 13;
-        tmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-        tmp.color = GetContinentAccent(continent);
-        tmp.characterSpacing = 4f;
-        tmp.alignment = TextAlignmentOptions.Left;
-        var textRect = textObj.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(4f, 10f);
-        textRect.offsetMax = new Vector2(0f, 0f);
+        var tagline = SelectionUIStyle.CreateText("BrandTagline", parent, "EXPLORE  ·  DRIVE  ·  BELONG", 10f,
+            UITheme.FontWeight.Medium, UITheme.WithAlpha(UITheme.TextPrimary, .72f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(tagline.rectTransform, new Vector2(.04f, .845f), new Vector2(.38f, .89f), Vector2.zero, Vector2.zero);
+        tagline.characterSpacing = 2f;
     }
 
-    void CreateCountryCard(CountryDefinition country)
+    void BuildBackButton(RectTransform parent)
     {
-        // Neon-inspired compact card (3-across friendly).
-        GameObject card = new GameObject($"CountryCard_{country.countryCode}");
-        card.transform.SetParent(countryListContainer, false);
-        card.transform.localScale = Vector3.one;
-
-        var cardRect = card.AddComponent<RectTransform>();
-        cardRect.anchorMin = new Vector2(0f, 1f);
-        cardRect.anchorMax = new Vector2(1f, 1f);
-        cardRect.pivot = new Vector2(0.5f, 1f);
-        cardRect.anchoredPosition = Vector2.zero;
-        cardRect.sizeDelta = new Vector2(220f, 300f);
-
-        var cardLayout = card.AddComponent<LayoutElement>();
-        cardLayout.preferredHeight = 300f;
-        cardLayout.preferredWidth = 220f;
-        cardLayout.flexibleWidth = 0f;
-
-        var bg = card.AddComponent<Image>();
-        bg.color = UITheme.SurfaceHigh;
-
-        int cityCount = country.cities?.Length ?? 0;
-        string difficulty = cityCount <= 4 ? "HARD" : cityCount <= 7 ? "MEDIUM" : "EASY";
-        int unlockPct = Mathf.Clamp(40 + cityCount * 5, 0, 100);
-        bool isActive = CityManager.Instance != null && CityManager.Instance.activeCountry == country;
-        Color difficultyColor = difficulty == "HARD" ? UITheme.Accent
-            : difficulty == "MEDIUM" ? UITheme.Secondary
-            : UITheme.TertiaryDim;
-
-        // Hero image area (currently color-based by continent).
-        GameObject hero = new GameObject("HeroImage");
-        hero.transform.SetParent(card.transform, false);
-        var heroImg = hero.AddComponent<Image>();
-        heroImg.color = UITheme.WithAlpha(GetContinentAccent(country.continent), 0.85f);
-        var heroRt = hero.GetComponent<RectTransform>();
-        heroRt.anchorMin = Vector2.zero;
-        heroRt.anchorMax = Vector2.one;
-        heroRt.offsetMin = Vector2.zero;
-        heroRt.offsetMax = Vector2.zero;
-
-        // Full-screen gradient overlay (dark at bottom).
-        GameObject overlay = new GameObject("HeroOverlay");
-        overlay.transform.SetParent(hero.transform, false);
-        var overlayImg = overlay.AddComponent<Image>();
-        overlayImg.color = UITheme.WithAlpha(Color.black, 0.42f);
-
-        var overlayRect = overlay.GetComponent<RectTransform>();
-        overlayRect.anchorMin = Vector2.zero;
-        overlayRect.anchorMax = Vector2.one;
-        overlayRect.offsetMin = Vector2.zero;
-        overlayRect.offsetMax = Vector2.zero;
-
-        // Content block anchored to bottom.
-        GameObject content = new GameObject("Content");
-        content.transform.SetParent(card.transform, false);
-        var contentRt = content.AddComponent<RectTransform>();
-        contentRt.anchorMin = Vector2.zero;
-        contentRt.anchorMax = Vector2.one;
-        contentRt.offsetMin = new Vector2(12f, 10f);
-        contentRt.offsetMax = new Vector2(-12f, -10f);
-
-        // Status badge background + label (separate objects to avoid Graphic conflicts).
-        GameObject badgeObj = new GameObject("Badge");
-        badgeObj.transform.SetParent(content.transform, false);
-        var badgeBg = badgeObj.AddComponent<Image>();
-        badgeBg.color = UITheme.WithAlpha(isActive ? UITheme.Accent : UITheme.Secondary, 0.18f);
-        var badgeRt = badgeObj.GetComponent<RectTransform>();
-        badgeRt.anchorMin = new Vector2(0f, 0f);
-        badgeRt.anchorMax = new Vector2(0f, 0f);
-        badgeRt.pivot = new Vector2(0f, 0f);
-        badgeRt.anchoredPosition = new Vector2(0f, 250f);
-        badgeRt.sizeDelta = new Vector2(78f, 16f);
-
-        GameObject badgeTextObj = new GameObject("Text_Badge");
-        badgeTextObj.transform.SetParent(badgeObj.transform, false);
-        var badgeTmp = badgeTextObj.AddComponent<TextMeshProUGUI>();
-        badgeTmp.text = isActive ? "CURRENT ACTIVE" : "ELITE CLASS";
-        badgeTmp.fontSize = 9f;
-        badgeTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-        badgeTmp.color = isActive ? UITheme.Accent : UITheme.Secondary;
-        badgeTmp.alignment = TextAlignmentOptions.Center;
-        var badgeTextRt = badgeTextObj.GetComponent<RectTransform>();
-        badgeTextRt.anchorMin = Vector2.zero;
-        badgeTextRt.anchorMax = Vector2.one;
-        badgeTextRt.offsetMin = Vector2.zero;
-        badgeTextRt.offsetMax = Vector2.zero;
-
-        // Country name.
-        GameObject nameObj = new GameObject("Text_Country");
-        nameObj.transform.SetParent(content.transform, false);
-        var nameTmp = nameObj.AddComponent<TextMeshProUGUI>();
-        nameTmp.text = country.countryName.ToUpper();
-        nameTmp.fontSize = 16f;
-        nameTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-        nameTmp.color = UITheme.TextPrimary;
-        nameTmp.alignment = TextAlignmentOptions.Left;
-        nameTmp.overflowMode = TextOverflowModes.Ellipsis;
-        var nameRt = nameObj.GetComponent<RectTransform>();
-        nameRt.anchorMin = new Vector2(0f, 0f);
-        nameRt.anchorMax = new Vector2(1f, 0f);
-        nameRt.pivot = new Vector2(0f, 0f);
-        nameRt.anchoredPosition = new Vector2(0f, 100f);
-        nameRt.sizeDelta = new Vector2(0f, 24f);
-
-        // Three-column metadata strip.
-        GameObject statsRow = new GameObject("StatsRow");
-        statsRow.transform.SetParent(content.transform, false);
-        var statsBg = statsRow.AddComponent<Image>();
-        statsBg.color = UITheme.WithAlpha(UITheme.BackgroundAlt, 0.62f);
-
-        var rowLayout = statsRow.AddComponent<HorizontalLayoutGroup>();
-        rowLayout.spacing = 0f;
-        rowLayout.childAlignment = TextAnchor.MiddleCenter;
-        rowLayout.childForceExpandWidth = true;
-        rowLayout.childForceExpandHeight = true;
-        rowLayout.padding = new RectOffset(4, 4, 4, 4);
-        var statsRt = statsRow.GetComponent<RectTransform>();
-        statsRt.anchorMin = new Vector2(0f, 0f);
-        statsRt.anchorMax = new Vector2(1f, 0f);
-        statsRt.pivot = new Vector2(0.5f, 0f);
-        statsRt.anchoredPosition = new Vector2(0f, 50f);
-        statsRt.sizeDelta = new Vector2(0f, 40f);
-
-        CreateMetaCell(statsRow.transform, "DIFFICULTY", difficulty, difficultyColor);
-        CreateMetaCell(statsRow.transform, "CITIES", cityCount.ToString(), UITheme.TextPrimary);
-        CreateMetaCell(statsRow.transform, "UNLOCK", $"{unlockPct}%", UITheme.Accent);
-
-        // Select button
-        GameObject btnObj = new GameObject("Btn_SelectCountry");
-        btnObj.transform.SetParent(content.transform, false);
-        var btnRt = btnObj.AddComponent<RectTransform>();
-        btnRt.anchorMin = new Vector2(0f, 0f);
-        btnRt.anchorMax = new Vector2(1f, 0f);
-        btnRt.pivot = new Vector2(0.5f, 0f);
-        btnRt.anchoredPosition = new Vector2(0f, 0f);
-        btnRt.sizeDelta = new Vector2(0f, 26f);
-
-        var btnImg = btnObj.AddComponent<Image>();
-        btnImg.color = isActive ? UITheme.SurfaceBright : UITheme.Accent;
-        var btn = btnObj.AddComponent<Button>();
-
-        var cols = btn.colors;
-        cols.normalColor = btnImg.color;
-        cols.highlightedColor = isActive ? UITheme.SurfaceHigh : UITheme.AccentDim;
-        cols.pressedColor = isActive ? UITheme.WithAlpha(UITheme.SurfaceBright, 0.7f) : UITheme.WithAlpha(UITheme.Accent, 0.7f);
-        btn.colors = cols;
-
-        var btnText = new GameObject("Text").AddComponent<TextMeshProUGUI>();
-        btnText.transform.SetParent(btnObj.transform, false);
-        btnText.text = "SELECT COUNTRY";
-        btnText.fontSize = 11f;
-        btnText.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-        btnText.color = isActive ? UITheme.TextPrimary : UITheme.Background;
-        btnText.alignment = TextAlignmentOptions.Center;
-
-        var btnTextRt = btnText.GetComponent<RectTransform>();
-        btnTextRt.anchorMin = Vector2.zero;
-        btnTextRt.anchorMax = Vector2.one;
-        btnTextRt.offsetMin = Vector2.zero;
-        btnTextRt.offsetMax = Vector2.zero;
-
-        var capturedCountry = country;
-        btn.onClick.AddListener(() => OnCountrySelected(capturedCountry));
+        var buttonObject = CreateImage("BackButton", parent, new Color(.03f, .05f, .055f, .72f));
+        SelectionUIStyle.SetRect(buttonObject.rectTransform, new Vector2(.875f, .88f), new Vector2(.96f, .95f), Vector2.zero, Vector2.zero);
+        var button = buttonObject.gameObject.AddComponent<Button>();
+        var label = SelectionUIStyle.CreateText("Label", buttonObject.transform, "‹  MENU", 13f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Center);
+        SelectionUIStyle.Stretch(label.rectTransform, Vector2.zero, Vector2.one);
+        button.onClick.AddListener(() => StartCoroutine(Transition(() => SceneLoader.Instance?.LoadMainMenu())));
     }
 
-    void CreateMetaCell(Transform parent, string label, string value, Color valueColor)
+    void BuildHeroCopy(RectTransform parent)
     {
-        GameObject cell = new GameObject($"Meta_{label}");
-        cell.transform.SetParent(parent, false);
-        cell.AddComponent<RectTransform>();
-        var layout = cell.AddComponent<LayoutElement>();
-        layout.flexibleWidth = 1f;
+        var eyebrow = SelectionUIStyle.CreateText("Eyebrow", parent, "CHOOSE YOUR JOURNEY", 14f,
+            UITheme.FontWeight.Medium, UITheme.WithAlpha(UITheme.TextPrimary, .82f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(eyebrow.rectTransform, new Vector2(.04f, .68f), new Vector2(.43f, .75f), Vector2.zero, Vector2.zero);
+        eyebrow.characterSpacing = 4f;
 
-        var vertical = cell.AddComponent<VerticalLayoutGroup>();
-        vertical.spacing = 0f;
-        vertical.childAlignment = TextAnchor.MiddleCenter;
-        vertical.childControlHeight = false;
-        vertical.childControlWidth = true;
-        vertical.childForceExpandHeight = false;
-        vertical.childForceExpandWidth = true;
+        heroCountry = SelectionUIStyle.CreateText("FeaturedCountry", parent, "Choose a country", 72f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(heroCountry.rectTransform, new Vector2(.04f, .52f), new Vector2(.45f, .69f), Vector2.zero, Vector2.zero);
+        heroCountry.enableAutoSizing = true;
+        heroCountry.fontSizeMin = 40f;
+        heroCountry.fontSizeMax = 72f;
 
-        var labelObj = new GameObject("Label");
-        labelObj.transform.SetParent(cell.transform, false);
-        var labelTmp = labelObj.AddComponent<TextMeshProUGUI>();
-        labelTmp.text = label;
-        labelTmp.fontSize = 8f;
-        labelTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-        labelTmp.color = UITheme.TextMuted;
-        labelTmp.alignment = TextAlignmentOptions.Center;
-        var labelLayout = labelObj.AddComponent<LayoutElement>();
-        labelLayout.preferredHeight = 14f;
+        heroDetail = SelectionUIStyle.CreateText("FeaturedDetail", parent, "Select a destination below", 22f,
+            UITheme.FontWeight.Regular, UITheme.WithAlpha(UITheme.TextPrimary, .9f), TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(heroDetail.rectTransform, new Vector2(.04f, .46f), new Vector2(.45f, .53f), Vector2.zero, Vector2.zero);
 
-        var valueObj = new GameObject("Value");
-        valueObj.transform.SetParent(cell.transform, false);
-        var valueTmp = valueObj.AddComponent<TextMeshProUGUI>();
-        valueTmp.text = value;
-        valueTmp.fontSize = 12f;
-        valueTmp.font = UITheme.GetFont(UITheme.FontWeight.Bold);
-        valueTmp.color = valueColor;
-        valueTmp.alignment = TextAlignmentOptions.Center;
-        var valueLayout = valueObj.AddComponent<LayoutElement>();
-        valueLayout.preferredHeight = 18f;
+        var cta = CreateImage("DriveButton", parent, UITheme.Accent);
+        SelectionUIStyle.SetRect(cta.rectTransform, new Vector2(.04f, .365f), new Vector2(.34f, .445f), Vector2.zero, Vector2.zero);
+        SelectionUIStyle.AddOutline(cta.gameObject, UITheme.WithAlpha(Color.white, .42f));
+        driveButton = cta.gameObject.AddComponent<Button>();
+        driveLabel = SelectionUIStyle.CreateText("Label", cta.transform, "CHOOSE A COUNTRY", 18f,
+            UITheme.FontWeight.Bold, UITheme.Background, TextAlignmentOptions.Center);
+        SelectionUIStyle.Stretch(driveLabel.rectTransform, Vector2.zero, Vector2.one);
+        driveButton.onClick.AddListener(ConfirmCountry);
+        driveButton.interactable = false;
     }
 
-    void CreateEmptyState(string message)
+    void BuildCarousel(RectTransform parent, Sprite hero)
     {
-        GameObject msgObj = new GameObject("Text_Empty");
-        msgObj.transform.SetParent(countryListContainer, false);
-        var layout = msgObj.AddComponent<LayoutElement>();
-        layout.preferredHeight = 120f;
-        layout.flexibleWidth = 1f;
+        var viewport = CreateImage("CountryViewport", parent, Color.clear);
+        SelectionUIStyle.SetRect(viewport.rectTransform, new Vector2(.035f, .045f), new Vector2(.965f, .325f), Vector2.zero, Vector2.zero);
+        var mask = viewport.gameObject.AddComponent<RectMask2D>();
 
-        var tmp = msgObj.AddComponent<TextMeshProUGUI>();
-        tmp.text = message;
-        tmp.fontSize = 18;
-        tmp.font = UITheme.GetFont(UITheme.FontWeight.Regular);
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = UITheme.TextMuted;
+        var content = CreateUI("CountryFilmstrip", viewport.transform);
+        content.anchorMin = new Vector2(0f, 0f);
+        content.anchorMax = new Vector2(0f, 1f);
+        content.pivot = new Vector2(0f, .5f);
+        content.anchoredPosition = Vector2.zero;
+        content.sizeDelta = Vector2.zero;
+        var row = content.gameObject.AddComponent<HorizontalLayoutGroup>();
+        row.padding = new RectOffset(4, 18, 4, 4);
+        row.spacing = 16f;
+        row.childAlignment = TextAnchor.MiddleLeft;
+        row.childControlWidth = true;
+        row.childControlHeight = true;
+        row.childForceExpandWidth = false;
+        row.childForceExpandHeight = true;
+        var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-        var rect = msgObj.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(0f, 120f);
-    }
+        var scroll = viewport.gameObject.AddComponent<ScrollRect>();
+        scroll.viewport = viewport.rectTransform;
+        scroll.content = content;
+        scroll.horizontal = true;
+        scroll.vertical = false;
+        scroll.movementType = ScrollRect.MovementType.Elastic;
+        scroll.inertia = true;
+        scroll.decelerationRate = .12f;
+        scroll.scrollSensitivity = 32f;
 
-    Color GetContinentAccent(string continent)
-    {
-        switch (continent)
+        if (countries.Length == 0)
         {
-            case "Africa":   return UITheme.Africa;
-            case "Europe":   return UITheme.Europe;
-            case "Asia":     return UITheme.Asia;
-            case "Americas": return UITheme.Americas;
-            case "Oceania":  return UITheme.Oceania;
-            default:         return UITheme.Accent;
+            var empty = SelectionUIStyle.CreateText("NoCountries", content, "No countries found — return to Main Menu and try again.", 20f,
+                UITheme.FontWeight.Medium, UITheme.TextPrimary, TextAlignmentOptions.Left);
+            var emptyLayout = empty.gameObject.AddComponent<LayoutElement>();
+            emptyLayout.preferredWidth = 720f;
+            return;
+        }
+
+        for (int i = 0; i < countries.Length; i++)
+            CreateCountryCard(content, countries[i], hero, i);
+    }
+
+    void CreateCountryCard(RectTransform parent, CountryDefinition country, Sprite hero, int index)
+    {
+        var card = CreateImage($"Country_{country.countryCode}", parent, UITheme.SurfaceContainer);
+        var layout = card.gameObject.AddComponent<LayoutElement>();
+        layout.preferredWidth = 310f;
+        layout.minWidth = 280f;
+        layout.preferredHeight = 210f;
+        var button = card.gameObject.AddComponent<Button>();
+
+        var photo = CreateImage("Photo", card.transform, Color.white);
+        SelectionUIStyle.Stretch(photo.rectTransform, Vector2.zero, Vector2.one);
+        photo.sprite = hero;
+        photo.preserveAspect = false;
+        photo.color = Color.Lerp(Color.white, UITheme.GetContinentColor(country.countryName), .13f + (index % 3) * .035f);
+        photo.raycastTarget = false;
+
+        var wash = CreateImage("PhotoWash", card.transform, new Color(.01f, .02f, .025f, .32f));
+        SelectionUIStyle.Stretch(wash.rectTransform, Vector2.zero, Vector2.one);
+        var caption = CreateImage("CaptionShade", card.transform, new Color(.01f, .018f, .02f, .70f));
+        SelectionUIStyle.SetRect(caption.rectTransform, Vector2.zero, new Vector2(1f, .38f), Vector2.zero, Vector2.zero);
+
+        var code = SelectionUIStyle.CreateText("Code", card.transform, country.countryCode, 12f,
+            UITheme.FontWeight.Bold, UITheme.Accent, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(code.rectTransform, new Vector2(.06f, .29f), new Vector2(.35f, .46f), Vector2.zero, Vector2.zero);
+        code.characterSpacing = 1.5f;
+
+        var name = SelectionUIStyle.CreateText("Country", card.transform, country.countryName, 24f,
+            UITheme.FontWeight.Bold, UITheme.TextPrimary, TextAlignmentOptions.Left);
+        SelectionUIStyle.SetRect(name.rectTransform, new Vector2(.06f, .05f), new Vector2(.94f, .31f), Vector2.zero, Vector2.zero);
+        name.enableAutoSizing = true;
+        name.fontSizeMin = 17f;
+        name.fontSizeMax = 24f;
+
+        var frame = card.gameObject.AddComponent<Outline>();
+        frame.effectDistance = new Vector2(3f, -3f);
+        frame.effectColor = UITheme.WithAlpha(UITheme.Outline, .75f);
+        frame.useGraphicAlpha = true;
+        cardFrames[country] = card;
+
+        var captured = country;
+        button.onClick.AddListener(() => FeatureCountry(captured));
+    }
+
+    void SelectInitialCountry()
+    {
+        CountryDefinition initial = GameState.Instance?.selectedCountry;
+        if (!initial)
+            initial = Array.Find(countries, c => c && string.Equals(c.countryCode, "KE", StringComparison.OrdinalIgnoreCase));
+        if (!initial && countries.Length > 0) initial = countries[0];
+        FeatureCountry(initial);
+    }
+
+    void FeatureCountry(CountryDefinition country)
+    {
+        if (!country) return;
+        featuredCountry = country;
+        int cityCount = country.cities?.Length ?? 0;
+        heroCountry.text = country.countryName;
+        heroDetail.text = $"{country.continent}  ·  {cityCount} {(cityCount == 1 ? "city" : "cities")}  ·  Real-world routes";
+        driveLabel.text = $"DRIVE IN {country.countryName.ToUpperInvariant()}   ›";
+        driveButton.interactable = true;
+
+        foreach (var pair in cardFrames)
+        {
+            var outline = pair.Value.GetComponent<Outline>();
+            bool selected = pair.Key == country;
+            outline.effectColor = selected ? UITheme.Accent : UITheme.WithAlpha(UITheme.Outline, .7f);
+            outline.effectDistance = selected ? new Vector2(4f, -4f) : new Vector2(2f, -2f);
         }
     }
 
-    void OnCountrySelected(CountryDefinition country)
+    void ConfirmCountry()
     {
-        Debug.Log($"Country selected: {country.countryName}");
-
-        if (GameState.Instance != null)
-            GameState.Instance.SelectCountry(country);
-
-        if (CityManager.Instance != null)
-            CityManager.Instance.SetActiveCountry(country);
-
-        StartCoroutine(TransitionToCitySelect());
+        if (!featuredCountry) return;
+        GameState.Instance?.SelectCountry(featuredCountry);
+        CityManager.Instance?.SetActiveCountry(featuredCountry);
+        StartCoroutine(Transition(() => SceneLoader.Instance?.LoadCitySelectChecked()));
     }
 
-    void OnBack()
+    IEnumerator Transition(Action load)
     {
-        StartCoroutine(TransitionToMainMenu());
+        if (canvasGroup) yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, .25f));
+        load?.Invoke();
     }
 
-    IEnumerator AnimateIn()
+    static RectTransform CreateUI(string name, Transform parent)
     {
-        if (canvasGroup) canvasGroup.alpha = 0f;
-        yield return new WaitForSeconds(0.05f);
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeIn(canvasGroup, 0.4f));
-        if (contentPanel)
-            yield return StartCoroutine(
-                UIAnimator.SlideInFromBottom(contentPanel, 0.35f, 30f));
+        var obj = new GameObject(name, typeof(RectTransform));
+        obj.transform.SetParent(parent, false);
+        return obj.GetComponent<RectTransform>();
     }
 
-    IEnumerator TransitionToMainMenu()
+    static Image CreateImage(string name, Transform parent, Color color)
     {
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
-
-        SceneLoader.Instance?.LoadMainMenu();
-    }
-
-    IEnumerator TransitionToCitySelect()
-    {
-        if (canvasGroup)
-            yield return StartCoroutine(UIAnimator.FadeOut(canvasGroup, 0.25f));
-
-        SceneLoader.Instance?.LoadCitySelect();
-    }
-
-    void RefreshListLayout()
-    {
-        var listRect = countryListContainer as RectTransform;
-        if (listRect == null) return;
-
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(listRect);
-        Canvas.ForceUpdateCanvases();
+        var obj = new GameObject(name, typeof(RectTransform), typeof(Image));
+        obj.transform.SetParent(parent, false);
+        var image = obj.GetComponent<Image>();
+        image.color = color;
+        return image;
     }
 }

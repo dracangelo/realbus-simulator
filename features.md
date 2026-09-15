@@ -16,7 +16,7 @@
 - Mapbox tile streaming with distance-based detail levels.
 - Offline city downloads, cache limits, and LRU cleanup.
 - GPS tracking, route previews, and runtime navigation lines.
-- City, country, and route selection screens.
+- Cinematic country, city, and route selectors with swipeable cards.
 
 ## Gameplay
 
@@ -66,7 +66,7 @@
 - Mission history, XP, unlocks, upgrades, liveries, economy, and vehicle-state persistence.
 - Automatic saves after missions, rank-ups, purchases, customization, and app backgrounding.
 - Local/cloud conflict detection with player choice.
-- Main menu, garage, settings, credits, pause, loading, and mobile UI.
+- Main menu, garage, settings, credits, pause, resilient loading, and mobile UI.
 - Safe-area HUD with analogue speed, fuel, temperature, gear, route, ETA, schedule, and passenger readouts.
 - North-up route minimap with stop markers and a visibility toggle.
 - First-drive tutorial, missed-stop recovery, and turn guidance.
@@ -78,7 +78,7 @@
 - Spatial audio with production clip and FMOD bridge slots.
 - Glass reflections, cosmetic scuffs, exhaust, dust, and rain-spray effects.
 - Quality-aware visuals with motion blur disabled on Low.
-- 28sp minimum text, status icons, high contrast, haptics, and subtitles.
+- Scalable text, status icons, high contrast, haptics, and subtitles.
 - Passenger mood cues and context-sensitive reactions.
 - Recurring passenger stories that evolve with trust and driver reputation.
 - Resumable offline downloads with cache, size, and storage details.

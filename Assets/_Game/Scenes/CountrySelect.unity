@@ -846,6 +846,27 @@ MonoBehaviour:
   backButton: {fileID: 952705684}
   backButtonText: {fileID: 1348043446}
   backgroundPanel: {fileID: 1772511444}
+  fallbackCountries:
+  - {fileID: 11400000, guid: a019731b4a6f28bd7a7dd52ed9f226b8, type: 2}
+  - {fileID: 11400000, guid: 7a64879353274fbd4b4fe947a61100fe, type: 2}
+  - {fileID: 11400000, guid: feaa1d9cba1c508aaa9e05956a847435, type: 2}
+  - {fileID: 11400000, guid: 1e082e52f23437e59b5afbd7ad3379c5, type: 2}
+  - {fileID: 11400000, guid: e47091bd274ceb29680f1e4461b75d35, type: 2}
+  - {fileID: 11400000, guid: 648f48320c0a6dbe189597a7bffccd4f, type: 2}
+  - {fileID: 11400000, guid: 70855d2299d99205990fd28412cfe989, type: 2}
+  - {fileID: 11400000, guid: 477ac29649889a0409b0ed958915ff6e, type: 2}
+  - {fileID: 11400000, guid: e6033bda7b5ccfb879c44d30914052b7, type: 2}
+  - {fileID: 11400000, guid: a3aeded5e4a278e42b858ea2e8634390, type: 2}
+  - {fileID: 11400000, guid: c5b5f4156f6d2f77ca0259f79bee8bbb, type: 2}
+  - {fileID: 11400000, guid: d433a0e084521aba8b2207fd635d9fc8, type: 2}
+  - {fileID: 11400000, guid: bf4c487e09dd6171c8d72725613df7b8, type: 2}
+  - {fileID: 11400000, guid: ad688a61a5a0e47f9acfe128e23ef8e2, type: 2}
+  - {fileID: 11400000, guid: 592f54eab16c6ec648bf1e3a4b22676b, type: 2}
+  - {fileID: 11400000, guid: 6aeb205a10909f6eba2baab80c5db511, type: 2}
+  - {fileID: 11400000, guid: 80a31496bc449254182d8ad9b0898312, type: 2}
+  - {fileID: 11400000, guid: d28d908f7c0a483d9b33e8fed8b9e0cc, type: 2}
+  - {fileID: 11400000, guid: f71e2ff004f11c1b3a757fff82be8aa1, type: 2}
+  - {fileID: 11400000, guid: 8d787102b9294ba28b129e392c245460, type: 2}
 --- !u!114 &541553585
 MonoBehaviour:
   m_ObjectHideFlags: 0
