@@ -26,6 +26,7 @@ public class FuelSystem : MonoBehaviour
     [SerializeField] float currentFuelLitres = DefaultTankCapacityLitres;
     [SerializeField] float lastConsumptionLPer100Km = 0f;
 
+    public float TotalConsumedLitres { get; private set; }
     public float CurrentFuelLitres => currentFuelLitres;
     public float CurrentFuelPercent => Mathf.Clamp01(currentFuelLitres / Mathf.Max(1f, tankCapacityLitres)) * 100f;
     public float LastConsumptionLPer100Km => lastConsumptionLPer100Km;
@@ -51,9 +52,10 @@ public class FuelSystem : MonoBehaviour
             return;
 
         float preservedPercent = CurrentFuelPercent / 100f;
-        tankCapacityLitres = Mathf.Max(1f, spec.energyCapacityUnits);
-        cityBaseLPer100Km = Mathf.Max(1f, spec.cityConsumptionPer100Km);
-        motorwayBaseLPer100Km = Mathf.Max(1f, spec.motorwayConsumptionPer100Km);
+        BusUpgradeModifiers modifiers = UpgradeManager.EnsureExists().GetModifiers(spec.busId);
+        tankCapacityLitres = Mathf.Max(1f, spec.energyCapacityUnits * modifiers.energyCapacity);
+        cityBaseLPer100Km = Mathf.Max(1f, spec.cityConsumptionPer100Km * modifiers.energyConsumption);
+        motorwayBaseLPer100Km = Mathf.Max(1f, spec.motorwayConsumptionPer100Km * modifiers.energyConsumption);
         motorwaySpeedThresholdKmh = Mathf.Max(1f, spec.motorwaySpeedThresholdKmh);
         optimalCruiseRpm = Mathf.Max(1f, spec.optimalCruiseRpm);
         dieselPricePerLitreKES = Mathf.Max(0f, spec.unitPriceKES);
@@ -68,6 +70,7 @@ public class FuelSystem : MonoBehaviour
         if (!IsDriveActive() || busController == null)
             return;
 
+        busController.FuelDepleted = currentFuelLitres <= 0f;
         float distanceKm = (busController.currentSpeedKmh / 3600f) * Time.fixedDeltaTime;
         if (distanceKm <= 0f)
         {
@@ -84,9 +87,11 @@ public class FuelSystem : MonoBehaviour
         float roadGradientFactor = GetRoadGradientFactor();
 
         lastConsumptionLPer100Km = baseLPer100Km * loadFactor * rpmEfficiencyFactor * roadGradientFactor;
-        float fuelUsed = (lastConsumptionLPer100Km / 100f) * distanceKm;
+        float fuelUsed = Mathf.Min(currentFuelLitres, (lastConsumptionLPer100Km / 100f) * distanceKm);
 
+        TotalConsumedLitres += Mathf.Min(currentFuelLitres, fuelUsed);
         currentFuelLitres = Mathf.Max(0f, currentFuelLitres - fuelUsed);
+        busController.FuelDepleted = currentFuelLitres <= 0f;
         PersistFuelUsage(fuelUsed);
         SyncSessionFuelDisplay();
 
@@ -102,9 +107,7 @@ public class FuelSystem : MonoBehaviour
         if (passengerManager == null)
             return 1f;
 
-        float capacity = Mathf.Max(1f, passengerManager.GetMaxCapacity());
-        float occupancy = Mathf.Clamp01(passengerManager.currentPassengers / capacity);
-        return Mathf.Lerp(1f, 1.18f, occupancy);
+        return RealismRules.LoadFactor(passengerManager.currentPassengers, passengerManager.GetMaxCapacity());
     }
 
     public float GetBaseConsumptionLPer100Km()
@@ -157,6 +160,7 @@ public class FuelSystem : MonoBehaviour
 
         float cost = litresNeeded * dieselPricePerLitreKES;
         currentFuelLitres = tankCapacityLitres;
+        if (busController != null) busController.FuelDepleted = false;
 
         if (GameState.Instance != null)
         {
@@ -177,6 +181,7 @@ public class FuelSystem : MonoBehaviour
         if (GameState.Instance == null || GameState.Instance.vehicleState == null)
         {
             currentFuelLitres = tankCapacityLitres;
+            if (busController != null) busController.FuelDepleted = false;
             return;
         }
 

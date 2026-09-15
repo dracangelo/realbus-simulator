@@ -40,6 +40,8 @@ public class OfflineCacheManager : MonoBehaviour
     string _cacheRoot;
     bool   _loggedAuthFailure;
     float  _connectivityTimer;
+    bool _evicting;
+    public bool forceOffline;
 
     // ── Lifecycle ──────────────────────────────────────────────────────
 
@@ -53,7 +55,8 @@ public class OfflineCacheManager : MonoBehaviour
 
     void Start()
     {
-        isOnline = Application.internetReachability != NetworkReachability.NotReachable;
+        isOnline = !forceOffline && Application.internetReachability != NetworkReachability.NotReachable;
+        EnforceCacheSizeAsync();
         Debug.Log($"[OfflineCacheManager] Online={isOnline}  CacheRoot={_cacheRoot}");
     }
 
@@ -64,7 +67,7 @@ public class OfflineCacheManager : MonoBehaviour
         if (_connectivityTimer >= connectivityRecheckInterval)
         {
             _connectivityTimer = 0f;
-            isOnline = Application.internetReachability != NetworkReachability.NotReachable;
+            isOnline = !forceOffline && Application.internetReachability != NetworkReachability.NotReachable;
         }
     }
 
@@ -85,10 +88,17 @@ public class OfflineCacheManager : MonoBehaviour
         // ── Cache hit ──────────────────────────────────────────────────
         if (File.Exists(cachePath))
         {
-            File.SetLastWriteTimeUtc(cachePath, System.DateTime.UtcNow); // LRU touch
-            onDone?.Invoke(LoadTextureFromDisk(cachePath));
-            yield break;
+            Texture2D cached = LoadTextureFromDisk(cachePath);
+            if (cached != null)
+            {
+                try { File.SetLastWriteTimeUtc(cachePath, System.DateTime.UtcNow); } catch (IOException) { }
+                onDone?.Invoke(cached);
+                yield break;
+            }
+            try { File.Delete(cachePath); } catch (IOException) { }
         }
+
+        isOnline = !forceOffline && Application.internetReachability != NetworkReachability.NotReachable;
 
         // ── Offline and no cache ────────────────────────────────────────
         if (!isOnline)
@@ -167,11 +177,17 @@ public class OfflineCacheManager : MonoBehaviour
 
     static Texture2D LoadTextureFromDisk(string path)
     {
-        byte[] bytes = File.ReadAllBytes(path);
-        var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-        tex.LoadImage(bytes);          // resizes and fills
-        tex.Apply(false, true);        // mark non-readable to save VRAM copies
-        return tex;
+        Texture2D tex = null;
+        try
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (tex.LoadImage(bytes, false)) return tex; // Streaming LOD builder needs readable pixels.
+        }
+        catch (IOException) { }
+        catch (System.UnauthorizedAccessException) { }
+        if (tex != null) Destroy(tex);
+        return null;
     }
 
     void WriteToCache(string path, Texture2D tex)
@@ -181,7 +197,9 @@ public class OfflineCacheManager : MonoBehaviour
             string dir = Path.GetDirectoryName(path);
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
-            File.WriteAllBytes(path, tex.EncodeToPNG());
+            File.WriteAllBytes(path + ".tmp", tex.EncodeToPNG());
+            if (File.Exists(path)) File.Delete(path);
+            File.Move(path + ".tmp", path);
         }
         catch (System.Exception ex)
         {
@@ -193,7 +211,16 @@ public class OfflineCacheManager : MonoBehaviour
     /// Fire-and-forget: if cache is over budget, delete oldest files until under.
     /// Runs as a coroutine to avoid a main-thread stall.
     /// </summary>
-    void EnforceCacheSizeAsync() => StartCoroutine(EvictOldestTiles());
+    void EnforceCacheSizeAsync()
+    {
+        if (!_evicting) StartCoroutine(EvictOnce());
+    }
+    IEnumerator EvictOnce()
+    {
+        _evicting = true;
+        try { yield return EvictOldestTiles(); }
+        finally { _evicting = false; }
+    }
 
     IEnumerator EvictOldestTiles()
     {
@@ -232,7 +259,7 @@ public class OfflineCacheManager : MonoBehaviour
 
     void HandleDownloadFailure(UnityWebRequest req, int zoom, int x, int y)
     {
-        isOnline = false;
+        isOnline = !forceOffline && Application.internetReachability != NetworkReachability.NotReachable;
         long status   = req.responseCode;
         string body   = req.downloadHandler?.text ?? "";
         if (body.Length > 200) body = body.Substring(0, 200);

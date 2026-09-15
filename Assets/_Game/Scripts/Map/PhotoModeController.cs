@@ -25,6 +25,8 @@ public class PhotoModeController : MonoBehaviour
     [SerializeField] bool isPhotoModeActive;
     [SerializeField] string lastScreenshotPath;
 
+    float previousTimeScale;
+    bool previousAudioPause;
     Transform originalParent;
     Vector3 originalLocalPosition;
     Quaternion originalLocalRotation;
@@ -102,6 +104,8 @@ public class PhotoModeController : MonoBehaviour
         pitchDegrees = NormalizePitch(euler.x);
         yawDegrees = euler.y;
 
+        previousTimeScale = Time.timeScale;
+        previousAudioPause = AudioListener.pause;
         Time.timeScale = 0f;
         AudioListener.pause = true;
         isPhotoModeActive = true;
@@ -123,13 +127,17 @@ public class PhotoModeController : MonoBehaviour
             else
             {
                 targetCamera.transform.SetParent(null, false);
+                targetCamera.transform.localPosition = originalLocalPosition;
+                targetCamera.transform.localRotation = originalLocalRotation;
             }
         }
 
-        AudioListener.pause = false;
-        Time.timeScale = 1f;
+        AudioListener.pause = previousAudioPause;
+        Time.timeScale = previousTimeScale;
         isPhotoModeActive = false;
     }
+
+    void OnDisable() { ExitPhotoMode(); }
 
     public void CaptureScreenshot()
     {
@@ -140,6 +148,12 @@ public class PhotoModeController : MonoBehaviour
         lastScreenshotPath = Path.Combine(directory, filename);
         ScreenCapture.CaptureScreenshot(lastScreenshotPath);
         Debug.Log($"PhotoMode: Screenshot saved to {lastScreenshotPath}");
+    }
+
+    public void MovePhotoCamera(Vector3 localDirection)
+    {
+        if (isPhotoModeActive && targetCamera != null)
+            targetCamera.transform.position += targetCamera.transform.TransformDirection(localDirection) * moveSpeed * Time.unscaledDeltaTime;
     }
 
     void UpdatePhotoCameraInput()

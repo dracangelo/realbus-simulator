@@ -43,6 +43,7 @@ public class WeatherSystem : MonoBehaviour
     private CityDefinition activeCity;
     private bool weatherLoaded = false;
     private Coroutine weatherTransitionRoutine;
+    float blendedGrip = 1f;
 
     public WeatherState TargetWeather { get; private set; } = WeatherState.Clear;
     public float TransitionProgress01 { get; private set; } = 1f;
@@ -256,6 +257,8 @@ public class WeatherSystem : MonoBehaviour
 
     public void ApplyWeather(WeatherState state, float intensity, float temp)
     {
+        if (weatherTransitionRoutine != null) { StopCoroutine(weatherTransitionRoutine); weatherTransitionRoutine = null; }
+        blendedGrip = GripFor(state, intensity);
         currentWeather = state;
         TargetWeather = state;
         TransitionProgress01 = 1f;
@@ -299,40 +302,38 @@ public class WeatherSystem : MonoBehaviour
         }
     }
 
+    public void TransitionWeather(WeatherState state)
+    {
+        if (weatherTransitionRoutine != null) StopCoroutine(weatherTransitionRoutine);
+        weatherTransitionRoutine = StartCoroutine(TransitionToWeather(state));
+    }
+
     IEnumerator TransitionToWeather(WeatherState newState)
     {
         float targetInt = GetIntensityForState(newState);
         float elapsed = 0f;
-        float duration = Random.Range(
-            Mathf.Max(1f, transitionMinSeconds),
-            Mathf.Max(Mathf.Max(1f, transitionMinSeconds), transitionMaxSeconds));
-
+        float duration = Random.Range(Mathf.Max(1f, transitionMinSeconds), Mathf.Max(transitionMinSeconds, transitionMaxSeconds));
         WeatherState oldState = currentWeather;
         float oldIntensity = weatherIntensity;
+        float oldGrip = blendedGrip;
         TargetWeather = newState;
-        TransitionProgress01 = 0f;
-
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
             TransitionProgress01 = t;
-
-            float blendedIntensity = Mathf.Lerp(oldIntensity, targetInt, t);
-
-            rainController?.SetRain(newState, blendedIntensity * t);
-            fogController?.SetFog(newState, blendedIntensity * t);
-            snowController?.SetSnow(newState, blendedIntensity * t);
-            skyController?.SetSky(newState, blendedIntensity * t, temperature);
-
+            // Fade the outgoing precipitation out before bringing the incoming state in.
+            currentWeather = t < 0.5f ? oldState : newState;
+            weatherIntensity = t < 0.5f ? oldIntensity * (1f - t * 2f) : targetInt * (t * 2f - 1f);
+            blendedGrip = Mathf.Lerp(oldGrip, GripFor(newState, targetInt), t);
+            rainController?.SetRain(currentWeather, weatherIntensity);
+            fogController?.BlendWeather(oldState, oldIntensity, newState, targetInt, t);
+            snowController?.SetSnow(currentWeather, weatherIntensity);
+            skyController?.SetSky(currentWeather, weatherIntensity, temperature);
             yield return null;
         }
-
-        currentWeather = newState;
-        TargetWeather = newState;
-        TransitionProgress01 = 1f;
-        weatherIntensity = targetInt;
-        Debug.Log($"WeatherSystem: Transitioned to {newState}");
+        currentWeather = newState; weatherIntensity = targetInt;
+        TransitionProgress01 = 1f; weatherTransitionRoutine = null;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
@@ -381,17 +382,21 @@ public class WeatherSystem : MonoBehaviour
         currentWeather == WeatherState.Snow ||
         currentWeather == WeatherState.Blizzard;
 
-    public float GetRoadGripMultiplier()
+    public float GetRoadGripMultiplier() => blendedGrip;
+
+    static float GripFor(WeatherState state, float intensity)
     {
-        switch (currentWeather)
+        float grip;
+        switch (state)
         {
-            case WeatherState.LightRain:    return 0.85f;
-            case WeatherState.HeavyRain:    return 0.70f;
-            case WeatherState.Thunderstorm: return 0.65f;
-            case WeatherState.Snow:         return 0.50f;
-            case WeatherState.Blizzard:     return 0.35f;
-            case WeatherState.Fog:          return 0.90f;
-            default:                        return 1.0f;
+            case WeatherState.LightRain:    grip = 0.85f; break;
+            case WeatherState.HeavyRain:    grip = 0.70f; break;
+            case WeatherState.Thunderstorm: grip = 0.65f; break;
+            case WeatherState.Snow:         grip = 0.50f; break;
+            case WeatherState.Blizzard:     grip = 0.35f; break;
+            case WeatherState.Fog:          grip = 0.90f; break;
+            default:                        grip = 1.0f; break;
         }
+        return Mathf.Lerp(1f, grip, Mathf.Clamp01(intensity));
     }
 }

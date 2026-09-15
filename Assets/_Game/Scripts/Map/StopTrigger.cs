@@ -95,10 +95,6 @@ public class StopTrigger : MonoBehaviour
         if (mission != null && mission.routeActive && mission.currentRoute != null)
             return stopIndex == Mathf.Clamp(mission.currentStopIndex, 0, mission.currentRoute.stops.Length - 1);
 
-        var freeDrive = FreeDriveSession.Instance;
-        if (freeDrive != null && freeDrive.sessionActive)
-            return true;
-
         return false;
     }
 

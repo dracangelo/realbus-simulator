@@ -29,6 +29,7 @@ public class RainController : MonoBehaviour
     public float maxWiperSpeed = 2.25f;
 
     private float currentWetness = 0f;
+    float lastAppliedWetness = -1f;
     private WeatherState currentRainState = WeatherState.Clear;
     private Coroutine dryRoadRoutine;
     private Coroutine thunderRoutine;
@@ -93,9 +94,7 @@ public class RainController : MonoBehaviour
                 StopAllParticles();
                 StopLoopingRainAudio();
                 SetWipers(false, 0f);
-                if (dryRoadRoutine != null)
-                    StopCoroutine(dryRoadRoutine);
-                dryRoadRoutine = StartCoroutine(DryRoad());
+                if (dryRoadRoutine == null) dryRoadRoutine = StartCoroutine(DryRoad());
                 break;
         }
     }
@@ -105,7 +104,7 @@ public class RainController : MonoBehaviour
         if (ps == null) return;
         StopParticlesExcept(ps);
         var emission = ps.emission;
-        emission.rateOverTime = Mathf.Lerp(0, 500, intensity);
+        emission.rateOverTime = Mathf.Lerp(0, QualitySettings.GetQualityLevel() == 0 ? 150 : 500, intensity);
         if (intensity > 0.001f)
         {
             if (!ps.isPlaying)
@@ -131,6 +130,9 @@ public class RainController : MonoBehaviour
     void SetWetRoad(float wetness)
     {
         currentWetness = wetness;
+        if (Mathf.Abs(wetness - lastAppliedWetness) < 0.01f && wetness > 0f && wetness < 1f) return;
+        if (Mathf.Approximately(wetness, lastAppliedWetness)) return;
+        lastAppliedWetness = wetness;
         ApplyWetnessToMaterial(roadMaterial, wetness);
 
         if (roadMaterials != null)
@@ -152,6 +154,8 @@ public class RainController : MonoBehaviour
 
                 rendererRef.GetPropertyBlock(wetRoadPropertyBlock);
                 wetRoadPropertyBlock.SetFloat(wetBlendProperty, wetness);
+                wetRoadPropertyBlock.SetFloat("_Smoothness", Mathf.Lerp(0.15f, 0.85f, wetness));
+                wetRoadPropertyBlock.SetColor("_BaseColor", Color.Lerp(new Color(0.18f, 0.19f, 0.21f), new Color(0.09f, 0.10f, 0.12f), wetness));
                 if (wetSpecularMaterial != null)
                 {
                     if (wetSpecularMaterial.HasProperty("_Color"))

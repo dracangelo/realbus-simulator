@@ -118,6 +118,16 @@ public class CitySelector : MonoBehaviour
         // ── Step 1: City definition ────────────────────────────────────
         var runtimeCity = GetOrCreateRuntimeCity(config);
 
+        var unlock = UnlockManager.Instance;
+        if (unlock != null && !unlock.IsCityUnlocked(runtimeCity))
+        {
+            _loading = false;
+            Debug.LogWarning("City is locked: " + runtimeCity.cityName);
+            yield break;
+        }
+        var streamer = FindFirstObjectByType<TileStreamManager>();
+        if (streamer != null) streamer.ResetStreaming();
+
         // ── Step 2: Register & activate ───────────────────────────────
         var cityMgr = CityManager.Instance;
         cityMgr?.RegisterCity(runtimeCity);
@@ -134,6 +144,8 @@ public class CitySelector : MonoBehaviour
         // ── Step 4: Coordinate origin ──────────────────────────────────
         if (coordinateConverter != null)
             coordinateConverter.SetCityOrigin(runtimeCity);
+
+        if (streamer != null) streamer.zoomLevel = config.defaultZoom;
 
         yield return null; // allow systems to react to origin change
 

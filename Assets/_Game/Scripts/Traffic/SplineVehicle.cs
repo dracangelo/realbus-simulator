@@ -21,12 +21,21 @@ public class SplineVehicle : MonoBehaviour
 
     [Header("Path Cache")]
     public int lookaheadNodes = 8;
+    float emergencyYieldSeconds;
+    float stuckSeconds;
+    Vector3 lastProgressPosition;
+    public static void NotifyEmergency(Vector3 source, float radius, float seconds)
+    {
+        foreach (var vehicle in ActiveSplineVehicles)
+            if (vehicle != null && (vehicle.transform.position - source).sqrMagnitude < radius * radius) vehicle.emergencyYieldSeconds = seconds;
+    }
     readonly Queue<int> cachedPath = new Queue<int>();
 
     void OnEnable()
     {
         if (!ActiveSplineVehicles.Contains(this))
             ActiveSplineVehicles.Add(this);
+        lastProgressPosition = transform.position;
     }
 
     void OnDisable()
@@ -64,24 +73,27 @@ public class SplineVehicle : MonoBehaviour
             return;
 
         Vector3 target = roadGraph.GetNodePosition(targetNodeIndex);
+        Vector3 segment = (target - roadGraph.GetNodePosition(currentNodeIndex)).normalized;
+        emergencyYieldSeconds = Mathf.Max(0f, emergencyYieldSeconds - Time.deltaTime);
+        target += Vector3.Cross(Vector3.up, segment) * (roadGraph.GetLaneOffset(currentNodeIndex, laneIndex) - (emergencyYieldSeconds > 0f ? 3f : 0f));
         Vector3 to = target - transform.position;
         to.y = 0f;
         float dist = to.magnitude;
         Vector3 dir = dist > 0.001f ? to / dist : transform.forward;
 
         float desired = roadGraph.GetSpeedLimitKmh(currentNodeIndex);
-        if (roadGraph.IsRedSignal(targetNodeIndex) && dist <= redLightStopDistance)
-            desired = 0f;
+        if (emergencyYieldSeconds > 0f) desired = Mathf.Min(desired, 8f);
+        if (roadGraph.IsRedSignal(targetNodeIndex))
+            desired = Mathf.Min(desired, RealismRules.StoppingSpeedKmh(dist, 5f, brakeKmhPerSec / 3.6f * 0.65f));
 
-        float frontLimited = ApplyHeadwayLimit(desired);
+        float frontLimited = TrafficParticipant.LimitSpeed(transform, ApplyHeadwayLimit(desired), 5f, brakeKmhPerSec / 3.6f * 0.65f);
         float rate = frontLimited < speedKmh ? brakeKmhPerSec : accelKmhPerSec;
         speedKmh = Mathf.MoveTowards(speedKmh, frontLimited, rate * Time.deltaTime);
 
         float speedMs = speedKmh / 3.6f;
-        float laneOffset = roadGraph.GetLaneOffset(currentNodeIndex, laneIndex);
-        Vector3 side = Vector3.Cross(Vector3.up, dir).normalized;
-        Vector3 nextPos = transform.position + dir * speedMs * Time.deltaTime + side * laneOffset * 0.035f;
+        Vector3 nextPos = Vector3.MoveTowards(transform.position, target, speedMs * Time.deltaTime);
         transform.position = nextPos;
+        UpdateStuckRecovery();
 
         if (dir.sqrMagnitude > 0.001f)
         {
@@ -94,6 +106,15 @@ public class SplineVehicle : MonoBehaviour
             currentNodeIndex = targetNodeIndex;
             EnsureTargetNode(forceAdvance: true);
         }
+    }
+
+    void UpdateStuckRecovery()
+    {
+        float moved = Vector3.Distance(transform.position, lastProgressPosition); lastProgressPosition = transform.position;
+        bool legitimateStop = emergencyYieldSeconds > 0f || roadGraph.IsRedSignal(targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, minHeadway + 2f);
+        if (moved > 0.025f || speedKmh > 1.5f || legitimateStop) { stuckSeconds = 0f; return; }
+        stuckSeconds += Time.deltaTime;
+        if (stuckSeconds >= 18f) { cachedPath.Clear(); EnsureTargetNode(forceAdvance: true); stuckSeconds = 0f; }
     }
 
     float ApplyHeadwayLimit(float desiredKmh)
@@ -148,7 +169,7 @@ public class SplineVehicle : MonoBehaviour
         if (roadGraph == null || !roadGraph.IsValidNode(currentNodeIndex))
             return;
 
-        int cursor = currentNodeIndex;
+        int cursor = roadGraph.IsValidNode(targetNodeIndex) ? targetNodeIndex : currentNodeIndex;
         for (int i = 0; i < lookaheadNodes; i++)
         {
             int next = roadGraph.GetRandomNextNode(cursor);

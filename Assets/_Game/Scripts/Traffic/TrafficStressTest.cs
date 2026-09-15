@@ -1,85 +1,58 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Globalization;
 
+/// <summary>On-device benchmark. Measures actual tiers, frame-time percentiles, and exports CSV.</summary>
 public class TrafficStressTest : MonoBehaviour
 {
-    [Header("References")]
     public VehiclePool vehiclePool;
-
-    [Header("Test")]
-    public int startVehicles = 10;
-    public int stepVehicles = 10;
-    public int maxVehicles = 200;
+    public bool autoStart = true;
+    public int startVehicles = 10, stepVehicles = 5, maxVehicles = 50;
     public float settleSecondsPerStep = 12f;
     public int sampleFrames = 300;
-
-    [Header("Output")]
     public List<int> vehicleCounts = new List<int>();
     public List<float> avgFps = new List<float>();
     public int detectedCliffVehicleCount = -1;
     public float cliffThresholdPercentDrop = 20f;
-
-    bool running;
-
-    void Start()
-    {
-        if (!running)
-            StartCoroutine(RunBenchmark());
-    }
-
+    public bool Running { get; private set; }
+    public string LastReportPath { get; private set; }
+    void Start() { if (autoStart) Begin(); }
+    public void Begin() { if (!Running && vehiclePool != null) StartCoroutine(RunBenchmark()); }
     IEnumerator RunBenchmark()
     {
-        running = true;
-        vehicleCounts.Clear();
-        avgFps.Clear();
-        detectedCliffVehicleCount = -1;
-
-        float prevFps = -1f;
-        for (int count = startVehicles; count <= maxVehicles; count += stepVehicles)
+        Running = true;
+        while (vehiclePool.GetPoolCount() == 0) yield return null;
+        vehicleCounts.Clear(); avgFps.Clear(); detectedCliffVehicleCount = -1;
+        var csv = new System.Text.StringBuilder("device,requested,full,spline,dormant,avg_fps,p95_ms,passengers,weather\n");
+        float previousFps = 0f;
+        int limit = Mathf.Min(maxVehicles, vehiclePool.GetPoolCount());
+        for (int count = Mathf.Clamp(startVehicles, 1, limit); count <= limit; count += Mathf.Max(1, stepVehicles))
         {
-            ApplyVehicleCount(count);
-            yield return new WaitForSeconds(settleSecondsPerStep);
-
-            float fps = 0f;
-            yield return StartCoroutine(SampleAverageFps(sampleFrames, v => fps = v));
-            vehicleCounts.Add(count);
-            avgFps.Add(fps);
-            Debug.Log($"TrafficStressTest: vehicles={count}, avgFPS={fps:0.0}");
-
-            if (prevFps > 0f)
+            vehiclePool.SetForcedActiveCount(count);
+            yield return new WaitForSeconds(Mathf.Max(0f, settleSecondsPerStep));
+            var samples = new List<float>(); float seconds = 0f;
+            for (int i = 0; i < Mathf.Max(1, sampleFrames); i++)
             {
-                float drop = (prevFps - fps) / Mathf.Max(1f, prevFps);
-                if (drop >= cliffThresholdPercentDrop * 0.01f && detectedCliffVehicleCount < 0)
-                    detectedCliffVehicleCount = count;
+                yield return null;
+                if (Time.timeScale <= 0f) { i--; continue; }
+                seconds += Time.unscaledDeltaTime; samples.Add(Time.unscaledDeltaTime);
             }
-            prevFps = fps;
+            samples.Sort();
+            float fps = samples.Count / Mathf.Max(0.001f, seconds);
+            float p95 = samples[Mathf.Min(samples.Count - 1, Mathf.FloorToInt(samples.Count * 0.95f))] * 1000f;
+            vehiclePool.GetTierCounts(out int full, out int spline, out int dormant, out _);
+            vehicleCounts.Add(full + spline); avgFps.Add(fps);
+            csv.AppendLine(string.Format(CultureInfo.InvariantCulture, "\"{0}\",{1},{2},{3},{4},{5:F2},{6:F2},{7},{8}", SystemInfo.deviceModel.Replace("\"", "\"\""), count, full, spline, dormant, fps, p95, PassengerManager.Instance != null ? PassengerManager.Instance.currentPassengers : 0, WeatherSystem.Instance != null ? WeatherSystem.Instance.CurrentCompositeWeatherLabel : "None"));
+            if (detectedCliffVehicleCount < 0 && (fps < 30f || previousFps > 0f && fps < previousFps * (1f - cliffThresholdPercentDrop / 100f)))
+                detectedCliffVehicleCount = full + spline;
+            previousFps = fps;
         }
-
-        int maxBudget = detectedCliffVehicleCount > 0 ? Mathf.Max(startVehicles, detectedCliffVehicleCount - stepVehicles) : maxVehicles;
-        Debug.Log($"TrafficStressTest: Estimated max safe AI traffic budget = {maxBudget}");
-        running = false;
+        LastReportPath = Path.Combine(Application.persistentDataPath, "traffic-stress-" + System.DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".csv");
+        File.WriteAllText(LastReportPath, csv.ToString());
+        vehiclePool.SetForcedActiveCount(-1); Running = false;
+        Debug.Log("Traffic benchmark saved: " + LastReportPath);
     }
-
-    IEnumerator SampleAverageFps(int frames, System.Action<float> onDone)
-    {
-        float acc = 0f;
-        int used = 0;
-        for (int i = 0; i < frames; i++)
-        {
-            yield return null;
-            if (Time.unscaledDeltaTime <= 0f) continue;
-            acc += 1f / Time.unscaledDeltaTime;
-            used++;
-        }
-        float avg = used > 0 ? acc / used : 0f;
-        onDone?.Invoke(avg);
-    }
-
-    void ApplyVehicleCount(int target)
-    {
-        if (vehiclePool == null) return;
-        int clamped = Mathf.Clamp(target, 1, Mathf.Max(1, vehiclePool.GetPoolCount()));
-        vehiclePool.SetForcedActiveCount(clamped);
-    }
+    void OnDisable() { StopAllCoroutines(); if (Running && vehiclePool != null) vehiclePool.SetForcedActiveCount(-1); Running = false; }
 }

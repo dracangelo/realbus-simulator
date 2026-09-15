@@ -35,5 +35,6 @@ public class MapOrigin : ScriptableObject
     }
 
     public bool IsValid() =>
-        System.Math.Abs(originLat) > 0.0001 || System.Math.Abs(originLon) > 0.0001;
+        !double.IsNaN(originLat) && !double.IsNaN(originLon) &&
+        System.Math.Abs(originLat) <= 90d && System.Math.Abs(originLon) <= 180d;
 }

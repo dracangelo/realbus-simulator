@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 101}
+  - component: {fileID: 102}
+  - component: {fileID: 103}
+  - component: {fileID: 104}
+  m_Layer: 0
+  m_Name: Phase 5 Realism Test
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &101
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!114 &102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aab01b99f0a14c3a89dedd4b5d9c15a0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  engineProfile: {fileID: 11400000, guid: 9c593d39ce7340da9f59ee1b246865de, type: 2}
+  transmissionProfile: {fileID: 11400000, guid: a03233f52cbf46a4a6275a2ff5fe2c79, type: 2}
+  tutorialCity: {fileID: 11400000, guid: dd04b8c374db40f88fc8a75cb78aac68, type: 2}
+  futureCities:
+  - {fileID: 11400000, guid: 644cc21af8994e72ba4c973869738733, type: 2}
+  - {fileID: 11400000, guid: 3be8730da39c43b1bd727628d918f042, type: 2}
+  - {fileID: 11400000, guid: 629cf4ba0a7640e6be99feb2ebe2d665, type: 2}
+  - {fileID: 11400000, guid: 19db2a06e96d41808766f83bc64ac8d7, type: 2}
+  loadLocalRoutes: 0
+  showDebugUI: 0
+
+--- !u!114 &103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77959336c1654e758634caa4d1a744a2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  map: {fileID: 102}
+
+--- !u!114 &104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca9daf1581104f15822d43f1bf93273f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  gameplay: {fileID: 103}
+  autoRunBenchmark: 0

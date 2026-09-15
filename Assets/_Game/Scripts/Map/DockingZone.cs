@@ -19,10 +19,15 @@ public class DockingZone : MonoBehaviour
     public bool isCorrectlyDocked = false;
     public float currentKerbOffsetMeters;
     public float currentStopSignOffsetMeters;
+    public float currentHeadingErrorDegrees;
+    public float currentDockingScore;
+    LineRenderer bayOutline;
+    Material bayMaterial;
 
     void Start()
     {
         SyncLegacyDockingRadius();
+        BuildBayOutline();
         StartCoroutine(InitNextFrame());
     }
 
@@ -43,6 +48,8 @@ public class DockingZone : MonoBehaviour
         if (busController == null) return;
         if (!IsRelevantStop())
         {
+            if (bayOutline != null) bayOutline.enabled = false;
+            isCorrectlyDocked = false;
             if (isDocked)
             {
                 isDocked = false;
@@ -53,6 +60,7 @@ public class DockingZone : MonoBehaviour
 
         bool wasDockedBefore = isDocked;
         EvaluateDockingState();
+        UpdateBayFeedback();
 
         if (isDocked && !wasDockedBefore) OnDocked();
         if (!isDocked && wasDockedBefore) OnUndocked();
@@ -65,7 +73,10 @@ public class DockingZone : MonoBehaviour
         if (busController != null)
             busController.RequestKneelingSuspension(true);
         if (StopApproachUI.Instance != null)
-            StopApproachUI.Instance.ShowDocked(stopName);
+            StopApproachUI.Instance.ShowDocked(stopName, currentDockingScore, DockingGrade(currentDockingScore));
+        RealBusAudioManager.EnsureExists().PlayDocking();
+        AccessibilityManager.EnsureExists().Pulse(HapticCue.Docking);
+        SubtitleManager.EnsureExists().Show("Conductor", $"Arrived at {stopName}.", 2f);
     }
 
     void OnUndocked()
@@ -77,6 +88,17 @@ public class DockingZone : MonoBehaviour
             busController.RequestKneelingSuspension(false);
         if (StopApproachUI.Instance != null)
             StopApproachUI.Instance.HideApproach();
+    }
+
+    void OnDisable()
+    {
+        if (CurrentDockedZone == this) OnUndocked();
+        isDocked = isCorrectlyDocked = false;
+    }
+
+    void OnDestroy()
+    {
+        if (bayMaterial != null) Destroy(bayMaterial);
     }
 
     void OnDrawGizmos()
@@ -96,27 +118,75 @@ public class DockingZone : MonoBehaviour
             return stopIndex >= 0 ? stopIndex == currentIndex : stopName == mission.currentRoute.stops[currentIndex].stopName;
         }
 
-        var freeDrive = FreeDriveSession.Instance;
-        if (freeDrive != null && freeDrive.sessionActive)
-            return true;
-
         return false;
     }
 
     void EvaluateDockingState()
     {
-        Vector3 local = transform.InverseTransformPoint(busController.transform.position);
+        Vector3 local = transform.InverseTransformPoint(busController.dockingReference != null
+            ? busController.dockingReference.position : busController.transform.position);
         currentKerbOffsetMeters = Mathf.Abs(local.x);
         currentStopSignOffsetMeters = Mathf.Abs(local.z);
 
         float headingError = Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, busController.transform.eulerAngles.y));
-        isCorrectlyDocked =
-            currentKerbOffsetMeters <= kerbToleranceMeters &&
-            currentStopSignOffsetMeters <= stopSignToleranceMeters &&
-            headingError <= headingToleranceDegrees &&
-            busController.currentSpeedKmh <= maxDockingSpeedKmh;
+        currentHeadingErrorDegrees = headingError;
+        currentDockingScore = CalculateDockingScore(currentKerbOffsetMeters, currentStopSignOffsetMeters,
+            currentHeadingErrorDegrees, busController.currentSpeedKmh, kerbToleranceMeters,
+            stopSignToleranceMeters, headingToleranceDegrees, maxDockingSpeedKmh);
+        isCorrectlyDocked = GameplayRules.IsDocked(currentKerbOffsetMeters, currentStopSignOffsetMeters,
+            headingError, busController.currentSpeedKmh, kerbToleranceMeters, stopSignToleranceMeters,
+            headingToleranceDegrees, maxDockingSpeedKmh);
 
         isDocked = isCorrectlyDocked;
+    }
+
+    void UpdateBayFeedback()
+    {
+        if (bayOutline != null)
+        {
+            bayOutline.enabled = true;
+            Color color = isDocked ? UITheme.Success : currentDockingScore >= 60f ? UITheme.TertiaryDim : UITheme.Error;
+            bayOutline.startColor = bayOutline.endColor = color;
+        }
+        if (!isDocked && StopApproachUI.Instance != null && currentStopSignOffsetMeters <= Mathf.Max(12f, stopSignToleranceMeters * 3f))
+            StopApproachUI.Instance.ShowDockingAlignment(stopName, currentKerbOffsetMeters, currentStopSignOffsetMeters,
+                currentHeadingErrorDegrees, busController.currentSpeedKmh, currentDockingScore,
+                kerbToleranceMeters, stopSignToleranceMeters, headingToleranceDegrees, maxDockingSpeedKmh);
+    }
+
+    void BuildBayOutline()
+    {
+        bayOutline = GetComponent<LineRenderer>();
+        if (bayOutline == null) bayOutline = gameObject.AddComponent<LineRenderer>();
+        bayOutline.useWorldSpace = false; bayOutline.loop = false; bayOutline.positionCount = 5; bayOutline.widthMultiplier = 0.09f;
+        bayOutline.SetPositions(new[]
+        {
+            new Vector3(-kerbToleranceMeters, 0.04f, -stopSignToleranceMeters),
+            new Vector3(kerbToleranceMeters, 0.04f, -stopSignToleranceMeters),
+            new Vector3(kerbToleranceMeters, 0.04f, stopSignToleranceMeters),
+            new Vector3(-kerbToleranceMeters, 0.04f, stopSignToleranceMeters),
+            new Vector3(-kerbToleranceMeters, 0.04f, -stopSignToleranceMeters)
+        });
+        Shader shader = Shader.Find("Sprites/Default");
+        if (shader != null) { bayMaterial = new Material(shader); bayOutline.material = bayMaterial; }
+        bayOutline.enabled = false;
+    }
+
+    public static float CalculateDockingScore(float kerb, float sign, float heading, float speed,
+        float kerbTolerance, float signTolerance, float headingTolerance, float speedTolerance)
+    {
+        float error = Mathf.Clamp01(kerb / Mathf.Max(0.01f, kerbTolerance)) * 0.4f
+            + Mathf.Clamp01(sign / Mathf.Max(0.01f, signTolerance)) * 0.3f
+            + Mathf.Clamp01(heading / Mathf.Max(0.01f, headingTolerance)) * 0.2f
+            + Mathf.Clamp01(speed / Mathf.Max(0.01f, speedTolerance)) * 0.1f;
+        return Mathf.Round((1f - error) * 100f);
+    }
+
+    public static string DockingGrade(float score)
+    {
+        if (score >= 85f) return "GOLD";
+        if (score >= 65f) return "SILVER";
+        return "BRONZE";
     }
 
     void SyncLegacyDockingRadius()

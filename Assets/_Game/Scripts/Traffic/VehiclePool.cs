@@ -38,7 +38,7 @@ public class VehiclePool : MonoBehaviour
     public bool allowAutoResolveRoadGraph = true;
 
     [Header("Debug")]
-    public int debugForceActiveCount = 6;
+    public int debugForceActiveCount = 0;
     public bool logBusDistance = true;
     public bool logBusDistanceOnce = true;
     public float logBusDistanceIntervalSeconds = 5f;
@@ -75,6 +75,8 @@ public class VehiclePool : MonoBehaviour
     public Color splineRingColor = new Color(0.2f, 0.9f, 1f, 0.3f);
 
     readonly List<PooledVehicle> pooled = new List<PooledVehicle>();
+    readonly HashSet<PooledVehicle> reservedFull = new HashSet<PooledVehicle>();
+    readonly List<(PooledVehicle vehicle, float distance)> candidates = new List<(PooledVehicle, float)>(50);
     float densityTick;
     float tierTick;
     float distanceLogTick;
@@ -98,6 +100,8 @@ public class VehiclePool : MonoBehaviour
             return;
         }
 
+        var bus = FindFirstObjectByType<BusController>();
+        if (bus != null) playerBus = bus.transform;
         TryResolveRoadGraph();
         WarmPool();
         ApplyDensityNow();
@@ -204,12 +208,13 @@ public class VehiclePool : MonoBehaviour
             var spline = go.GetComponent<SplineVehicle>();
             if (spline == null) spline = go.AddComponent<SplineVehicle>();
 
+            if (go.GetComponent<TrafficParticipant>() == null) go.AddComponent<TrafficParticipant>();
             var rb = go.GetComponent<Rigidbody>();
             if (rb == null) rb = go.AddComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.None;
 
-            int startNode = Random.Range(0, roadGraph.NodeCount);
+            int startNode = PickNearbySpawnNode();
             int laneCount = 1;
             if (roadGraph.nodes != null && startNode >= 0 && startNode < roadGraph.nodes.Length && roadGraph.nodes[startNode] != null)
                 laneCount = Mathf.Max(1, roadGraph.nodes[startNode].laneCount);
@@ -235,6 +240,19 @@ public class VehiclePool : MonoBehaviour
 
         if (logSpawnEvents)
             Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}).");
+    }
+
+    int PickNearbySpawnNode()
+    {
+        int fallback = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
+        if (playerBus == null) return fallback;
+        for (int i = 0; i < 512; i++)
+        {
+            int node = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
+            float distance = Vector3.Distance(playerBus.position, roadGraph.GetNodePosition(node));
+            if (distance > 35f && distance < 350f) return node;
+        }
+        return fallback;
     }
 
     bool IsTrafficGraphDisabledByConfig()
@@ -354,9 +372,11 @@ public class VehiclePool : MonoBehaviour
     void UpdateSimulationTiers()
     {
         int fullUsed = 0;
-        int clampedCap = Mathf.Clamp(maxFullAiVehicles, 15, 20);
-        var reservedFull = new HashSet<PooledVehicle>();
-        var candidates = new List<(PooledVehicle vehicle, float distance)>(pooled.Count);
+        int ownFull = 0;
+        foreach (var vehicle in pooled) if (vehicle.tier == SimulationTier.FullAI) ownFull++;
+        int externalFull = Mathf.Max(0, AIVehicleController.ActiveCount - ownFull);
+        int clampedCap = Mathf.Max(0, Mathf.Min(maxFullAiVehicles, 20 - externalFull));
+        reservedFull.Clear(); candidates.Clear();
 
         // Keep existing full-AI vehicles if still within hysteresis, then fill remaining budget.
         for (int i = 0; i < pooled.Count; i++)
@@ -395,7 +415,7 @@ public class VehiclePool : MonoBehaviour
                 fullUsed++;
                 ApplyTierIfNeeded(pv, SimulationTier.FullAI);
             }
-            else if (dist <= splineRadiusMeters + transitionHysteresisMeters)
+            else if (dist <= splineRadiusMeters)
             {
                 ApplyTierIfNeeded(pv, SimulationTier.Spline);
             }
@@ -432,12 +452,9 @@ public class VehiclePool : MonoBehaviour
         {
             // Seamless promotion: preserve pose + spline velocity estimate.
             Vector3 vel = pv.spline != null ? pv.spline.GetVelocityWorld() : Vector3.zero;
-            int currentNode = roadGraph.GetNearestNodeIndex(pv.go.transform.position);
-            if (!roadGraph.IsValidNode(currentNode))
-                currentNode = pv.full != null ? pv.full.currentNodeIndex : 0;
-            int targetNode = roadGraph.GetRandomNextNode(currentNode);
-            if (!roadGraph.IsValidNode(targetNode) && pv.full != null)
-                targetNode = pv.full.targetNodeIndex;
+            int currentNode = pv.spline.currentNodeIndex;
+            int targetNode = pv.spline.targetNodeIndex;
+            if (pv.rb != null) pv.rb.isKinematic = false;
 
             if (pv.full != null)
             {
@@ -454,10 +471,8 @@ public class VehiclePool : MonoBehaviour
         {
             // Seamless demotion: preserve pose + current rigidbody velocity.
             Vector3 vel = pv.full != null ? pv.full.GetVelocityWorld() : Vector3.zero;
-            int currentNode = roadGraph.GetNearestNodeIndex(pv.go.transform.position);
-            if (!roadGraph.IsValidNode(currentNode))
-                currentNode = pv.spline != null ? pv.spline.currentNodeIndex : 0;
-            int targetNode = roadGraph.GetRandomNextNode(currentNode);
+            int currentNode = pv.full.currentNodeIndex;
+            int targetNode = pv.full.targetNodeIndex;
             if (pv.spline != null)
             {
                 pv.spline.Init(roadGraph, currentNode, targetNode, pv.laneIndex, vel.magnitude * 3.6f);
@@ -468,8 +483,7 @@ public class VehiclePool : MonoBehaviour
                 pv.full.enabled = false;
             if (pv.rb != null)
             {
-                pv.rb.linearVelocity = Vector3.zero;
-                pv.rb.angularVelocity = Vector3.zero;
+                if (!pv.rb.isKinematic) { pv.rb.linearVelocity = Vector3.zero; pv.rb.angularVelocity = Vector3.zero; }
                 pv.rb.isKinematic = true;
             }
         }
@@ -479,8 +493,7 @@ public class VehiclePool : MonoBehaviour
             if (pv.spline != null) pv.spline.enabled = false;
             if (pv.rb != null)
             {
-                pv.rb.linearVelocity = Vector3.zero;
-                pv.rb.angularVelocity = Vector3.zero;
+                if (!pv.rb.isKinematic) { pv.rb.linearVelocity = Vector3.zero; pv.rb.angularVelocity = Vector3.zero; }
                 pv.rb.isKinematic = true;
             }
             pv.go.SetActive(false);
@@ -495,6 +508,7 @@ public class VehiclePool : MonoBehaviour
             }
         }
 
+        if (pv.rb != null) pv.rb.detectCollisions = desired == SimulationTier.FullAI;
         pv.tier = desired;
     }
 
@@ -536,17 +550,7 @@ public class VehiclePool : MonoBehaviour
             ? ScheduleManager.Instance.currentTimeMinutes
             : 12f * 60f;
 
-        float morning = Gaussian(now, morningPeakMinutes, peakWidthMinutes);
-        float evening = Gaussian(now, eveningPeakMinutes, peakWidthMinutes);
-        float rushSignal = Mathf.Clamp01(Mathf.Max(morning, evening));
-        return Mathf.Lerp(1f, rushMultiplier, rushSignal);
-    }
-
-    static float Gaussian(float x, float mean, float sigma)
-    {
-        if (sigma <= 0.001f) return 0f;
-        float d = (x - mean) / sigma;
-        return Mathf.Exp(-0.5f * d * d);
+        return RealismRules.DailyDensity(now, morningPeakMinutes, eveningPeakMinutes, peakWidthMinutes, rushMultiplier);
     }
 
     VehiclePrefabEntry PickWeightedPrefab()

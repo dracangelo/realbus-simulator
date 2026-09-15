@@ -15,6 +15,7 @@ public class MissionBriefingUI : MonoBehaviour
     [Header("Header")]
     public TextMeshProUGUI cityNameText;
     public TextMeshProUGUI routeNameText;
+    public RouteMapGraphic routeMap;
     public Image accentLine;
 
     [Header("Route Stats")]
@@ -141,6 +142,8 @@ public class MissionBriefingUI : MonoBehaviour
             if (routeNameText) routeNameText.text = "No route selected";
             return;
         }
+
+        if (routeMap != null) routeMap.SetRoute(activeRoute);
 
         // City name
         var city = GameState.Instance?.selectedCity ?? CityManager.Instance?.activeCity;

@@ -7,6 +7,8 @@ public class BusRoute : ScriptableObject
     public string routeNumber = "1";
     public string routeName = "CBD - Westlands";
     public float baseFare = 50f; // KES
+    public long osmRelationId;
+    public bool isRoadPathValidated;
     public bool isGrandTourRoute = false;
     public string generatedRouteId = "";
     public string sourceCityCode = "";

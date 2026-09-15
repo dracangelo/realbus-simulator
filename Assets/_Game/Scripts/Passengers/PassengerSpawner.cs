@@ -41,19 +41,7 @@ public class PassengerSpawner : MonoBehaviour
             ? ScheduleManager.Instance.currentTimeMinutes
             : 12f * 60f;
 
-        float morning = Gaussian(now, morningPeakMinutes, peakWidthMinutes);
-        float evening = Gaussian(now, eveningPeakMinutes, peakWidthMinutes);
-        float rushSignal = Mathf.Clamp01(Mathf.Max(morning, evening));
-
-        // Requirement: rush hour peaks to ~5x baseline.
-        return Mathf.Lerp(1f, rushHourMultiplier, rushSignal);
-    }
-
-    static float Gaussian(float x, float mean, float sigma)
-    {
-        if (sigma <= 0.001f) return 0f;
-        float d = (x - mean) / sigma;
-        return Mathf.Exp(-0.5f * d * d);
+        return RealismRules.DailyDensity(now, morningPeakMinutes, eveningPeakMinutes, peakWidthMinutes, rushHourMultiplier);
     }
 
     public BusStopData[] BuildRandomStopsFromRoadGraph(int desiredCount = -1, int startNodeIndex = -1)

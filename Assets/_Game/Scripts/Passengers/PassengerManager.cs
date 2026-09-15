@@ -40,7 +40,7 @@ public class PassengerManager : MonoBehaviour
     public int lastAlightingCount = 0;
     public int lastBoardingCount = 0;
     public bool hadWheelchairBoarding = false;
-    public bool doorsOpen = true;
+    public bool doorsOpen = false;
     public float latestRequiredDwellSeconds = 2f;
     public bool stopRequestActive = false;
     public bool stopRequestAcknowledged = false;
@@ -70,12 +70,41 @@ public class PassengerManager : MonoBehaviour
     private readonly List<PassengerAgent> onboardPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> waitingPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> alightingPassengers = new List<PassengerAgent>();
+    public IReadOnlyList<PassengerAgent> OnboardPassengers => onboardPassengers;
+    public IReadOnlyList<PassengerAgent> AlightingPassengers => alightingPassengers;
+    public IReadOnlyList<PassengerAgent> WaitingPassengers => waitingPassengers;
+    public Vector3 WaitingPlatformWorld { get; private set; }
+    int preparedStop = -1;
+    float completedSatisfaction;
+    int completedPassengerCount;
     private float lastSpeedKmh = 0f;
     private float longitudinalAcceleration = 0f;
     private float currentLongitudinalG = 0f;
     private bool hadElderlyBoarding = false;
     private float accessibilityResetTimer = -1f;
     private float lastAlightingTimeUnits = 0f;
+
+    public void RestoreCheckpointState(int passengerCount, float satisfaction, int served, float fares,
+        float income, float distanceKm, int currentStopIndex, int routeStopCount)
+    {
+        onboardPassengers.Clear(); waitingPassengers.Clear(); alightingPassengers.Clear();
+        int restoredCount = Mathf.Clamp(passengerCount, 0, GetMaxCapacity());
+        int destination = Mathf.Clamp(currentStopIndex + 1, 0, Mathf.Max(0, routeStopCount - 1));
+        for (int i = 0; i < restoredCount; i++)
+        {
+            PassengerAgent passenger = new PassengerAgent(Mathf.Max(0, currentStopIndex - 1), destination, 60f, false);
+            passenger.satisfaction = Mathf.Clamp01(satisfaction); passenger.AssignBusSlot(i); passenger.MarkBoarded();
+            onboardPassengers.Add(passenger);
+        }
+        currentPassengers = restoredCount;
+        averageSatisfaction = Mathf.Clamp01(satisfaction);
+        totalPassengersServed = Mathf.Max(0, served);
+        totalFareCollected = totalFaresCollected = Mathf.Max(0f, fares);
+        sessionIncome = Mathf.Max(0f, income);
+        totalDistanceKm = Mathf.Max(0f, distanceKm);
+        preparedStop = -1; waitingAtCurrentStop = lastAlightingCount = lastBoardingCount = 0;
+        doorsOpen = stopRequestActive = stopRequestAcknowledged = false;
+    }
 
     void Awake()
     {
@@ -91,13 +120,38 @@ public class PassengerManager : MonoBehaviour
     void Update()
     {
         TrackDistance();
-        TrackBusAcceleration();
-        UpdateOnboardPassengerDynamics();
+
         UpdatePassengerAnimationState();
         UpdateAccessibilityReset();
+        PrepareApproachingStop();
         UpdatePatience();
+        RecalculateSatisfaction();
         HandleStopRequestAcknowledgeInput();
         HandleDoorOpenInput();
+    }
+
+    void FixedUpdate()
+    {
+        TrackBusAcceleration();
+        UpdateOnboardPassengerDynamics();
+    }
+
+    void PrepareApproachingStop()
+    {
+        var mission = MissionManager.Instance;
+        if (mission == null || !mission.routeActive || mission.currentRoute == null || mission.distanceToNextStop > 120f) return;
+        int index = mission.currentStopIndex;
+        if (index == preparedStop || index < 0 || index >= mission.currentRoute.stops.Length - 1) return;
+        PrepareWaiting(mission.currentRoute.stops[index], index, mission.currentRoute.stops.Length);
+    }
+
+    void PrepareWaiting(BusStopData stop, int index, int count)
+    {
+        waitingPassengers.Clear();
+        preparedStop = index;
+        WaitingPlatformWorld = GPSManager.Instance != null ? GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude) : transform.position;
+        SpawnWaitingPassengers(stop, index, count);
+        waitingAtCurrentStop = waitingPassengers.Count;
     }
 
     void TrackDistance()
@@ -112,8 +166,8 @@ public class PassengerManager : MonoBehaviour
         if (busController == null) return;
         float speedMs = busController.currentSpeedKmh / 3.6f;
         float lastSpeedMs = lastSpeedKmh / 3.6f;
-        if (Time.deltaTime > 0f)
-            longitudinalAcceleration = (speedMs - lastSpeedMs) / Time.deltaTime;
+        if (Time.fixedDeltaTime > 0f)
+            longitudinalAcceleration = (speedMs - lastSpeedMs) / Time.fixedDeltaTime;
         currentLongitudinalG = Mathf.Abs(longitudinalAcceleration) / 9.81f;
         lastSpeedKmh = busController.currentSpeedKmh;
     }
@@ -127,9 +181,9 @@ public class PassengerManager : MonoBehaviour
         {
             if (passenger == null) continue;
             if (!passenger.isSeated)
-                passenger.UpdateStandingSway(-longitudinalAcceleration);
+                passenger.UpdateStandingSway(-longitudinalAcceleration, Time.fixedDeltaTime);
 
-            if (currentLongitudinalG > 0.5f)
+            if (longitudinalAcceleration < -0.5f * 9.81f)
             {
                 bool alreadyComplained = passenger.hasComplainedAboutBraking;
                 passenger.RegisterHarshBrakingComplaint();
@@ -139,7 +193,7 @@ public class PassengerManager : MonoBehaviour
 
             float accelerationG = longitudinalAcceleration / 9.81f;
             if (accelerationG > 0.35f)
-                passenger.RegisterHarshAcceleration();
+                passenger.RegisterHarshAcceleration(Time.fixedDeltaTime);
         }
     }
 
@@ -172,6 +226,8 @@ public class PassengerManager : MonoBehaviour
             if (!passenger.HasReachedExit(doorLocalPosition))
                 continue;
 
+            completedSatisfaction += passenger.satisfaction;
+            completedPassengerCount++;
             passenger.MarkExited();
             alightingPassengers.RemoveAt(i);
         }
@@ -188,6 +244,7 @@ public class PassengerManager : MonoBehaviour
 
     void UpdateAccessibilityReset()
     {
+        if (MissionManager.Instance != null && MissionManager.Instance.missionState == MissionState.AtStop) return;
         if (accessibilityResetTimer < 0f)
             return;
 
@@ -222,7 +279,25 @@ public class PassengerManager : MonoBehaviour
 
     public bool CanOpenDoors()
     {
-        return currentPassengers < Mathf.Max(1, doorOpenCapacityLimit);
+        return currentPassengers < Mathf.Min(GetMaxCapacity(), Mathf.Max(1, doorOpenCapacityLimit));
+    }
+
+    public bool CanOpenDoorsForStop(int stopIndex, int totalStops)
+    {
+        if (CanOpenDoors()) return true;
+        foreach (var passenger in onboardPassengers)
+            if (passenger.destinationStopIndex == stopIndex || stopIndex == totalStops - 1) return true;
+        return false;
+    }
+
+    public bool HasServiceAnimations
+    {
+        get
+        {
+            if (alightingPassengers.Count > 0) return true;
+            foreach (var passenger in onboardPassengers) if (passenger.isBoarding) return true;
+            return false;
+        }
     }
 
     public float GetRequiredDwellTimeSeconds()
@@ -253,26 +328,26 @@ public class PassengerManager : MonoBehaviour
         }
 
         // Alighting first.
-        int alighting = ProcessAlighting(stopIndex);
+        int alighting = ProcessAlighting(stopIndex, totalStops > 0 && stopIndex == totalStops - 1);
         lastAlightingCount = alighting;
         currentPassengers = Mathf.Max(0, onboardPassengers.Count);
 
-        // Capacity policy: refuse door open at full cap.
-        doorsOpen = CanOpenDoors();
+        // Service alighting first, then admit only the remaining capacity.
+        doorsOpen = true; // Full occupancy must never prevent alighting.
         int boarding = 0;
         hadWheelchairBoarding = false;
         waitingAtCurrentStop = 0;
 
-        if (doorsOpen)
+        if (doorsOpen && (totalStops <= 0 || stopIndex < totalStops - 1))
         {
-            waitingPassengers.Clear();
-            SpawnWaitingPassengers(stop, stopIndex, totalStops);
+            if (preparedStop != stopIndex || stopIndex < 0) PrepareWaiting(stop, stopIndex, totalStops);
             waitingAtCurrentStop = waitingPassengers.Count;
             PrepareAccessibilityBoarding();
 
             int canBoard = Mathf.Max(0, GetMaxCapacity() - currentPassengers);
             boarding = Mathf.Min(waitingAtCurrentStop, canBoard);
             ProcessBoarding(boarding, stopIndex, totalStops);
+            waitingPassengers.RemoveRange(0, boarding);
         }
 
         lastBoardingCount = boarding;
@@ -335,6 +410,12 @@ public class PassengerManager : MonoBehaviour
 
     public void ResetForFreeDriveMode()
     {
+        preparedStop = -1;
+        completedSatisfaction = 0f; completedPassengerCount = 0;
+        averageSatisfaction = 1f; missedRequestedStops = 0;
+        lastSpeedKmh = busController != null ? busController.currentSpeedKmh : 0f;
+        totalPassengersServed = 0;
+        totalFareCollected = totalFaresCollected = sessionIncome = totalDistanceKm = 0f;
         onboardPassengers.Clear();
         waitingPassengers.Clear();
         alightingPassengers.Clear();
@@ -352,11 +433,11 @@ public class PassengerManager : MonoBehaviour
         lastAlightingTimeUnits = 0f;
     }
 
-    int ProcessAlighting(int stopIndex)
+    int ProcessAlighting(int stopIndex, bool unloadAll = false)
     {
         if (!useAdvancedPassengerSimulation || onboardPassengers.Count == 0 || stopIndex < 0)
         {
-            int alightingFallback = Mathf.Min(
+            int alightingFallback = unloadAll ? currentPassengers : Mathf.Min(
                 currentPassengers,
                 Random.Range(
                     Mathf.RoundToInt(currentPassengers * 0.2f),
@@ -372,7 +453,7 @@ public class PassengerManager : MonoBehaviour
         {
             var p = onboardPassengers[i];
             if (p == null) continue;
-            if (p.destinationStopIndex == stopIndex)
+            if (unloadAll || p.destinationStopIndex == stopIndex)
             {
                 p.ClearStopRequest();
                 p.MarkAlightingToDoor();
@@ -472,14 +553,14 @@ public class PassengerManager : MonoBehaviour
 
     void RecalculateSatisfaction()
     {
-        if (onboardPassengers.Count == 0 && waitingPassengers.Count == 0 && alightingPassengers.Count == 0)
+        if (completedPassengerCount == 0 && onboardPassengers.Count == 0 && waitingPassengers.Count == 0 && alightingPassengers.Count == 0)
         {
             averageSatisfaction = 1f;
             return;
         }
 
-        float sum = 0f;
-        int count = 0;
+        float sum = completedSatisfaction;
+        int count = completedPassengerCount;
         foreach (var p in onboardPassengers)
         {
             if (p == null) continue;
@@ -671,6 +752,12 @@ public class PassengerManager : MonoBehaviour
 
         if (MissionManager.Instance != null && MissionManager.Instance.routeActive)
             MissionManager.Instance.TryOpenDoorsAtCurrentStop();
+    }
+
+    public void RequestDoors()
+    {
+        RingBell();
+        MissionManager.Instance?.TryOpenDoorsAtCurrentStop();
     }
 
     void RingBell()

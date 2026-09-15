@@ -77,6 +77,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Steer",
+                    "type": "Value",
+                    "id": "9f7a89b4-33c5-458d-9728-a0f0b56b44fe",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -167,6 +176,39 @@
                     "action": "ShiftDown",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "Keyboard",
+                    "id": "904b9c5e-b143-43d1-b181-27e9ded35f54",
+                    "path": "1DAxis",
+                    "action": "Steer",
+                    "isComposite": true,
+                    "isPartOfComposite": false,
+                    "groups": "",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "negative",
+                    "id": "a440b59b-5ec0-4213-a0a1-a5fe0f207009",
+                    "path": "<Keyboard>/a",
+                    "action": "Steer",
+                    "isComposite": false,
+                    "isPartOfComposite": true,
+                    "groups": "",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "positive",
+                    "id": "debc2139-bc90-403e-a14d-9031cdc8d2a8",
+                    "path": "<Keyboard>/d",
+                    "action": "Steer",
+                    "isComposite": false,
+                    "isPartOfComposite": true,
+                    "groups": "",
+                    "processors": "",
+                    "interactions": ""
                 }
             ]
         }

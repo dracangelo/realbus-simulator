@@ -39,6 +39,7 @@ public class RoadSurfaceFrictionController : MonoBehaviour
     {
         if (busController == null || busController.allWheels == null) return;
 
+        if (maintenanceSystem == null) maintenanceSystem = busController.GetComponent<MaintenanceSystem>();
         float weatherGrip = ResolveWeatherGripMultiplier();
 
         currentGrip = Mathf.Lerp(currentGrip, weatherGrip, Time.deltaTime * lerpSpeed);
@@ -74,17 +75,6 @@ public class RoadSurfaceFrictionController : MonoBehaviour
     float ResolveWeatherGripMultiplier()
     {
         if (WeatherSystem.Instance == null)
-            return 1f;
-
-        if (WeatherSystem.Instance.IsRaining())
-        {
-            if (surfaceDetector != null)
-                return Mathf.Clamp(surfaceDetector.wetMultiplier, 0.05f, 1f);
-
-            return Mathf.Clamp(rainGripMultiplier, 0.05f, 1f);
-        }
-
-        if (!useWeatherSystemForNonRainConditions)
             return 1f;
 
         return Mathf.Clamp(WeatherSystem.Instance.GetRoadGripMultiplier(), 0.05f, 1f);

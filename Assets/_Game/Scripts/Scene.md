@@ -1,6 +1,6 @@
 # RealBus Simulator — Scene Hierarchy & Component Reference
 
-> **Last updated:** Phase 6.5 complete  
+> **Last updated:** Phase 7 implementation complete; device acceptance pending
 > **Unity version:** 6000.3.10f1 (Unity 6.3 LTS)  
 > **Platform:** Android (Samsung Galaxy S20 / A54)
 > **Orientation target:** Landscape-only on Android phones and tablets
@@ -761,4 +761,4 @@ Reference: `Assets/_Game/Fonts/`
 
 ---
 
-*Generated from RealBus Simulator development session — Phase 6.5*
+*Generated from RealBus Simulator development session — Phase 7 implementation*

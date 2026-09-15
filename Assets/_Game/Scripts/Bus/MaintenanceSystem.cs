@@ -74,11 +74,7 @@ public class MaintenanceSystem : MonoBehaviour
     {
         int axleIndex = GetAxleIndexForWheel(wheelIndex);
         float wear = GetAxleWearNormalized(axleIndex);
-        if (wear <= 0.5f)
-            return 1f;
-
-        float extraWear = (wear - 0.5f) / 0.5f;
-        return Mathf.Lerp(1f, 0.72f, extraWear);
+        return RealismRules.TyreGrip(wear);
     }
 
     public float AutoServiceAndGetCost()
@@ -106,6 +102,7 @@ public class MaintenanceSystem : MonoBehaviour
 
     void TrackBrakeWear()
     {
+        if (busController.currentSpeedKmh < 0.1f) return;
         float heavyBrakeFactor = Mathf.Pow(Mathf.Clamp01(busController.brakeInput), 1.4f);
         float speedFactor = Mathf.Clamp(busController.currentSpeedKmh / 80f, 0.15f, 1.35f);
         float heatFactor = 1f + Mathf.Clamp01(busController.brakeHeat / Mathf.Max(1f, busController.maxBrakeHeat));
@@ -156,8 +153,8 @@ public class MaintenanceSystem : MonoBehaviour
 
     void TrackEngineHours()
     {
-        float rpmFactor = Mathf.Clamp(busController.currentRPM / 1600f, 0.35f, 1.4f);
-        engineHours += Time.fixedDeltaTime * engineHoursPerSecond * rpmFactor;
+        if (!busController.FuelDepleted && busController.currentRPM > 0f)
+            engineHours += Time.fixedDeltaTime * engineHoursPerSecond;
     }
 
     void CacheWheelBaseFriction()
@@ -181,6 +178,8 @@ public class MaintenanceSystem : MonoBehaviour
 
     void ApplyTyreGripPenalty()
     {
+        // The surface controller is the sole friction writer when composed systems are present.
+        if (busController != null && busController.GetComponent<RoadSurfaceFrictionController>() != null) return;
         if (busController == null || busController.allWheels == null)
             return;
 

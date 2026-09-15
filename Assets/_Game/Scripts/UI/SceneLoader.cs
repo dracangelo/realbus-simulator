@@ -7,6 +7,7 @@ public class SceneLoader : MonoBehaviour
 
     [Header("Scene Catalog")]
     public SceneCatalog sceneCatalog;
+    bool isLoading;
 
     void Awake()
     {
@@ -80,7 +81,7 @@ public class SceneLoader : MonoBehaviour
     System.Collections.IEnumerator DelayedLoad(string sceneName, float delay)
     {
         yield return new WaitForSeconds(delay);
-        SceneManager.LoadScene(sceneName);
+        yield return LoadAsync(SceneManager.LoadSceneAsync(sceneName));
     }
 
     void LoadByIndex(int buildIndex)
@@ -90,7 +91,27 @@ public class SceneLoader : MonoBehaviour
             Debug.LogError("SceneLoader: Invalid build index.");
             return;
         }
-        SceneManager.LoadScene(buildIndex);
+        if (!isLoading) StartCoroutine(LoadAsync(SceneManager.LoadSceneAsync(buildIndex)));
+    }
+
+    System.Collections.IEnumerator LoadAsync(AsyncOperation operation)
+    {
+        if (operation == null) yield break;
+        isLoading = true;
+        LoadingScreenUI screen = LoadingScreenUI.EnsureExists();
+        screen.Show();
+        operation.allowSceneActivation = false;
+        while (operation.progress < 0.9f)
+        {
+            screen.SetProgress(operation.progress / 0.9f);
+            yield return null;
+        }
+        screen.SetProgress(1f);
+        yield return new WaitForSecondsRealtime(0.2f);
+        operation.allowSceneActivation = true;
+        while (!operation.isDone) yield return null;
+        screen.Hide();
+        isLoading = false;
     }
 
     bool HasCountrySelection()

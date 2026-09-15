@@ -21,6 +21,8 @@ public static class BusRouteParser
 
     public class ParsedBusRoute
     {
+        public long osmRelationId;
+        public bool isRoadPathValidated;
         public string routeRef;
         public string routeName;
         public string destinationName;
@@ -103,6 +105,7 @@ public static class BusRouteParser
 
             var ret = new ParsedBusRoute
             {
+                osmRelationId = r.osmRelationId,
                 routeRef        = r.routeRef + "-R",
                 routeName       = r.routeName + " (Return)",
                 destinationName = r.originName,
@@ -114,7 +117,9 @@ public static class BusRouteParser
             };
 
             // Reverse stops.
-            ret.stops.AddRange(r.stops);
+            foreach (var stop in r.stops)
+                ret.stops.Add(new BusStop { stopId = stop.stopId, stopName = stop.stopName,
+                    latitude = stop.latitude, longitude = stop.longitude, headingDegrees = stop.headingDegrees });
             ret.stops.Reverse();
 
             // Reverse geometry.
@@ -136,6 +141,7 @@ public static class BusRouteParser
     {
         var parsed = new ParsedBusRoute
         {
+            osmRelationId   = elem.id,
             routeRef        = elem.tags.GetValueOrDefault("ref", ""),
             destinationName = elem.tags.GetValueOrDefault("to",  ""),
             originName      = elem.tags.GetValueOrDefault("from",""),
@@ -153,6 +159,8 @@ public static class BusRouteParser
                 AppendPoint(parsed.geometry, gp.lat, gp.lon);
         }
 
+        bool hasInlineGeometry = parsed.geometry.Count > 0;
+
         // ── Members ────────────────────────────────────────────────────
         if (elem.members != null)
         {
@@ -161,7 +169,7 @@ public static class BusRouteParser
                 if (mem == null) continue;
 
                 // Stops.
-                if (mem.type == "node" && IsStopRole(mem.role))
+                if ((mem.type == "node" || mem.type == "way") && IsStopRole(mem.role))
                 {
                     double lat = mem.lat, lon = mem.lon;
                     if (lat == 0d && lon == 0d && mem.geometry?.Count > 0)
@@ -185,10 +193,18 @@ public static class BusRouteParser
                 }
 
                 // Way geometry (only needed when inline geometry absent).
-                if (mem.type == "way" && parsed.geometry.Count == 0
+                if (mem.type == "way" && !hasInlineGeometry
                     && mem.geometry != null && mem.geometry.Count > 0)
                 {
                     bool reverse = mem.role == "backward" || mem.role == "reverse";
+                    if (string.IsNullOrEmpty(mem.role) && parsed.geometry.Count > 0)
+                    {
+                        var last = parsed.geometry[parsed.geometry.Count - 1];
+                        var first = mem.geometry[0];
+                        var end = mem.geometry[mem.geometry.Count - 1];
+                        reverse = HaversineMeters(last.lat, last.lon, end.lat, end.lon)
+                            < HaversineMeters(last.lat, last.lon, first.lat, first.lon);
+                    }
                     if (reverse)
                         for (int j = mem.geometry.Count - 1; j >= 0; j--)
                             AppendPoint(parsed.geometry, mem.geometry[j].lat, mem.geometry[j].lon);
@@ -213,7 +229,8 @@ public static class BusRouteParser
 
     static bool IsStopRole(string role) =>
         role == "stop"           || role == "platform"         ||
-        role == "stop_entry_only"|| role == "stop_exit_only";
+        role == "stop_entry_only"|| role == "stop_exit_only" ||
+        role == "platform_entry_only" || role == "platform_exit_only";
 
     // ── Geometry helpers ───────────────────────────────────────────────
 
@@ -224,6 +241,13 @@ public static class BusRouteParser
     }
 
     // ── Length computation ─────────────────────────────────────────────
+
+    public static void RefreshMetrics(ParsedBusRoute route)
+    {
+        ComputeLength(route);
+        ClassifyDifficulty(route);
+        if (route.geometry.Count >= 2) RecomputeStopHeadings(route);
+    }
 
     static void ComputeLength(ParsedBusRoute route)
     {

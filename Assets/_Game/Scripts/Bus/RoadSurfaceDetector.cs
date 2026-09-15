@@ -96,6 +96,8 @@ public class RoadSurfaceDetector : MonoBehaviour
 
     RoadType ResolveRoadType(Transform hitTransform)
     {
+        var metadata = hitTransform.GetComponentInParent<RoadSurfaceType>();
+        if (metadata != null) return metadata.roadType;
         Transform current = hitTransform;
         while (current != null)
         {

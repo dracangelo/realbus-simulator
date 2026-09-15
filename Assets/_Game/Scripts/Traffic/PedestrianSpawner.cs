@@ -35,6 +35,7 @@ public class PedestrianSpawner : MonoBehaviour
     public float baselineSpawnChance = 0.2f;
     public float rushMultiplier = 2.0f;
 
+    readonly Stack<SimplePedestrian> spare = new Stack<SimplePedestrian>();
     readonly List<SimplePedestrian> active = new List<SimplePedestrian>();
     readonly Dictionary<int, int> activeByCrossing = new Dictionary<int, int>();
     ZebraCrossing[] runtimeCrossings;
@@ -62,6 +63,12 @@ public class PedestrianSpawner : MonoBehaviour
 
         EnsurePedestrianPrefab();
         EnsureRuntimeCrossings();
+        for (int i = 0; i < maxActivePedestrians; i++)
+        {
+            var go = Instantiate(pedestrianPrefab, transform);
+            var pedestrian = go.GetComponent<SimplePedestrian>() ?? go.AddComponent<SimplePedestrian>();
+            go.SetActive(false); spare.Push(pedestrian);
+        }
     }
 
     void Update()
@@ -85,7 +92,8 @@ public class PedestrianSpawner : MonoBehaviour
             p.Tick(Time.deltaTime, walkSpeed);
             if (p.IsDone)
             {
-                Destroy(p.gameObject);
+                p.gameObject.SetActive(false);
+                spare.Push(p);
                 active.RemoveAt(i);
             }
         }
@@ -117,9 +125,11 @@ public class PedestrianSpawner : MonoBehaviour
             Transform from = dir ? x.spawnA : x.spawnB;
             Transform to = dir ? x.spawnB : x.spawnA;
 
-            GameObject go = Instantiate(pedestrianPrefab, from.position, Quaternion.identity, transform);
-            var ped = go.GetComponent<SimplePedestrian>();
-            if (ped == null) ped = go.AddComponent<SimplePedestrian>();
+            if (spare.Count == 0) break;
+            var ped = spare.Pop();
+            ped.transform.position = from.position;
+            ped.transform.rotation = Quaternion.identity;
+            ped.gameObject.SetActive(true);
             IncrementCrossing(i);
             ped.Init(to, () => DecrementCrossing(i), true);
             active.Add(ped);
@@ -259,17 +269,7 @@ public class PedestrianSpawner : MonoBehaviour
     float GetTimeOfDayDensity()
     {
         float now = ScheduleManager.Instance != null ? ScheduleManager.Instance.currentTimeMinutes : 12f * 60f;
-        float morning = Gaussian(now, 7.5f * 60f, 90f);
-        float evening = Gaussian(now, 17.5f * 60f, 90f);
-        float rushSignal = Mathf.Clamp01(Mathf.Max(morning, evening));
-        return Mathf.Lerp(1f, rushMultiplier, rushSignal);
-    }
-
-    static float Gaussian(float x, float mean, float sigma)
-    {
-        if (sigma <= 0.001f) return 0f;
-        float d = (x - mean) / sigma;
-        return Mathf.Exp(-0.5f * d * d);
+        return RealismRules.DailyDensity(now, peak: rushMultiplier);
     }
 
     int GetActiveCountForCrossing(int index)

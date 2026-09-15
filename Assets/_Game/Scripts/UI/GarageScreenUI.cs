@@ -16,6 +16,7 @@ public class GarageScreenUI : MonoBehaviour
     TextMeshProUGUI currentNameText;
     TextMeshProUGUI compareNameText;
     TextMeshProUGUI comparisonHintText;
+    GarageProgressionPanel progressionPanel;
 
     readonly List<GameObject> spawnedCards = new List<GameObject>();
 
@@ -250,12 +251,19 @@ public class GarageScreenUI : MonoBehaviour
         footer.offsetMin = new Vector2(28f, 22f);
         footer.offsetMax = new Vector2(-28f, 70f);
 
+        var upgradesButton = CreateButton("Upgrades", footer, UITheme.SurfaceHigh, out var upgradesLabel);
+        upgradesLabel.text = "UPGRADES";
+        upgradesButton.onClick.AddListener(ShowUpgrades);
+        Anchor(upgradesButton.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0.22f, 1f), new Vector2(16f, 10f), new Vector2(-8f, -10f));
+
+        var liveryButton = CreateButton("Livery", footer, UITheme.SurfaceHigh, out var liveryLabel);
+        liveryLabel.text = "LIVERY";
+        liveryButton.onClick.AddListener(ShowLivery);
+        Anchor(liveryButton.GetComponent<RectTransform>(), new Vector2(0.22f, 0f), new Vector2(0.44f, 1f), new Vector2(8f, 10f), new Vector2(-8f, -10f));
+
         equipButton = CreateButton("Equip", footer, UITheme.Accent, out equipButtonText);
         equipButton.onClick.AddListener(HandleEquipPressed);
-        Anchor(equipButton.GetComponent<RectTransform>(), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-240f, 10f), new Vector2(-16f, -10f));
-
-        var helper = CreateText("FooterHint", footer, "Owned buses can be equipped immediately. Locked buses unlock automatically at the required rank.", 13f, UITheme.TextSecondary, UITheme.FontWeight.Regular, TextAlignmentOptions.Left);
-        Anchor(helper.rectTransform, new Vector2(0f, 0f), new Vector2(0.68f, 1f), new Vector2(18f, 10f), new Vector2(-20f, -10f));
+        Anchor(equipButton.GetComponent<RectTransform>(), new Vector2(0.72f, 0f), new Vector2(1f, 1f), new Vector2(8f, 10f), new Vector2(-16f, -10f));
     }
 
     void PopulateList(BusFleetManager fleet)
@@ -388,6 +396,33 @@ public class GarageScreenUI : MonoBehaviour
 
         Refresh();
         owner?.RefreshGarageAndFleetPresentation();
+    }
+
+    void ShowUpgrades()
+    {
+        if (focusedSpec == null)
+            return;
+        EnsureProgressionPanel();
+        progressionPanel.ShowUpgrades(focusedSpec);
+    }
+
+    void ShowLivery()
+    {
+        if (focusedSpec == null)
+            return;
+        EnsureProgressionPanel();
+        progressionPanel.ShowLivery(focusedSpec);
+    }
+
+    void EnsureProgressionPanel()
+    {
+        if (progressionPanel != null)
+            return;
+        var panelObject = new GameObject("GarageProgressionPanel", typeof(RectTransform), typeof(GarageProgressionPanel));
+        panelObject.transform.SetParent(transform, false);
+        progressionPanel = panelObject.GetComponent<GarageProgressionPanel>();
+        panelObject.transform.SetAsLastSibling();
+        panelObject.SetActive(false);
     }
 
     void HideImmediate()

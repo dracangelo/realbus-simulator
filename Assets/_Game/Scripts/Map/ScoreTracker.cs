@@ -18,6 +18,7 @@ public class ScoreTracker : MonoBehaviour
     private float hardBrakingPenalty = 0f;
     private float sharpCornerPenalty = 0f;
     private float harshAccelerationPenalty = 0f;
+    private float satisfactionBaseline = 100f;
 
     [Header("Safety (25%)")]
     public float safetyScore = 100f;
@@ -34,6 +35,33 @@ public class ScoreTracker : MonoBehaviour
     private Rigidbody busRigidbody;
     private Vector3 lastVelocity;
 
+    bool recording;
+    float missionFuelStart;
+    float missionDistanceStart;
+    FuelSystem fuel;
+    public int pointDeductions;
+    float extraPointPenaltyPercent;
+    float passengerServicePenalty;
+    public const int MaximumPoints = 10000;
+    public bool IsRecording => recording;
+
+    public void BeginMission(BusController bus)
+    {
+        busRigidbody = bus != null ? bus.GetComponent<Rigidbody>() : null;
+        lastVelocity = busRigidbody != null ? busRigidbody.linearVelocity : Vector3.zero;
+        punctualityScore = satisfactionScore = safetyScore = efficiencyScore = totalScore = 100f;
+        satisfactionBaseline = 100f;
+        hardBrakingPenalty = sharpCornerPenalty = harshAccelerationPenalty = 0f;
+        collisionCount = redLightViolations = stopsCompleted = pointDeductions = 0;
+        extraPointPenaltyPercent = passengerServicePenalty = 0f;
+        fuel = bus != null ? bus.GetComponent<FuelSystem>() : null;
+        missionFuelStart = fuel != null ? fuel.TotalConsumedLitres : 0f;
+        missionDistanceStart = MissionManager.Instance != null ? MissionManager.Instance.DistanceDrivenKm : 0f;
+        if (bus != null && bus.GetComponent<MissionDrivingMonitor>() == null) bus.gameObject.AddComponent<MissionDrivingMonitor>();
+        recording = true;
+    }
+    public void EndMission() { UpdateTotalScore(); recording = false; }
+
     public int CollisionCount => collisionCount;
     public int RedLightViolationCount => redLightViolations;
 
@@ -49,11 +77,18 @@ public class ScoreTracker : MonoBehaviour
         if (bus != null) busRigidbody = bus.GetComponent<Rigidbody>();
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        if (busRigidbody == null) return;
+        if (!recording || busRigidbody == null) return;
 
         CheckPassengerSatisfaction();
+        var passengers = PassengerManager.Instance;
+        if (passengers != null && passengers.totalPassengersServed > 0)
+            satisfactionScore = Mathf.Min(satisfactionScore, passengers.averageSatisfaction * 100f);
+        var mission = MissionManager.Instance;
+        float scoredDistance = mission != null ? mission.DistanceDrivenKm - missionDistanceStart : 0f;
+        if (fuel != null && scoredDistance > 0.1f)
+            UpdateEfficiencyScore((fuel.TotalConsumedLitres - missionFuelStart) / scoredDistance * 100f, fuel.GetBaseConsumptionLPer100Km());
         UpdateTotalScore();
 
         lastVelocity = busRigidbody.linearVelocity;
@@ -62,28 +97,28 @@ public class ScoreTracker : MonoBehaviour
     void CheckPassengerSatisfaction()
     {
         // Hard braking — deceleration > 0.4g
-        Vector3 acceleration = (busRigidbody.linearVelocity - lastVelocity) / Time.deltaTime;
+        Vector3 acceleration = (busRigidbody.linearVelocity - lastVelocity) / Time.fixedDeltaTime;
         float decelerationG = -Vector3.Dot(acceleration, busRigidbody.transform.forward) / 9.81f;
 
         if (decelerationG > 0.4f)
         {
-            hardBrakingPenalty += decelerationG * Time.deltaTime * 2f;
-            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty);
+            hardBrakingPenalty += decelerationG * Time.fixedDeltaTime * 2f;
+            satisfactionScore = Mathf.Max(0f, satisfactionBaseline - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty - passengerServicePenalty);
         }
 
         // Sharp cornering — lateral G > 0.3g
         float lateralG = Vector3.Dot(acceleration, busRigidbody.transform.right) / 9.81f;
         if (Mathf.Abs(lateralG) > 0.3f)
         {
-            sharpCornerPenalty += Mathf.Abs(lateralG) * Time.deltaTime * 1.5f;
-            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty);
+            sharpCornerPenalty += Mathf.Abs(lateralG) * Time.fixedDeltaTime * 1.5f;
+            satisfactionScore = Mathf.Max(0f, satisfactionBaseline - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty - passengerServicePenalty);
         }
 
         float accelerationG = Vector3.Dot(acceleration, busRigidbody.transform.forward) / 9.81f;
         if (accelerationG > 0.35f)
         {
-            harshAccelerationPenalty += accelerationG * Time.deltaTime * 1.25f;
-            satisfactionScore = Mathf.Max(0f, 100f - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty);
+            harshAccelerationPenalty += accelerationG * Time.fixedDeltaTime * 1.25f;
+            satisfactionScore = Mathf.Max(0f, satisfactionBaseline - hardBrakingPenalty - sharpCornerPenalty - harshAccelerationPenalty - passengerServicePenalty);
         }
     }
 
@@ -99,28 +134,13 @@ public class ScoreTracker : MonoBehaviour
     {
         stopsCompleted++;
 
-        switch (status)
-        {
-            case PunctualityStatus.OnTime:
-                // No penalty
-                break;
-            case PunctualityStatus.Early:
-                punctualityScore = Mathf.Max(0f, punctualityScore - 5f);
-                break;
-            case PunctualityStatus.Late:
-                punctualityScore = Mathf.Max(0f, punctualityScore - 10f);
-                break;
-            case PunctualityStatus.SeverelyLate:
-                punctualityScore = Mathf.Max(0f, punctualityScore - 20f);
-                break;
-        }
-
-        if (arrivalDeltaSeconds > 0f)
-            punctualityScore = Mathf.Max(0f, punctualityScore - (Mathf.Floor(arrivalDeltaSeconds / 30f) * 2f));
+        punctualityScore = Mathf.Max(0f, punctualityScore - GameplayRules.LatePenaltyPercent(arrivalDeltaSeconds));
+        UpdateTotalScore();
     }
 
     public void RecordCollision()
     {
+        if (!recording) return;
         collisionCount++;
         safetyScore = Mathf.Max(0f, safetyScore - 15f);
         Debug.Log($"Collision! Safety score: {safetyScore:F0}");
@@ -128,8 +148,13 @@ public class ScoreTracker : MonoBehaviour
 
     public void RecordRedLight()
     {
+        if (!recording) return;
         redLightViolations++;
-        safetyScore = Mathf.Max(0f, safetyScore - 10f);
+        pointDeductions += 500;
+        float categoryDeduction = safetyWeight > 0f ? Mathf.Min(safetyScore, 5f / safetyWeight) : 0f;
+        safetyScore -= categoryDeduction;
+        extraPointPenaltyPercent += Mathf.Max(0f, 5f - categoryDeduction * safetyWeight);
+        UpdateTotalScore();
         Debug.Log($"Red light! Safety score: {safetyScore:F0}");
     }
 
@@ -155,8 +180,28 @@ public class ScoreTracker : MonoBehaviour
 
     public void ApplyPassengerServicePenalty(float satisfactionPenalty, float punctualityPenalty = 0f)
     {
+        if (!recording) return;
+        passengerServicePenalty += Mathf.Max(0f, satisfactionPenalty);
         satisfactionScore = Mathf.Max(0f, satisfactionScore - Mathf.Max(0f, satisfactionPenalty));
         punctualityScore = Mathf.Max(0f, punctualityScore - Mathf.Max(0f, punctualityPenalty));
+        UpdateTotalScore();
+    }
+
+    public void RestoreCheckpoint(float punctuality, float satisfaction, float safety, float efficiency,
+        int completedStops, int deductions, int collisions, int redLights)
+    {
+        punctualityScore = Mathf.Clamp(punctuality, 0f, 100f);
+        satisfactionScore = satisfactionBaseline = Mathf.Clamp(satisfaction, 0f, 100f);
+        safetyScore = Mathf.Clamp(safety, 0f, 100f);
+        efficiencyScore = Mathf.Clamp(efficiency, 0f, 100f);
+        stopsCompleted = Mathf.Max(0, completedStops);
+        pointDeductions = Mathf.Max(0, deductions);
+        collisionCount = Mathf.Max(0, collisions);
+        redLightViolations = Mathf.Max(0, redLights);
+        hardBrakingPenalty = sharpCornerPenalty = harshAccelerationPenalty = 0f;
+        extraPointPenaltyPercent = passengerServicePenalty = 0f;
+        missionFuelStart = fuel != null ? fuel.TotalConsumedLitres : 0f;
+        missionDistanceStart = MissionManager.Instance != null ? MissionManager.Instance.DistanceDrivenKm : 0f;
         UpdateTotalScore();
     }
 
@@ -179,6 +224,7 @@ public class ScoreTracker : MonoBehaviour
                    + (satisfactionScore * satisfactionWeight)
                    + (safetyScore * safetyWeight)
                    + (efficiencyScore * efficiencyWeight);
+        totalScore = Mathf.Clamp(totalScore - extraPointPenaltyPercent, 0f, 100f);
     }
 
     public int GetStarRating()

@@ -32,15 +32,20 @@ public class TrafficLight : MonoBehaviour
 
     void Update()
     {
-        timeInState += Time.deltaTime;
+        AdvanceTime(Time.deltaTime);
+    }
 
-        if (timeInState >= GetStateDuration(currentState))
+    public void AdvanceTime(float seconds)
+    {
+        var previous = currentState;
+        float cycle = GetStateDuration(LightState.Red) + GetStateDuration(LightState.Green) + GetStateDuration(LightState.Amber);
+        timeInState += Mathf.Max(0f, seconds) % cycle;
+        while (timeInState >= GetStateDuration(currentState))
         {
-            timeInState = 0f;
+            timeInState -= GetStateDuration(currentState);
             AdvanceState();
         }
-
-        UpdateVisuals();
+        if (previous != currentState) UpdateVisuals();
     }
 
     void AdvanceState()
@@ -57,21 +62,28 @@ public class TrafficLight : MonoBehaviour
     {
         switch (state)
         {
-            case LightState.Red: return redDuration;
-            case LightState.Green: return greenDuration;
-            case LightState.Amber: return amberDuration;
-            default: return redDuration;
+            case LightState.Red: return Mathf.Max(0.01f, redDuration);
+            case LightState.Green: return Mathf.Max(0.01f, greenDuration);
+            case LightState.Amber: return Mathf.Max(0.01f, amberDuration);
+            default: return Mathf.Max(0.01f, redDuration);
         }
     }
 
     void UpdateVisuals()
     {
-        if (redLight) redLight.material.color = 
-            currentState == LightState.Red ? LitRed : Unlit;
-        if (greenLight) greenLight.material.color = 
-            currentState == LightState.Green ? LitGreen : Unlit;
-        if (amberLight) amberLight.material.color = 
-            currentState == LightState.Amber ? LitAmber : Unlit;
+        ApplyColor(redLight, currentState == LightState.Red ? LitRed : Unlit);
+        ApplyColor(greenLight, currentState == LightState.Green ? LitGreen : Unlit);
+        ApplyColor(amberLight, currentState == LightState.Amber ? LitAmber : Unlit);
+    }
+    MaterialPropertyBlock block;
+    void ApplyColor(Renderer target, Color color)
+    {
+        if (target == null) return;
+        if (block == null) block = new MaterialPropertyBlock();
+        target.GetPropertyBlock(block);
+        block.SetColor("_BaseColor", color);
+        block.SetColor("_Color", color);
+        target.SetPropertyBlock(block);
     }
 
     public bool IsRed() => currentState == LightState.Red;
@@ -79,21 +91,8 @@ public class TrafficLight : MonoBehaviour
 
     void ApplyPhaseOffset()
     {
-        float remainingOffset = Mathf.Max(0f, phaseOffset);
         currentState = LightState.Red;
         timeInState = 0f;
-
-        while (remainingOffset > 0f)
-        {
-            float stateDuration = GetStateDuration(currentState);
-            if (remainingOffset < stateDuration)
-            {
-                timeInState = remainingOffset;
-                break;
-            }
-
-            remainingOffset -= stateDuration;
-            AdvanceState();
-        }
+        AdvanceTime(phaseOffset);
     }
 }

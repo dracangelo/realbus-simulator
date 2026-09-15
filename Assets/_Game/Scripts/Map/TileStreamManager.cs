@@ -24,13 +24,14 @@ public class TileStreamManager : MonoBehaviour
         public Vector3 centerPosition;
         public Vector3 scale;
         public Texture2D sourceTexture;
-        public Color32[] sourcePixels;
+        public byte[] sourcePng;
         public int sourceWidth;
         public int sourceHeight;
         public TileLodTier currentLod = TileLodTier.Tier3;
         public TileLodTier requestedLod = TileLodTier.Tier3;
         public int buildVersion = 0;
         public bool isBuilding = false;
+        public bool hasMesh;
     }
 
     struct MeshBuildData
@@ -50,6 +51,7 @@ public class TileStreamManager : MonoBehaviour
         public int textureWidth;
         public int textureHeight;
         public bool colliderEnabled;
+        public string error;
     }
 
     [Header("Mapbox")]
@@ -102,7 +104,22 @@ public class TileStreamManager : MonoBehaviour
     readonly HashSet<TileKey> loadingTiles = new HashSet<TileKey>();
     readonly ConcurrentQueue<TileBuildResult> completedBuilds = new ConcurrentQueue<TileBuildResult>();
 
+    public int ActiveTileCount => activeTiles.Count;
+    public int PendingTileCount => loadingTiles.Count + activeBuildJobs;
+    readonly Dictionary<TileKey, float> retryAfter = new Dictionary<TileKey, float>();
+
+    public void ResetStreaming()
+    {
+        StopAllCoroutines();
+        foreach (var key in new List<TileKey>(activeTiles.Keys)) UnloadTile(key);
+        loadingTiles.Clear();
+        retryAfter.Clear();
+        t = refreshEverySeconds;
+    }
+
     int activeBuildJobs;
+    int nextBuildVersion;
+    public PhysicsMaterial roadPhysicsMaterial;
     float t;
 
     void Start()
@@ -157,26 +174,19 @@ public class TileStreamManager : MonoBehaviour
         Vector3 busWorldPosition = busTransform.position;
         Vector3 streamFocusPosition = GetStreamingFocusWorldPosition(busWorldPosition);
         var gps = converter.WorldToGeoPosition(streamFocusPosition);
-        int centerX = MapTileLoader.LonToTileX(gps.lon, zoomLevel);
-        int centerY = MapTileLoader.LatToTileY(gps.lat, zoomLevel);
-
-        int tileRadius = Mathf.CeilToInt(loadRadiusMeters / Mathf.Max(1f, tileWorldSize));
-        var needed = new List<(TileKey key, float dist)>(tileRadius * tileRadius);
-
-        for (int dx = -tileRadius; dx <= tileRadius; dx++)
+        var needed = new List<(TileKey key, float dist)>();
+        var keys = new HashSet<TileKey>();
+        var busGps = converter.WorldToGeoPosition(busWorldPosition);
+        // Keep the full bus-centered disk and add lookahead; do not leave a gap behind the bus.
+        foreach (var center in new[] { busGps, gps })
+        foreach (var tile in SlippyTileCoverage.InRadius(center.lat, center.lon, zoomLevel, loadRadiusMeters))
         {
-            for (int dy = -tileRadius; dy <= tileRadius; dy++)
-            {
-                float worldDist = Mathf.Sqrt(dx * dx + dy * dy) * tileWorldSize;
-                if (worldDist > loadRadiusMeters)
-                    continue;
-
-                var key = new TileKey(zoomLevel, centerX + dx, centerY + dy);
-                Vector3 tileCenter = EstimateTileCenterWorldPosition(key);
-                float distanceFromBus = Vector3.Distance(busWorldPosition, tileCenter);
-                needed.Add((key, distanceFromBus));
-            }
+            var key = new TileKey(zoomLevel, tile.x, tile.y);
+            if (keys.Add(key)) needed.Add((key, Vector3.Distance(busWorldPosition, EstimateTileCenterWorldPosition(key))));
         }
+
+        foreach (var failedKey in new List<TileKey>(retryAfter.Keys))
+            if (!keys.Contains(failedKey)) retryAfter.Remove(failedKey);
 
         needed.Sort((a, b) => a.dist.CompareTo(b.dist));
 
@@ -197,6 +207,7 @@ public class TileStreamManager : MonoBehaviour
         for (int i = 0; i < needed.Count && started < capacity; i++)
         {
             var key = needed[i].key;
+            if (retryAfter.TryGetValue(key, out float retryAt) && Time.unscaledTime < retryAt) continue;
             if (activeTiles.ContainsKey(key) || loadingTiles.Contains(key))
                 continue;
 
@@ -216,42 +227,41 @@ public class TileStreamManager : MonoBehaviour
             if (runtime == null || runtime.root == null)
                 continue;
 
-            float distance = Vector3.Distance(busTransform.position, runtime.centerPosition);
+            float distance = DistanceToTile(busTransform.position, runtime);
             TileLodTier desiredLod = ResolveLod(distance);
-            if (desiredLod != runtime.currentLod && desiredLod != runtime.requestedLod)
+            if (!runtime.hasMesh || desiredLod != runtime.currentLod)
                 QueueLodBuild(runtime, desiredLod);
         }
     }
 
     void QueueLodBuild(TileRuntime runtime, TileLodTier lod)
     {
-        if (runtime == null || runtime.sourcePixels == null)
-            return;
-        if (runtime.isBuilding)
-            return;
-        if (activeBuildJobs >= Mathf.Max(1, maxConcurrentLodBuilds))
-            return;
-
+        if (runtime == null || runtime.sourcePng == null || runtime.isBuilding) return;
+        if (activeBuildJobs >= Mathf.Max(1, maxConcurrentLodBuilds)) return;
+        // Unity texture decoding must remain on the main thread. Keep only encoded source bytes
+        // between builds; otherwise every distant tile retains a full-size CPU and GPU texture.
+        var decoded = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        if (!decoded.LoadImage(runtime.sourcePng)) { Destroy(decoded); return; }
+        Color32[] pixels = decoded.GetPixels32();
+        int width = decoded.width, height = decoded.height;
+        Destroy(decoded);
+        int segments = GetSegmentsForLod(lod);
+        bool collider = createMeshCollider && lod == TileLodTier.Tier1;
+        TileKey key = runtime.key;
         runtime.isBuilding = true;
         runtime.requestedLod = lod;
-        runtime.buildVersion++;
+        runtime.buildVersion = ++nextBuildVersion;
         int version = runtime.buildVersion;
         Interlocked.Increment(ref activeBuildJobs);
-
         Task.Run(() =>
         {
-            var result = new TileBuildResult
+            var result = new TileBuildResult { key = key, buildVersion = version, lod = lod, colliderEnabled = collider };
+            try
             {
-                key = runtime.key,
-                buildVersion = version,
-                lod = lod,
-                mesh = BuildMeshData(GetSegmentsForLod(lod)),
-                texturePixels = BuildTexturePixels(runtime.sourcePixels, runtime.sourceWidth, runtime.sourceHeight, lod, out int texWidth, out int texHeight),
-                textureWidth = texWidth,
-                textureHeight = texHeight,
-                colliderEnabled = createMeshCollider && lod == TileLodTier.Tier1
-            };
-
+                result.mesh = BuildMeshData(segments);
+                result.texturePixels = BuildTexturePixels(pixels, width, height, lod, out result.textureWidth, out result.textureHeight);
+            }
+            catch (System.Exception exception) { result.error = exception.Message; }
             completedBuilds.Enqueue(result);
         });
     }
@@ -269,7 +279,12 @@ public class TileStreamManager : MonoBehaviour
             if (result.buildVersion != runtime.buildVersion)
                 continue;
 
+            runtime.isBuilding = false;
+            if (result.error != null) { Debug.LogWarning("Tile LOD build failed: " + result.error); continue; }
+            float distance = busTransform != null ? DistanceToTile(busTransform.position, runtime) : tier3DistanceMeters;
+            if (ResolveLod(distance) != result.lod) continue;
             ApplyLodResult(runtime, result);
+            runtime.hasMesh = true;
             runtime.isBuilding = false;
             runtime.currentLod = result.lod;
         }
@@ -299,6 +314,7 @@ public class TileStreamManager : MonoBehaviour
 
         if (runtime.meshCollider != null)
         {
+            runtime.meshCollider.sharedMaterial = roadPhysicsMaterial;
             runtime.meshCollider.enabled = result.colliderEnabled;
             runtime.meshCollider.sharedMesh = result.colliderEnabled ? mesh : null;
         }
@@ -309,7 +325,7 @@ public class TileStreamManager : MonoBehaviour
             result.lod == TileLodTier.Tier1 ? TextureFormat.RGBA32 : TextureFormat.RGB24,
             false);
         texture.SetPixels32(result.texturePixels);
-        texture.Apply(false, false);
+        texture.Apply(true, true);
         ApplyTextureSettings(texture, result.lod);
 
         Material tileMaterial = previousMaterial;
@@ -344,9 +360,13 @@ public class TileStreamManager : MonoBehaviour
         else
             yield return DownloadDirect(key, t2 => tex = t2);
 
-        if (tex != null && !activeTiles.ContainsKey(key))
+        if (tex != null && !activeTiles.ContainsKey(key) && busTransform != null &&
+            Vector3.Distance(busTransform.position, EstimateTileCenterWorldPosition(key)) <= unloadRadiusMeters)
             CreateTileRuntime(tex, key);
+        else if (tex != null) Destroy(tex);
 
+        if (tex == null) retryAfter[key] = Time.unscaledTime + 15f;
+        else retryAfter.Remove(key);
         loadingTiles.Remove(key);
         if (loadingUI != null)
             loadingUI.SetLoading(loadingTiles.Count > 0 || activeBuildJobs > 0);
@@ -371,8 +391,8 @@ public class TileStreamManager : MonoBehaviour
 
     void CreateTileRuntime(Texture2D tex, TileKey key)
     {
-        Texture2D readable = EnsureReadableTexture(tex);
-        Color32[] pixels = readable.GetPixels32();
+        Texture2D readable = tex; // Ownership transfers from the request to this tile.
+        byte[] sourcePng = readable.EncodeToPNG();
 
         double centerLon = MapTileLoader.TileXToLon(key.x + 0.5, key.zoom);
         double centerLat = MapTileLoader.TileYToLat(key.y + 0.5, key.zoom);
@@ -404,8 +424,8 @@ public class TileStreamManager : MonoBehaviour
             meshRenderer = tileRoot.AddComponent<MeshRenderer>(),
             centerPosition = centerPos,
             scale = new Vector3(width, 1f, height),
-            sourceTexture = readable,
-            sourcePixels = pixels,
+            sourceTexture = null,
+            sourcePng = sourcePng,
             sourceWidth = readable.width,
             sourceHeight = readable.height,
             currentLod = TileLodTier.Tier3,
@@ -415,8 +435,9 @@ public class TileStreamManager : MonoBehaviour
         if (createMeshCollider)
             runtime.meshCollider = tileRoot.AddComponent<MeshCollider>();
 
+        Destroy(readable);
         activeTiles[key] = runtime;
-        float busDistance = busTransform != null ? Vector3.Distance(busTransform.position, centerPos) : tier3DistanceMeters;
+        float busDistance = busTransform != null ? DistanceToTile(busTransform.position, runtime) : tier3DistanceMeters;
         QueueLodBuild(runtime, ResolveLod(busDistance));
     }
 
@@ -450,13 +471,13 @@ public class TileStreamManager : MonoBehaviour
         return shader;
     }
 
-    TileLodTier ResolveLod(float distanceMeters)
+    TileLodTier ResolveLod(float distance) => (TileLodTier)RealismRules.TileTier(distance, tier1DistanceMeters, tier2DistanceMeters);
+
+    static float DistanceToTile(Vector3 position, TileRuntime tile)
     {
-        if (distanceMeters <= tier1DistanceMeters)
-            return TileLodTier.Tier1;
-        if (distanceMeters <= tier2DistanceMeters)
-            return TileLodTier.Tier2;
-        return TileLodTier.Tier3;
+        float x = Mathf.Max(0f, Mathf.Abs(position.x - tile.centerPosition.x) - tile.scale.x * 0.5f);
+        float z = Mathf.Max(0f, Mathf.Abs(position.z - tile.centerPosition.z) - tile.scale.z * 0.5f);
+        return Mathf.Sqrt(x * x + z * z);
     }
 
     int GetSegmentsForLod(TileLodTier lod)

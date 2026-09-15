@@ -8,6 +8,8 @@ public class AIVehicleController : MonoBehaviour
 
     static readonly List<AIVehicleController> ActiveVehicles = new List<AIVehicleController>();
 
+    public static int ActiveCount => ActiveVehicles.Count;
+
     [Header("Identity")]
     public VehicleType vehicleType = VehicleType.Car;
 
@@ -35,7 +37,11 @@ public class AIVehicleController : MonoBehaviour
 
     Rigidbody rb;
     float laneShift;
+    Transform passingBus;
     float emergencyYieldTimer;
+    float stuckSeconds;
+    float recoveryLaneTimer;
+    Vector3 lastProgressPosition;
 
     void OnEnable()
     {
@@ -52,6 +58,7 @@ public class AIVehicleController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.interpolation = RigidbodyInterpolation.Interpolate;
+        lastProgressPosition = transform.position;
     }
 
     public void Init(AIRoadGraph graph, int startNode, int lane, VehicleType type)
@@ -74,12 +81,12 @@ public class AIVehicleController : MonoBehaviour
         vehicleType = type;
         currentSpeedKmh = Mathf.Max(0f, speedKmh);
         if (rb != null)
-            rb.linearVelocity = transform.forward * (currentSpeedKmh / 3.6f);
+            if (!rb.isKinematic) rb.linearVelocity = transform.forward * (currentSpeedKmh / 3.6f);
     }
 
     public Vector3 GetVelocityWorld()
     {
-        return rb != null ? rb.linearVelocity : Vector3.zero;
+        return transform.forward * (currentSpeedKmh / 3.6f);
     }
 
     public void SetVelocityWorld(Vector3 velocity)
@@ -100,6 +107,8 @@ public class AIVehicleController : MonoBehaviour
 
         Vector3 current = transform.position;
         Vector3 target = roadGraph.GetNodePosition(targetNodeIndex);
+        Vector3 segment = (target - roadGraph.GetNodePosition(currentNodeIndex)).normalized;
+        target += Vector3.Cross(Vector3.up, segment) * (roadGraph.GetLaneOffset(currentNodeIndex, laneIndex) + laneShift);
         Vector3 travelDir = (target - current);
         travelDir.y = 0f;
         float distance = travelDir.magnitude;
@@ -108,13 +117,35 @@ public class AIVehicleController : MonoBehaviour
         float desiredSpeed = ResolveDesiredSpeedKmh();
         float safeSpeed = ApplyTrafficAndFollowingRules(desiredSpeed);
         MoveVehicle(travelDir, safeSpeed);
+        UpdateStuckRecovery();
 
-        if (distance <= Mathf.Max(stopDistance, vehicleLength))
+        if (distance <= Mathf.Min(2f, stopDistance))
         {
             currentNodeIndex = targetNodeIndex;
             targetNodeIndex = roadGraph.GetRandomNextNode(currentNodeIndex);
-            isOvertaking = false;
-            laneShift = 0f;
+            if (!isOvertaking) laneShift = 0f;
+        }
+    }
+
+    void UpdateStuckRecovery()
+    {
+        float moved = Vector3.Distance(transform.position, lastProgressPosition);
+        lastProgressPosition = transform.position;
+        recoveryLaneTimer = Mathf.Max(0f, recoveryLaneTimer - Time.fixedDeltaTime);
+        if (recoveryLaneTimer <= 0f && !isOvertaking && !isYieldingToEmergency) laneShift = 0f;
+        bool legitimateStop = isYieldingToEmergency || roadGraph.IsRedSignal(targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, safeFollowingDistance + 2f);
+        if (moved > 0.04f || currentSpeedKmh > 2f || legitimateStop) { stuckSeconds = 0f; return; }
+        stuckSeconds += Time.fixedDeltaTime;
+        if (stuckSeconds >= 12f && recoveryLaneTimer <= 0f && roadGraph.nodes[currentNodeIndex].laneCount > 1)
+        {
+            float side = laneIndex == 0 ? Mathf.Abs(overtakingLaneShift) : -Mathf.Abs(overtakingLaneShift);
+            if (TrafficParticipant.PassingLaneClear(transform, side, 25f)) { laneShift = side; recoveryLaneTimer = 5f; stuckSeconds = 0f; return; }
+        }
+        if (stuckSeconds >= 20f)
+        {
+            int next = roadGraph.GetRandomNextNode(currentNodeIndex);
+            if (roadGraph.IsValidNode(next)) targetNodeIndex = next;
+            stuckSeconds = 0f;
         }
     }
 
@@ -124,7 +155,7 @@ public class AIVehicleController : MonoBehaviour
         switch (vehicleType)
         {
             case VehicleType.Truck: return speedLimit * 0.8f;
-            case VehicleType.Motorcycle: return speedLimit * 1.05f;
+            case VehicleType.Motorcycle: return speedLimit;
             case VehicleType.Bus: return speedLimit * 0.75f;
             case VehicleType.Emergency: return speedLimit * 1.25f;
             default: return speedLimit;
@@ -140,24 +171,21 @@ public class AIVehicleController : MonoBehaviour
             if (roadGraph.IsRedSignal(targetNodeIndex))
             {
                 float distToSignal = Vector3.Distance(transform.position, roadGraph.GetNodePosition(targetNodeIndex));
-                if (distToSignal < 18f)
-                    result = 0f;
+                result = Mathf.Min(result, RealismRules.StoppingSpeedKmh(distToSignal, vehicleLength * 0.5f + 3f, maxBrake * 0.65f));
             }
         }
 
-        AIVehicleController front = FindFrontVehicle();
-        if (front != null)
+        if (!isOvertaking && roadGraph.nodes[currentNodeIndex].laneCount > 1 && !roadGraph.IsRedSignal(targetNodeIndex))
         {
-            float gap = Vector3.Distance(transform.position, front.transform.position);
-            if (gap < safeFollowingDistance)
-                result = Mathf.Min(result, front.currentSpeedKmh * 0.9f);
-
-            // Overtake very slow/stopped bus when safe.
-            if (!isOvertaking && front.vehicleType == VehicleType.Bus && front.currentSpeedKmh < 2f && gap < safeFollowingDistance * 1.4f)
-            {
-                isOvertaking = true;
-                laneShift = overtakingLaneShift;
-            }
+            var stoppedBus = TrafficParticipant.StoppedBusAhead(transform, safeFollowingDistance * 2.5f);
+            if (stoppedBus != null && TrafficParticipant.PassingLaneClear(transform, overtakingLaneShift))
+            { passingBus = stoppedBus; isOvertaking = true; laneShift = overtakingLaneShift; }
+        }
+        if (isOvertaking)
+        {
+            result = Mathf.Min(result, 12f);
+            if (passingBus == null || Vector3.Dot(transform.forward, passingBus.position - transform.position) < -12f)
+            { isOvertaking = false; passingBus = null; laneShift = 0f; }
         }
 
         if (isYieldingToEmergency)
@@ -172,22 +200,25 @@ public class AIVehicleController : MonoBehaviour
             }
         }
 
-        return Mathf.Max(0f, result);
+        return TrafficParticipant.LimitSpeed(transform, Mathf.Max(0f, result), vehicleLength * 0.5f + 3f, maxBrake * 0.65f);
     }
 
     void MoveVehicle(Vector3 forwardDir, float targetSpeedKmh)
     {
         float targetMs = targetSpeedKmh / 3.6f;
-        float currentMs = rb.linearVelocity.magnitude;
-        float delta = targetMs - currentMs;
-        float accel = delta >= 0f ? maxAccel : maxBrake;
+        float currentMs = currentSpeedKmh / 3.6f;
+        float accel = targetMs >= currentMs ? maxAccel : maxBrake;
         float newMs = Mathf.MoveTowards(currentMs, targetMs, accel * Time.fixedDeltaTime);
-
-        Vector3 side = Vector3.Cross(Vector3.up, forwardDir).normalized;
-        float laneOffset = roadGraph.GetLaneOffset(currentNodeIndex, laneIndex) + laneShift;
-        Vector3 desiredPos = transform.position + forwardDir * newMs * Time.fixedDeltaTime + side * laneOffset * 0.05f;
-        Vector3 move = (desiredPos - transform.position);
-        rb.MovePosition(transform.position + move);
+        // Physics owns position; the lane target is an absolute offset, never a per-frame drift.
+        Vector3 velocity = forwardDir * newMs;
+        if (isOvertaking && passingBus != null)
+        {
+            Vector3 side = passingBus.right;
+            float offset = Vector3.Dot(side, transform.position - passingBus.position);
+            velocity += side * Mathf.Clamp((overtakingLaneShift - offset) * 1.5f, -1.5f, 1.5f);
+        }
+        velocity.y = rb.linearVelocity.y;
+        rb.linearVelocity = velocity;
 
         if (forwardDir.sqrMagnitude > 0.001f)
         {
@@ -228,6 +259,7 @@ public class AIVehicleController : MonoBehaviour
 
     public static void NotifyEmergencyVehicle(Vector3 source, float radius, float yieldDuration)
     {
+        SplineVehicle.NotifyEmergency(source, radius, yieldDuration);
         float sqr = radius * radius;
         for (int i = 0; i < ActiveVehicles.Count; i++)
         {
