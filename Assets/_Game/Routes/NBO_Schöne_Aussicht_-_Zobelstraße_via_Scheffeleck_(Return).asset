@@ -15,6 +15,11 @@ MonoBehaviour:
   routeNumber: NBO-9R
   routeName: "NBO Sch\xF6ne Aussicht - Zobelstra\xDFe via Scheffeleck (Return)"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:4ae5f5fd1feda63af8385ee76eee321b
+  sourceCityCode: FRA
   stops:
   - stopName: "Sch\xF6ne Aussicht"
     latitude: 50.109774605749195

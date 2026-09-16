@@ -191,13 +191,22 @@ public class MapTileLoader : MonoBehaviour
             string url = $"https://api.mapbox.com/styles/v1/{mapStyle}/tiles/512/" +
                          $"{zoom}/{tileX}/{tileY}@2x?access_token={mapboxToken}";
 
-            using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(url))
+            // Buffer the response first, then decode it ourselves. UnityWebRequestTexture
+            // can report a DataProcessingError with HTTP 200 for otherwise valid Mapbox
+            // PNG/JPEG tiles on some Unity/Linux combinations.
+            using (UnityWebRequest request = UnityWebRequest.Get(url))
             {
                 request.timeout = Mathf.Max(1, httpTimeoutSeconds);
+                request.SetRequestHeader("Accept", "image/png,image/jpeg;q=0.9,*/*;q=0.1");
                 yield return request.SendWebRequest();
 
                 if (request.result == UnityWebRequest.Result.Success)
-                    tex = DownloadHandlerTexture.GetContent(request);
+                {
+                    byte[] bytes = request.downloadHandler != null ? request.downloadHandler.data : null;
+                    tex = DecodeTile(bytes);
+                    if (tex == null)
+                        LogTileFailure(tileX, tileY, request, "Mapbox returned HTTP 200, but the response was not a supported PNG/JPEG tile");
+                }
                 else
                     LogTileFailure(tileX, tileY, request);
             }
@@ -326,21 +335,38 @@ public class MapTileLoader : MonoBehaviour
         plane.SetActive(false);
     }
 
-    void LogTileFailure(int tileX, int tileY, UnityWebRequest request)
+    static Texture2D DecodeTile(byte[] bytes)
+    {
+        if (bytes == null || bytes.Length < 16)
+            return null;
+
+        var texture = new Texture2D(2, 2, TextureFormat.RGBA32, true);
+        if (texture.LoadImage(bytes, false))
+            return texture;
+
+        Destroy(texture);
+        return null;
+    }
+
+    void LogTileFailure(int tileX, int tileY, UnityWebRequest request, string overrideError = null)
     {
         if (request == null)
             return;
 
         long status = request.responseCode;
-        string err = string.IsNullOrWhiteSpace(request.error) ? "unknown error" : request.error;
-        string body = request.downloadHandler != null ? request.downloadHandler.text : "";
+        string err = !string.IsNullOrWhiteSpace(overrideError)
+            ? overrideError
+            : string.IsNullOrWhiteSpace(request.error) ? "unknown error" : request.error;
+        string contentType = request.GetResponseHeader("Content-Type") ?? "";
+        bool textualResponse = contentType.IndexOf("json", System.StringComparison.OrdinalIgnoreCase) >= 0
+            || contentType.IndexOf("text", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        string body = textualResponse && request.downloadHandler != null ? request.downloadHandler.text : "";
         if (body != null && body.Length > 160)
             body = body.Substring(0, 160);
 
-        bool accessDenied = status == 401 || status == 403
-            || err.IndexOf("access denied", System.StringComparison.OrdinalIgnoreCase) >= 0
-            || (body != null && body.IndexOf("access denied", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            || (body != null && body.IndexOf("not authorized", System.StringComparison.OrdinalIgnoreCase) >= 0);
+        // Never classify a successful HTTP 200 image/decode problem as an auth
+        // failure. Auth responses from the Styles API use 401/403.
+        bool accessDenied = status == 401 || status == 403;
 
         if (accessDenied && !loggedAuthFailureHint)
         {
@@ -360,6 +386,7 @@ public class MapTileLoader : MonoBehaviour
         {
             tileFailureLogCount++;
             string detail = string.IsNullOrWhiteSpace(body) ? err : $"{err} | {body}";
+            if (!string.IsNullOrWhiteSpace(contentType)) detail += $" | Content-Type: {contentType}";
             Debug.LogWarning($"MapTileLoader: Failed tile {tileX},{tileY} (HTTP {status}) — {detail}");
         }
     }

@@ -15,6 +15,11 @@ MonoBehaviour:
   routeNumber: R0R
   routeName: Trufi Stop - 3rd Parklands Avenue/Aga Kan Hospital Junction (Return)
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:b36014302ead76fef9502dc090bedaf6
+  sourceCityCode: NBO
   stops:
   - stopName: Trufi Stop
     latitude: -1.2816710034890266

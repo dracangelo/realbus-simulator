@@ -26,3 +26,8 @@ Generated from `Assets/unity models`. Re-run `Tools > RealBus > Setup > Wire All
 - **Bus_stop EU_LP** — `Assets/_Game/Resources/BusStopsGenerated/bus_stopEU_LP_1082de58.prefab`
 - **DE_Bus Stop_Sign_FBX** — `Assets/_Game/Resources/BusStopsGenerated/DE_BusStop_Sign_FBX_3b9beabb.prefab`
 - **Mersyside-Bus_Stop_3BE9AE0B** — `Assets/_Game/Resources/BusStopsGenerated/Mersyside_Bus_Stop_3BE9AE0B_33716790.prefab`
+
+## Gas-station props
+
+- **Gas** — `Assets/_Game/Resources/GasStationsGenerated/Gas_fd071b77.prefab`
+- **Gasstation** — `Assets/_Game/Resources/GasStationsGenerated/gasstation_3a29cada.prefab`

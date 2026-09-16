@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 #if UNITY_EDITOR
@@ -20,12 +21,22 @@ public class SceneBootstrap : MonoBehaviour
     [SerializeField] bool disableCinemachineBrainForDirectPlay = true;
     [SerializeField] bool forceClearVisibilityForDirectPlay = true;
     [SerializeField] bool suppressBuildingsForCurrentPhase = false;
+    [SerializeField] bool autoStartSelectedRoute = true;
     [SerializeField] Vector3 directPlayCameraLocalPosition = new Vector3(0f, 3.2f, -7.5f);
     [SerializeField] Vector3 directPlayCameraLocalEuler = new Vector3(14f, 0f, 0f);
     [Header("Gameplay Fallbacks")]
     [SerializeField] BusRoute fallbackRoute;
     [SerializeField] MissionData fallbackMissionData;
     [SerializeField] MissionData[] knownMissionData;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void EnsureGameplaySceneHasBootstrap()
+    {
+        if (FindFirstObjectByType<MissionManager>() == null || FindFirstObjectByType<SceneBootstrap>() != null)
+            return;
+
+        new GameObject("SceneBootstrap (Runtime)").AddComponent<SceneBootstrap>();
+    }
 
     void Awake()
     {
@@ -141,6 +152,8 @@ public class SceneBootstrap : MonoBehaviour
         if (missionManager.busController == null)
             missionManager.busController = FindObjectOfType<BusController>();
 
+        missionManager.busController = InstantiateSelectedDrivableBus(missionManager.busController);
+
         EnsureVehicleSupportSystems(missionManager.busController);
 
         EnsureGpsManager();
@@ -175,6 +188,73 @@ public class SceneBootstrap : MonoBehaviour
 
         EnsureClearVisibility();
         ApplyBusScaleFromMap();
+        ConfigureSelectedRouteStart(missionManager, selectedRoute != null ? routeToUse : null);
+    }
+
+    void ConfigureSelectedRouteStart(MissionManager missionManager, BusRoute selectedRoute)
+    {
+        FreeDriveSession freeDrive = FindObjectOfType<FreeDriveSession>();
+        bool hasSelectedMission = autoStartSelectedRoute && selectedRoute != null && selectedRoute.GetStopCount() >= 2;
+        if (freeDrive != null)
+        {
+            freeDrive.autoStart = !hasSelectedMission;
+            if (hasSelectedMission && freeDrive.sessionActive)
+                freeDrive.EndSession();
+        }
+
+        if (hasSelectedMission)
+            StartCoroutine(StartSelectedRouteWhenReady(missionManager, selectedRoute));
+    }
+
+    IEnumerator StartSelectedRouteWhenReady(MissionManager missionManager, BusRoute route)
+    {
+        route.EnsureRuntimeData();
+        for (int frame = 0; frame < 300; frame++)
+        {
+            if (missionManager == null || missionManager.routeActive || missionManager.CurrentCountdownValue > 0)
+                yield break;
+
+            if (missionManager.busController != null && GPSManager.Instance != null)
+            {
+                missionManager.StartRoute(route);
+                Debug.Log($"SceneBootstrap: Starting selected route '{route.routeName}' instead of free drive.");
+                yield break;
+            }
+            yield return null;
+        }
+
+        Debug.LogError($"SceneBootstrap: Timed out starting selected route '{route.routeName}'.");
+    }
+
+    BusController InstantiateSelectedDrivableBus(BusController sceneBus)
+    {
+        BusSpec spec = BusFleetManager.EnsureExists().GetSelectedDrivableBusSpec();
+        if (sceneBus == null || spec == null || spec.drivablePrefab == null)
+            return sceneBus;
+
+        Vector3 position = sceneBus.transform.position;
+        Quaternion rotation = sceneBus.transform.rotation;
+        Camera gameplayCamera = Camera.main != null ? Camera.main : FindObjectOfType<Camera>();
+        if (gameplayCamera != null && gameplayCamera.transform.IsChildOf(sceneBus.transform))
+            gameplayCamera.transform.SetParent(null, true);
+
+        GameObject instance = Instantiate(spec.drivablePrefab, position, rotation);
+        instance.name = spec.displayName + " (Player Bus)";
+        BusController replacement = instance.GetComponent<BusController>();
+        if (replacement == null)
+        {
+            Debug.LogError($"SceneBootstrap: Drivable prefab for '{spec.displayName}' has no BusController. Keeping scene bus.");
+            Destroy(instance);
+            return sceneBus;
+        }
+
+        foreach (MobileControlsUI controls in FindObjectsByType<MobileControlsUI>(FindObjectsInactive.Include))
+            controls.busController = replacement;
+
+        sceneBus.gameObject.SetActive(false);
+        Destroy(sceneBus.gameObject);
+        Debug.Log($"SceneBootstrap: Using real drivable prefab '{spec.drivablePrefab.name}' for physics and docking.");
+        return replacement;
     }
 
     void EnsureVehicleSupportSystems(BusController busController)
@@ -304,6 +384,10 @@ public class SceneBootstrap : MonoBehaviour
         // Always render + collide roads in direct-play so the player bus can drive on geometry.
         roadBuilder.renderRoadSurface = true;
         roadBuilder.drawCenterLines = true;
+        roadBuilder.useRoadModelInstances = true;
+        roadBuilder.roadModelResourcePath = "RoadsGenerated";
+        roadBuilder.generateRoadBoundaries = true;
+        roadBuilder.addPhysicalBoundaryColliders = true;
         roadBuilder.maxColliderSegmentLength = Mathf.Clamp(roadBuilder.maxColliderSegmentLength, 10f, 60f);
         roadBuilder.SetRoadSurfaceVisible(true);
 
@@ -563,8 +647,12 @@ public class SceneBootstrap : MonoBehaviour
 
     BusRoute EnsureRouteHasStops(BusRoute route)
     {
-        if (route != null && route.stops != null && route.stops.Length > 0)
-            return route;
+        if (route != null)
+        {
+            route.EnsureRuntimeData();
+            if (route.stops != null && route.stops.Length > 0)
+                return route;
+        }
 
         var city = GameState.Instance?.selectedCity ?? CityManager.Instance?.activeCity;
         if (city == null)
@@ -589,6 +677,7 @@ public class SceneBootstrap : MonoBehaviour
         runtimeRoute.baseFare = route != null ? route.baseFare : 50f;
         runtimeRoute.difficulty = route != null ? route.difficulty : 3;
         runtimeRoute.stops = parsedStops;
+        runtimeRoute.EnsureRuntimeData();
 
         Debug.Log($"SceneBootstrap: Built runtime fallback route '{runtimeRoute.routeName}' from {parsedStops.Length} downloaded OSM stops.");
         return runtimeRoute;
@@ -717,6 +806,9 @@ public class SceneBootstrap : MonoBehaviour
 
         builder.maxBuildingsPerFrame = Mathf.Max(builder.maxBuildingsPerFrame, 500);
         builder.enableDistanceCulling = false;
+        builder.streamAroundVehicle = true;
+        builder.buildingLoadDistance = Mathf.Max(500f, builder.buildingLoadDistance);
+        builder.buildingUnloadDistance = Mathf.Max(builder.buildingLoadDistance + 150f, builder.buildingUnloadDistance);
         builder.drawFootprints = false;
 
         var activeBuildingsRoot = GameObject.Find("OSM_Buildings");
@@ -843,11 +935,14 @@ public class SceneBootstrap : MonoBehaviour
     void ApplyBusScaleFromMap()
     {
         var bus = FindObjectOfType<BusController>();
-        var map = FindObjectOfType<MapTileLoader>();
-        if (bus == null || map == null) return;
+        if (bus == null) return;
 
-        float scale = map.tileWorldSize > 0f ? map.tileWorldSize / 200f : 1f;
-        bus.transform.localScale = Vector3.one * Mathf.Max(0.5f, scale);
+        // GPSToWorld already returns metre-scaled coordinates. Scaling a Rigidbody
+        // hierarchy also scales its WheelColliders, which left imported buses tiny,
+        // visually broken and unable to put usable torque into the road.
+        if (bus.transform.localScale != Vector3.one)
+            Debug.LogWarning($"SceneBootstrap: Reset invalid vehicle scale {bus.transform.localScale} to 1:1 world metres.");
+        bus.transform.localScale = Vector3.one;
     }
 
     void EnsureMainCameraForDirectPlay(BusController bus)

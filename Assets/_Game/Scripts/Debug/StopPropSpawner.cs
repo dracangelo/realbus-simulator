@@ -15,13 +15,14 @@ public class StopPropSpawner : MonoBehaviour
 
     [Header("Placement")]
     public float lateralOffset = 3f;
+    [Range(-1f, 1f)] public float stopSide = -1f;
     public float forwardOffset = 1.5f;
     public float stopModelVerticalOffset = 0f;
     public bool alignToRouteDirection = true;
     public Vector2 randomYawRange = new Vector2(-10f, 10f);
     public Vector2 randomScaleRange = new Vector2(0.8f, 1.2f);
     public float triggerApproachDistance = 50f;
-    public float triggerDockingRadius = 12f;
+    public float triggerDockingRadius = 3f;
     public bool spawnOnlyFirstStopAtMissionStart = false;
     public bool logSpawns = true;
 
@@ -94,16 +95,16 @@ public class StopPropSpawner : MonoBehaviour
                 continue;
             }
 
-            Vector3 offset = new Vector3(Random.Range(-lateralOffset, lateralOffset), 0f, forwardOffset);
-            Vector3 worldPos = stopPos + offset;
             float yaw = alignToRouteDirection
                 ? GetRouteYaw(route, i)
                 : 0f;
-            yaw += Random.Range(randomYawRange.x, randomYawRange.y);
+            Quaternion routeRotation = Quaternion.Euler(0f, yaw, 0f);
+            Vector3 offset = routeRotation * new Vector3(lateralOffset * Mathf.Sign(stopSide), 0f, forwardOffset);
+            Vector3 worldPos = stopPos + offset;
 
             var stopRoot = new GameObject($"RuntimeStop_{i:00}_{SanitizeName(stop.stopName)}");
             stopRoot.transform.SetParent(transform, false);
-            stopRoot.transform.position = stopPos;
+            stopRoot.transform.SetPositionAndRotation(worldPos, routeRotation);
 
             var trigger = stopRoot.AddComponent<StopTrigger>();
             trigger.stopName = stop.stopName;
@@ -115,7 +116,9 @@ public class StopPropSpawner : MonoBehaviour
             docking.stopIndex = i;
             docking.dockingRadius = triggerDockingRadius;
 
-            var model = Instantiate(prefab, worldPos + Vector3.up * stopModelVerticalOffset, Quaternion.Euler(0f, yaw, 0f), stopRoot.transform);
+            var model = Instantiate(prefab, stopRoot.transform);
+            model.transform.localPosition = Vector3.up * stopModelVerticalOffset;
+            model.transform.localRotation = Quaternion.Euler(0f, Random.Range(randomYawRange.x, randomYawRange.y), 0f);
             float scale = Random.Range(randomScaleRange.x, randomScaleRange.y);
             model.transform.localScale = Vector3.Scale(model.transform.localScale, Vector3.one * scale);
 

@@ -24,7 +24,11 @@ MonoBehaviour:
   roadsFileName: roads.xml
   buildingsFileName: buildings.xml
   availableRoutes:
-  - {fileID: 11400000, guid: 7bb01e91afb80af7498525d0c495a81f, type: 2}
+  - {fileID: 11400000, guid: 8e0b3384f95b7715d835454a8e6c34d9, type: 2}
+  - {fileID: 11400000, guid: 0d388c92bd98a5699bbcf58b48f5c804, type: 2}
+  - {fileID: 11400000, guid: 6b25b3d4216b11b408d282880b3add9d, type: 2}
+  - {fileID: 11400000, guid: 3c1767dba5a64a7cdad1b06e46115547, type: 2}
+  - {fileID: 11400000, guid: b36014302ead76fef9502dc090bedaf6, type: 2}
   spawnLat: -1.2864
   spawnLon: 36.8172
   isDownloaded: 1

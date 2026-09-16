@@ -55,7 +55,8 @@ public class OSMBuildingLoader : MonoBehaviour
 
             if (!dataLoaded)
             {
-                Debug.LogWarning($"Buildings: No building ways were found in {preferredPath}. Check whether the file is still an empty stub.");
+                Debug.LogWarning($"Buildings: No building ways were found in {preferredPath}. " +
+                    "Use Tools > RealBus > OSM > Download Buildings + POIs For Active City; most non-Nairobi city folders currently contain placeholder building files.");
                 yield break;
             }
 

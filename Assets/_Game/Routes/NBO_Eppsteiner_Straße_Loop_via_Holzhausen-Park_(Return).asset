@@ -15,6 +15,11 @@ MonoBehaviour:
   routeNumber: NBO-7R
   routeName: "NBO Eppsteiner Stra\xDFe Loop via Holzhausen-Park (Return)"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:7eba3902d7f7486b4a95d9b94b42fbed
+  sourceCityCode: FRA
   stops:
   - stopName: "Eppsteiner Stra\xDFe"
     latitude: 50.12029832116421

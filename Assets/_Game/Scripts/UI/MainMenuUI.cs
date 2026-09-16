@@ -30,6 +30,7 @@ public class MainMenuUI : MonoBehaviour
     public TextMeshProUGUI navGarageText;
     public TextMeshProUGUI navRoutesText;
     public TextMeshProUGUI navMarketText;
+    TextMeshProUGUI navDailyText;
     public Image currencyBadge;
     public TextMeshProUGUI currencyText;
 
@@ -116,12 +117,14 @@ public class MainMenuUI : MonoBehaviour
     Vector2 careerOffsetMaxStatic;
     GarageScreenUI garageScreen;
     bool garageScreenVisible;
+    bool transitionInProgress;
 
     void Start()
     {
         BusFleetManager.EnsureExists();
         XPSystem.EnsureExists();
         AutoBindLayoutReferences();
+        EnsureDailyChallengeNav();
         CacheGarageStatLabels();
         EnsureMaintenanceDetailUI();
         EnsureCareerDetailUI();
@@ -172,6 +175,7 @@ public class MainMenuUI : MonoBehaviour
         ApplyNavLabel(navGarageText, "GARAGE", false);
         ApplyNavLabel(navRoutesText, "START PLAYING", false);
         ApplyNavLabel(navMarketText, "MARKET", false);
+        ApplyNavLabel(navDailyText, "DAILY CHALLENGE", false);
 
         if (currencyBadge)
             currencyBadge.color = UITheme.Surface;
@@ -769,6 +773,7 @@ public class MainMenuUI : MonoBehaviour
         ApplyNavFontSize(navGarageText, compact ? 15f : 18f);
         ApplyNavFontSize(navRoutesText, compact ? 15f : 18f);
         ApplyNavFontSize(navMarketText, compact ? 15f : 18f);
+        ApplyNavFontSize(navDailyText, compact ? 13f : 16f);
 
         if (currencyText)
             currencyText.fontSize = compact ? 18f : 22f;
@@ -854,10 +859,62 @@ public class MainMenuUI : MonoBehaviour
         customizeButton?.onClick.RemoveListener(OnCustomize);
         playButton?.onClick.AddListener(OnPlay);
         customizeButton?.onClick.AddListener(OnCustomize);
+        BindNavButton(navDriveText, OnPlay);
+        BindNavButton(navGarageText, ToggleGarage);
+        BindNavButton(navRoutesText, OnPlay);
+        BindNavButton(navMarketText, OpenMarket);
+        BindNavButton(navDailyText, OpenDailyChallenge);
+    }
+
+    void EnsureDailyChallengeNav()
+    {
+        Transform navLinks = topBar ? topBar.Find("NavLinks") : null;
+        if (!navLinks) return;
+
+        navDailyText = navLinks.Find("Text_DailyChallenge")?.GetComponent<TextMeshProUGUI>();
+        if (!navDailyText)
+        {
+            GameObject item = new GameObject("Text_DailyChallenge", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            item.transform.SetParent(navLinks, false);
+            navDailyText = item.GetComponent<TextMeshProUGUI>();
+            navDailyText.alignment = TextAlignmentOptions.Center;
+            navDailyText.raycastTarget = true;
+        }
+
+        SetNavItemWidth(navDriveText, 100f);
+        SetNavItemWidth(navGarageText, 120f);
+        SetNavItemWidth(navRoutesText, 180f);
+        SetNavItemWidth(navMarketText, 110f);
+        SetNavItemWidth(navDailyText, 170f);
+        if (navLinks.TryGetComponent(out HorizontalLayoutGroup row)) row.spacing = 20f;
+        if (navLinks is RectTransform navRect) navRect.sizeDelta = new Vector2(760f, navRect.sizeDelta.y);
+    }
+
+    static void SetNavItemWidth(TextMeshProUGUI label, float width)
+    {
+        if (!label) return;
+        LayoutElement layout = label.GetComponent<LayoutElement>();
+        if (!layout) layout = label.gameObject.AddComponent<LayoutElement>();
+        layout.preferredWidth = width;
+        layout.preferredHeight = 56f;
+    }
+
+    static void BindNavButton(TextMeshProUGUI label, UnityEngine.Events.UnityAction action)
+    {
+        if (!label) return;
+        label.raycastTarget = true;
+        Button button = label.GetComponent<Button>();
+        if (!button) button = label.gameObject.AddComponent<Button>();
+        button.targetGraphic = label;
+        button.transition = Selectable.Transition.None;
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(action);
     }
 
     void OnPlay()
     {
+        if (transitionInProgress) return;
+        transitionInProgress = true;
         StartCoroutine(TransitionOut());
     }
 
@@ -868,12 +925,23 @@ public class MainMenuUI : MonoBehaviour
 
     void LoadPrimaryAction()
     {
-        var loader = SceneLoader.Instance;
-        if (loader == null)
-            return;
+        var loader = SceneLoader.EnsureExists();
         // A new drive always follows the complete, predictable setup flow:
         // Main Menu -> Country -> City -> Route -> Game.
         loader.LoadCountrySelect();
+    }
+
+    void OpenMarket()
+    {
+        EnsureGarageScreen();
+        garageScreenVisible = true;
+        garageScreen.ShowMarket();
+        RefreshFleetPresentation();
+    }
+
+    void OpenDailyChallenge()
+    {
+        Phase7MenuController.EnsureExists().ShowDailyChallenge();
     }
 
     IEnumerator TransitionOut()
@@ -1058,6 +1126,7 @@ public class MainMenuUI : MonoBehaviour
         ApplyNavLabel(navGarageText, "GARAGE", garageScreenVisible);
         ApplyNavLabel(navRoutesText, "START PLAYING", false);
         ApplyNavLabel(navMarketText, "MARKET", false);
+        ApplyNavLabel(navDailyText, "DAILY CHALLENGE", false);
 
         var gameState = GameState.Instance;
         var city = gameState != null && gameState.selectedCity != null

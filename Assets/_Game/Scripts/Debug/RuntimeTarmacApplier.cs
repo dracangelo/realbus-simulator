@@ -149,6 +149,9 @@ public class RuntimeTarmacApplier : MonoBehaviour
         foreach (var mr in root.GetComponentsInChildren<MeshRenderer>(true))
         {
             if (mr == null) continue;
+            // Kerbs/boundary strips have their own contrasting material. Painting
+            // them with asphalt made them visually disappear into the roadway.
+            if (mr.gameObject.name == "RoadBoundaries" || HasNamedAncestor(mr.transform, "RoadVisual_")) continue;
             mr.enabled  = true;
             mr.material = runtimeMaterial;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -157,6 +160,13 @@ public class RuntimeTarmacApplier : MonoBehaviour
         }
 
         Debug.Log($"[RuntimeTarmacApplier] Applied tarmac to {count} road renderers.");
+    }
+
+    static bool HasNamedAncestor(Transform transform, string prefix)
+    {
+        for (Transform current = transform; current != null; current = current.parent)
+            if (current.name.StartsWith(prefix, System.StringComparison.Ordinal)) return true;
+        return false;
     }
 
     Material CreateTarmacMaterial()

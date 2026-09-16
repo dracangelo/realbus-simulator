@@ -117,9 +117,10 @@ public class OfflineCacheManager : MonoBehaviour
 
         // ── Download ───────────────────────────────────────────────────
         string url = BuildTileUrl(mapboxToken, style, zoom, x, y);
-        using (var req = UnityWebRequestTexture.GetTexture(url))
+        using (var req = UnityWebRequest.Get(url))
         {
             req.timeout = Mathf.Max(1, httpTimeoutSeconds);
+            req.SetRequestHeader("Accept", "image/png,image/jpeg;q=0.9,*/*;q=0.1");
             yield return req.SendWebRequest();
 
             if (req.result != UnityWebRequest.Result.Success)
@@ -130,7 +131,15 @@ public class OfflineCacheManager : MonoBehaviour
             }
 
             isOnline = true;
-            var tex = DownloadHandlerTexture.GetContent(req);
+            byte[] bytes = req.downloadHandler != null ? req.downloadHandler.data : null;
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, true);
+            if (bytes == null || bytes.Length < 16 || !tex.LoadImage(bytes, false))
+            {
+                Destroy(tex);
+                Debug.LogWarning($"[OfflineCacheManager] Mapbox returned HTTP {req.responseCode}, but tile {zoom}/{x}/{y} was not a supported PNG/JPEG image (Content-Type: {req.GetResponseHeader("Content-Type") ?? "unknown"}).");
+                onDone?.Invoke(null);
+                yield break;
+            }
             WriteToCache(cachePath, tex);
             EnforceCacheSizeAsync();
             onDone?.Invoke(tex);
@@ -264,9 +273,7 @@ public class OfflineCacheManager : MonoBehaviour
         string body   = req.downloadHandler?.text ?? "";
         if (body.Length > 200) body = body.Substring(0, 200);
 
-        bool authFail = status == 401 || status == 403
-            || body.IndexOf("access denied",  System.StringComparison.OrdinalIgnoreCase) >= 0
-            || body.IndexOf("Unauthorized",   System.StringComparison.OrdinalIgnoreCase) >= 0;
+        bool authFail = status == 401 || status == 403;
 
         if (authFail && !_loggedAuthFailure)
         {

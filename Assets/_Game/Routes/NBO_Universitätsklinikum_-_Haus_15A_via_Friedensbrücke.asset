@@ -15,6 +15,11 @@ MonoBehaviour:
   routeNumber: NBO-2
   routeName: "NBO Universit\xE4tsklinikum - Haus 15A via Friedensbr\xFCcke"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:f7a8bdc58cf572945b4c6d9badc7593e
+  sourceCityCode: FRA
   stops:
   - stopName: "Universit\xE4tsklinikum"
     latitude: 50.096740110600074

@@ -15,6 +15,11 @@ MonoBehaviour:
   routeNumber: NBO-0
   routeName: "NBO Haus 32C - Main-Neckar-Br\xFCcke via Heilbronner Stra\xDFe"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:549da4ee74c1381b38e7bfd11ab3fb72
+  sourceCityCode: FRA
   stops:
   - stopName: Haus 32C
     latitude: 50.09546900028746

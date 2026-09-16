@@ -17,6 +17,7 @@ MonoBehaviour:
   description: Imported, game-ready bus model.
   requiredRank: 3
   modelPrefab: {fileID: 1548905386218406846, guid: d112e679b338656db9b9cbde8437ab55, type: 3}
+  drivablePrefab: {fileID: 6770155051866695132, guid: d3102c64af12c86f0af297cbd9bb664b, type: 3}
   previewSprite: {fileID: 0}
   seatedCapacity: 36
   standingCapacity: 34

@@ -59,13 +59,11 @@ public class Phase7MenuController : MonoBehaviour
         if (mainMenu)
         {
             CreateButton(canvas.transform, "SETTINGS", new Vector2(-160f, -48f), new Vector2(210f, 60f), ToggleSettings, new Vector2(1f, 1f));
-            CreateButton(canvas.transform, "CREDITS", new Vector2(-390f, -48f), new Vector2(190f, 60f), ToggleCredits, new Vector2(1f, 1f));
-            CreateButton(canvas.transform, "DAILY", new Vector2(-600f, -48f), new Vector2(190f, 60f), ToggleDaily, new Vector2(1f, 1f));
         }
         if (gameplay)
         {
-            CreateButton(canvas.transform, "Ⅱ  PAUSE", new Vector2(32f, -32f), new Vector2(190f, 58f), TogglePause, new Vector2(0f, 1f), new Vector2(0f, 1f));
-            CreateButton(canvas.transform, "CAMERA", new Vector2(32f, -104f), new Vector2(190f, 58f), () => MobileCameraController.EnsureExists().CycleCamera(), new Vector2(0f, 1f), new Vector2(0f, 1f));
+            CreateButton(canvas.transform, "Ⅱ", new Vector2(-28f, -210f), new Vector2(78f, 78f), TogglePause, Vector2.one, Vector2.one);
+            CreateButton(canvas.transform, "CAM", new Vector2(-120f, -210f), new Vector2(78f, 78f), () => MobileCameraController.EnsureExists().CycleCamera(), Vector2.one, Vector2.one);
         }
         BuildSettings(); BuildMobileSettings(); BuildCredits(); BuildPause(); BuildDaily();
     }
@@ -87,8 +85,9 @@ public class Phase7MenuController : MonoBehaviour
         AddSetting("Colour-blind icons", () => OnOff(settings.Current.colourBlindIcons), () => { settings.Current.colourBlindIcons = !settings.Current.colourBlindIcons; settings.SaveAndApply(); }, ref y);
         AddSetting("Haptics", () => OnOff(settings.Current.haptics), () => { settings.Current.haptics = !settings.Current.haptics; settings.SaveAndApply(); }, ref y);
         AddSetting("Subtitles", () => OnOff(settings.Current.subtitles), () => { settings.Current.subtitles = !settings.Current.subtitles; settings.SaveAndApply(); }, ref y);
-        CreateButton(settingsPanel.transform, "MOBILE & PERFORMANCE", new Vector2(-170f, -440f), new Vector2(320f, 58f), ToggleMobileSettings);
-        CreateButton(settingsPanel.transform, "CLOSE", new Vector2(210f, -440f), new Vector2(260f, 58f), ToggleSettings);
+        CreateButton(settingsPanel.transform, "MOBILE & PERFORMANCE", new Vector2(-230f, -440f), new Vector2(300f, 58f), ToggleMobileSettings);
+        CreateButton(settingsPanel.transform, "CREDITS", new Vector2(100f, -440f), new Vector2(200f, 58f), OpenCreditsFromSettings);
+        CreateButton(settingsPanel.transform, "CLOSE", new Vector2(300f, -440f), new Vector2(160f, 58f), ToggleSettings);
         settingsPanel.SetActive(false);
     }
 
@@ -131,7 +130,7 @@ public class Phase7MenuController : MonoBehaviour
         creditsPanel = Modal("CreditsPanel", new Vector2(760f, 440f));
         CreateText(creditsPanel.transform, "REALBUS", 48f, new Vector2(0f, 145f), new Vector2(650f, 70f), TextAlignmentOptions.Center);
         CreateText(creditsPanel.transform, "Design, engineering and simulation team\nOpen map and weather data providers\nBuilt with Unity", 29f, new Vector2(0f, 25f), new Vector2(650f, 180f), TextAlignmentOptions.Center);
-        CreateButton(creditsPanel.transform, "CLOSE", new Vector2(0f, -150f), new Vector2(240f, 58f), ToggleCredits);
+        CreateButton(creditsPanel.transform, "BACK TO SETTINGS", new Vector2(0f, -150f), new Vector2(320f, 58f), CloseCreditsToSettings);
         creditsPanel.SetActive(false);
     }
 
@@ -139,7 +138,7 @@ public class Phase7MenuController : MonoBehaviour
     {
         pausePanel = Modal("PausePanel", new Vector2(760f, 640f));
         CreateText(pausePanel.transform, "PAUSED", 48f, new Vector2(0f, 250f), new Vector2(650f, 70f), TextAlignmentOptions.Center);
-        pauseScore = CreateText(pausePanel.transform, "Score unavailable", 28f, new Vector2(0f, 115f), new Vector2(650f, 180f), TextAlignmentOptions.Center);
+        pauseScore = CreateText(pausePanel.transform, "Score unavailable\n\nW/S DRIVE  •  A/D STEER  •  E/Q SHIFT\nX REVERSE  •  P PARKING BRAKE", 26f, new Vector2(0f, 115f), new Vector2(650f, 220f), TextAlignmentOptions.Center);
         CreateButton(pausePanel.transform, "RESUME", new Vector2(0f, -30f), new Vector2(330f, 58f), TogglePause);
         CreateButton(pausePanel.transform, "SETTINGS", new Vector2(0f, -105f), new Vector2(330f, 58f), ToggleSettings);
         CreateButton(pausePanel.transform, "CONTROL LAYOUT", new Vector2(0f, -180f), new Vector2(330f, 58f), BeginControlLayoutEdit);
@@ -164,7 +163,10 @@ public class Phase7MenuController : MonoBehaviour
         if (paused && pauseScore != null)
         {
             ScoreTracker score = ScoreTracker.Instance;
-            pauseScore.text = score != null ? $"TOTAL {score.totalScore:0}%\nPunctuality {score.punctualityScore:0}  •  Satisfaction {score.satisfactionScore:0}\nSafety {score.safetyScore:0}  •  Efficiency {score.efficiencyScore:0}" : "Free drive session";
+            string summary = score != null
+                ? $"TOTAL {score.totalScore:0}%\nPunctuality {score.punctualityScore:0}  •  Satisfaction {score.satisfactionScore:0}\nSafety {score.safetyScore:0}  •  Efficiency {score.efficiencyScore:0}"
+                : "Free drive session";
+            pauseScore.text = summary + "\n\nW/S DRIVE  •  A/D STEER  •  E/Q SHIFT\nX REVERSE  •  P PARKING BRAKE";
         }
     }
 
@@ -186,16 +188,33 @@ public class Phase7MenuController : MonoBehaviour
     {
         if (paused && pausePanel != null) pausePanel.SetActive(true);
     }
-    void ToggleCredits() { if (creditsPanel != null) creditsPanel.SetActive(!creditsPanel.activeSelf); }
+    void OpenCreditsFromSettings()
+    {
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+        if (creditsPanel != null) creditsPanel.SetActive(true);
+    }
+
+    void CloseCreditsToSettings()
+    {
+        if (creditsPanel != null) creditsPanel.SetActive(false);
+        if (settingsPanel != null) settingsPanel.SetActive(true);
+    }
+
+    public void ShowDailyChallenge()
+    {
+        if (dailyPanel == null) BuildForScene();
+        if (dailyPanel == null) return;
+        dailyPanel.SetActive(true);
+        DailyChallengeManager daily = DailyChallengeManager.EnsureExists();
+        daily.RefreshChallenge();
+        if (dailySummary != null) dailySummary.text = daily.GetSummary();
+    }
+
     void ToggleDaily()
     {
         if (dailyPanel == null) return;
-        bool show = !dailyPanel.activeSelf; dailyPanel.SetActive(show);
-        if (show)
-        {
-            DailyChallengeManager daily = DailyChallengeManager.EnsureExists(); daily.RefreshChallenge();
-            if (dailySummary != null) dailySummary.text = daily.GetSummary();
-        }
+        if (dailyPanel.activeSelf) dailyPanel.SetActive(false);
+        else ShowDailyChallenge();
     }
     void StartDailyChallenge()
     {
@@ -227,7 +246,7 @@ public class Phase7MenuController : MonoBehaviour
         shade.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.76f);
         GameObject panel = new GameObject("Panel", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(shade.transform, false);
         RectTransform pr = panel.GetComponent<RectTransform>(); pr.anchorMin = pr.anchorMax = pr.pivot = new Vector2(0.5f, 0.5f); pr.sizeDelta = size;
-        panel.GetComponent<Image>().color = UITheme.SurfaceContainer;
+        Image panelImage = panel.GetComponent<Image>(); panelImage.color = UITheme.SurfaceContainer; RuntimeUiShapes.Rounded(panelImage); RuntimeUiShapes.SoftShadow(panelImage, .6f, 12f);
         return shade;
     }
 
@@ -235,7 +254,10 @@ public class Phase7MenuController : MonoBehaviour
     {
         GameObject o = new GameObject("Button_" + label.Replace(" ", ""), typeof(RectTransform), typeof(Image), typeof(Button)); o.transform.SetParent(parent, false);
         RectTransform r = o.GetComponent<RectTransform>(); Vector2 a = anchor ?? new Vector2(0.5f, 0.5f); r.anchorMin = r.anchorMax = a; r.pivot = pivot ?? new Vector2(0.5f, 0.5f); r.sizeDelta = size; r.anchoredPosition = position;
-        o.GetComponent<Image>().color = UITheme.Accent;
+        Image image = o.GetComponent<Image>(); image.color = UITheme.Accent;
+        bool circular = Mathf.Abs(size.x - size.y) < 10f;
+        if (circular) RuntimeUiShapes.Circle(image); else RuntimeUiShapes.Rounded(image);
+        RuntimeUiShapes.SoftShadow(image, .42f, 7f);
         Button b = o.GetComponent<Button>(); if (action != null) b.onClick.AddListener(() => action());
         TextMeshProUGUI t = CreateText(o.transform, label, 28f, Vector2.zero, size, TextAlignmentOptions.Center); t.color = UITheme.Background;
         return b;

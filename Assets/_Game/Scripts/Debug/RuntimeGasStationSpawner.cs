@@ -7,6 +7,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
 {
     [Header("Resources (relative to Assets/_Game/Resources)")]
     public string gasStationResourcePath = "BussimAssets/GasStation";
+    public string generatedGasStationResourcesPath = "GasStationsGenerated";
 
     [Header("Placement")]
     public int maxStations = 25;
@@ -44,8 +45,8 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             return;
         }
 
-        var prefab = Resources.Load<GameObject>(gasStationResourcePath);
-        if (prefab == null)
+        GameObject[] prefabs = LoadStationPrefabs();
+        if (prefabs.Length == 0)
         {
             if (logSpawns)
                 Debug.LogWarning($"[RuntimeGasStationSpawner] Missing resource: {gasStationResourcePath}");
@@ -67,7 +68,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
                 continue;
 
             world.y += yOffset;
-            Instantiate(prefab, world, Quaternion.identity, transform);
+            Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
             placed.Add(world);
             spawned++;
 
@@ -93,8 +94,8 @@ public class RuntimeGasStationSpawner : MonoBehaviour
 
     void SpawnFromFuelResponse(OverpassResponse response)
     {
-        var prefab = Resources.Load<GameObject>(gasStationResourcePath);
-        if (prefab == null)
+        GameObject[] prefabs = LoadStationPrefabs();
+        if (prefabs.Length == 0)
         {
             if (logSpawns)
                 Debug.LogWarning($"[RuntimeGasStationSpawner] Missing resource: {gasStationResourcePath}");
@@ -116,7 +117,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
                 continue;
 
             world.y += yOffset;
-            Instantiate(prefab, world, Quaternion.identity, transform);
+            Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
             placed.Add(world);
             spawned++;
         }
@@ -140,6 +141,14 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             return true;
 
         return false;
+    }
+
+    GameObject[] LoadStationPrefabs()
+    {
+        GameObject[] generated = Resources.LoadAll<GameObject>(generatedGasStationResourcesPath);
+        if (generated != null && generated.Length > 0) return generated;
+        GameObject fallback = Resources.Load<GameObject>(gasStationResourcePath);
+        return fallback != null ? new[] { fallback } : System.Array.Empty<GameObject>();
     }
 
     bool IsFuelElement(OverpassResponse.Element elem)

@@ -42,7 +42,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     [Header("Road Model Visuals")]
     public bool useRoadModelInstances = true;
-    public string roadModelResourcePath = "BussimAssets/roads/road with two lines in middle ";
+    public string roadModelResourcePath = "RoadsGenerated";
     public RoadModelForwardAxis roadModelForwardAxis = RoadModelForwardAxis.ZAxis;
     public float roadModelSurfaceLift = 0.01f;
     public bool overrideRoadModelMaterials = false;
@@ -67,6 +67,17 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     public float centerLineWidth = 0.3f;
     public Color centerLineColor = new Color(1f, 0.85f, 0.2f, 1f);
 
+    [Header("Road Boundaries")]
+    public bool generateRoadBoundaries = true;
+    public bool includeServiceRoadBoundaries = false;
+    [Min(0.1f)] public float boundaryWidth = 0.38f;
+    [Min(0f)] public float boundaryOffsetFromRoad = 0.18f;
+    [Min(0.01f)] public float boundaryHeight = 0.1f;
+    public Color boundaryColor = new Color(0.72f, 0.74f, 0.72f, 1f);
+    public bool addPhysicalBoundaryColliders = true;
+    [Min(0.2f)] public float physicalBoundaryHeight = 0.7f;
+    [Min(0f)] public float junctionOpeningMeters = 7f;
+
     [Header("State")]
     public bool roadsBuilt = false;
     private GameObject roadsParent;
@@ -77,6 +88,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     private GameObject medianBarrierPrefab;
     private bool medianBarrierLoadAttempted;
     private PhysicsMaterial runtimeRoadPhysicMaterial;
+    private Material runtimeBoundaryMaterial;
 
     void Awake()
     {
@@ -116,16 +128,19 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (!way.IsRoad()) continue;
 
             var points = new List<Vector3>(way.nodeRefs.Count);
+            var sourceNodeIds = new List<long>(way.nodeRefs.Count);
             foreach (long nodeRef in way.nodeRefs)
             {
                 if (!data.nodeMap.TryGetValue(nodeRef, out var node)) continue;
                 Vector3 worldPos = GPSManager.Instance.GpsToWorld(node.lat, node.lon);
                 worldPos.y = roadYOffset;
                 points.Add(worldPos);
+                sourceNodeIds.Add(nodeRef);
             }
 
             if (points.Count < 2) continue;
 
+            var sourcePoints = new List<Vector3>(points);
             points = DensifyPoints(points);
 
             float width = way.GetRoadWidth();
@@ -164,6 +179,13 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
             if (renderRoadSurface && drawCenterLines && way.ShouldDrawCenterLine())
                 BuildCenterLine(points);
+
+            if (generateRoadBoundaries && (includeServiceRoadBoundaries || way.GetRoadType() != "service"))
+            {
+                BuildRoadBoundaries(points, width);
+                if (addPhysicalBoundaryColliders)
+                    BuildPhysicalRoadBoundaries(roadObj.transform, sourcePoints, sourceNodeIds, data, width);
+            }
 
             if (autoGenerateMedianBarriers && way.ShouldGenerateMedianBarrier())
                 BuildMedianBarrier(roadObj.transform, points, way.GetRoadWidth());
@@ -302,6 +324,106 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         lr.SetPositions(worldPts);
     }
 
+    void BuildRoadBoundaries(List<Vector3> points, float roadWidth)
+    {
+        if (points == null || points.Count < 2) return;
+
+        Vector3[] left = new Vector3[points.Count];
+        Vector3[] right = new Vector3[points.Count];
+        float offset = roadWidth * .5f + Mathf.Max(0f, boundaryOffsetFromRoad);
+        for (int i = 0; i < points.Count; i++)
+        {
+            Vector3 forward = i == 0
+                ? points[1] - points[0]
+                : i == points.Count - 1 ? points[i] - points[i - 1] : points[i + 1] - points[i - 1];
+            forward.y = 0f;
+            if (forward.sqrMagnitude < .001f) forward = Vector3.forward;
+            Vector3 side = Vector3.Cross(Vector3.up, forward.normalized);
+            Vector3 basePoint = points[i];
+            basePoint.y = roadYOffset + boundaryHeight;
+            left[i] = basePoint - side * offset;
+            right[i] = basePoint + side * offset;
+        }
+
+        Mesh leftMesh = BuildRoadSegmentMesh(new List<Vector3>(left), Mathf.Max(.1f, boundaryWidth));
+        Mesh rightMesh = BuildRoadSegmentMesh(new List<Vector3>(right), Mathf.Max(.1f, boundaryWidth));
+        if (leftMesh == null || rightMesh == null) return;
+
+        var combine = new[]
+        {
+            new CombineInstance { mesh = leftMesh, transform = Matrix4x4.identity },
+            new CombineInstance { mesh = rightMesh, transform = Matrix4x4.identity }
+        };
+        Mesh combined = new Mesh { name = "RoadBoundaries", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+        combined.CombineMeshes(combine, true, false);
+        Destroy(leftMesh);
+        Destroy(rightMesh);
+
+        GameObject boundary = new GameObject("RoadBoundaries");
+        boundary.transform.SetParent(roadsParent.transform, false);
+        MeshFilter filter = boundary.AddComponent<MeshFilter>();
+        MeshRenderer renderer = boundary.AddComponent<MeshRenderer>();
+        filter.sharedMesh = combined;
+        renderer.sharedMaterial = ResolveBoundaryMaterial();
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = true;
+    }
+
+    Material ResolveBoundaryMaterial()
+    {
+        if (pavementMaterial != null) return pavementMaterial;
+        if (runtimeBoundaryMaterial != null) return runtimeBoundaryMaterial;
+        runtimeBoundaryMaterial = new Material(ResolveShader()) { color = boundaryColor, renderQueue = 2120 };
+        if (runtimeBoundaryMaterial.HasProperty("_Smoothness")) runtimeBoundaryMaterial.SetFloat("_Smoothness", .08f);
+        if (runtimeBoundaryMaterial.HasProperty("_Metallic")) runtimeBoundaryMaterial.SetFloat("_Metallic", 0f);
+        return runtimeBoundaryMaterial;
+    }
+
+    void BuildPhysicalRoadBoundaries(Transform parent, List<Vector3> points, List<long> nodeIds, OSMData data, float roadWidth)
+    {
+        if (parent == null || points == null || nodeIds == null || points.Count < 2 || nodeIds.Count != points.Count)
+            return;
+
+        GameObject root = new GameObject("PhysicalRoadBoundaries");
+        root.transform.SetParent(parent, false);
+        float sideOffset = roadWidth * .5f + Mathf.Max(.05f, boundaryOffsetFromRoad);
+        float colliderWidth = Mathf.Max(.2f, boundaryWidth);
+        float colliderHeight = Mathf.Max(.2f, physicalBoundaryHeight);
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            Vector3 from = points[i - 1];
+            Vector3 to = points[i];
+            Vector3 segment = to - from;
+            segment.y = 0f;
+            float length = segment.magnitude;
+            if (length < 1f) continue;
+
+            Vector3 direction = segment / length;
+            float startGap = data != null && data.IsIntersectionNode(nodeIds[i - 1]) ? junctionOpeningMeters : 0f;
+            float endGap = data != null && data.IsIntersectionNode(nodeIds[i]) ? junctionOpeningMeters : 0f;
+            float usableLength = length - startGap - endGap;
+            if (usableLength < 1f) continue;
+
+            Vector3 right = Vector3.Cross(Vector3.up, direction);
+            Vector3 center = from + direction * (startGap + usableLength * .5f);
+            center.y = roadYOffset + colliderHeight * .5f;
+            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
+            CreateBoundaryCollider(root.transform, $"Left_{i}", center - right * sideOffset, rotation, colliderWidth, colliderHeight, usableLength);
+            CreateBoundaryCollider(root.transform, $"Right_{i}", center + right * sideOffset, rotation, colliderWidth, colliderHeight, usableLength);
+        }
+    }
+
+    void CreateBoundaryCollider(Transform parent, string name, Vector3 position, Quaternion rotation, float width, float height, float length)
+    {
+        GameObject edge = new GameObject(name);
+        edge.transform.SetParent(parent, false);
+        edge.transform.SetPositionAndRotation(position, rotation);
+        BoxCollider collider = edge.AddComponent<BoxCollider>();
+        collider.size = new Vector3(width, height, length);
+        collider.isTrigger = false;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     bool ShouldUseRoadModelVisuals()
@@ -321,6 +443,12 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             return;
 
         roadVisualPrefab = Resources.Load<GameObject>(roadModelResourcePath);
+        if (roadVisualPrefab == null)
+        {
+            GameObject[] generatedRoads = Resources.LoadAll<GameObject>(roadModelResourcePath);
+            if (generatedRoads != null && generatedRoads.Length > 0)
+                roadVisualPrefab = generatedRoads[0];
+        }
         if (roadVisualPrefab == null)
         {
             Debug.LogWarning($"OSM: Road model not found at Resources path '{roadModelResourcePath}'. Falling back to generated mesh roads.");

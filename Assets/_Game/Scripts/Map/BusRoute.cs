@@ -36,6 +36,48 @@ public class BusRoute : ScriptableObject
         return stops != null ? stops.Length : 0;
     }
 
+    public void EnsureRuntimeData()
+    {
+        if ((stops == null || stops.Length == 0) && busStops != null && busStops.Length > 0)
+            SyncLegacyStopsFromBusStops();
+
+        if (distanceKm <= 0.001f)
+            distanceKm = CalculateDistanceKm();
+
+        if (estimatedTimeMinutes <= 0.001f && distanceKm > 0f)
+            estimatedTimeMinutes = distanceKm / 24f * 60f + GetStopCount() * 0.35f;
+    }
+
+    float CalculateDistanceKm()
+    {
+        if (geometryLatLonFlat != null && geometryLatLonFlat.Length >= 4)
+        {
+            double total = 0d;
+            for (int i = 2; i + 1 < geometryLatLonFlat.Length; i += 2)
+                total += HaversineKm(geometryLatLonFlat[i - 2], geometryLatLonFlat[i - 1], geometryLatLonFlat[i], geometryLatLonFlat[i + 1]);
+            return (float)total;
+        }
+
+        if (stops == null || stops.Length < 2) return 0f;
+        double stopTotal = 0d;
+        for (int i = 1; i < stops.Length; i++)
+            stopTotal += HaversineKm(stops[i - 1].latitude, stops[i - 1].longitude, stops[i].latitude, stops[i].longitude);
+        return (float)stopTotal;
+    }
+
+    static double HaversineKm(double latA, double lonA, double latB, double lonB)
+    {
+        const double radiusKm = 6371.0088d;
+        double lat1 = latA * System.Math.PI / 180d;
+        double lat2 = latB * System.Math.PI / 180d;
+        double dLat = (latB - latA) * System.Math.PI / 180d;
+        double dLon = (lonB - lonA) * System.Math.PI / 180d;
+        double sinLat = System.Math.Sin(dLat * 0.5d);
+        double sinLon = System.Math.Sin(dLon * 0.5d);
+        double value = sinLat * sinLat + System.Math.Cos(lat1) * System.Math.Cos(lat2) * sinLon * sinLon;
+        return radiusKm * 2d * System.Math.Atan2(System.Math.Sqrt(value), System.Math.Sqrt(System.Math.Max(0d, 1d - value)));
+    }
+
     public string GetProgressionId(string fallbackCityCode = null)
     {
         if (!string.IsNullOrWhiteSpace(generatedRouteId))

@@ -13,9 +13,13 @@ MonoBehaviour:
   m_Name: "NBO_Westend_-_R\xF6mer_Paulskirche_via_Weserstra\xDFe_M\xFCnchener_Stra\xDFe"
   m_EditorClassIdentifier: GameScripts::BusRoute
   routeNumber: NBO-6
-  routeName: "NBO Westend - R\xF6mer/Paulskirche via Weserstra\xDFe/M\xFCnchener
-    Stra\xDFe"
+  routeName: "NBO Westend - R\xF6mer/Paulskirche via Weserstra\xDFe/M\xFCnchener Stra\xDFe"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:b8cf72e94fee687bdaab591324e50e06
+  sourceCityCode: FRA
   stops:
   - stopName: Westend
     latitude: 50.11808398411786

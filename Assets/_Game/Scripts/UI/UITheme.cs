@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -97,4 +98,89 @@ public static class UITheme
     }
 
     public enum FontWeight { Light, Regular, Medium, Bold }
+}
+
+/// <summary>Generated sprites used by runtime-built mobile UI.</summary>
+public static class RuntimeUiShapes
+{
+    static Sprite roundedRectangle;
+    static Sprite circle;
+
+    public static void Rounded(Image image)
+    {
+        if (image == null) return;
+        image.sprite = roundedRectangle != null ? roundedRectangle : roundedRectangle = BuildRoundedRectangle();
+        image.type = Image.Type.Sliced;
+    }
+
+    public static void Circle(Image image)
+    {
+        if (image == null) return;
+        image.sprite = circle != null ? circle : circle = BuildCircle();
+        image.type = Image.Type.Simple;
+        image.preserveAspect = true;
+    }
+
+    public static void SoftShadow(Graphic graphic, float alpha = 0.45f, float distance = 8f)
+    {
+        if (graphic == null) return;
+        Shadow shadow = graphic.GetComponent<Shadow>();
+        if (shadow == null) shadow = graphic.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, alpha);
+        shadow.effectDistance = new Vector2(0f, -distance);
+        shadow.useGraphicAlpha = true;
+    }
+
+    static Sprite BuildRoundedRectangle()
+    {
+        const int size = 64;
+        const int radius = 16;
+        Texture2D texture = NewTexture("Runtime Rounded Rectangle", size);
+        Color32[] pixels = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float cx = Mathf.Clamp(x + .5f, radius, size - radius);
+            float cy = Mathf.Clamp(y + .5f, radius, size - radius);
+            float distance = Vector2.Distance(new Vector2(x + .5f, y + .5f), new Vector2(cx, cy));
+            byte alpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(radius + .5f - distance) * 255f);
+            pixels[y * size + x] = new Color32(255, 255, 255, alpha);
+        }
+        texture.SetPixels32(pixels); texture.Apply(false, true);
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f, 0,
+            SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
+        sprite.name = texture.name; sprite.hideFlags = HideFlags.HideAndDontSave;
+        return sprite;
+    }
+
+    static Sprite BuildCircle()
+    {
+        const int size = 128;
+        float radius = size * .5f - 1f;
+        Vector2 center = new Vector2(size * .5f, size * .5f);
+        Texture2D texture = NewTexture("Runtime Circle", size);
+        Color32[] pixels = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float distance = Vector2.Distance(new Vector2(x + .5f, y + .5f), center);
+            byte alpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(radius + .75f - distance) * 255f);
+            pixels[y * size + x] = new Color32(255, 255, 255, alpha);
+        }
+        texture.SetPixels32(pixels); texture.Apply(false, true);
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f);
+        sprite.name = texture.name; sprite.hideFlags = HideFlags.HideAndDontSave;
+        return sprite;
+    }
+
+    static Texture2D NewTexture(string name, int size)
+    {
+        return new Texture2D(size, size, TextureFormat.RGBA32, false, true)
+        {
+            name = name,
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+    }
 }

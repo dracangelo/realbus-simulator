@@ -17,6 +17,8 @@ public class BusSpec : ScriptableObject
 
     [Header("Visuals")]
     public GameObject modelPrefab;
+    [Tooltip("Complete playable prefab with Rigidbody, wheels, BusController, and docking reference.")]
+    public GameObject drivablePrefab;
     public Sprite previewSprite;
 
     [Header("Capacity")]

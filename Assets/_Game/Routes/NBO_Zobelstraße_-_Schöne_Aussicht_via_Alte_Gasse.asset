@@ -15,6 +15,11 @@ MonoBehaviour:
   routeNumber: NBO-9
   routeName: "NBO Zobelstra\xDFe - Sch\xF6ne Aussicht via Alte Gasse"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:60cfe18c022f3f468a81b07a27d010be
+  sourceCityCode: FRA
   stops:
   - stopName: "Zobelstra\xDFe"
     latitude: 50.11283335530003

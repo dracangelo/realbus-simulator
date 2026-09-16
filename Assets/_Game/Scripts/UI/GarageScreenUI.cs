@@ -45,6 +45,13 @@ public class GarageScreenUI : MonoBehaviour
         isVisible = true;
     }
 
+    public void ShowMarket()
+    {
+        Show();
+        if (focusedSpec != null) ShowUpgrades();
+        owner?.HandleGarageVisibilityChanged(true);
+    }
+
     public void Hide()
     {
         if (!built)

@@ -26,7 +26,21 @@ MonoBehaviour:
   maxLon: 8.7121
   roadsFileName: roads.xml
   buildingsFileName: buildings.xml
-  availableRoutes: []
+  availableRoutes:
+  - {fileID: 11400000, guid: 549da4ee74c1381b38e7bfd11ab3fb72, type: 2}
+  - {fileID: 11400000, guid: a51ebbd929827570fa76880b689b8c45, type: 2}
+  - {fileID: 11400000, guid: cb7094978cdb979a392e3cb34e04b27a, type: 2}
+  - {fileID: 11400000, guid: 88fd3bade52573683a7af98cc3ae6c2b, type: 2}
+  - {fileID: 11400000, guid: f7a8bdc58cf572945b4c6d9badc7593e, type: 2}
+  - {fileID: 11400000, guid: dafe5f9e408dbcb99bfbb23e3141f489, type: 2}
+  - {fileID: 11400000, guid: d34c5534f4df692e399ebf064ed522b3, type: 2}
+  - {fileID: 11400000, guid: 7c51aa7120f9f2fea9e5a953f3cbe502, type: 2}
+  - {fileID: 11400000, guid: b8cf72e94fee687bdaab591324e50e06, type: 2}
+  - {fileID: 11400000, guid: ed5b32cfa745c4616a89bf280b96fc8c, type: 2}
+  - {fileID: 11400000, guid: 32df366a6d9fa1a6d89f483d02d01c78, type: 2}
+  - {fileID: 11400000, guid: 7eba3902d7f7486b4a95d9b94b42fbed, type: 2}
+  - {fileID: 11400000, guid: 60cfe18c022f3f468a81b07a27d010be, type: 2}
+  - {fileID: 11400000, guid: 4ae5f5fd1feda63af8385ee76eee321b, type: 2}
   spawnLat: 50.1109
   spawnLon: 8.6821
   isDownloaded: 1

@@ -9,12 +9,32 @@ public class SceneLoader : MonoBehaviour
     public SceneCatalog sceneCatalog;
     bool isLoading;
 
+    public static SceneLoader EnsureExists()
+    {
+        if (Instance != null) return Instance;
+        SceneLoader existing = FindAnyObjectByType<SceneLoader>();
+        return existing != null ? existing : new GameObject("SceneLoader").AddComponent<SceneLoader>();
+    }
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         ConfigureLandscapeOrientation();
         DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        isLoading = false;
+        if (LoadingScreenUI.Instance != null) LoadingScreenUI.Instance.Hide();
     }
 
     void ConfigureLandscapeOrientation()
@@ -28,11 +48,11 @@ public class SceneLoader : MonoBehaviour
 #endif
     }
 
-    public void LoadMainMenu() => LoadByIndex(sceneCatalog != null ? sceneCatalog.mainMenuBuildIndex : 0);
-    public void LoadCountrySelect() => LoadByIndex(sceneCatalog != null ? sceneCatalog.countrySelectBuildIndex : 1);
-    public void LoadCitySelect() => LoadByIndex(sceneCatalog != null ? sceneCatalog.citySelectBuildIndex : 2);
-    public void LoadRouteSelect() => LoadByIndex(sceneCatalog != null ? sceneCatalog.routeSelectBuildIndex : 3);
-    public void LoadGame() => LoadByIndex(sceneCatalog != null ? sceneCatalog.gameplayBuildIndex : 4);
+    public void LoadMainMenu() => LoadScene("MainMenu", sceneCatalog != null ? sceneCatalog.mainMenuBuildIndex : 0);
+    public void LoadCountrySelect() => LoadScene("CountrySelect", sceneCatalog != null ? sceneCatalog.countrySelectBuildIndex : 1);
+    public void LoadCitySelect() => LoadScene("CitySelect", sceneCatalog != null ? sceneCatalog.citySelectBuildIndex : 2);
+    public void LoadRouteSelect() => LoadScene("RouteSelect", sceneCatalog != null ? sceneCatalog.routeSelectBuildIndex : 3);
+    public void LoadGame() => LoadScene("GameScene", sceneCatalog != null ? sceneCatalog.gameplayBuildIndex : 4);
 
     public void LoadCitySelectChecked()
     {
@@ -92,6 +112,19 @@ public class SceneLoader : MonoBehaviour
             return;
         }
         if (!isLoading) StartCoroutine(LoadAsync(SceneManager.LoadSceneAsync(buildIndex)));
+    }
+
+    void LoadScene(string sceneName, int fallbackBuildIndex)
+    {
+        if (isLoading) return;
+        if (Application.CanStreamedLevelBeLoaded(sceneName))
+        {
+            StartCoroutine(LoadAsync(SceneManager.LoadSceneAsync(sceneName)));
+            return;
+        }
+
+        Debug.LogWarning($"SceneLoader: Scene '{sceneName}' was not found by name; trying build index {fallbackBuildIndex}.");
+        LoadByIndex(fallbackBuildIndex);
     }
 
     System.Collections.IEnumerator LoadAsync(AsyncOperation operation)
