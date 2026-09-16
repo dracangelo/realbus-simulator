@@ -131,6 +131,12 @@ public class BusController : MonoBehaviour
         if (rb == null || engineData == null || transmissionData == null)
             return;
 
+        // A route start owns the interlock during briefing, countdown and stops.
+        // It must never remain latched while the mission is actively driving.
+        MissionManager activeMission = MissionManager.Instance;
+        if (ServiceBrakeInterlock && activeMission != null && activeMission.missionState == MissionState.InProgress)
+            ServiceBrakeInterlock = false;
+
         currentSpeedKmh = rb.linearVelocity.magnitude * 3.6f;
         UpdateRPM();
         shiftCooldown -= Time.fixedDeltaTime;

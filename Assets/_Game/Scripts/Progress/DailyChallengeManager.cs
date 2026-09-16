@@ -54,9 +54,28 @@ public class DailyChallengeManager : MonoBehaviour
         if (ChallengeRoute == null && !RefreshChallenge()) return false;
         GameState state = GameState.Instance;
         if (state == null) return false;
-        state.SelectCity(ChallengeCity); state.SelectRoute(ChallengeRoute);
-        if (CityManager.Instance != null) CityManager.Instance.SetActiveCity(ChallengeCity);
+        CountryDefinition country = FindCountryForCity(ChallengeCity);
+        if (country != null) state.SelectCountry(country);
+        state.SelectCity(ChallengeCity);
+        state.SelectRoute(ChallengeRoute);
+        if (CityManager.Instance != null)
+        {
+            if (country != null) CityManager.Instance.SetActiveCountry(country);
+            CityManager.Instance.SetActiveCity(ChallengeCity);
+        }
         IsActive = true; return true;
+    }
+
+    static CountryDefinition FindCountryForCity(CityDefinition city)
+    {
+        if (city == null || CityManager.Instance == null || CityManager.Instance.allCountries == null) return null;
+        foreach (CountryDefinition country in CityManager.Instance.allCountries)
+        {
+            if (country == null) continue;
+            if (country.cities != null && System.Array.IndexOf(country.cities, city) >= 0) return country;
+            if (string.Equals(country.countryName, city.country, System.StringComparison.OrdinalIgnoreCase)) return country;
+        }
+        return null;
     }
 
     public bool AppliesTo(BusRoute route) { return IsActive && route != null && route == ChallengeRoute && ChallengeMission != null; }

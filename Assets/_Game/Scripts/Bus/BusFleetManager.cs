@@ -6,6 +6,7 @@ public class BusFleetManager : MonoBehaviour
 {
     const string SelectedBusPlayerPrefsKey = "fleet.selected_bus_id";
     const string OwnedBusPlayerPrefsKey = "fleet.owned_bus_ids";
+    const string ModelBackedDefaultMigrationKey = "fleet.model_backed_default.v2";
 
     public static BusFleetManager Instance { get; private set; }
 
@@ -60,6 +61,7 @@ public class BusFleetManager : MonoBehaviour
         LoadOwnedState();
         SyncUnlockOwnership();
         EnsureSelectedBusIsValid();
+        MigratePlaceholderSelectionToModelBackedBus();
         ApplySelectedBusToGameState();
     }
 
@@ -74,6 +76,28 @@ public class BusFleetManager : MonoBehaviour
         EnsureInitialized();
         SyncUnlockOwnership();
         return GetBusSpecById(selectedBusId) ?? GetFirstOwnedBus();
+    }
+
+    public BusSpec GetSelectedDrivableBusSpec()
+    {
+        EnsureInitialized();
+        SyncUnlockOwnership();
+        BusSpec selected = GetBusSpecById(selectedBusId);
+        if (selected != null && selected.drivablePrefab != null)
+            return selected;
+
+        BusSpec fallback = GetFirstOwnedBus();
+        if (fallback != null && fallback.drivablePrefab != null)
+        {
+            selectedBusId = fallback.busId;
+            SaveOwnedState();
+            ApplySelectedBusToGameState();
+            SelectedBusChanged?.Invoke(fallback);
+            Debug.LogWarning($"BusFleetManager: Replaced placeholder fleet selection with model-backed bus '{fallback.displayName}'.");
+            return fallback;
+        }
+
+        return selected;
     }
 
     public BusSpec GetBusSpecById(string busId)
@@ -285,8 +309,37 @@ public class BusFleetManager : MonoBehaviour
         SaveOwnedState();
     }
 
+    void MigratePlaceholderSelectionToModelBackedBus()
+    {
+        if (PlayerPrefs.GetInt(ModelBackedDefaultMigrationKey, 0) != 0)
+            return;
+
+        BusSpec current = GetBusSpecById(selectedBusId);
+        BusSpec modelBacked = GetFirstOwnedBus();
+        if (modelBacked == null || modelBacked.drivablePrefab == null)
+            return; // Model imports have not finished yet; retry on the next launch.
+
+        if (current == null || current.drivablePrefab == null)
+        {
+            selectedBusId = modelBacked.busId;
+            SaveOwnedState();
+        }
+
+        PlayerPrefs.SetInt(ModelBackedDefaultMigrationKey, 1);
+        PlayerPrefs.Save();
+    }
+
     BusSpec GetFirstOwnedBus()
     {
+        // Prefer a complete model-backed vehicle for new saves and invalid legacy
+        // selections so gameplay does not silently fall back to the grey test bus.
+        for (int i = 0; i < busSpecs.Count; i++)
+        {
+            var spec = busSpecs[i];
+            if (spec != null && spec.drivablePrefab != null && ownedBusIds.Contains(spec.busId))
+                return spec;
+        }
+
         for (int i = 0; i < busSpecs.Count; i++)
         {
             var spec = busSpecs[i];

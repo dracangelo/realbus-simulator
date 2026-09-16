@@ -90,7 +90,7 @@ public class FirstDriveTutorial : MonoBehaviour
     {
         continueButton.gameObject.SetActive(step == 0);
         title.text = step == 0 ? "WELCOME, DRIVER" : "DRIVING SCHOOL";
-        if (step == 0) instruction.text = "This short guide teaches the essential mobile controls. Driving assists can be changed in Settings.";
+        if (step == 0) instruction.text = "W/S drive, A/D steer, E/Q shift, X selects reverse, and P toggles the parking brake. Touch controls work the same way.";
         else if (step == 1) instruction.text = "Hold the accelerator and reach 8 km/h.";
         else if (step == 2) instruction.text = "Brake smoothly and stop below 5 km/h.";
         else if (step == 3) instruction.text = "Steer left or right to feel the response curve.";

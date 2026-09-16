@@ -41,7 +41,15 @@ public class FreeDriveSession : MonoBehaviour
         busController = FindFirstObjectByType<BusController>();
         fuelLitres = ResolveInitialFuelLitres();
         fuelLevel = Mathf.Clamp01(fuelLitres / Mathf.Max(1f, fuelCapacityLitres)) * 100f;
-        if (autoStart) StartCoroutine(BeginSessionWhenReady());
+
+        BusRoute selectedRoute = GameState.Instance != null ? GameState.Instance.selectedRoute : null;
+        if (selectedRoute != null)
+            selectedRoute.EnsureRuntimeData();
+
+        if (selectedRoute != null && selectedRoute.GetStopCount() >= 2)
+            StartCoroutine(BeginSelectedRouteWhenReady(selectedRoute));
+        else if (autoStart)
+            StartCoroutine(BeginSessionWhenReady());
     }
 
     void Update()
@@ -79,6 +87,26 @@ public class FreeDriveSession : MonoBehaviour
         yield return WaitForRoadSurfaceIfAvailable();
         PositionBusAtSessionStart();
         StartSession();
+    }
+
+    IEnumerator BeginSelectedRouteWhenReady(BusRoute route)
+    {
+        while (busController == null)
+        {
+            busController = FindFirstObjectByType<BusController>();
+            yield return null;
+        }
+
+        while (MissionManager.Instance == null || GPSManager.Instance == null)
+            yield return null;
+
+        MissionManager mission = MissionManager.Instance;
+        if (mission.busController == null)
+            mission.busController = busController;
+
+        mission.currentRoute = route;
+        mission.StartRoute(route);
+        Debug.Log($"FreeDriveSession: Selected route '{route.routeName}' detected; starting scheduled service instead of free drive.");
     }
 
     public void StartSession()

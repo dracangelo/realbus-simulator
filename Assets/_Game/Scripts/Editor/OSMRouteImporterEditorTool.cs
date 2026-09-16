@@ -430,7 +430,8 @@ public class OSMRouteImporterEditorTool : EditorWindow
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        status = $"Saved {saved} BusRoute assets to {folder}.";
+        int linked = RouteAssetRegistry.RepairImportedRoutes(false);
+        status = $"Saved {saved} BusRoute assets and linked {linked} routes to their cities.";
     }
 
     // ── shared pathfinding helper ─────────────────────────────────────────────
@@ -532,6 +533,9 @@ public class OSMRouteImporterEditorTool : EditorWindow
         var asset = ScriptableObject.CreateInstance<BusRoute>();
         asset.routeName   = GenerateRouteName(d, isReturn);
         asset.routeNumber = GenerateRouteNumber(d, isReturn);
+        asset.sourceCityCode = ResolveRouteCityCode();
+        asset.generatedRouteId = $"{asset.sourceCityCode}:{asset.routeNumber}:{d.stops.Count}:{isReturn}";
+        asset.isRoadPathValidated = d.pathWorld.Count >= 2;
         asset.busStops    = d.stops.Select(s => s.stop).ToArray();
         asset.stops       = d.stops.Select(s => new BusStopData
         {
@@ -1120,6 +1124,121 @@ static class EditorCoroutineUtility
         if (routines.Count > 0 || !subscribed) return;
         EditorApplication.update -= Update;
         subscribed = false;
+    }
+}
+
+public static class RouteAssetRegistry
+{
+    const string RouteFolder = "Assets/_Game/Routes";
+
+    [InitializeOnLoadMethod]
+    static void QueueRepair() => EditorApplication.delayCall += () => RepairImportedRoutes(false);
+
+    [MenuItem("Tools/RealBus/OSM/Repair Route-City Links")]
+    public static void RepairFromMenu()
+    {
+        int count = RepairImportedRoutes(true);
+        EditorUtility.DisplayDialog("RealBus routes", $"Linked {count} valid routes to matching cities.", "OK");
+    }
+
+    public static int RepairImportedRoutes(bool logResult)
+    {
+        CityDefinition[] cities = AssetDatabase.FindAssets("t:CityDefinition", new[] { "Assets/_Game/ScriptableObjects/Cities" })
+            .Select(guid => AssetDatabase.LoadAssetAtPath<CityDefinition>(AssetDatabase.GUIDToAssetPath(guid)))
+            .Where(city => city != null).ToArray();
+        if (cities.Length == 0) return 0;
+
+        var discovered = new Dictionary<CityDefinition, List<BusRoute>>();
+        foreach (CityDefinition city in cities) discovered[city] = new List<BusRoute>();
+
+        foreach (string guid in AssetDatabase.FindAssets("t:BusRoute", new[] { RouteFolder }))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (path.IndexOf("/OSMPreviews/", System.StringComparison.OrdinalIgnoreCase) >= 0) continue;
+            BusRoute route = AssetDatabase.LoadAssetAtPath<BusRoute>(path);
+            if (route == null) continue;
+            route.EnsureRuntimeData();
+            if (route.GetStopCount() < 2 || route.distanceKm <= .001f) continue;
+            CityDefinition city = FindCity(route, cities);
+            if (city == null) continue;
+
+            bool changed = false;
+            if (!string.Equals(route.sourceCityCode, city.cityCode, System.StringComparison.OrdinalIgnoreCase))
+            {
+                route.sourceCityCode = city.cityCode;
+                changed = true;
+            }
+            if (string.IsNullOrWhiteSpace(route.generatedRouteId))
+            {
+                route.generatedRouteId = "asset:" + guid;
+                changed = true;
+            }
+            if (changed) EditorUtility.SetDirty(route);
+            discovered[city].Add(route);
+        }
+
+        int linked = 0;
+        foreach (var pair in discovered)
+        {
+            var merged = new List<BusRoute>();
+            if (pair.Key.availableRoutes != null) merged.AddRange(pair.Key.availableRoutes.Where(IsUsable));
+            merged.AddRange(pair.Value);
+            BusRoute[] unique = merged.GroupBy(BuildRouteSignature, System.StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.OrderBy(route => AssetDatabase.GetAssetPath(route), System.StringComparer.OrdinalIgnoreCase).First())
+                .OrderBy(route => route.routeNumber, System.StringComparer.OrdinalIgnoreCase)
+                .ThenBy(route => route.routeName, System.StringComparer.OrdinalIgnoreCase).ToArray();
+            if (!SameRoutes(pair.Key.availableRoutes, unique))
+            {
+                pair.Key.availableRoutes = unique;
+                EditorUtility.SetDirty(pair.Key);
+            }
+            linked += unique.Length;
+        }
+
+        AssetDatabase.SaveAssets();
+        if (logResult) Debug.Log($"[RouteAssetRegistry] Linked {linked} routes across {cities.Length} cities.");
+        return linked;
+    }
+
+    static CityDefinition FindCity(BusRoute route, CityDefinition[] cities)
+    {
+        if (route.stops == null || route.stops.Length == 0 || route.stops[0] == null) return null;
+        BusStopData anchor = route.stops[0];
+        CityDefinition best = null;
+        double bestDistance = double.MaxValue;
+        foreach (CityDefinition city in cities)
+        {
+            if (anchor.latitude < city.minLat || anchor.latitude > city.maxLat ||
+                anchor.longitude < city.minLon || anchor.longitude > city.maxLon) continue;
+            double distance = System.Math.Abs(anchor.latitude - city.centreLat) + System.Math.Abs(anchor.longitude - city.centreLon);
+            if (distance < bestDistance) { best = city; bestDistance = distance; }
+        }
+        return best;
+    }
+
+    static bool IsUsable(BusRoute route)
+    {
+        if (route == null) return false;
+        route.EnsureRuntimeData();
+        return route.GetStopCount() >= 2 && route.distanceKm > .001f;
+    }
+
+    static string BuildRouteSignature(BusRoute route)
+    {
+        BusStopData first = route.stops != null && route.stops.Length > 0 ? route.stops[0] : null;
+        BusStopData last = route.stops != null && route.stops.Length > 0 ? route.stops[route.stops.Length - 1] : null;
+        return string.Join("|", route.routeNumber ?? "", route.GetStopCount().ToString(),
+            Coordinate(first, true), Coordinate(first, false), Coordinate(last, true), Coordinate(last, false));
+    }
+
+    static string Coordinate(BusStopData stop, bool latitude) => stop == null ? "0" :
+        (latitude ? stop.latitude : stop.longitude).ToString("F5", System.Globalization.CultureInfo.InvariantCulture);
+
+    static bool SameRoutes(BusRoute[] current, BusRoute[] next)
+    {
+        if (current == null || current.Length != next.Length) return false;
+        for (int i = 0; i < next.Length; i++) if (current[i] != next[i]) return false;
+        return true;
     }
 }
 #endif

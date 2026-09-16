@@ -50,7 +50,12 @@ public class RouteSelectUI : MonoBehaviour
             ? UnlockManager.Instance.GetRoutesForCity(activeCity)
             : new List<BusRoute>(activeCity.availableRoutes ?? Array.Empty<BusRoute>());
         if (available == null) return;
-        foreach (BusRoute route in available) if (route) routes.Add(route);
+        foreach (BusRoute route in available)
+        {
+            if (!route) continue;
+            route.EnsureRuntimeData();
+            if (route.GetStopCount() >= 2) routes.Add(route);
+        }
     }
 
     void BuildCinematicScreen()

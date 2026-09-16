@@ -13,9 +13,13 @@ MonoBehaviour:
   m_Name: "NBO_Fran\xE7ois-Mitterrand-Platz_-_Hohenstaufenstra\xDFe_via_Hauptbahnhof_Pforzheimer_Stra\xDFe_(Return)"
   m_EditorClassIdentifier: GameScripts::BusRoute
   routeNumber: NBO-4R
-  routeName: "NBO Fran\xE7ois-Mitterrand-Platz - Hohenstaufenstra\xDFe via Hauptbahnhof/Pforzheimer
-    Stra\xDFe (Return)"
+  routeName: "NBO Fran\xE7ois-Mitterrand-Platz - Hohenstaufenstra\xDFe via Hauptbahnhof/Pforzheimer Stra\xDFe (Return)"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:7c51aa7120f9f2fea9e5a953f3cbe502
+  sourceCityCode: FRA
   stops:
   - stopName: "Fran\xE7ois-Mitterrand-Platz"
     latitude: 50.1109558849443

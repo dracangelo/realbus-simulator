@@ -14,6 +14,16 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         Hospital
     }
 
+    sealed class BuildingRecord
+    {
+        public long id;
+        public string label;
+        public BuildingKind kind;
+        public List<Vector3> footprint;
+        public Vector3 center;
+        public float height;
+    }
+
     public static OSMBuildingMeshBuilder Instance { get; private set; }
 
     [Header("Materials")]
@@ -43,6 +53,14 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     public bool enableDistanceCulling = false;
     public float maxBuildingDistance = 1500f;
 
+    [Header("Proximity Streaming")]
+    public bool streamAroundVehicle = true;
+    [Min(100f)] public float buildingLoadDistance = 600f;
+    [Min(120f)] public float buildingUnloadDistance = 800f;
+    [Min(50f)] public float streamingCellSize = 200f;
+    [Min(0.1f)] public float streamingRefreshSeconds = 0.65f;
+    [Min(10)] public int maxBuildingLoadsPerRefresh = 240;
+
     // ── PERF: if a single frame takes longer than this threshold the coroutine
     //          yields immediately, regardless of maxBuildingsPerFrame.
     [Header("Frame-time Budget")]
@@ -53,6 +71,15 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     public bool buildingsBuilt = false;
     private GameObject buildingsParent;
     readonly Dictionary<BuildingKind, Material> materialCache = new Dictionary<BuildingKind, Material>();
+    readonly Dictionary<BuildingKind, Material> roofMaterialCache = new Dictionary<BuildingKind, Material>();
+    Texture2D defaultFacadeTexture;
+    Texture2D defaultRoofTexture;
+    readonly Dictionary<Vector2Int, List<BuildingRecord>> buildingBuckets = new Dictionary<Vector2Int, List<BuildingRecord>>();
+    readonly Dictionary<long, BuildingRecord> recordsById = new Dictionary<long, BuildingRecord>();
+    readonly Dictionary<long, GameObject> activeBuildings = new Dictionary<long, GameObject>();
+    Transform streamingTarget;
+    float streamingTimer;
+    bool streamRefreshRunning;
 
     void Awake()
     {
@@ -63,6 +90,19 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     void Start()
     {
         StartCoroutine(WaitForDataThenBuild());
+    }
+
+    void Update()
+    {
+        if (!streamAroundVehicle || !buildingsBuilt || streamRefreshRunning)
+            return;
+
+        streamingTimer -= Time.deltaTime;
+        if (streamingTimer > 0f)
+            return;
+
+        streamingTimer = Mathf.Max(.1f, streamingRefreshSeconds);
+        StartCoroutine(RefreshStreamedBuildings());
     }
 
     IEnumerator WaitForDataThenBuild()
@@ -83,6 +123,10 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
         buildingsParent = new GameObject("OSM_Buildings");
         buildingsParent.transform.position = Vector3.zero;
+        buildingBuckets.Clear();
+        recordsById.Clear();
+        activeBuildings.Clear();
+        buildingsBuilt = false;
 
         int buildingCount = 0;
         int skippedDistance = 0;
@@ -154,29 +198,29 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
                 }
             }
 
-            float height = ResolveBuildingHeight(way);
             var buildingKind = ResolveBuildingKind(way);
+            Vector3 center = Vector3.zero;
+            for (int i = 0; i < footprint.Count; i++) center += footprint[i];
+            center /= footprint.Count;
 
-            Mesh mesh = BuildExtrudedMesh(footprint, height);
-            if (mesh == null)
+            var record = new BuildingRecord
             {
-                skippedInvalidFootprint++;
-                continue;
-            }
+                id = way.id,
+                label = ResolveBuildingLabel(way, buildingKind),
+                kind = buildingKind,
+                footprint = footprint,
+                center = center,
+                height = ResolveBuildingHeight(way, buildingKind)
+            };
 
-            string buildingLabel = ResolveBuildingLabel(way, buildingKind);
-            GameObject buildingObj = new GameObject($"Building_{buildingLabel}_{way.id}");
-            buildingObj.transform.parent = buildingsParent.transform;
+            recordsById[record.id] = record;
+            Vector2Int cell = WorldToStreamingCell(record.center);
+            if (!buildingBuckets.TryGetValue(cell, out var bucket))
+                buildingBuckets[cell] = bucket = new List<BuildingRecord>();
+            bucket.Add(record);
 
-            var mf = buildingObj.AddComponent<MeshFilter>();
-            var mr = buildingObj.AddComponent<MeshRenderer>();
-            mf.mesh = mesh;
-            mr.material = ResolveBuildingMaterial(buildingKind);
-            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            mr.receiveShadows = false;
-
-            if (drawFootprints)
-                BuildFootprintOutline(footprint, buildingObj.transform, ResolveBuildingColor(buildingKind));
+            if (!streamAroundVehicle)
+                CreateBuildingObject(record);
 
             buildingCount++;
             frameCount++;
@@ -195,9 +239,119 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         }
 
         buildingsBuilt = true;
+        if (streamAroundVehicle)
+            yield return StartCoroutine(RefreshStreamedBuildings());
         Debug.Log(
-            $"Buildings: Built {buildingCount} buildings! " +
+            streamAroundVehicle
+            ? $"Buildings: Indexed {buildingCount} buildings; {activeBuildings.Count} loaded near the vehicle. " +
+              $"Streaming range {buildingLoadDistance:0}m/{buildingUnloadDistance:0}m. " +
+              $"(skipped {skippedDistance} by distance, {skippedInvalidFootprint} invalid footprints, {skippedMissingNodes} missing nodes)"
+            : $"Buildings: Built {buildingCount} buildings! " +
             $"(skipped {skippedDistance} by distance, {skippedInvalidFootprint} invalid footprints, {skippedMissingNodes} missing nodes)");
+    }
+
+    IEnumerator RefreshStreamedBuildings()
+    {
+        streamRefreshRunning = true;
+        ResolveStreamingTarget();
+        if (streamingTarget == null)
+        {
+            streamRefreshRunning = false;
+            yield break;
+        }
+
+        Vector3 target = streamingTarget.position;
+        target.y = 0f;
+        float unloadSq = Mathf.Max(buildingLoadDistance + 50f, buildingUnloadDistance);
+        unloadSq *= unloadSq;
+        var unloadIds = new List<long>();
+        foreach (var pair in activeBuildings)
+        {
+            if (!recordsById.TryGetValue(pair.Key, out var record) || HorizontalSqrDistance(record.center, target) > unloadSq)
+            {
+                DestroyBuildingObject(pair.Value);
+                unloadIds.Add(pair.Key);
+            }
+        }
+        for (int i = 0; i < unloadIds.Count; i++) activeBuildings.Remove(unloadIds[i]);
+
+        float cellSize = Mathf.Max(50f, streamingCellSize);
+        int radius = Mathf.CeilToInt(buildingLoadDistance / cellSize);
+        Vector2Int centerCell = WorldToStreamingCell(target);
+        float loadSq = buildingLoadDistance * buildingLoadDistance;
+        var candidates = new List<BuildingRecord>();
+
+        for (int dz = -radius; dz <= radius; dz++)
+        for (int dx = -radius; dx <= radius; dx++)
+        {
+            Vector2Int cell = new Vector2Int(centerCell.x + dx, centerCell.y + dz);
+            if (!buildingBuckets.TryGetValue(cell, out var bucket)) continue;
+            for (int i = 0; i < bucket.Count; i++)
+            {
+                BuildingRecord record = bucket[i];
+                if (activeBuildings.ContainsKey(record.id) || HorizontalSqrDistance(record.center, target) > loadSq)
+                    continue;
+                candidates.Add(record);
+            }
+        }
+
+        candidates.Sort((a, b) => HorizontalSqrDistance(a.center, target).CompareTo(HorizontalSqrDistance(b.center, target)));
+        int loadCount = Mathf.Min(Mathf.Max(1, maxBuildingLoadsPerRefresh), candidates.Count);
+        for (int i = 0; i < loadCount; i++)
+        {
+            BuildingRecord record = candidates[i];
+            GameObject instance = CreateBuildingObject(record);
+            if (instance != null) activeBuildings[record.id] = instance;
+        }
+
+        streamRefreshRunning = false;
+        yield break;
+    }
+
+    GameObject CreateBuildingObject(BuildingRecord record)
+    {
+        Mesh mesh = BuildExtrudedMesh(record.footprint, record.height);
+        if (mesh == null) return null;
+        GameObject buildingObj = new GameObject($"Building_{record.label}_{record.id}");
+        buildingObj.transform.SetParent(buildingsParent.transform, false);
+        var mf = buildingObj.AddComponent<MeshFilter>();
+        var mr = buildingObj.AddComponent<MeshRenderer>();
+        mf.sharedMesh = mesh;
+        mr.sharedMaterials = new[] { ResolveBuildingMaterial(record.kind), ResolveRoofMaterial(record.kind) };
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        mr.receiveShadows = true;
+        if (drawFootprints)
+            BuildFootprintOutline(record.footprint, buildingObj.transform, ResolveBuildingColor(record.kind));
+        return buildingObj;
+    }
+
+    void DestroyBuildingObject(GameObject building)
+    {
+        if (building == null) return;
+        MeshFilter filter = building.GetComponent<MeshFilter>();
+        if (filter != null && filter.sharedMesh != null) Destroy(filter.sharedMesh);
+        Destroy(building);
+    }
+
+    Vector2Int WorldToStreamingCell(Vector3 position)
+    {
+        float size = Mathf.Max(50f, streamingCellSize);
+        return new Vector2Int(Mathf.FloorToInt(position.x / size), Mathf.FloorToInt(position.z / size));
+    }
+
+    static float HorizontalSqrDistance(Vector3 a, Vector3 b)
+    {
+        float x = a.x - b.x;
+        float z = a.z - b.z;
+        return x * x + z * z;
+    }
+
+    void ResolveStreamingTarget()
+    {
+        if (streamingTarget != null && streamingTarget.gameObject.activeInHierarchy)
+            return;
+        BusController bus = FindFirstObjectByType<BusController>();
+        streamingTarget = bus != null ? bus.transform : Camera.main != null ? Camera.main.transform : null;
     }
 
     float GetSignedAreaXZ(List<Vector3> footprint)
@@ -216,9 +370,9 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         return areaTwice * 0.5f;
     }
 
-    float ResolveBuildingHeight(OSMWay way)
+    float ResolveBuildingHeight(OSMWay way, BuildingKind kind)
     {
-        float height = defaultBuildingHeight;
+        float height;
 
         if (way.tags.TryGetValue("building:levels", out var levelsRaw) && int.TryParse(levelsRaw, out int levels))
             height = Mathf.Max(floorHeight, levels * floorHeight);
@@ -227,9 +381,28 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             string cleaned = heightRaw.Replace("m", "").Trim();
             if (float.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsedHeight))
                 height = Mathf.Max(floorHeight, parsedHeight);
+            else
+                height = EstimateUntaggedHeight(way, kind);
         }
+        else
+            height = EstimateUntaggedHeight(way, kind);
 
         return height;
+    }
+
+    float EstimateUntaggedHeight(OSMWay way, BuildingKind kind)
+    {
+        // Most OSM footprints do not include levels. Stable variation avoids an
+        // artificial city where every building is exactly ten metres tall.
+        float variation = Mathf.Abs((way.id * 1103515245L + 12345L) % 1000L) / 999f;
+        switch (kind)
+        {
+            case BuildingKind.House: return Mathf.Lerp(5.5f, 13f, variation);
+            case BuildingKind.Commercial: return Mathf.Lerp(10f, 30f, variation);
+            case BuildingKind.School: return Mathf.Lerp(7f, 16f, variation);
+            case BuildingKind.Hospital: return Mathf.Lerp(12f, 26f, variation);
+            default: return Mathf.Lerp(Mathf.Max(6f, defaultBuildingHeight * .7f), defaultBuildingHeight * 1.8f, variation);
+        }
     }
 
     BuildingKind ResolveBuildingKind(OSMWay way)
@@ -305,10 +478,39 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
         var mat = new Material(ResolveDefaultBuildingShader());
         mat.color = ResolveBuildingColor(kind);
+        if (defaultFacadeTexture == null)
+            defaultFacadeTexture = Resources.Load<Texture2D>("MapboxStyles/Styles/MapboxSampleStyles/Realistic/Assets/Textures/RealisticSideAlbedo");
+        if (defaultFacadeTexture != null)
+        {
+            defaultFacadeTexture.wrapMode = TextureWrapMode.Repeat;
+            mat.mainTexture = defaultFacadeTexture;
+            mat.mainTextureScale = new Vector2(1f, 1.2f);
+        }
         if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0.05f);
         if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
         if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.08f);
         materialCache[kind] = mat;
+        return mat;
+    }
+
+    Material ResolveRoofMaterial(BuildingKind kind)
+    {
+        if (roofMaterial != null)
+            return roofMaterial;
+        if (roofMaterialCache.TryGetValue(kind, out var cached) && cached != null)
+            return cached;
+
+        var mat = new Material(ResolveDefaultBuildingShader());
+        mat.color = Color.Lerp(ResolveBuildingColor(kind), new Color(.16f, .17f, .18f, 1f), .48f);
+        if (defaultRoofTexture == null)
+            defaultRoofTexture = Resources.Load<Texture2D>("MapboxStyles/Styles/MapboxSampleStyles/Realistic/Assets/Textures/RealisticTopAlbedo");
+        if (defaultRoofTexture != null)
+        {
+            defaultRoofTexture.wrapMode = TextureWrapMode.Repeat;
+            mat.mainTexture = defaultRoofTexture;
+        }
+        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", .04f);
+        roofMaterialCache[kind] = mat;
         return mat;
     }
 
@@ -362,7 +564,8 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         if (n < 3) return null;
 
         List<Vector3> verts = new List<Vector3>();
-        List<int> tris = new List<int>();
+        List<int> wallTris = new List<int>();
+        List<int> roofTris = new List<int>();
         List<Vector2> uvs = new List<Vector2>();
 
         // Walls
@@ -385,8 +588,8 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             uvs.Add(new Vector2(0, 1));
             uvs.Add(new Vector2(segLen, 1));
 
-            tris.Add(idx); tris.Add(idx + 2); tris.Add(idx + 1);
-            tris.Add(idx + 1); tris.Add(idx + 2); tris.Add(idx + 3);
+            wallTris.Add(idx); wallTris.Add(idx + 2); wallTris.Add(idx + 1);
+            wallTris.Add(idx + 1); wallTris.Add(idx + 2); wallTris.Add(idx + 3);
         }
 
         // Flat roof using fan triangulation
@@ -411,14 +614,16 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             int ai = roofBase + 1 + i * 2;
             int bi = roofBase + 1 + i * 2 + 1;
 
-            tris.Add(ci); tris.Add(ai); tris.Add(bi);
+            roofTris.Add(ci); roofTris.Add(ai); roofTris.Add(bi);
         }
 
         Mesh mesh = new Mesh();
         mesh.name = "Building";
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = verts.ToArray();
-        mesh.triangles = tris.ToArray();
+        mesh.subMeshCount = 2;
+        mesh.SetTriangles(wallTris, 0);
+        mesh.SetTriangles(roofTris, 1);
         mesh.uv = uvs.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();

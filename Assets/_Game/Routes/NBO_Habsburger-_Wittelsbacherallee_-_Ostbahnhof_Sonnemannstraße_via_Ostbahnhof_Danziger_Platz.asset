@@ -13,9 +13,13 @@ MonoBehaviour:
   m_Name: "NBO_Habsburger-_Wittelsbacherallee_-_Ostbahnhof_Sonnemannstra\xDFe_via_Ostbahnhof_Danziger_Platz"
   m_EditorClassIdentifier: GameScripts::BusRoute
   routeNumber: NBO-10
-  routeName: "NBO Habsburger-/Wittelsbacherallee - Ostbahnhof/Sonnemannstra\xDFe
-    via Ostbahnhof/Danziger Platz"
+  routeName: "NBO Habsburger-/Wittelsbacherallee - Ostbahnhof/Sonnemannstra\xDFe via Ostbahnhof/Danziger Platz"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:cb7094978cdb979a392e3cb34e04b27a
+  sourceCityCode: FRA
   stops:
   - stopName: Habsburger-/Wittelsbacherallee
     latitude: 50.12066213719008

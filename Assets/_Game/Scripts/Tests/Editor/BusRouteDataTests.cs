@@ -50,6 +50,23 @@ public class BusRouteDataTests
     }
 
     [Test]
+    public void BusRoute_EnsureRuntimeData_RepairsMissingMetrics()
+    {
+        var route = UnityEngine.ScriptableObject.CreateInstance<BusRoute>();
+        route.stops = new[]
+        {
+            new BusStopData { stopName = "A", latitude = -1.2864, longitude = 36.8172 },
+            new BusStopData { stopName = "B", latitude = -1.2864, longitude = 36.8272 }
+        };
+
+        route.EnsureRuntimeData();
+
+        Assert.That(route.distanceKm, Is.GreaterThan(1f));
+        Assert.That(route.estimatedTimeMinutes, Is.GreaterThan(0f));
+        Assert.That(route.GetStopCount(), Is.EqualTo(2));
+    }
+
+    [Test]
     public void CityConfig_CreateRuntimeCityDefinition_ComputesBoundingBoxAndCopiesRoutes()
     {
         var route = UnityEngine.ScriptableObject.CreateInstance<BusRoute>();

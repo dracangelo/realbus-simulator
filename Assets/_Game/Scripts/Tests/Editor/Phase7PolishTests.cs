@@ -14,7 +14,7 @@ public class Phase7PolishTests
     }
 
     [TestCase(-1, "R")]
-    [TestCase(0, "N")]
+    [TestCase(0, "D")]
     [TestCase(1, "2")]
     [TestCase(4, "5")]
     public void HudGearLabel_IsDriverFriendly(int gear, string expected)

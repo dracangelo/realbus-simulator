@@ -95,7 +95,10 @@ public class HUDManager : MonoBehaviour
 
     void UpdateRouteReadout(float speed)
     {
-        if (mission == null || !mission.routeActive || mission.currentRoute == null || mission.currentRoute.stops == null)
+        bool selectedMissionStarting = mission != null &&
+            (mission.routeActive || mission.CurrentCountdownValue > 0 || mission.missionState == MissionState.Briefing) &&
+            GameState.Instance?.selectedRoute != null;
+        if (mission == null || (!mission.routeActive && !selectedMissionStarting) || mission.currentRoute == null || mission.currentRoute.stops == null)
         {
             nextStopText.text = "FREE DRIVE";
             etaText.text = "Explore safely";
@@ -108,10 +111,12 @@ public class HUDManager : MonoBehaviour
 
         int count = mission.currentRoute.stops.Length;
         int index = Mathf.Clamp(mission.currentStopIndex, 0, Mathf.Max(0, count - 1));
-        nextStopText.text = $"NEXT  {mission.currentRoute.stops[index].stopName}";
+        string navigation = GetGuidanceInstruction();
+        if (string.IsNullOrWhiteSpace(navigation)) navigation = "↑  CONTINUE STRAIGHT";
+        nextStopText.text = $"{navigation}  •  {mission.distanceToNextStop:0} m";
         float etaSeconds = mission.distanceToNextStop / Mathf.Max(4.2f, speed / 3.6f);
-        etaText.text = $"{mission.distanceToNextStop:0} m  •  ETA {FormatEta(etaSeconds)}";
-        guidanceText.text = GetGuidanceInstruction();
+        etaText.text = $"ROUTE NAVIGATION  •  ETA {FormatEta(etaSeconds)}";
+        guidanceText.text = $"{navigation}\n<size=14>{mission.currentRoute.stops[index].stopName}</size>";
         progressFill.fillAmount = count > 1 ? Mathf.Clamp01(index / (float)(count - 1)) : 1f;
 
         PunctualityStatus status = ScheduleManager.Instance != null ? ScheduleManager.Instance.GetLiveStatus(index) : PunctualityStatus.OnTime;
@@ -125,7 +130,7 @@ public class HUDManager : MonoBehaviour
         if (minimap != null) minimap.gameObject.SetActive(!minimap.gameObject.activeSelf);
     }
 
-    public static string FormatGear(int gear) { return gear < 0 ? "R" : gear == 0 ? "N" : (gear + 1).ToString(); }
+    public static string FormatGear(int gear) { return gear < 0 ? "R" : gear == 0 ? "D" : (gear + 1).ToString(); }
     public static string FormatEta(float seconds) { return seconds < 60f ? "<1 min" : Mathf.CeilToInt(seconds / 60f) + " min"; }
     public static string StatusIcon(PunctualityStatus status) { return status == PunctualityStatus.OnTime ? "✓" : status == PunctualityStatus.Early ? "↑" : status == PunctualityStatus.Late ? "!" : "!!"; }
     static string StatusLabel(PunctualityStatus status) { return status == PunctualityStatus.OnTime ? "On time" : status == PunctualityStatus.Early ? "Early" : status == PunctualityStatus.Late ? "Late" : "Severely late"; }
@@ -139,33 +144,39 @@ public class HUDManager : MonoBehaviour
         CanvasScaler scaler = c.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f); scaler.matchWidthOrHeight = 0.5f;
         safeRoot = new GameObject("SafeArea", typeof(RectTransform), typeof(SafeAreaFitter)); safeRoot.transform.SetParent(c.transform, false);
 
-        RectTransform speedPanel = Panel("SpeedCluster", safeRoot.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(205f, 205f), new Vector2(125f, 125f));
-        speedText = Text("Speed", speedPanel, "0\n<size=20>KM/H</size>", 48, TextAlignmentOptions.Center, Vector2.zero, new Vector2(190f, 120f));
-        speedNeedle = Needle("Needle", speedPanel, 72f, UITheme.Accent);
-        gearText = Text("Gear", speedPanel, "N", 40, TextAlignmentOptions.Center, new Vector2(0f, -65f), new Vector2(70f, 55f));
+        RectTransform mapPanel = Panel("NavigationCard", safeRoot.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(440f, 220f), new Vector2(26f, -26f));
+        GameObject mini = new GameObject("Minimap", typeof(RectTransform), typeof(RuntimeMinimapGraphic)); mini.transform.SetParent(mapPanel, false);
+        RectTransform miniRt = mini.GetComponent<RectTransform>(); Stretch(miniRt); miniRt.offsetMin = new Vector2(10f, 10f); miniRt.offsetMax = new Vector2(-10f, -10f);
+        minimap = mini.GetComponent<RuntimeMinimapGraphic>(); minimap.color = new Color(0.035f, 0.055f, 0.06f, 0.94f); minimap.raycastTarget = false;
+        Image instructionPill = Box("InstructionPill", mapPanel, new Vector2(-12f, -144f), new Vector2(225f, 64f), new Color(.02f, .025f, .026f, .86f));
+        instructionPill.rectTransform.anchorMin = instructionPill.rectTransform.anchorMax = new Vector2(1f, 1f); instructionPill.rectTransform.pivot = new Vector2(1f, 1f);
+        guidanceText = Text("Guidance", instructionPill.transform, "↑  CONTINUE", 19, TextAlignmentOptions.Center, Vector2.zero, new Vector2(210f, 54f));
 
-        RectTransform routePanel = Panel("RoutePanel", safeRoot.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(680f, 170f), new Vector2(0f, -84f));
-        nextStopText = Text("NextStop", routePanel, "FREE DRIVE", 30, TextAlignmentOptions.Left, new Vector2(-155f, 36f), new Vector2(340f, 45f));
-        etaText = Text("ETA", routePanel, "", 24, TextAlignmentOptions.Left, new Vector2(-155f, 2f), new Vector2(340f, 38f));
-        guidanceText = Text("Guidance", routePanel, "", 22, TextAlignmentOptions.Left, new Vector2(-155f, -30f), new Vector2(430f, 34f));
-        schedulePill = Box("SchedulePill", routePanel, new Vector2(210f, 34f), new Vector2(430f, 48f), UITheme.Secondary);
-        scheduleText = Text("Status", schedulePill.rectTransform, "◇ NO SCHEDULE", 23, TextAlignmentOptions.Center, Vector2.zero, schedulePill.rectTransform.sizeDelta);
-        Image track = Box("ProgressTrack", routePanel, new Vector2(0f, -68f), new Vector2(620f, 12f), UITheme.SurfaceBright);
+        RectTransform routePanel = Panel("NextStopBanner", safeRoot.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(560f, 112f), new Vector2(0f, -32f));
+        nextStopText = Text("Navigation", routePanel, "↑  ROUTE NAVIGATION", 25, TextAlignmentOptions.Center, new Vector2(0f, 17f), new Vector2(520f, 38f));
+        etaText = Text("ETA", routePanel, "Follow the highlighted road", 16, TextAlignmentOptions.Center, new Vector2(0f, -14f), new Vector2(510f, 27f));
+        schedulePill = Box("SchedulePill", routePanel, new Vector2(0f, -43f), new Vector2(162f, 25f), UITheme.Secondary);
+        scheduleText = Text("Status", schedulePill.rectTransform, "NO SCHEDULE", 12, TextAlignmentOptions.Center, Vector2.zero, schedulePill.rectTransform.sizeDelta);
+        Image track = Box("ProgressTrack", routePanel, new Vector2(0f, -53f), new Vector2(500f, 6f), UITheme.SurfaceBright);
         progressFill = Box("ProgressFill", track.rectTransform, Vector2.zero, Vector2.zero, UITheme.Accent);
         progressFill.type = Image.Type.Filled; progressFill.fillMethod = Image.FillMethod.Horizontal; progressFill.fillOrigin = 0;
         Stretch(progressFill.rectTransform);
 
-        RectTransform energyPanel = Panel("VehicleVitals", safeRoot.transform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(330f, 176f), new Vector2(-185f, 110f));
-        fuelNeedle = Needle("FuelNeedle", energyPanel, 58f, UITheme.TertiaryDim);
-        temperatureNeedle = Needle("TemperatureNeedle", energyPanel, 42f, UITheme.Success); temperatureNeedle.rectTransform.anchoredPosition = new Vector2(112f, 0f);
-        fuelText = Text("Fuel", energyPanel, "FUEL 100%", 25, TextAlignmentOptions.Center, new Vector2(-58f, -57f), new Vector2(180f, 40f));
-        temperatureText = Text("Temperature", energyPanel, "TEMP 80°C", 25, TextAlignmentOptions.Center, new Vector2(80f, -57f), new Vector2(180f, 40f));
-        passengerText = Text("Passengers", safeRoot.transform, "● PAX 0/0", 28, TextAlignmentOptions.Center, new Vector2(0f, 34f), new Vector2(245f, 50f));
-        RectTransform paxRt = passengerText.rectTransform; paxRt.anchorMin = paxRt.anchorMax = new Vector2(0.5f, 0f);
+        RectTransform speedPanel = CirclePanel("SpeedDial", safeRoot.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), 176f, new Vector2(-286f, -24f), UITheme.TertiaryDim);
+        Image speedFace = Box("SpeedFace", speedPanel, Vector2.zero, new Vector2(154f, 154f), new Color(.035f, .04f, .042f, .98f)); RuntimeUiShapes.Circle(speedFace);
+        speedText = Text("Speed", speedPanel, "0\n<size=18>km/h</size>", 53, TextAlignmentOptions.Center, new Vector2(0f, 10f), new Vector2(148f, 104f));
+        speedNeedle = Needle("SpeedNeedle", speedPanel, 67f, UITheme.TertiaryDim);
+        gearText = Text("Gear", speedPanel, "D", 25, TextAlignmentOptions.Center, new Vector2(0f, -57f), new Vector2(64f, 32f));
 
-        GameObject mini = new GameObject("Minimap", typeof(RectTransform), typeof(RuntimeMinimapGraphic)); mini.transform.SetParent(safeRoot.transform, false);
-        RectTransform miniRt = mini.GetComponent<RectTransform>(); miniRt.anchorMin = miniRt.anchorMax = new Vector2(1f, 1f); miniRt.pivot = new Vector2(1f, 1f); miniRt.sizeDelta = new Vector2(220f, 220f); miniRt.anchoredPosition = new Vector2(-28f, -28f);
-        minimap = mini.GetComponent<RuntimeMinimapGraphic>(); minimap.color = new Color(0.04f, 0.06f, 0.07f, 0.88f); minimap.raycastTarget = false;
+        RectTransform energyPanel = Panel("VehicleVitals", safeRoot.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(235f, 126f), new Vector2(-28f, -49f));
+        fuelNeedle = Needle("FuelNeedle", energyPanel, 34f, UITheme.TertiaryDim); fuelNeedle.gameObject.SetActive(false);
+        temperatureNeedle = Needle("TemperatureNeedle", energyPanel, 34f, UITheme.Success); temperatureNeedle.gameObject.SetActive(false);
+        fuelText = Text("Fuel", energyPanel, "▰  FUEL 100%", 18, TextAlignmentOptions.Left, new Vector2(14f, 35f), new Vector2(202f, 32f));
+        fuelText.rectTransform.anchorMin = fuelText.rectTransform.anchorMax = new Vector2(0f, .5f); fuelText.rectTransform.pivot = new Vector2(0f, .5f);
+        passengerText = Text("Passengers", energyPanel, "●  PAX 0/0", 18, TextAlignmentOptions.Left, new Vector2(14f, 0f), new Vector2(202f, 32f));
+        passengerText.rectTransform.anchorMin = passengerText.rectTransform.anchorMax = new Vector2(0f, .5f); passengerText.rectTransform.pivot = new Vector2(0f, .5f);
+        temperatureText = Text("Temperature", energyPanel, "TEMP 80°C", 14, TextAlignmentOptions.Left, new Vector2(14f, -35f), new Vector2(202f, 28f));
+        temperatureText.rectTransform.anchorMin = temperatureText.rectTransform.anchorMax = new Vector2(0f, .5f); temperatureText.rectTransform.pivot = new Vector2(0f, .5f);
     }
 
     void BuildStopMarkers(int count)
@@ -187,15 +198,25 @@ public class HUDManager : MonoBehaviour
         int ahead = Mathf.Min(path.Count - 1, nearest + 2); Vector3 direction = path[ahead] - bus.transform.position; direction.y = 0f;
         if (direction.sqrMagnitude < 1f) return "CONTINUE";
         float angle = Vector3.SignedAngle(bus.transform.forward, direction.normalized, Vector3.up);
-        string instruction = angle > 28f ? "TURN RIGHT" : angle < -28f ? "TURN LEFT" : angle > 9f ? "KEEP RIGHT" : angle < -9f ? "KEEP LEFT" : "CONTINUE STRAIGHT";
+        string instruction = angle > 28f ? "↱  TURN RIGHT" : angle < -28f ? "↰  TURN LEFT" : angle > 9f ? "↗  KEEP RIGHT" : angle < -9f ? "↖  KEEP LEFT" : "↑  CONTINUE STRAIGHT";
         if (mission.HasActiveDiversion) instruction = mission.CurrentDiversionLabel.ToUpperInvariant() + " • " + instruction;
-        return "◇ " + instruction;
+        return instruction;
     }
 
     RectTransform Panel(string name, Transform parent, Vector2 anchor, Vector2 pivot, Vector2 size, Vector2 position)
     {
         Image image = Box(name, parent, position, size, new Color(0.04f, 0.06f, 0.07f, 0.88f));
         image.rectTransform.anchorMin = image.rectTransform.anchorMax = anchor; image.rectTransform.pivot = pivot;
+        Outline outline = image.gameObject.AddComponent<Outline>(); outline.effectColor = new Color(1f, 1f, 1f, .20f); outline.effectDistance = new Vector2(2f, -2f);
+        RuntimeUiShapes.SoftShadow(image);
+        return image.rectTransform;
+    }
+
+    RectTransform CirclePanel(string name, Transform parent, Vector2 anchor, Vector2 pivot, float diameter, Vector2 position, Color tint)
+    {
+        Image image = Box(name, parent, position, new Vector2(diameter, diameter), tint);
+        image.rectTransform.anchorMin = image.rectTransform.anchorMax = anchor; image.rectTransform.pivot = pivot;
+        RuntimeUiShapes.Circle(image); RuntimeUiShapes.SoftShadow(image, .5f, 9f);
         return image.rectTransform;
     }
 
@@ -203,7 +224,7 @@ public class HUDManager : MonoBehaviour
     {
         GameObject o = new GameObject(name, typeof(RectTransform), typeof(Image)); o.transform.SetParent(parent, false);
         RectTransform r = o.GetComponent<RectTransform>(); r.sizeDelta = size; r.anchoredPosition = position;
-        Image image = o.GetComponent<Image>(); image.color = tint; image.raycastTarget = false; return image;
+        Image image = o.GetComponent<Image>(); image.color = tint; image.raycastTarget = false; RuntimeUiShapes.Rounded(image); return image;
     }
 
     Image Needle(string name, Transform parent, float length, Color tint)
@@ -216,7 +237,7 @@ public class HUDManager : MonoBehaviour
     {
         GameObject o = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI)); o.transform.SetParent(parent, false);
         RectTransform r = o.GetComponent<RectTransform>(); r.sizeDelta = dimensions; r.anchoredPosition = position;
-        TextMeshProUGUI t = o.GetComponent<TextMeshProUGUI>(); t.text = value; t.fontSize = Mathf.Max(28f, size); t.alignment = align; t.color = UITheme.TextPrimary; t.font = UITheme.GetFont(size >= 30 ? UITheme.FontWeight.Bold : UITheme.FontWeight.Medium); t.raycastTarget = false;
+        TextMeshProUGUI t = o.GetComponent<TextMeshProUGUI>(); t.text = value; t.fontSize = Mathf.Max(12f, size); t.alignment = align; t.color = UITheme.TextPrimary; t.font = UITheme.GetFont(size >= 26 ? UITheme.FontWeight.Bold : UITheme.FontWeight.Medium); t.raycastTarget = false;
         return t;
     }
 

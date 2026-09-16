@@ -138,7 +138,7 @@ public class FreeDriveUI : MonoBehaviour
         if (gearText)
         {
             int gear = transmissionData != null ? transmissionData.currentGear + 1 : 1;
-            gearText.text = $"G{gear}";
+            gearText.text = HUDManager.FormatGear(gear);
         }
 
         if (fuelText)

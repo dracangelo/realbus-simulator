@@ -15,8 +15,9 @@ MonoBehaviour:
   busId: fleet.imported.b809d991f06d
   displayName: BIS+TUA
   description: Imported, game-ready bus model.
-  requiredRank: 2
+  requiredRank: 1
   modelPrefab: {fileID: 2256947642734181918, guid: bfe647f835b47814f863058000ec0981, type: 3}
+  drivablePrefab: {fileID: 2048642386487623814, guid: 3bc09c96327e3971397c2ad0e99d3e8f, type: 3}
   previewSprite: {fileID: 0}
   seatedCapacity: 36
   standingCapacity: 34

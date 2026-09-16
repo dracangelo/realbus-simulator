@@ -6,14 +6,17 @@
 - Diesel fuel and electric battery consumption systems.
 - Passenger weight, aerodynamics, brake fade, tyre wear, and maintenance.
 - Wet, paved, cobblestone, gravel, and dirt surface handling.
-- Button, steering-wheel, tilt, keyboard, and customizable mobile controls.
+- Cinematic mobile driving controls with pedals, steering buttons or wheel, gear, horn, and retarder.
+- Model-backed playable buses with generated physics, wheels, cameras, and docking points.
 - Optional speed and stop-approach driving assists.
 
 ## Maps and routes
 
 - OpenStreetMap road, building, stop, signal, and route importing.
+- Imported routes automatically link to their geographic city with repaired metrics and duplicate filtering.
 - Road-following route generation with one-way-road support.
 - Mapbox tile streaming with distance-based detail levels.
+- Resilient Mapbox PNG/JPEG decoding and accurate authorization diagnostics.
 - Offline city downloads, cache limits, and LRU cleanup.
 - GPS tracking, route previews, and runtime navigation lines.
 - Cinematic country, city, and route selectors with swipeable cards.
@@ -21,7 +24,7 @@
 ## Gameplay
 
 - Free-drive and scheduled mission modes.
-- Guided, accuracy-graded docking with kerb and alignment feedback.
+- Guided, accuracy-graded docking against the real bus door and physical stop prefab.
 - Door controls, kneeling, boarding, and alighting.
 - Timetables with early, on-time, late, and severely late arrivals.
 - Punctuality, satisfaction, safety, and efficiency scoring.
@@ -47,6 +50,10 @@
 - Time-of-day simulation with street, cabin, and headlight control.
 - Vehicle, road, map-tile, and traffic level-of-detail systems.
 - Runtime stress testing with CSV performance reports.
+- Real gas-station models spawn at OpenStreetMap fuel locations.
+- Varied-height OSM buildings with façade and roof materials.
+- Vehicle-proximity building streaming and physical road-edge boundaries with junction openings.
+- Imported road-surface models with automatic procedural-road fallback.
 - Adaptive 30/45/60 FPS targets, resolution scaling, and thermal response.
 
 ## Progression and customization
@@ -67,7 +74,7 @@
 - Automatic saves after missions, rank-ups, purchases, customization, and app backgrounding.
 - Local/cloud conflict detection with player choice.
 - Main menu, garage, settings, credits, pause, resilient loading, and mobile UI.
-- Safe-area HUD with analogue speed, fuel, temperature, gear, route, ETA, schedule, and passenger readouts.
+- Rounded cinematic HUD with navigation, next stop, speed dial, fuel, passengers, gear, and schedule.
 - North-up route minimap with stop markers and a visibility toggle.
 - First-drive tutorial, missed-stop recovery, and turn guidance.
 - Exterior, cockpit, chase, and kerb cameras with a digital mirror.

@@ -15,6 +15,11 @@ MonoBehaviour:
   routeNumber: NBO-7
   routeName: "NBO Altk\xF6nigstra\xDFe Loop via Holzhausen-Park"
   baseFare: 50
+  osmRelationId: 0
+  isRoadPathValidated: 0
+  isGrandTourRoute: 0
+  generatedRouteId: asset:32df366a6d9fa1a6d89f483d02d01c78
+  sourceCityCode: FRA
   stops:
   - stopName: "Altk\xF6nigstra\xDFe"
     latitude: 50.12087324031621
