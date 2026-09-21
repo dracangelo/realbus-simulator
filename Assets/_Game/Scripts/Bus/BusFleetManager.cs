@@ -178,6 +178,28 @@ public class BusFleetManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>Registers a vehicle supplied by an optional runtime content pack.</summary>
+    public bool RegisterRuntimeBusSpec(BusSpec spec, bool grantOwnership = true)
+    {
+        EnsureInitialized();
+        if (spec == null || string.IsNullOrWhiteSpace(spec.busId) || spec.drivablePrefab == null)
+            return false;
+
+        int existingIndex = GetSpecIndex(spec.busId);
+        if (existingIndex >= 0)
+            busSpecs[existingIndex] = spec;
+        else
+            busSpecs.Add(spec);
+
+        busSpecs.Sort(CompareBusSpecs);
+        if (grantOwnership)
+            ownedBusIds.Add(spec.busId);
+        EnsureSelectedBusIsValid();
+        SaveOwnedState();
+        FleetChanged?.Invoke();
+        return true;
+    }
+
     public void ApplySaveState(IEnumerable<string> ownedIds, string selectedId)
     {
         EnsureInitialized();

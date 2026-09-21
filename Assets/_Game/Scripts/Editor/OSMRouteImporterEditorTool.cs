@@ -1130,9 +1130,52 @@ static class EditorCoroutineUtility
 public static class RouteAssetRegistry
 {
     const string RouteFolder = "Assets/_Game/Routes";
+    static bool repairQueued;
+    static int idleFrames;
 
     [InitializeOnLoadMethod]
-    static void QueueRepair() => EditorApplication.delayCall += () => RepairImportedRoutes(false);
+    static void QueueRepair()
+    {
+        if (Application.isBatchMode)
+            return;
+
+        EditorApplication.delayCall += QueueDeferredRepair;
+    }
+
+    static void QueueDeferredRepair()
+    {
+        if (repairQueued)
+            return;
+
+        repairQueued = true;
+        idleFrames = 0;
+        EditorApplication.update += RunDeferredRepairWhenIdle;
+    }
+
+    static void RunDeferredRepairWhenIdle()
+    {
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            idleFrames = 0;
+            return;
+        }
+
+        idleFrames++;
+        if (idleFrames < 5)
+            return;
+
+        EditorApplication.update -= RunDeferredRepairWhenIdle;
+        repairQueued = false;
+
+        try
+        {
+            RepairImportedRoutes(false);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[RouteAssetRegistry] Deferred route repair skipped: {ex.Message}");
+        }
+    }
 
     [MenuItem("Tools/RealBus/OSM/Repair Route-City Links")]
     public static void RepairFromMenu()
@@ -1150,6 +1193,7 @@ public static class RouteAssetRegistry
 
         var discovered = new Dictionary<CityDefinition, List<BusRoute>>();
         foreach (CityDefinition city in cities) discovered[city] = new List<BusRoute>();
+        bool anyChanged = false;
 
         foreach (string guid in AssetDatabase.FindAssets("t:BusRoute", new[] { RouteFolder }))
         {
@@ -1173,7 +1217,11 @@ public static class RouteAssetRegistry
                 route.generatedRouteId = "asset:" + guid;
                 changed = true;
             }
-            if (changed) EditorUtility.SetDirty(route);
+            if (changed)
+            {
+                EditorUtility.SetDirty(route);
+                anyChanged = true;
+            }
             discovered[city].Add(route);
         }
 
@@ -1191,11 +1239,13 @@ public static class RouteAssetRegistry
             {
                 pair.Key.availableRoutes = unique;
                 EditorUtility.SetDirty(pair.Key);
+                anyChanged = true;
             }
             linked += unique.Length;
         }
 
-        AssetDatabase.SaveAssets();
+        if (anyChanged)
+            AssetDatabase.SaveAssets();
         if (logResult) Debug.Log($"[RouteAssetRegistry] Linked {linked} routes across {cities.Length} cities.");
         return linked;
     }

@@ -1,0 +1,865 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-16T17:27:04Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 387905425,
+  "lat": 30.0617556,
+  "lon": 31.2187153,
+  "tags": {
+    "amenity": "fuel",
+    "name": "مصر",
+    "name:ar": "مصر",
+    "name:en": "Misr"
+  }
+},
+{
+  "type": "node",
+  "id": 419852047,
+  "lat": 30.0603232,
+  "lon": 31.2219365,
+  "tags": {
+    "amenity": "fuel",
+    "name": "مصر",
+    "name:ar": "مصر",
+    "name:en": "Misr",
+    "operator": "مصر"
+  }
+},
+{
+  "type": "node",
+  "id": 663079693,
+  "lat": 30.0161323,
+  "lon": 31.2506452,
+  "tags": {
+    "amenity": "fuel",
+    "name": "Mobil",
+    "name:en": "Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 670119439,
+  "lat": 30.0194006,
+  "lon": 31.2251535,
+  "tags": {
+    "amenity": "fuel",
+    "building": "yes",
+    "name": "محطة بنزين التعاون",
+    "name:ar": "محطة بنزين التعاون",
+    "name:en": "Co-op"
+  }
+},
+{
+  "type": "node",
+  "id": 670119464,
+  "lat": 30.0193646,
+  "lon": 31.2254086,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "name": "موبيل",
+    "name:ar": "موبيل",
+    "name:en": "Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 670119534,
+  "lat": 30.0256372,
+  "lon": 31.2264578,
+  "tags": {
+    "alt_name": "كالتكس",
+    "amenity": "fuel",
+    "brand": "Oilibya",
+    "brand:wikidata": "Q7081491",
+    "building": "yes",
+    "name": "اويليبيا",
+    "name:ar": "كالتكس",
+    "name:en": "Oillibya"
+  }
+},
+{
+  "type": "node",
+  "id": 679674472,
+  "lat": 30.0698142,
+  "lon": 31.2704359,
+  "tags": {
+    "alt_name": "مصر",
+    "amenity": "fuel",
+    "name": "مصر",
+    "name:ar": "مصر",
+    "name:en": "Misr"
+  }
+},
+{
+  "type": "node",
+  "id": 1259516844,
+  "lat": 30.0463243,
+  "lon": 31.2411273,
+  "tags": {
+    "alt_name": "موبيل",
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q3088656",
+    "brand:wikipedia": "en:Mobil",
+    "name": "موبيل",
+    "name:ar": "موبيل",
+    "name:en": "Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 1259516857,
+  "lat": 30.0443270,
+  "lon": 31.2417151,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Esso",
+    "brand:wikidata": "Q867662",
+    "brand:wikipedia": "en:Esso",
+    "name": "اسو",
+    "name:ar": "اسو",
+    "name:en": "Esso"
+  }
+},
+{
+  "type": "node",
+  "id": 1259516964,
+  "lat": 30.0457516,
+  "lon": 31.2672949,
+  "tags": {
+    "amenity": "fuel",
+    "name": "مصر"
+  }
+},
+{
+  "type": "node",
+  "id": 1444958056,
+  "lat": 30.0763730,
+  "lon": 31.2731892,
+  "tags": {
+    "alt_name": "موبيل",
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "name": "موبيل",
+    "name:ar": "موبيل",
+    "name:en": "Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 2112432270,
+  "lat": 30.0403850,
+  "lon": 31.2101797,
+  "tags": {
+    "alt_name": "Cooperation Petroleum Company Gas Station;Co-op Gas Station",
+    "alt_name:en": "Cooperation Petroleum Company Gas Station;Co-op Gas Station",
+    "amenity": "fuel",
+    "name": "محطة بنزين التعاون",
+    "name:ar": "محطة بنزين التعاون",
+    "name:en": "CPC Gas Station"
+  }
+},
+{
+  "type": "node",
+  "id": 3220031878,
+  "lat": 30.0458446,
+  "lon": 31.2357841,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "brand:wikipedia": "en:Mobil",
+    "name": "Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 3232185180,
+  "lat": 30.0652981,
+  "lon": 31.2033876,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Total",
+    "brand:wikidata": "Q154037",
+    "brand:wikipedia": "fr:TotalEnergies",
+    "name": "Total",
+    "operator": "Total"
+  }
+},
+{
+  "type": "node",
+  "id": 3838857157,
+  "lat": 30.0516749,
+  "lon": 31.2081102,
+  "tags": {
+    "amenity": "fuel",
+    "name": "موبيل Mobil",
+    "name:ar": "موبيل Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 4233754031,
+  "lat": 30.0618655,
+  "lon": 31.2068878,
+  "tags": {
+    "amenity": "fuel",
+    "compressed_air": "yes",
+    "name": "Wataneya",
+    "name:en": "Misr petroleum"
+  }
+},
+{
+  "type": "node",
+  "id": 9590261926,
+  "lat": 30.0173675,
+  "lon": 31.2137656,
+  "tags": {
+    "amenity": "fuel",
+    "fuel:cng": "yes",
+    "name": "غاز تك"
+  }
+},
+{
+  "type": "node",
+  "id": 9590283681,
+  "lat": 30.0172374,
+  "lon": 31.2137269,
+  "tags": {
+    "amenity": "fuel",
+    "name": "مصر"
+  }
+},
+{
+  "type": "node",
+  "id": 9922938348,
+  "lat": 30.0683321,
+  "lon": 31.2448011,
+  "tags": {
+    "amenity": "fuel",
+    "name": "Misr Petroleum"
+  }
+},
+{
+  "type": "node",
+  "id": 11099081605,
+  "lat": 30.0796740,
+  "lon": 31.2556179,
+  "tags": {
+    "amenity": "fuel"
+  }
+},
+{
+  "type": "node",
+  "id": 11983462263,
+  "lat": 30.0470120,
+  "lon": 31.2432759,
+  "tags": {
+    "amenity": "fuel",
+    "name": "co.op"
+  }
+},
+{
+  "type": "node",
+  "id": 11993719939,
+  "lat": 30.0381243,
+  "lon": 31.2348636,
+  "tags": {
+    "amenity": "fuel",
+    "name": "Misr"
+  }
+},
+{
+  "type": "node",
+  "id": 12732140152,
+  "lat": 30.0185046,
+  "lon": 31.2295082,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "check_date": "2025-04-06",
+    "fuel:diesel": "yes",
+    "fuel:octane_92": "yes",
+    "name": "موبيل",
+    "name:ar": "موبيل",
+    "name:en": "Mobil",
+    "operator": "Mobil",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "self_service": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 13169228504,
+  "lat": 30.0520873,
+  "lon": 31.2397325,
+  "tags": {
+    "amenity": "fuel"
+  }
+},
+{
+  "type": "node",
+  "id": 13727433901,
+  "lat": 30.0432221,
+  "lon": 31.2114186,
+  "tags": {
+    "amenity": "fuel",
+    "name": "شيل اوت"
+  }
+},
+{
+  "type": "node",
+  "id": 14099082344,
+  "lat": 30.0361277,
+  "lon": 31.2113764,
+  "tags": {
+    "amenity": "fuel",
+    "name": "محطة بنزين مصر",
+    "name:ar": "محطة بنزين مصر",
+    "name:en": "Misr Gas Station"
+  }
+},
+{
+  "type": "node",
+  "id": 14099157679,
+  "lat": 30.0352397,
+  "lon": 31.2178068,
+  "tags": {
+    "amenity": "fuel",
+    "name": "محطة بنزين موبيل",
+    "name:ar": "محطة بنزين موبيل",
+    "name:en": "Mobil Gas Station"
+  }
+},
+{
+  "type": "node",
+  "id": 14099215952,
+  "lat": 30.0394616,
+  "lon": 31.2155135,
+  "tags": {
+    "amenity": "fuel",
+    "name": "محطة بنزين موبيل",
+    "name:ar": "محطة بنزين موبيل",
+    "name:en": "Mobil Gas Station"
+  }
+},
+{
+  "type": "way",
+  "id": 52301937,
+  "nodes": [
+    665521623,
+    665521627,
+    665521633,
+    665521636,
+    665521623
+  ],
+  "tags": {
+    "amenity": "fuel"
+  }
+},
+{
+  "type": "way",
+  "id": 686194615,
+  "nodes": [
+    6431722663,
+    6431722664,
+    6431722665,
+    6431722666,
+    7235994858,
+    7235994855,
+    6431722663
+  ],
+  "tags": {
+    "amenity": "fuel"
+  }
+},
+{
+  "type": "way",
+  "id": 772271272,
+  "nodes": [
+    7209623951,
+    7209623952,
+    7209623953,
+    7209623954,
+    7209623955,
+    7209623956,
+    7209623957,
+    7209623958,
+    7209623951
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "roof:shape": "flat"
+  }
+},
+{
+  "type": "way",
+  "id": 822297475,
+  "nodes": [
+    7677941073,
+    7677941074,
+    7677941075,
+    7677941076,
+    7677941073
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "compressed_air": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1121915374,
+  "nodes": [
+    699997752,
+    10261260039,
+    10261260035,
+    10278017583,
+    10261260036,
+    10261260037,
+    10278017582,
+    699997752
+  ],
+  "tags": {
+    "addr:city": "القاهرة",
+    "alt_name": "موبيل",
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "brand:wikipedia": "en:Mobil",
+    "building": "yes",
+    "name": "موبيل",
+    "name:ar": "موبيل",
+    "name:en": "Mobil",
+    "operator": "Mobil"
+  }
+},
+{
+  "type": "way",
+  "id": 1123897303,
+  "nodes": [
+    1259516956,
+    10278167001,
+    10278167000,
+    10278166999,
+    1259516956
+  ],
+  "tags": {
+    "addr:city": "القاهرة",
+    "amenity": "fuel",
+    "brand": "Misr Petroleum"
+  }
+},
+{
+  "type": "way",
+  "id": 1135775396,
+  "nodes": [
+    10587508848,
+    10587508849,
+    10587508850,
+    10587508851,
+    10587508848
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "brand:wikipedia": "en:Mobil",
+    "building": "yes",
+    "name": "Mobil"
+  }
+},
+{
+  "type": "way",
+  "id": 1211533985,
+  "nodes": [
+    11224545134,
+    11224545135,
+    11224545136,
+    11224572137,
+    11224545134
+  ],
+  "tags": {
+    "amenity": "fuel"
+  }
+},
+{
+  "type": "way",
+  "id": 1293852423,
+  "nodes": [
+    11993719932,
+    11993719933,
+    11993719934,
+    11993719935,
+    11993719936,
+    11993719937,
+    11993719938,
+    11993719932
+  ],
+  "tags": {
+    "amenity": "fuel"
+  }
+},
+{
+  "type": "way",
+  "id": 1327267572,
+  "nodes": [
+    12278937135,
+    12278937136,
+    12278937137,
+    12278937138,
+    12278937139,
+    12278937140,
+    12278937135
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "TotalEnergies",
+    "brand:wikidata": "Q154037",
+    "building": "roof",
+    "fuel:octane_92": "yes",
+    "fuel:octane_95": "yes",
+    "layer": "1",
+    "name": "Total"
+  }
+},
+{
+  "type": "node",
+  "id": 12278937135,
+  "lat": 30.0096594,
+  "lon": 31.2011703
+},
+{
+  "type": "node",
+  "id": 12278937136,
+  "lat": 30.0095940,
+  "lon": 31.2011704
+},
+{
+  "type": "node",
+  "id": 12278937137,
+  "lat": 30.0095942,
+  "lon": 31.2013222
+},
+{
+  "type": "node",
+  "id": 12278937138,
+  "lat": 30.0097307,
+  "lon": 31.2013220
+},
+{
+  "type": "node",
+  "id": 12278937139,
+  "lat": 30.0097306,
+  "lon": 31.2012461
+},
+{
+  "type": "node",
+  "id": 12278937140,
+  "lat": 30.0096594,
+  "lon": 31.2012462
+},
+{
+  "type": "node",
+  "id": 665521623,
+  "lat": 30.0279171,
+  "lon": 31.2276096
+},
+{
+  "type": "node",
+  "id": 665521627,
+  "lat": 30.0278812,
+  "lon": 31.2272681
+},
+{
+  "type": "node",
+  "id": 665521633,
+  "lat": 30.0276800,
+  "lon": 31.2272964
+},
+{
+  "type": "node",
+  "id": 665521636,
+  "lat": 30.0277159,
+  "lon": 31.2276379
+},
+{
+  "type": "node",
+  "id": 11224545135,
+  "lat": 30.0515043,
+  "lon": 31.2082100
+},
+{
+  "type": "node",
+  "id": 699997752,
+  "lat": 30.0576044,
+  "lon": 31.2061453
+},
+{
+  "type": "node",
+  "id": 10261260035,
+  "lat": 30.0576950,
+  "lon": 31.2062290
+},
+{
+  "type": "node",
+  "id": 10261260036,
+  "lat": 30.0576084,
+  "lon": 31.2063543
+},
+{
+  "type": "node",
+  "id": 10261260037,
+  "lat": 30.0575178,
+  "lon": 31.2062706
+},
+{
+  "type": "node",
+  "id": 10261260039,
+  "lat": 30.0576506,
+  "lon": 31.2061880
+},
+{
+  "type": "node",
+  "id": 10278017582,
+  "lat": 30.0575475,
+  "lon": 31.2062276
+},
+{
+  "type": "node",
+  "id": 10278017583,
+  "lat": 30.0576474,
+  "lon": 31.2062979
+},
+{
+  "type": "node",
+  "id": 11224545136,
+  "lat": 30.0516355,
+  "lon": 31.2079994
+},
+{
+  "type": "node",
+  "id": 11224572137,
+  "lat": 30.0517400,
+  "lon": 31.2080973
+},
+{
+  "type": "node",
+  "id": 11224545134,
+  "lat": 30.0516181,
+  "lon": 31.2083039
+},
+{
+  "type": "node",
+  "id": 6431722663,
+  "lat": 30.0344814,
+  "lon": 31.2333423
+},
+{
+  "type": "node",
+  "id": 6431722664,
+  "lat": 30.0344427,
+  "lon": 31.2335414
+},
+{
+  "type": "node",
+  "id": 6431722665,
+  "lat": 30.0341517,
+  "lon": 31.2334583
+},
+{
+  "type": "node",
+  "id": 6431722666,
+  "lat": 30.0342008,
+  "lon": 31.2332657
+},
+{
+  "type": "node",
+  "id": 7235994855,
+  "lat": 30.0343806,
+  "lon": 31.2333146
+},
+{
+  "type": "node",
+  "id": 7235994858,
+  "lat": 30.0342512,
+  "lon": 31.2332780
+},
+{
+  "type": "node",
+  "id": 11993719932,
+  "lat": 30.0382049,
+  "lon": 31.2349633
+},
+{
+  "type": "node",
+  "id": 11993719933,
+  "lat": 30.0381870,
+  "lon": 31.2350507
+},
+{
+  "type": "node",
+  "id": 11993719934,
+  "lat": 30.0379942,
+  "lon": 31.2349952
+},
+{
+  "type": "node",
+  "id": 11993719935,
+  "lat": 30.0380308,
+  "lon": 31.2348364
+},
+{
+  "type": "node",
+  "id": 11993719936,
+  "lat": 30.0379193,
+  "lon": 31.2348101
+},
+{
+  "type": "node",
+  "id": 11993719937,
+  "lat": 30.0379535,
+  "lon": 31.2346672
+},
+{
+  "type": "node",
+  "id": 11993719938,
+  "lat": 30.0382537,
+  "lon": 31.2347556
+},
+{
+  "type": "node",
+  "id": 7677941073,
+  "lat": 30.0392808,
+  "lon": 31.2347103
+},
+{
+  "type": "node",
+  "id": 7677941074,
+  "lat": 30.0391665,
+  "lon": 31.2347843
+},
+{
+  "type": "node",
+  "id": 7677941075,
+  "lat": 30.0392083,
+  "lon": 31.2348680
+},
+{
+  "type": "node",
+  "id": 7677941076,
+  "lat": 30.0393198,
+  "lon": 31.2347843
+},
+{
+  "type": "node",
+  "id": 1259516956,
+  "lat": 30.0507470,
+  "lon": 31.2415211
+},
+{
+  "type": "node",
+  "id": 10278166999,
+  "lat": 30.0507434,
+  "lon": 31.2416171
+},
+{
+  "type": "node",
+  "id": 10278167000,
+  "lat": 30.0505963,
+  "lon": 31.2416098
+},
+{
+  "type": "node",
+  "id": 10278167001,
+  "lat": 30.0505999,
+  "lon": 31.2415138
+},
+{
+  "type": "node",
+  "id": 7209623951,
+  "lat": 30.0539126,
+  "lon": 31.2465626
+},
+{
+  "type": "node",
+  "id": 7209623952,
+  "lat": 30.0537389,
+  "lon": 31.2465786
+},
+{
+  "type": "node",
+  "id": 7209623953,
+  "lat": 30.0537490,
+  "lon": 31.2467245
+},
+{
+  "type": "node",
+  "id": 7209623954,
+  "lat": 30.0536852,
+  "lon": 31.2467304
+},
+{
+  "type": "node",
+  "id": 7209623955,
+  "lat": 30.0536751,
+  "lon": 31.2465847
+},
+{
+  "type": "node",
+  "id": 7209623956,
+  "lat": 30.0536519,
+  "lon": 31.2465868
+},
+{
+  "type": "node",
+  "id": 7209623957,
+  "lat": 30.0536422,
+  "lon": 31.2464473
+},
+{
+  "type": "node",
+  "id": 7209623958,
+  "lat": 30.0539029,
+  "lon": 31.2464232
+},
+{
+  "type": "node",
+  "id": 10587508848,
+  "lat": 30.0591583,
+  "lon": 31.2232484
+},
+{
+  "type": "node",
+  "id": 10587508849,
+  "lat": 30.0592175,
+  "lon": 31.2232895
+},
+{
+  "type": "node",
+  "id": 10587508850,
+  "lat": 30.0591834,
+  "lon": 31.2233550
+},
+{
+  "type": "node",
+  "id": 10587508851,
+  "lat": 30.0591242,
+  "lon": 31.2233139
+}
+
+  ]
+}

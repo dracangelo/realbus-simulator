@@ -92,8 +92,18 @@ public class CityManager : MonoBehaviour
         if (activeCountry == country) return;
 
         activeCountry = country;
+        if (!CountryContainsCity(country, activeCity))
+            activeCity = null;
         Debug.Log($"[CityManager] Country: {country.countryName}");
         OnCountryChanged?.Invoke(country);
+    }
+
+    static bool CountryContainsCity(CountryDefinition country, CityDefinition city)
+    {
+        if (country == null || city == null || country.cities == null) return false;
+        for (int i = 0; i < country.cities.Length; i++)
+            if (country.cities[i] == city) return true;
+        return false;
     }
 
     /// <summary>

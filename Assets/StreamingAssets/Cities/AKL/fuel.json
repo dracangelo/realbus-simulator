@@ -1,0 +1,988 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-16T17:25:02Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 577509679,
+  "lat": -36.8592320,
+  "lon": 174.7528916,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "compressed_air": "yes",
+    "name": "Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 648872457,
+  "lat": -36.8446844,
+  "lon": 174.7735219,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Z",
+    "brand:wikidata": "Q8063337",
+    "brand:wikipedia": "en:Z Energy",
+    "compressed_air": "yes",
+    "name": "Z",
+    "operator": "Z Energy",
+    "website": "https://www.z.co.nz/find-a-station/station/z-quay-st/"
+  }
+},
+{
+  "type": "node",
+  "id": 2653514645,
+  "lat": -36.8676005,
+  "lon": 174.7616616,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "G.A.S.",
+    "brand:wikidata": "Q112189761",
+    "name": "G.A.S."
+  }
+},
+{
+  "type": "node",
+  "id": 11072516182,
+  "lat": -36.8454520,
+  "lon": 174.7379816,
+  "tags": {
+    "amenity": "fuel",
+    "branch": "Herne Bay",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "fuel:diesel": "yes",
+    "fuel:lpg": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_95": "yes",
+    "name": "BP Connect",
+    "official_name": "BP Connect Herne Bay",
+    "opening_hours": "24/7",
+    "operator": "BP",
+    "phone": "+64 9 360 7790",
+    "self_service": "no",
+    "website": "https://map.bp.com/en-NZ/NZ/gas-station/auckland/bp-connect-herne-bay/0DJ11"
+  }
+},
+{
+  "type": "node",
+  "id": 11072528016,
+  "lat": -36.8458828,
+  "lon": 174.7422140,
+  "tags": {
+    "amenity": "fuel",
+    "branch": "Jervois Road",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "fuel:diesel": "yes",
+    "fuel:lpg": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_95": "yes",
+    "name": "BP 2go",
+    "official_name": "BP 2go Jervois Road",
+    "opening_hours": "Mo-Su 05:00-23:00",
+    "operator": "BP",
+    "phone": "+64 9 378 4417",
+    "website": "https://map.bp.com/en-NZ/NZ/gas-station/auckland/bp-2go-jervois-road/0DK37"
+  }
+},
+{
+  "type": "way",
+  "id": 53725822,
+  "nodes": [
+    678304267,
+    1598459409,
+    10181937348,
+    678304396,
+    10181937367,
+    10181937366,
+    10181937365,
+    10181937364,
+    10181937363,
+    10181937362,
+    10181937361,
+    2982025459,
+    2982025460,
+    1598459402,
+    10181937360,
+    1431565146,
+    678304397,
+    678304270,
+    1598459411,
+    1598459410,
+    678304267
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "branch": "Beach Road",
+    "brand": "Z",
+    "brand:wikidata": "Q8063337",
+    "compressed_air": "yes",
+    "fuel:diesel": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_95": "yes",
+    "landuse": "retail",
+    "name": "Z",
+    "official_name": "Z Beach Road",
+    "opening_hours": "24/7",
+    "operator": "Z Energy",
+    "phone": "+64 9 373 5268",
+    "website": "https://www.z.co.nz/find-a-station/station/z-beach-rd/"
+  }
+},
+{
+  "type": "way",
+  "id": 220588231,
+  "nodes": [
+    2296918107,
+    2296918056,
+    2296918096,
+    2296918045,
+    2296918048,
+    2296918097,
+    2296918117,
+    2296918034,
+    2296918076,
+    2296918032,
+    2296918107
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Gull",
+    "brand:wikidata": "Q111949119",
+    "brand:wikipedia": "en:Gull Petroleum",
+    "building": "roof",
+    "compressed_air": "yes",
+    "layer": "1",
+    "name": "Gull",
+    "opening_hours": "24/7",
+    "operator": "Gull"
+  }
+},
+{
+  "type": "way",
+  "id": 253926052,
+  "nodes": [
+    2597905450,
+    2597905466,
+    2597905436,
+    2597905454,
+    2597905456,
+    10279103444,
+    2597905464,
+    2597905469,
+    2597905458,
+    2597905437,
+    10279103442,
+    2597905450
+  ],
+  "tags": {
+    "addr:city": "Auckland",
+    "addr:housenumber": "433",
+    "addr:postcode": "1023",
+    "addr:street": "Khyber Pass Road",
+    "addr:suburb": "Newmarket",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:website": "https://www.bp.com/",
+    "brand:wikidata": "Q152057",
+    "brand:wikipedia": "en:BP",
+    "building": "yes",
+    "building:levels": "1",
+    "fuel:diesel": "yes",
+    "fuel:electricity": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_98": "yes",
+    "height": "4.5",
+    "name": "BP Newmarket",
+    "operator": "BP",
+    "payment:american_express": "yes",
+    "payment:coins": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "payment:maestro": "yes",
+    "payment:mastercard": "yes",
+    "payment:notes": "yes",
+    "payment:visa": "yes",
+    "phone": "+64 9 523 0830",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 317610530,
+  "nodes": [
+    3238923380,
+    3238923383,
+    3238923381,
+    3238923379,
+    3238923375,
+    3238923373,
+    3238923377,
+    3238923374,
+    3238923378,
+    3238923376,
+    3238923380
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Z",
+    "brand:wikidata": "Q8063337",
+    "brand:wikipedia": "en:Z Energy",
+    "building": "yes",
+    "compressed_air": "yes",
+    "name": "Z",
+    "operator": "Z Energy",
+    "website": "https://www.z.co.nz/find-a-station/station/z-ponsonby/"
+  }
+},
+{
+  "type": "way",
+  "id": 331964337,
+  "nodes": [
+    3390678512,
+    3390678507,
+    3390678508,
+    3390678518,
+    3390678512
+  ],
+  "tags": {
+    "addr:city": "Auckland",
+    "addr:housenumber": "506",
+    "addr:postcode": "1052",
+    "addr:street": "Parnell Road",
+    "addr:suburb": "Parnell",
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "building": "yes",
+    "name": "Mobil",
+    "phone": "+64 9 373 4054",
+    "ref:linz:address_id": "1140783",
+    "website": "https://www.mobil.co.nz/en/find-station"
+  }
+},
+{
+  "type": "way",
+  "id": 331966243,
+  "nodes": [
+    3390696332,
+    3390696334,
+    3390696335,
+    3390696341,
+    3390696344,
+    3390696346,
+    3390696348,
+    3390696347,
+    3390696345,
+    3390696343,
+    3390696340,
+    3390696339,
+    3390696332
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "brand:wikipedia": "en:Mobil",
+    "building": "retail",
+    "compressed_air": "yes",
+    "fuel:diesel": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_98": "yes",
+    "name": "Mobil Quay Street",
+    "opening_hours": "24/7",
+    "phone": "+64 9 377 2942",
+    "website": "https://www.mobil.co.nz/en-nz/find-station/aucklandcentral-auckland-mobilquaystreet-300400086"
+  }
+},
+{
+  "type": "way",
+  "id": 814611004,
+  "nodes": [
+    7609356793,
+    7609356792,
+    3641945281,
+    7609356790,
+    7609356789,
+    7609356788,
+    7609356787,
+    7609356786,
+    7609356793
+  ],
+  "tags": {
+    "addr:housenumber": "104-108",
+    "addr:postcode": "1010",
+    "addr:street": "Fanshawe Street",
+    "addr:suburb": "Auckland City",
+    "amenity": "fuel",
+    "branch": "Fanshawe Street",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "building": "yes",
+    "compressed_air": "yes",
+    "fuel:diesel": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_95": "yes",
+    "fuel:octane_98": "yes",
+    "height": "4",
+    "name": "BP Connect",
+    "official_name": "BP Connect Fanshawe Street",
+    "opening_hours": "Mo-Th 05:30-22:00; Fr 05:30-24:00; Sa 00:00-24:00; Su 00:00-22:00",
+    "phone": "+64 9 373 0910",
+    "self_service": "yes",
+    "website": "https://map.bp.com/en-NZ/NZ/gas-station/auckland/bp-connect-fanshawe-street/0DJ12"
+  }
+},
+{
+  "type": "way",
+  "id": 968642771,
+  "nodes": [
+    8961585490,
+    8961585491,
+    8961585492,
+    8961585493,
+    8961585490
+  ],
+  "tags": {
+    "addr:housenumber": "104",
+    "addr:street": "Newton Road",
+    "addr:suburb": "Eden Terrace",
+    "amenity": "fuel",
+    "building": "roof",
+    "fuel:diesel": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_95": "yes",
+    "layer": "1",
+    "name": "U Go",
+    "opening_hours": "24/7",
+    "ref:linz:address_id": "1123736"
+  }
+},
+{
+  "type": "way",
+  "id": 1042480244,
+  "nodes": [
+    9596175629,
+    9596175630,
+    9596175631,
+    9596175632,
+    9596175629
+  ],
+  "tags": {
+    "access": "private",
+    "amenity": "fuel",
+    "building": "yes",
+    "description": "Ports of Auckland Hydrogen Project",
+    "fuel:LH2": "yes",
+    "name": "H₂",
+    "operator": "H2H Energy"
+  }
+},
+{
+  "type": "way",
+  "id": 1153134835,
+  "nodes": [
+    10725097503,
+    10725097504,
+    10725097505,
+    10725097506,
+    10725097503
+  ],
+  "tags": {
+    "access": "private",
+    "amenity": "fuel",
+    "building": "yes",
+    "description": "Ports of Auckland Hydrogen Project",
+    "fuel:LH2": "yes",
+    "name": "H₂",
+    "operator": "H2H Energy"
+  }
+},
+{
+  "type": "way",
+  "id": 1548071947,
+  "nodes": [
+    3458695042,
+    14080011417,
+    14080011426,
+    14080011427,
+    14080011428,
+    3458695042
+  ],
+  "tags": {
+    "addr:city": "Auckland",
+    "addr:street": "Sandringham Road",
+    "addr:suburb": "Mount Eden",
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "building": "yes",
+    "fuel:diesel": "yes",
+    "fuel:octane_95": "yes",
+    "name": "Mobil",
+    "operator": "Mobil"
+  }
+},
+{
+  "type": "node",
+  "id": 3458695042,
+  "lat": -36.8739990,
+  "lon": 174.7419025
+},
+{
+  "type": "node",
+  "id": 14080011417,
+  "lat": -36.8741641,
+  "lon": 174.7418059
+},
+{
+  "type": "node",
+  "id": 14080011426,
+  "lat": -36.8742043,
+  "lon": 174.7417841
+},
+{
+  "type": "node",
+  "id": 14080011427,
+  "lat": -36.8741410,
+  "lon": 174.7416258
+},
+{
+  "type": "node",
+  "id": 14080011428,
+  "lat": -36.8739399,
+  "lon": 174.7417458
+},
+{
+  "type": "node",
+  "id": 2296918032,
+  "lat": -36.8708340,
+  "lon": 174.7486733
+},
+{
+  "type": "node",
+  "id": 2296918034,
+  "lat": -36.8708247,
+  "lon": 174.7485392
+},
+{
+  "type": "node",
+  "id": 2296918045,
+  "lat": -36.8705143,
+  "lon": 174.7486639
+},
+{
+  "type": "node",
+  "id": 2296918048,
+  "lat": -36.8705100,
+  "lon": 174.7485473
+},
+{
+  "type": "node",
+  "id": 2296918056,
+  "lat": -36.8707388,
+  "lon": 174.7486083
+},
+{
+  "type": "node",
+  "id": 2296918076,
+  "lat": -36.8707793,
+  "lon": 174.7485751
+},
+{
+  "type": "node",
+  "id": 2296918096,
+  "lat": -36.8705980,
+  "lon": 174.7487149
+},
+{
+  "type": "node",
+  "id": 2296918097,
+  "lat": -36.8707364,
+  "lon": 174.7483635
+},
+{
+  "type": "node",
+  "id": 2296918107,
+  "lat": -36.8707976,
+  "lon": 174.7487002
+},
+{
+  "type": "node",
+  "id": 2296918117,
+  "lat": -36.8708201,
+  "lon": 174.7484118
+},
+{
+  "type": "node",
+  "id": 2597905436,
+  "lat": -36.8673650,
+  "lon": 174.7746850
+},
+{
+  "type": "node",
+  "id": 2597905454,
+  "lat": -36.8673360,
+  "lon": 174.7747025
+},
+{
+  "type": "node",
+  "id": 2597905456,
+  "lat": -36.8672878,
+  "lon": 174.7747239
+},
+{
+  "type": "node",
+  "id": 2597905466,
+  "lat": -36.8673350,
+  "lon": 174.7745429
+},
+{
+  "type": "node",
+  "id": 8961585490,
+  "lat": -36.8629529,
+  "lon": 174.7578778
+},
+{
+  "type": "node",
+  "id": 8961585491,
+  "lat": -36.8628323,
+  "lon": 174.7579163
+},
+{
+  "type": "node",
+  "id": 8961585492,
+  "lat": -36.8628490,
+  "lon": 174.7579983
+},
+{
+  "type": "node",
+  "id": 8961585493,
+  "lat": -36.8629697,
+  "lon": 174.7579598
+},
+{
+  "type": "node",
+  "id": 3238923373,
+  "lat": -36.8584952,
+  "lon": 174.7475729
+},
+{
+  "type": "node",
+  "id": 3238923374,
+  "lat": -36.8585432,
+  "lon": 174.7474519
+},
+{
+  "type": "node",
+  "id": 3238923375,
+  "lat": -36.8585492,
+  "lon": 174.7476241
+},
+{
+  "type": "node",
+  "id": 3238923376,
+  "lat": -36.8585558,
+  "lon": 174.7473794
+},
+{
+  "type": "node",
+  "id": 3238923377,
+  "lat": -36.8585562,
+  "lon": 174.7474648
+},
+{
+  "type": "node",
+  "id": 3238923378,
+  "lat": -36.8585747,
+  "lon": 174.7473974
+},
+{
+  "type": "node",
+  "id": 3238923379,
+  "lat": -36.8586041,
+  "lon": 174.7475359
+},
+{
+  "type": "node",
+  "id": 3238923380,
+  "lat": -36.8586171,
+  "lon": 174.7471822
+},
+{
+  "type": "node",
+  "id": 3238923381,
+  "lat": -36.8586636,
+  "lon": 174.7474402
+},
+{
+  "type": "node",
+  "id": 3238923383,
+  "lat": -36.8587472,
+  "lon": 174.7473060
+},
+{
+  "type": "node",
+  "id": 3641945281,
+  "lat": -36.8461776,
+  "lon": 174.7586625
+},
+{
+  "type": "node",
+  "id": 7609356786,
+  "lat": -36.8461098,
+  "lon": 174.7585136
+},
+{
+  "type": "node",
+  "id": 7609356787,
+  "lat": -36.8461280,
+  "lon": 174.7585183
+},
+{
+  "type": "node",
+  "id": 7609356788,
+  "lat": -36.8462080,
+  "lon": 174.7586062
+},
+{
+  "type": "node",
+  "id": 7609356789,
+  "lat": -36.8461750,
+  "lon": 174.7586531
+},
+{
+  "type": "node",
+  "id": 7609356790,
+  "lat": -36.8461736,
+  "lon": 174.7586615
+},
+{
+  "type": "node",
+  "id": 7609356792,
+  "lat": -36.8461666,
+  "lon": 174.7587309
+},
+{
+  "type": "node",
+  "id": 7609356793,
+  "lat": -36.8460784,
+  "lon": 174.7587105
+},
+{
+  "type": "node",
+  "id": 2597905437,
+  "lat": -36.8670978,
+  "lon": 174.7747641
+},
+{
+  "type": "node",
+  "id": 2597905450,
+  "lat": -36.8670712,
+  "lon": 174.7746223
+},
+{
+  "type": "node",
+  "id": 2597905458,
+  "lat": -36.8671500,
+  "lon": 174.7747671
+},
+{
+  "type": "node",
+  "id": 2597905464,
+  "lat": -36.8672405,
+  "lon": 174.7747427
+},
+{
+  "type": "node",
+  "id": 2597905469,
+  "lat": -36.8671923,
+  "lon": 174.7747601
+},
+{
+  "type": "node",
+  "id": 10279103442,
+  "lat": -36.8670806,
+  "lon": 174.7746725
+},
+{
+  "type": "node",
+  "id": 10279103444,
+  "lat": -36.8672592,
+  "lon": 174.7747353
+},
+{
+  "type": "node",
+  "id": 3390678507,
+  "lat": -36.8625708,
+  "lon": 174.7818577
+},
+{
+  "type": "node",
+  "id": 3390678508,
+  "lat": -36.8626214,
+  "lon": 174.7819300
+},
+{
+  "type": "node",
+  "id": 3390678512,
+  "lat": -36.8626289,
+  "lon": 174.7817941
+},
+{
+  "type": "node",
+  "id": 3390678518,
+  "lat": -36.8626795,
+  "lon": 174.7818664
+},
+{
+  "type": "node",
+  "id": 678304267,
+  "lat": -36.8497413,
+  "lon": 174.7747278
+},
+{
+  "type": "node",
+  "id": 678304270,
+  "lat": -36.8497757,
+  "lon": 174.7752212
+},
+{
+  "type": "node",
+  "id": 678304396,
+  "lat": -36.8493898,
+  "lon": 174.7747044
+},
+{
+  "type": "node",
+  "id": 678304397,
+  "lat": -36.8494989,
+  "lon": 174.7753642
+},
+{
+  "type": "node",
+  "id": 1431565146,
+  "lat": -36.8493843,
+  "lon": 174.7749795
+},
+{
+  "type": "node",
+  "id": 1598459402,
+  "lat": -36.8493399,
+  "lon": 174.7748062
+},
+{
+  "type": "node",
+  "id": 1598459409,
+  "lat": -36.8496740,
+  "lon": 174.7747011
+},
+{
+  "type": "node",
+  "id": 1598459410,
+  "lat": -36.8497455,
+  "lon": 174.7747930
+},
+{
+  "type": "node",
+  "id": 1598459411,
+  "lat": -36.8497626,
+  "lon": 174.7750655
+},
+{
+  "type": "node",
+  "id": 2982025459,
+  "lat": -36.8493310,
+  "lon": 174.7747684
+},
+{
+  "type": "node",
+  "id": 2982025460,
+  "lat": -36.8493336,
+  "lon": 174.7747840
+},
+{
+  "type": "node",
+  "id": 10181937348,
+  "lat": -36.8494407,
+  "lon": 174.7747037
+},
+{
+  "type": "node",
+  "id": 10181937360,
+  "lat": -36.8493833,
+  "lon": 174.7749657
+},
+{
+  "type": "node",
+  "id": 10181937361,
+  "lat": -36.8493309,
+  "lon": 174.7747548
+},
+{
+  "type": "node",
+  "id": 10181937362,
+  "lat": -36.8493322,
+  "lon": 174.7747407
+},
+{
+  "type": "node",
+  "id": 10181937363,
+  "lat": -36.8493355,
+  "lon": 174.7747291
+},
+{
+  "type": "node",
+  "id": 10181937364,
+  "lat": -36.8493406,
+  "lon": 174.7747192
+},
+{
+  "type": "node",
+  "id": 10181937365,
+  "lat": -36.8493469,
+  "lon": 174.7747119
+},
+{
+  "type": "node",
+  "id": 10181937366,
+  "lat": -36.8493566,
+  "lon": 174.7747076
+},
+{
+  "type": "node",
+  "id": 10181937367,
+  "lat": -36.8493702,
+  "lon": 174.7747053
+},
+{
+  "type": "node",
+  "id": 3390696347,
+  "lat": -36.8476180,
+  "lon": 174.7793921
+},
+{
+  "type": "node",
+  "id": 3390696348,
+  "lat": -36.8476372,
+  "lon": 174.7794676
+},
+{
+  "type": "node",
+  "id": 9596175629,
+  "lat": -36.8427855,
+  "lon": 174.7741812
+},
+{
+  "type": "node",
+  "id": 9596175630,
+  "lat": -36.8427738,
+  "lon": 174.7741855
+},
+{
+  "type": "node",
+  "id": 9596175631,
+  "lat": -36.8427683,
+  "lon": 174.7741623
+},
+{
+  "type": "node",
+  "id": 9596175632,
+  "lat": -36.8427801,
+  "lon": 174.7741581
+},
+{
+  "type": "node",
+  "id": 10725097503,
+  "lat": -36.8430201,
+  "lon": 174.7747429
+},
+{
+  "type": "node",
+  "id": 10725097504,
+  "lat": -36.8430102,
+  "lon": 174.7747518
+},
+{
+  "type": "node",
+  "id": 10725097505,
+  "lat": -36.8429990,
+  "lon": 174.7747321
+},
+{
+  "type": "node",
+  "id": 10725097506,
+  "lat": -36.8430090,
+  "lon": 174.7747233
+},
+{
+  "type": "node",
+  "id": 3390696332,
+  "lat": -36.8474348,
+  "lon": 174.7792656
+},
+{
+  "type": "node",
+  "id": 3390696334,
+  "lat": -36.8474698,
+  "lon": 174.7794031
+},
+{
+  "type": "node",
+  "id": 3390696335,
+  "lat": -36.8475075,
+  "lon": 174.7793881
+},
+{
+  "type": "node",
+  "id": 3390696339,
+  "lat": -36.8475154,
+  "lon": 174.7792336
+},
+{
+  "type": "node",
+  "id": 3390696340,
+  "lat": -36.8475358,
+  "lon": 174.7793137
+},
+{
+  "type": "node",
+  "id": 3390696341,
+  "lat": -36.8475195,
+  "lon": 174.7794350
+},
+{
+  "type": "node",
+  "id": 3390696343,
+  "lat": -36.8475691,
+  "lon": 174.7793004
+},
+{
+  "type": "node",
+  "id": 3390696344,
+  "lat": -36.8475543,
+  "lon": 174.7794212
+},
+{
+  "type": "node",
+  "id": 3390696345,
+  "lat": -36.8475947,
+  "lon": 174.7794013
+},
+{
+  "type": "node",
+  "id": 3390696346,
+  "lat": -36.8475727,
+  "lon": 174.7794933
+}
+
+  ]
+}

@@ -47,10 +47,9 @@ public class RuntimeOsmPoiVisualizer : MonoBehaviour
             return;
         }
 
-        string cityDir = Path.Combine(Application.streamingAssetsPath, "Cities", city.cityCode);
-        string poiPath = Path.Combine(cityDir, "poi.json");
-        string fuelPath = Path.Combine(cityDir, "fuel.json");
-        string buildingsJsonPath = Path.ChangeExtension(city.GetBuildingsPath(), ".json");
+        string poiPath = RuntimeCityContentStore.ResolveReadPath(city, "poi.json");
+        string fuelPath = RuntimeCityContentStore.ResolveReadPath(city, "fuel.json");
+        string buildingsJsonPath = RuntimeCityContentStore.ResolveReadPath(city, "buildings.json");
 
         var parent = new GameObject("OSM_POIs");
         parent.transform.SetParent(transform, false);

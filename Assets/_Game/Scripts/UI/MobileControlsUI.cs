@@ -28,8 +28,8 @@ public class MobileControlsUI : MonoBehaviour
         SetupHoldButton(brakeButton, () => braking = true, () => braking = false);
         SetupHoldButton(steerLeftButton, () => left = true, () => left = false);
         SetupHoldButton(steerRightButton, () => right = true, () => right = false);
-        if (shiftUpButton != null) shiftUpButton.onClick.AddListener(() => { if (busController != null && busController.transmissionData != null) busController.transmissionData.ShiftUp(); });
-        if (shiftDownButton != null) shiftDownButton.onClick.AddListener(() => { if (busController != null && busController.transmissionData != null) busController.transmissionData.ShiftDown(); });
+        if (shiftUpButton != null) shiftUpButton.onClick.AddListener(SelectDriveOrShiftUp);
+        if (shiftDownButton != null) shiftDownButton.onClick.AddListener(ShiftDownOrSelectReverse);
         if (retarderButton != null) retarderButton.onClick.AddListener(() => { if (busController != null) busController.ToggleRetarder(); });
         if (hornButton != null) hornButton.onClick.AddListener(() => { if (busController != null) busController.HonkHorn(); });
         if (doorButton != null) doorButton.onClick.AddListener(() => PassengerManager.Instance?.RequestDoors());
@@ -172,6 +172,20 @@ public class MobileControlsUI : MonoBehaviour
     {
         if (busController != null && busController.isActiveAndEnabled) return;
         busController = FindFirstObjectByType<BusController>();
+    }
+
+    void SelectDriveOrShiftUp()
+    {
+        if (busController == null || busController.transmissionData == null) return;
+        if (busController.transmissionData.currentGear < 0) busController.SelectReverse(false);
+        else busController.transmissionData.ShiftUp();
+    }
+
+    void ShiftDownOrSelectReverse()
+    {
+        if (busController == null || busController.transmissionData == null || busController.currentSpeedKmh >= 1f) return;
+        if (busController.transmissionData.currentGear == 0) busController.SelectReverse(true);
+        else busController.transmissionData.ShiftDown();
     }
 
     public void ApplyControlPreferences(RealBusSettings settings)

@@ -21,6 +21,8 @@ public class BusController : MonoBehaviour
     [Header("Weight & Dynamics")]
     public float centerOfMassY = 1.6f;
     public float antiRollForce = 8000f;
+    [Tooltip("Low-speed torque-converter assistance used to get a heavy bus moving from rest.")]
+    [Min(0f)] public float launchAssistAcceleration = 0.85f;
 
     [Header("Data")]
     public EngineSystem engineData;
@@ -88,6 +90,7 @@ public class BusController : MonoBehaviour
         if (runtimeTransmissionInstance == null && transmissionData != null)
             ApplyRuntimeTransmission(transmissionData);
         rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+        ConfigureSuspensionForVehicleMass();
 
         CaptureModelRootBasePosition();
     }
@@ -164,11 +167,55 @@ public class BusController : MonoBehaviour
         float torque = engineData.GetTorque(currentRPM) * transmissionData.GetCurrentRatio()
             * transmissionData.differentialRatio / count;
         float throttle = currentRPM >= engineData.maxRPM ? 0f : Mathf.Min(Mathf.Clamp01(throttleInput), Mathf.Clamp01(AssistThrottleLimit));
+        bool driveAllowed = !parkingBrakeActive && !ServiceBrakeInterlock && !FuelDepleted && brakeInput <= 0f;
         foreach (var wheel in driveWheels)
         {
             if (wheel == null) continue;
-            wheel.motorTorque = parkingBrakeActive || ServiceBrakeInterlock || FuelDepleted || brakeInput > 0f ? 0f : torque * throttle;
+            wheel.motorTorque = driveAllowed ? torque * throttle : 0f;
         }
+
+        // Heavy buses use a torque converter to provide strong launch torque.
+        // This also prevents WheelCollider static-friction stalls at route spawn.
+        // Gear index 0 is first/Drive in TransmissionSystem; negative is Reverse.
+        if (driveAllowed && throttle > .01f && currentSpeedKmh < 6f && HasGroundedDriveWheel())
+        {
+            float fade = 1f - currentSpeedKmh / 6f;
+            float direction = transmissionData.currentGear < 0 ? -1f : 1f;
+            rb.AddForce(transform.forward * (direction * rb.mass * launchAssistAcceleration * throttle * fade), ForceMode.Force);
+        }
+    }
+
+    /// <summary>
+    /// Sizes suspension for the actual vehicle mass. The imported four-wheel
+    /// prefabs previously used car-strength springs, allowing a 12-ton chassis
+    /// to bottom out on its BoxCollider and stall against the road.
+    /// </summary>
+    public void ConfigureSuspensionForVehicleMass()
+    {
+        int wheelCount = CountWheels(allWheels);
+        if (rb == null || wheelCount == 0) return;
+
+        float loadPerWheel = rb.mass * Physics.gravity.magnitude / wheelCount;
+        foreach (WheelCollider wheel in allWheels)
+        {
+            if (wheel == null) continue;
+            float desiredCompression = Mathf.Max(0.06f, wheel.suspensionDistance * 0.45f);
+            float requiredSpring = Mathf.Clamp(loadPerWheel / desiredCompression, 60000f, 320000f);
+            JointSpring spring = wheel.suspensionSpring;
+            spring.spring = Mathf.Max(spring.spring, requiredSpring);
+            spring.damper = Mathf.Max(spring.damper, 2f * Mathf.Sqrt(spring.spring * Mathf.Max(20f, wheel.mass)) * 0.65f);
+            spring.targetPosition = Mathf.Clamp(spring.targetPosition, 0.45f, 0.6f);
+            wheel.suspensionSpring = spring;
+            wheel.ConfigureVehicleSubsteps(5f, 12, 15);
+        }
+    }
+
+    bool HasGroundedDriveWheel()
+    {
+        if (driveWheels == null) return false;
+        foreach (WheelCollider wheel in driveWheels)
+            if (wheel != null && wheel.isGrounded) return true;
+        return false;
     }
 
     public static int CountWheels(WheelCollider[] wheels)
@@ -339,6 +386,7 @@ public class BusController : MonoBehaviour
         {
             rb.mass = Mathf.Max(1f, spec.rigidbodyMassKg);
             rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+            ConfigureSuspensionForVehicleMass();
         }
 
         ApplyRuntimeEngine(spec.engineProfile);
