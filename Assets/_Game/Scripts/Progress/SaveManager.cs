@@ -412,7 +412,11 @@ public class SaveManager : MonoBehaviour
 
     void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (lastAppliedSave != null)
+        // GameState and CityManager survive scene changes. Reapplying the save here
+        // used to overwrite a country the player had just selected with the country
+        // from the previous save (usually Kenya). Only restore when a newly-created
+        // GameState genuinely has no selection yet.
+        if (lastAppliedSave != null && GameState.Instance != null && GameState.Instance.selectedCountry == null)
             ApplySelectionState(lastAppliedSave);
     }
 

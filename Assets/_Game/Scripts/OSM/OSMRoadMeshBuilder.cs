@@ -89,6 +89,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     private bool medianBarrierLoadAttempted;
     private PhysicsMaterial runtimeRoadPhysicMaterial;
     private Material runtimeBoundaryMaterial;
+    private static Texture2D runtimeAsphaltTexture;
 
     void Awake()
     {
@@ -159,20 +160,18 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (colliderMaterial != null)
                 mc.sharedMaterial = colliderMaterial;
 
+            // The generated surface is always retained as a reliable base. Imported
+            // road packs are decorative overlays and must never make roads vanish.
+            var mf = roadObj.AddComponent<MeshFilter>();
+            var mr = roadObj.AddComponent<MeshRenderer>();
+            mf.mesh = mesh;
+            mr.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
+            mr.enabled = renderRoadSurface;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            mr.receiveShadows = false;
+
             if (ShouldUseRoadModelVisuals())
-            {
                 BuildRoadModelVisuals(roadObj.transform, points, width);
-            }
-            else
-            {
-                var mf = roadObj.AddComponent<MeshFilter>();
-                var mr = roadObj.AddComponent<MeshRenderer>();
-                mf.mesh = mesh;
-                mr.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
-                mr.enabled = renderRoadSurface;
-                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                mr.receiveShadows = false;
-            }
 
             if (!string.IsNullOrEmpty(roadTag) && IsValidTag(roadTag))
                 roadObj.tag = roadTag;
@@ -677,6 +676,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0f);
         if (mat.HasProperty("_Metallic"))   mat.SetFloat("_Metallic",   0f);
         if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.05f);
+        Texture2D asphalt = GetOrCreateAsphaltTexture();
+        if (mat.HasProperty("_BaseMap")) { mat.SetTexture("_BaseMap", asphalt); mat.SetTextureScale("_BaseMap", new Vector2(1f, 2f)); }
+        if (mat.HasProperty("_MainTex")) { mat.SetTexture("_MainTex", asphalt); mat.SetTextureScale("_MainTex", new Vector2(1f, 2f)); }
 
         // FIX: disable back-face culling so the mesh is visible regardless of
         // winding order issues and from below (debug camera angles, etc.)
@@ -688,5 +690,30 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         if (mat.HasProperty("_ZWrite"))  mat.SetFloat("_ZWrite",  1f);
 
         return mat;
+    }
+
+    public static Texture2D GetOrCreateAsphaltTexture()
+    {
+        if (runtimeAsphaltTexture != null) return runtimeAsphaltTexture;
+        const int size = 128;
+        runtimeAsphaltTexture = new Texture2D(size, size, TextureFormat.RGB24, true)
+        {
+            name = "Generated Asphalt",
+            wrapMode = TextureWrapMode.Repeat,
+            filterMode = FilterMode.Bilinear,
+            hideFlags = HideFlags.DontSave
+        };
+        var pixels = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            uint hash = (uint)(x * 374761393 + y * 668265263); hash = (hash ^ (hash >> 13)) * 1274126177u;
+            byte grain = (byte)(43 + (hash & 19));
+            if ((hash & 255) < 5) grain = (byte)Mathf.Max(24, grain - 16);
+            pixels[y * size + x] = new Color32(grain, grain, (byte)Mathf.Max(0, grain - 2), 255);
+        }
+        runtimeAsphaltTexture.SetPixels32(pixels);
+        runtimeAsphaltTexture.Apply(true, true);
+        return runtimeAsphaltTexture;
     }
 }

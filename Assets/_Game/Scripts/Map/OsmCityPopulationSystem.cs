@@ -226,9 +226,8 @@ public class OsmCityPopulationSystem : MonoBehaviour
         if (city == null || string.IsNullOrWhiteSpace(city.cityCode))
             return;
 
-        string cityDir = Path.Combine(Application.streamingAssetsPath, "Cities", city.cityCode);
-        SpawnPoiActivityFromResponse(LoadResponse(Path.Combine(cityDir, "poi.json")));
-        SpawnPoiActivityFromResponse(LoadResponse(Path.Combine(cityDir, "buildings.json")));
+        SpawnPoiActivityFromResponse(LoadResponse(RuntimeCityContentStore.ResolveReadPath(city, "poi.json")));
+        SpawnPoiActivityFromResponse(LoadResponse(RuntimeCityContentStore.ResolveReadPath(city, "buildings.json")));
     }
 
     void SpawnPoiActivityFromResponse(OverpassResponse response)

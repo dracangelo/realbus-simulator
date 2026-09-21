@@ -1,0 +1,1492 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-16T17:27:04Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "way",
+  "id": 47098909,
+  "nodes": [
+    600582420,
+    600582421,
+    600582422,
+    600582423,
+    600582420
+  ],
+  "tags": {
+    "addr:housenumber": "1234",
+    "addr:street": "North Halsted Street",
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "building": "roof",
+    "check_date": "2025-06-02",
+    "name": "Mobil"
+  }
+},
+{
+  "type": "way",
+  "id": 148902942,
+  "nodes": [
+    1619646457,
+    1619646458,
+    9462970516,
+    9462970514,
+    9463001418,
+    9463001420,
+    9463001421,
+    1619646456,
+    1619646455,
+    9463001422,
+    9462970513,
+    9463001419,
+    9462970515,
+    9463001417,
+    1619646457
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1004",
+    "addr:postcode": "60607",
+    "addr:state": "IL",
+    "addr:street": "South Desplaines Street",
+    "addr:street:name": "Desplaines",
+    "addr:street:prefix": "South",
+    "addr:street:type": "Street",
+    "amenity": "fuel",
+    "brand": "Citgo",
+    "brand:wikidata": "Q2974437",
+    "building": "roof",
+    "building:levels": "1",
+    "chicago:building_id": "369906",
+    "name": "Citgo",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 153273216,
+  "nodes": [
+    1659791105,
+    1659791180,
+    1659791255,
+    1659791157,
+    1659791105
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1221",
+    "addr:postcode": "60605",
+    "addr:state": "IL",
+    "addr:street": "South Wabash Avenue",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "building": "roof",
+    "chicago:building_id": "843353",
+    "name": "BP",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 209853412,
+  "nodes": [
+    2200129064,
+    13114217120,
+    13114217118,
+    13114217116,
+    2200129355,
+    2200129358,
+    13114217117,
+    13114217119,
+    13114217121,
+    2200129067,
+    2200129064
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1342",
+    "addr:postcode": "60642",
+    "addr:state": "IL",
+    "addr:street": "West Division Street",
+    "addr:street:name": "Division",
+    "addr:street:prefix": "West",
+    "addr:street:type": "Street",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "building": "roof",
+    "check_date": "2026-09-04",
+    "check_date:opening_hours": "2026-09-04",
+    "chicago:building_id": "321618",
+    "compressed_air": "no",
+    "fuel:diesel": "yes",
+    "name": "BP",
+    "opening_hours": "24/7",
+    "phone": "+1 773-772-9647",
+    "self_service": "yes",
+    "website": "https://map.bp.com/en-US/US/gas-station/chicago/bp/26990803463346064200100000000000"
+  }
+},
+{
+  "type": "way",
+  "id": 209853589,
+  "nodes": [
+    2200129031,
+    2200129272,
+    2200129278,
+    2200129033,
+    2200129031
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1400",
+    "addr:postcode": "60642",
+    "addr:state": "IL",
+    "addr:street": "West Division Street",
+    "addr:street:name": "Division",
+    "addr:street:prefix": "West",
+    "addr:street:type": "Street",
+    "amenity": "fuel",
+    "atm": "yes",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "building": "roof",
+    "check_date": "2026-09-04",
+    "check_date:opening_hours": "2026-09-04",
+    "chicago:building_id": "321707",
+    "compressed_air": "yes",
+    "name": "Shell",
+    "opening_hours": "24/7",
+    "phone": "+1 773-235-4477",
+    "self_service": "yes",
+    "toilets": "yes",
+    "website": "https://find.shell.com/us/fuel/10008844-1400-w-division-st/en_US"
+  }
+},
+{
+  "type": "way",
+  "id": 210225423,
+  "nodes": [
+    2203195671,
+    2203195632,
+    2203195652,
+    2203195679,
+    2203195671
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "2477",
+    "addr:postcode": "60616",
+    "addr:state": "IL",
+    "addr:street": "South Archer Avenue",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "building": "roof",
+    "chicago:building_id": "858454",
+    "name": "Shell",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 210258600,
+  "nodes": [
+    2203473191,
+    2203473676,
+    2203473686,
+    2203473193,
+    2203473191
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1741",
+    "addr:postcode": "60616",
+    "addr:state": "IL",
+    "addr:street": "South Ruble Street",
+    "addr:street:name": "Ruble",
+    "addr:street:prefix": "South",
+    "addr:street:type": "Street",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "building": "roof",
+    "check_date": "2025-11-25",
+    "chicago:building_id": "378127",
+    "name": "Shell",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 210269000,
+  "nodes": [
+    2203571326,
+    2203571642,
+    2203571645,
+    2203571462,
+    2203571468,
+    2203571330,
+    2203571326
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1001",
+    "addr:postcode": "60607",
+    "addr:state": "IL",
+    "addr:street": "West Jackson Boulevard",
+    "addr:street:name": "Jackson",
+    "addr:street:prefix": "West",
+    "addr:street:type": "Boulevard",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "building": "retail",
+    "building:levels": "1",
+    "chicago:building_id": "361121",
+    "name": "Shell",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 210270323,
+  "nodes": [
+    2203579214,
+    2203579270,
+    2203579272,
+    2203579215,
+    2203579214
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "335",
+    "addr:postcode": "60607",
+    "addr:state": "IL",
+    "addr:street": "North Ogden Avenue",
+    "addr:street:name": "Ogden",
+    "addr:street:prefix": "North",
+    "addr:street:type": "Avenue",
+    "amenity": "fuel",
+    "brand": "Marathon",
+    "brand:wikidata": "Q458363",
+    "building": "roof",
+    "chicago:building_id": "351963",
+    "layer": "1",
+    "name": "Marathon",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 210270773,
+  "nodes": [
+    2203570823,
+    2203570881,
+    2203570891,
+    2203570835,
+    2203570823
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "building": "roof",
+    "chicago:building_id": "362230",
+    "name": "Shell"
+  }
+},
+{
+  "type": "way",
+  "id": 210308543,
+  "nodes": [
+    2203946574,
+    2203946679,
+    2203946697,
+    2203946591,
+    2203946574
+  ],
+  "tags": {
+    "access": "private",
+    "addr:city": "Chicago",
+    "addr:housenumber": "1150",
+    "addr:postcode": "60642",
+    "addr:state": "IL",
+    "addr:street": "North North Branch Street",
+    "amenity": "fuel",
+    "building": "roof",
+    "chicago:building_id": "323386",
+    "name": "City of Chicago Fuel Site 010",
+    "operator": "City of Chicago"
+  }
+},
+{
+  "type": "way",
+  "id": 210539354,
+  "nodes": [
+    2206203056,
+    2206203117,
+    2206203120,
+    2206203059,
+    2206203056
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "444",
+    "addr:postcode": "60616",
+    "addr:state": "IL",
+    "addr:street": "West 26th Street",
+    "addr:street:name": "26th",
+    "addr:street:prefix": "West",
+    "addr:street:type": "Street",
+    "amenity": "fuel",
+    "brand": "Gas Depot",
+    "building": "yes",
+    "chicago:building_id": "395166",
+    "name": "Gas Depot",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 210679089,
+  "nodes": [
+    2207599028,
+    2207599053,
+    2207599060,
+    2207599030,
+    2207599028
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "631",
+    "addr:postcode": "60654",
+    "addr:state": "IL",
+    "addr:street": "North LaSalle Drive",
+    "addr:street:name": "La Salle",
+    "addr:street:prefix": "North",
+    "addr:street:type": "Boulevard",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "building": "roof",
+    "chicago:building_id": "344106",
+    "name": "BP",
+    "operator": "BP",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 210679889,
+  "nodes": [
+    2207601180,
+    2207601221,
+    2207601223,
+    2207601182,
+    2207601180
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "350",
+    "addr:postcode": "60610",
+    "addr:state": "IL",
+    "addr:street": "West Chicago Avenue",
+    "addr:street:name": "Chicago",
+    "addr:street:prefix": "West",
+    "addr:street:type": "Avenue",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "building": "roof",
+    "check_date": "2025-10-31",
+    "chicago:building_id": "337316",
+    "compressed_air": "yes",
+    "name": "Shell",
+    "operator": "Shell",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1037810259,
+  "nodes": [
+    9559059039,
+    9559059040,
+    9559059041,
+    9559059042,
+    9559059039
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1121",
+    "addr:postcode": "60607",
+    "addr:state": "IL",
+    "addr:street": "South Jefferson Street",
+    "amenity": "fuel",
+    "brand": "Mobil",
+    "brand:wikidata": "Q109676002",
+    "building": "roof",
+    "layer": "1",
+    "name": "Mobil",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1041728820,
+  "nodes": [
+    9590312996,
+    9913028727,
+    9590312997,
+    11782596423,
+    11782596424,
+    9913425821,
+    11782599313,
+    1572294897,
+    1602675892,
+    1572294887,
+    9590312998,
+    13081146461,
+    12095748458,
+    12095748457,
+    9590312996
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "50",
+    "addr:postcode": "60605",
+    "addr:state": "IL",
+    "addr:street": "West Ida B. Wells Drive",
+    "addr:street:name": "Congress",
+    "addr:street:prefix": "West",
+    "addr:street:type": "PKWY",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "changing_table": "no",
+    "compressed_air": "no",
+    "landuse": "retail",
+    "name": "BP",
+    "opening_hours": "24/7",
+    "self_service": "yes",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1108539334,
+  "nodes": [
+    10142832659,
+    10142832660,
+    10142832661,
+    10142832662,
+    10142832663,
+    10142832659
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "750",
+    "addr:postcode": "60654",
+    "addr:state": "IL",
+    "addr:street": "North Wells Street",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "compressed_air": "yes",
+    "name": "BP",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1135008625,
+  "nodes": [
+    10580510524,
+    9987467018,
+    9987432816,
+    10580510525,
+    10580510526,
+    9987432815,
+    9987467019,
+    10580510527,
+    10580510524
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "735",
+    "addr:postcode": "60654",
+    "addr:state": "IL",
+    "addr:street": "West Division Street",
+    "amenity": "fuel",
+    "brand": "Exxon",
+    "brand:wikidata": "Q109675651",
+    "building": "roof",
+    "name": "Exxon",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1395634850,
+  "nodes": [
+    12918529975,
+    12918529976,
+    12918529971,
+    5494930517,
+    12918529973,
+    12918529974,
+    12918529964,
+    2090518222,
+    12918529975
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "130",
+    "addr:postcode": "60614",
+    "addr:state": "IL",
+    "addr:street": "West North Avenue",
+    "addr:street:name": "North",
+    "addr:street:prefix": "West",
+    "addr:street:type": "Avenue",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "chicago:building_id": "301852",
+    "name": "Shell",
+    "self_service": "yes",
+    "source": "Bing 2012"
+  }
+},
+{
+  "type": "way",
+  "id": 1395634852,
+  "nodes": [
+    12918529978,
+    2090518242,
+    13137244451,
+    2090518243,
+    13137244448,
+    13137244450,
+    2090518246,
+    12918529977,
+    12918529980,
+    3772855117,
+    12918529982,
+    13137244313,
+    12918529983,
+    12918529984,
+    12918529985,
+    12918529986,
+    12918529987,
+    12918529978
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1647",
+    "addr:postcode": "60614",
+    "addr:state": "IL",
+    "addr:street": "North LaSalle Drive",
+    "addr:street:name": "La Salle",
+    "addr:street:prefix": "North",
+    "addr:street:type": "Drive",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "chicago:building_id": "297422",
+    "landuse": "retail",
+    "name": "BP",
+    "self_service": "yes",
+    "source": "Bing 2012"
+  }
+},
+{
+  "type": "way",
+  "id": 1427624690,
+  "nodes": [
+    13124354213,
+    13124354241,
+    13124354240,
+    13124354235,
+    13124354238,
+    5650350874,
+    5650350877,
+    13124354212,
+    13124354214,
+    10968664604,
+    10968664603,
+    13124354213
+  ],
+  "tags": {
+    "addr:city": "Chicago",
+    "addr:housenumber": "1600",
+    "addr:postcode": "60642",
+    "addr:state": "IL",
+    "addr:street": "North Elston Avenue",
+    "addr:street:name": "Elston",
+    "addr:street:prefix": "North",
+    "addr:street:type": "Avenue",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "chicago:building_id": "303496",
+    "compressed_air": "yes",
+    "name": "BP",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2203579214,
+  "lat": 41.8877628,
+  "lon": -87.6611648
+},
+{
+  "type": "node",
+  "id": 2203579215,
+  "lat": 41.8877630,
+  "lon": -87.6609591
+},
+{
+  "type": "node",
+  "id": 2203579270,
+  "lat": 41.8878463,
+  "lon": -87.6611254
+},
+{
+  "type": "node",
+  "id": 2203579272,
+  "lat": 41.8878467,
+  "lon": -87.6609601
+},
+{
+  "type": "node",
+  "id": 2200129031,
+  "lat": 41.9035585,
+  "lon": -87.6630177
+},
+{
+  "type": "node",
+  "id": 2200129033,
+  "lat": 41.9035619,
+  "lon": -87.6629020
+},
+{
+  "type": "node",
+  "id": 2200129064,
+  "lat": 41.9035879,
+  "lon": -87.6621442
+},
+{
+  "type": "node",
+  "id": 2200129067,
+  "lat": 41.9035899,
+  "lon": -87.6620046
+},
+{
+  "type": "node",
+  "id": 2200129272,
+  "lat": 41.9036930,
+  "lon": -87.6630218
+},
+{
+  "type": "node",
+  "id": 2200129278,
+  "lat": 41.9036951,
+  "lon": -87.6629061
+},
+{
+  "type": "node",
+  "id": 2200129355,
+  "lat": 41.9037293,
+  "lon": -87.6621464
+},
+{
+  "type": "node",
+  "id": 2200129358,
+  "lat": 41.9037312,
+  "lon": -87.6620068
+},
+{
+  "type": "node",
+  "id": 13114217116,
+  "lat": 41.9037174,
+  "lon": -87.6621462
+},
+{
+  "type": "node",
+  "id": 13114217117,
+  "lat": 41.9037173,
+  "lon": -87.6620066
+},
+{
+  "type": "node",
+  "id": 13114217118,
+  "lat": 41.9036581,
+  "lon": -87.6621453
+},
+{
+  "type": "node",
+  "id": 13114217119,
+  "lat": 41.9036606,
+  "lon": -87.6620057
+},
+{
+  "type": "node",
+  "id": 13114217120,
+  "lat": 41.9036079,
+  "lon": -87.6621445
+},
+{
+  "type": "node",
+  "id": 13114217121,
+  "lat": 41.9036088,
+  "lon": -87.6620049
+},
+{
+  "type": "node",
+  "id": 5650350874,
+  "lat": 41.9112645,
+  "lon": -87.6628622
+},
+{
+  "type": "node",
+  "id": 5650350877,
+  "lat": 41.9111819,
+  "lon": -87.6630653
+},
+{
+  "type": "node",
+  "id": 10968664603,
+  "lat": 41.9107786,
+  "lon": -87.6623052
+},
+{
+  "type": "node",
+  "id": 10968664604,
+  "lat": 41.9107711,
+  "lon": -87.6630392
+},
+{
+  "type": "node",
+  "id": 13124354212,
+  "lat": 41.9111145,
+  "lon": -87.6632333
+},
+{
+  "type": "node",
+  "id": 13124354213,
+  "lat": 41.9113219,
+  "lon": -87.6627164
+},
+{
+  "type": "node",
+  "id": 13124354214,
+  "lat": 41.9111022,
+  "lon": -87.6632662
+},
+{
+  "type": "node",
+  "id": 13124354235,
+  "lat": 41.9112867,
+  "lon": -87.6628059
+},
+{
+  "type": "node",
+  "id": 13124354238,
+  "lat": 41.9112718,
+  "lon": -87.6628437
+},
+{
+  "type": "node",
+  "id": 13124354240,
+  "lat": 41.9112940,
+  "lon": -87.6627874
+},
+{
+  "type": "node",
+  "id": 13124354241,
+  "lat": 41.9113121,
+  "lon": -87.6627413
+},
+{
+  "type": "node",
+  "id": 2203195632,
+  "lat": 41.8471284,
+  "lon": -87.6460460
+},
+{
+  "type": "node",
+  "id": 2203195652,
+  "lat": 41.8471925,
+  "lon": -87.6462006
+},
+{
+  "type": "node",
+  "id": 2203195671,
+  "lat": 41.8473282,
+  "lon": -87.6456310
+},
+{
+  "type": "node",
+  "id": 2203195679,
+  "lat": 41.8473881,
+  "lon": -87.6457896
+},
+{
+  "type": "node",
+  "id": 2206203056,
+  "lat": 41.8456605,
+  "lon": -87.6386540
+},
+{
+  "type": "node",
+  "id": 2206203059,
+  "lat": 41.8456622,
+  "lon": -87.6384759
+},
+{
+  "type": "node",
+  "id": 2206203117,
+  "lat": 41.8457264,
+  "lon": -87.6386551
+},
+{
+  "type": "node",
+  "id": 2206203120,
+  "lat": 41.8457281,
+  "lon": -87.6384771
+},
+{
+  "type": "node",
+  "id": 2203473191,
+  "lat": 41.8577032,
+  "lon": -87.6434891
+},
+{
+  "type": "node",
+  "id": 2203473193,
+  "lat": 41.8577040,
+  "lon": -87.6433973
+},
+{
+  "type": "node",
+  "id": 2203473676,
+  "lat": 41.8578390,
+  "lon": -87.6434931
+},
+{
+  "type": "node",
+  "id": 2203473686,
+  "lat": 41.8578398,
+  "lon": -87.6434013
+},
+{
+  "type": "node",
+  "id": 2203570823,
+  "lat": 41.8767592,
+  "lon": -87.6568647
+},
+{
+  "type": "node",
+  "id": 2203570835,
+  "lat": 41.8767637,
+  "lon": -87.6566865
+},
+{
+  "type": "node",
+  "id": 2203570881,
+  "lat": 41.8768443,
+  "lon": -87.6568693
+},
+{
+  "type": "node",
+  "id": 2203570891,
+  "lat": 41.8768487,
+  "lon": -87.6566911
+},
+{
+  "type": "node",
+  "id": 2203571326,
+  "lat": 41.8773630,
+  "lon": -87.6524575
+},
+{
+  "type": "node",
+  "id": 2203571330,
+  "lat": 41.8773678,
+  "lon": -87.6521178
+},
+{
+  "type": "node",
+  "id": 2203571462,
+  "lat": 41.8774980,
+  "lon": -87.6523165
+},
+{
+  "type": "node",
+  "id": 2203571468,
+  "lat": 41.8775009,
+  "lon": -87.6521200
+},
+{
+  "type": "node",
+  "id": 2203571642,
+  "lat": 41.8777157,
+  "lon": -87.6524648
+},
+{
+  "type": "node",
+  "id": 2203571645,
+  "lat": 41.8777175,
+  "lon": -87.6523215
+},
+{
+  "type": "node",
+  "id": 1619646455,
+  "lat": 41.8691404,
+  "lon": -87.6440456
+},
+{
+  "type": "node",
+  "id": 1619646456,
+  "lat": 41.8691423,
+  "lon": -87.6439571
+},
+{
+  "type": "node",
+  "id": 1619646457,
+  "lat": 41.8695375,
+  "lon": -87.6440603
+},
+{
+  "type": "node",
+  "id": 1619646458,
+  "lat": 41.8695393,
+  "lon": -87.6439718
+},
+{
+  "type": "node",
+  "id": 9462970513,
+  "lat": 41.8692772,
+  "lon": -87.6440507
+},
+{
+  "type": "node",
+  "id": 9462970514,
+  "lat": 41.8694141,
+  "lon": -87.6439672
+},
+{
+  "type": "node",
+  "id": 9462970515,
+  "lat": 41.8694124,
+  "lon": -87.6440557
+},
+{
+  "type": "node",
+  "id": 9462970516,
+  "lat": 41.8694778,
+  "lon": -87.6439695
+},
+{
+  "type": "node",
+  "id": 9463001417,
+  "lat": 41.8694772,
+  "lon": -87.6440581
+},
+{
+  "type": "node",
+  "id": 9463001418,
+  "lat": 41.8693445,
+  "lon": -87.6439646
+},
+{
+  "type": "node",
+  "id": 9463001419,
+  "lat": 41.8693444,
+  "lon": -87.6440532
+},
+{
+  "type": "node",
+  "id": 9463001420,
+  "lat": 41.8692780,
+  "lon": -87.6439621
+},
+{
+  "type": "node",
+  "id": 9463001421,
+  "lat": 41.8692165,
+  "lon": -87.6439598
+},
+{
+  "type": "node",
+  "id": 9463001422,
+  "lat": 41.8692160,
+  "lon": -87.6440484
+},
+{
+  "type": "node",
+  "id": 9559059039,
+  "lat": 41.8682985,
+  "lon": -87.6419738
+},
+{
+  "type": "node",
+  "id": 9559059040,
+  "lat": 41.8682992,
+  "lon": -87.6418372
+},
+{
+  "type": "node",
+  "id": 9559059041,
+  "lat": 41.8685865,
+  "lon": -87.6418455
+},
+{
+  "type": "node",
+  "id": 9559059042,
+  "lat": 41.8685850,
+  "lon": -87.6419821
+},
+{
+  "type": "node",
+  "id": 1659791105,
+  "lat": 41.8671657,
+  "lon": -87.6255185
+},
+{
+  "type": "node",
+  "id": 1659791157,
+  "lat": 41.8668429,
+  "lon": -87.6255128
+},
+{
+  "type": "node",
+  "id": 1659791180,
+  "lat": 41.8671670,
+  "lon": -87.6253928
+},
+{
+  "type": "node",
+  "id": 1659791255,
+  "lat": 41.8668441,
+  "lon": -87.6253871
+},
+{
+  "type": "node",
+  "id": 1572294887,
+  "lat": 41.8759896,
+  "lon": -87.6293997
+},
+{
+  "type": "node",
+  "id": 1572294897,
+  "lat": 41.8759861,
+  "lon": -87.6296712
+},
+{
+  "type": "node",
+  "id": 1602675892,
+  "lat": 41.8759873,
+  "lon": -87.6296167
+},
+{
+  "type": "node",
+  "id": 9590312996,
+  "lat": 41.8757492,
+  "lon": -87.6293530
+},
+{
+  "type": "node",
+  "id": 9590312997,
+  "lat": 41.8757436,
+  "lon": -87.6295919
+},
+{
+  "type": "node",
+  "id": 9590312998,
+  "lat": 41.8759896,
+  "lon": -87.6293402
+},
+{
+  "type": "node",
+  "id": 9913028727,
+  "lat": 41.8757428,
+  "lon": -87.6293738
+},
+{
+  "type": "node",
+  "id": 9913425821,
+  "lat": 41.8757851,
+  "lon": -87.6296594
+},
+{
+  "type": "node",
+  "id": 11782596423,
+  "lat": 41.8757536,
+  "lon": -87.6296211
+},
+{
+  "type": "node",
+  "id": 11782596424,
+  "lat": 41.8757715,
+  "lon": -87.6296483
+},
+{
+  "type": "node",
+  "id": 11782599313,
+  "lat": 41.8758122,
+  "lon": -87.6296639
+},
+{
+  "type": "node",
+  "id": 12095748457,
+  "lat": 41.8757619,
+  "lon": -87.6293418
+},
+{
+  "type": "node",
+  "id": 12095748458,
+  "lat": 41.8757751,
+  "lon": -87.6293371
+},
+{
+  "type": "node",
+  "id": 13081146461,
+  "lat": 41.8757970,
+  "lon": -87.6293355
+},
+{
+  "type": "node",
+  "id": 2203946574,
+  "lat": 41.9024500,
+  "lon": -87.6549690
+},
+{
+  "type": "node",
+  "id": 2203946591,
+  "lat": 41.9025093,
+  "lon": -87.6548442
+},
+{
+  "type": "node",
+  "id": 2203946679,
+  "lat": 41.9027820,
+  "lon": -87.6552375
+},
+{
+  "type": "node",
+  "id": 2203946697,
+  "lat": 41.9028400,
+  "lon": -87.6551093
+},
+{
+  "type": "node",
+  "id": 600582420,
+  "lat": 41.9045480,
+  "lon": -87.6485439
+},
+{
+  "type": "node",
+  "id": 600582421,
+  "lat": 41.9045492,
+  "lon": -87.6482877
+},
+{
+  "type": "node",
+  "id": 600582422,
+  "lat": 41.9043929,
+  "lon": -87.6482865
+},
+{
+  "type": "node",
+  "id": 600582423,
+  "lat": 41.9043917,
+  "lon": -87.6485427
+},
+{
+  "type": "node",
+  "id": 2207601180,
+  "lat": 41.8967872,
+  "lon": -87.6376637
+},
+{
+  "type": "node",
+  "id": 2207601182,
+  "lat": 41.8967897,
+  "lon": -87.6373900
+},
+{
+  "type": "node",
+  "id": 2207601221,
+  "lat": 41.8968558,
+  "lon": -87.6376648
+},
+{
+  "type": "node",
+  "id": 2207601223,
+  "lat": 41.8968583,
+  "lon": -87.6373911
+},
+{
+  "type": "node",
+  "id": 10142832659,
+  "lat": 41.8964910,
+  "lon": -87.6347708
+},
+{
+  "type": "node",
+  "id": 10142832660,
+  "lat": 41.8961835,
+  "lon": -87.6347675
+},
+{
+  "type": "node",
+  "id": 9987432815,
+  "lat": 41.9034672,
+  "lon": -87.6475851
+},
+{
+  "type": "node",
+  "id": 9987432816,
+  "lat": 41.9033548,
+  "lon": -87.6474809
+},
+{
+  "type": "node",
+  "id": 9987467018,
+  "lat": 41.9033143,
+  "lon": -87.6475652
+},
+{
+  "type": "node",
+  "id": 9987467019,
+  "lat": 41.9034253,
+  "lon": -87.6476724
+},
+{
+  "type": "node",
+  "id": 10580510524,
+  "lat": 41.9032776,
+  "lon": -87.6476418
+},
+{
+  "type": "node",
+  "id": 10580510525,
+  "lat": 41.9033981,
+  "lon": -87.6473907
+},
+{
+  "type": "node",
+  "id": 10580510526,
+  "lat": 41.9035128,
+  "lon": -87.6474900
+},
+{
+  "type": "node",
+  "id": 10580510527,
+  "lat": 41.9033922,
+  "lon": -87.6477412
+},
+{
+  "type": "node",
+  "id": 2207599028,
+  "lat": 41.8934126,
+  "lon": -87.6323710
+},
+{
+  "type": "node",
+  "id": 2207599030,
+  "lat": 41.8934191,
+  "lon": -87.6318714
+},
+{
+  "type": "node",
+  "id": 2207599053,
+  "lat": 41.8934771,
+  "lon": -87.6323722
+},
+{
+  "type": "node",
+  "id": 2207599060,
+  "lat": 41.8934836,
+  "lon": -87.6318726
+},
+{
+  "type": "node",
+  "id": 10142832661,
+  "lat": 41.8961884,
+  "lon": -87.6342835
+},
+{
+  "type": "node",
+  "id": 10142832662,
+  "lat": 41.8964900,
+  "lon": -87.6342919
+},
+{
+  "type": "node",
+  "id": 10142832663,
+  "lat": 41.8964908,
+  "lon": -87.6346784
+},
+{
+  "type": "node",
+  "id": 2090518222,
+  "lat": 41.9115278,
+  "lon": -87.6329584
+},
+{
+  "type": "node",
+  "id": 2090518242,
+  "lat": 41.9123865,
+  "lon": -87.6329696
+},
+{
+  "type": "node",
+  "id": 2090518243,
+  "lat": 41.9123863,
+  "lon": -87.6328172
+},
+{
+  "type": "node",
+  "id": 2090518246,
+  "lat": 41.9124698,
+  "lon": -87.6326279
+},
+{
+  "type": "node",
+  "id": 3772855117,
+  "lat": 41.9129359,
+  "lon": -87.6328566
+},
+{
+  "type": "node",
+  "id": 5494930517,
+  "lat": 41.9112537,
+  "lon": -87.6329716
+},
+{
+  "type": "node",
+  "id": 12918529964,
+  "lat": 41.9115269,
+  "lon": -87.6329994
+},
+{
+  "type": "node",
+  "id": 12918529971,
+  "lat": 41.9112572,
+  "lon": -87.6328244
+},
+{
+  "type": "node",
+  "id": 12918529973,
+  "lat": 41.9112624,
+  "lon": -87.6329867
+},
+{
+  "type": "node",
+  "id": 12918529974,
+  "lat": 41.9112764,
+  "lon": -87.6329904
+},
+{
+  "type": "node",
+  "id": 12918529975,
+  "lat": 41.9115338,
+  "lon": -87.6325989
+},
+{
+  "type": "node",
+  "id": 12918529976,
+  "lat": 41.9112377,
+  "lon": -87.6325841
+},
+{
+  "type": "node",
+  "id": 12918529977,
+  "lat": 41.9124894,
+  "lon": -87.6325707
+},
+{
+  "type": "node",
+  "id": 12918529978,
+  "lat": 41.9123856,
+  "lon": -87.6330119
+},
+{
+  "type": "node",
+  "id": 12918529980,
+  "lat": 41.9129277,
+  "lon": -87.6328367
+},
+{
+  "type": "node",
+  "id": 12918529982,
+  "lat": 41.9129365,
+  "lon": -87.6328805
+},
+{
+  "type": "node",
+  "id": 12918529983,
+  "lat": 41.9129056,
+  "lon": -87.6329299
+},
+{
+  "type": "node",
+  "id": 12918529984,
+  "lat": 41.9128716,
+  "lon": -87.6329589
+},
+{
+  "type": "node",
+  "id": 12918529985,
+  "lat": 41.9128477,
+  "lon": -87.6329764
+},
+{
+  "type": "node",
+  "id": 12918529986,
+  "lat": 41.9128147,
+  "lon": -87.6329905
+},
+{
+  "type": "node",
+  "id": 12918529987,
+  "lat": 41.9127748,
+  "lon": -87.6329969
+},
+{
+  "type": "node",
+  "id": 13137244313,
+  "lat": 41.9129223,
+  "lon": -87.6329109
+},
+{
+  "type": "node",
+  "id": 13137244448,
+  "lat": 41.9124080,
+  "lon": -87.6328185
+},
+{
+  "type": "node",
+  "id": 13137244450,
+  "lat": 41.9124484,
+  "lon": -87.6326940
+},
+{
+  "type": "node",
+  "id": 13137244451,
+  "lat": 41.9123864,
+  "lon": -87.6328809
+}
+
+  ]
+}

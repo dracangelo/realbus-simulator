@@ -24,11 +24,9 @@ public class OSMLoader : MonoBehaviour
 
     IEnumerator LoadFromStreamingAssets()
     {
-        string xmlPath = CityManager.Instance != null
-            ? CityManager.Instance.activeCity.GetRoadsPath()
-            : Path.Combine(Application.streamingAssetsPath, "Cities/NBO/roads.xml");
-        string jsonPath = Path.ChangeExtension(xmlPath, ".json");
-
+        CityDefinition city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        string jsonPath = RuntimeCityContentStore.ResolveReadPath(city, "roads.json");
+        string xmlPath = RuntimeCityContentStore.ResolveReadPath(city, "roads.xml");
         string preferredPath = File.Exists(jsonPath) ? jsonPath : xmlPath;
         Debug.Log($"OSM: Loading from {preferredPath}");
 

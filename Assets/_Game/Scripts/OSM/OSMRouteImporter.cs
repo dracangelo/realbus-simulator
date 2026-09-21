@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Networking;
+using System.IO;
 
 /// <summary>
 /// Runtime component that fetches OSM bus route data and converts it into
@@ -117,7 +118,7 @@ public class OSMRouteImporter : MonoBehaviour
             yield break;
         }
 
-        _converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+        _converter = EnsureConverter(city);
         importInProgress = true;
         importComplete   = false;
         importedRoutes.Clear();
@@ -129,7 +130,7 @@ public class OSMRouteImporter : MonoBehaviour
         string roadsQuery = OverpassQueryBuilder.RoadsQuery(
             city.minLat, city.minLon, city.maxLat, city.maxLon, roadsTimeoutSec);
 
-        string roadsJson = localRoadsJson != null ? localRoadsJson.text : null;
+        string roadsJson = localRoadsJson != null ? localRoadsJson.text : ReadDownloadedOrBundled(city, "roads.json");
         if (roadsJson == null) yield return FetchOverpass(roadsQuery, json => roadsJson = json);
 
         if (string.IsNullOrEmpty(roadsJson))
@@ -153,7 +154,7 @@ public class OSMRouteImporter : MonoBehaviour
         string routesQuery = OverpassQueryBuilder.BusRoutesQuery(
             city.minLat, city.minLon, city.maxLat, city.maxLon, routesTimeoutSec);
 
-        string routesJson = localRoutesJson != null ? localRoutesJson.text : null;
+        string routesJson = localRoutesJson != null ? localRoutesJson.text : ReadDownloadedOrBundled(city, "routes.json");
         if (routesJson == null) yield return FetchOverpass(routesQuery, json => routesJson = json);
 
         if (string.IsNullOrEmpty(routesJson))
@@ -181,7 +182,8 @@ public class OSMRouteImporter : MonoBehaviour
                 accepted.Add(route);
             yield return null;
         }
-        parsedRoutes = applyRouteFilter ? BusRouteParser.FilterRoutes(accepted) : accepted;
+        bool filterImportedRoutes = applyRouteFilter && !IsExplicitSingleRouteDownload(city);
+        parsedRoutes = filterImportedRoutes ? BusRouteParser.FilterRoutes(accepted) : accepted;
         if (generateReturnRoutes)
         {
             var returns = BusRouteParser.GenerateReturnRoutes(parsedRoutes);
@@ -192,7 +194,7 @@ public class OSMRouteImporter : MonoBehaviour
                     accepted.Add(route);
                 yield return null;
             }
-            parsedRoutes.AddRange(applyRouteFilter ? BusRouteParser.FilterRoutes(accepted) : accepted);
+            parsedRoutes.AddRange(filterImportedRoutes ? BusRouteParser.FilterRoutes(accepted) : accepted);
         }
 
         // ── Step 8: Convert to BusRoute ScriptableObjects ─────────────
@@ -290,6 +292,32 @@ public class OSMRouteImporter : MonoBehaviour
     }
 
     // ── Helpers ────────────────────────────────────────────────────────
+
+    static CoordinateConverter EnsureConverter(CityDefinition city)
+    {
+        CoordinateConverter converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+        if (converter == null) converter = new GameObject("CoordinateConverter_RuntimeRoutes").AddComponent<CoordinateConverter>();
+        converter.SetCityOrigin(city);
+        return converter;
+    }
+
+    static string ReadDownloadedOrBundled(CityDefinition city, string fileName)
+    {
+        string path = RuntimeCityContentStore.ResolveReadPath(city, fileName);
+        try { return File.Exists(path) ? File.ReadAllText(path) : null; }
+        catch (IOException exception)
+        {
+            Debug.LogWarning($"[OSMRouteImporter] Could not read {path}: {exception.Message}");
+            return null;
+        }
+    }
+
+    static bool IsExplicitSingleRouteDownload(CityDefinition city)
+    {
+        string marker = RuntimeCityContentStore.WritablePath(city, "routes.mode");
+        try { return File.Exists(marker) && string.Equals(File.ReadAllText(marker).Trim(), "single", System.StringComparison.OrdinalIgnoreCase); }
+        catch (IOException) { return false; }
+    }
 
     void SetStatus(string msg)
     {

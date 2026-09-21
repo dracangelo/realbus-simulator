@@ -218,10 +218,10 @@ public static class ImportedModelWiringGenerator
         float rearZ = bounds.center.z - length * 0.31f;
         GameObject wheelRoot = new GameObject("WheelColliders");
         wheelRoot.transform.SetParent(root.transform, false);
-        WheelCollider frontLeft = CreateWheel(wheelRoot.transform, "FrontLeft", new Vector3(leftX, radius, frontZ), radius);
-        WheelCollider frontRight = CreateWheel(wheelRoot.transform, "FrontRight", new Vector3(rightX, radius, frontZ), radius);
-        WheelCollider rearLeft = CreateWheel(wheelRoot.transform, "RearLeft", new Vector3(leftX, radius, rearZ), radius);
-        WheelCollider rearRight = CreateWheel(wheelRoot.transform, "RearRight", new Vector3(rightX, radius, rearZ), radius);
+        WheelCollider frontLeft = CreateWheel(wheelRoot.transform, "FrontLeft", new Vector3(leftX, radius, frontZ), radius, body.mass, 4);
+        WheelCollider frontRight = CreateWheel(wheelRoot.transform, "FrontRight", new Vector3(rightX, radius, frontZ), radius, body.mass, 4);
+        WheelCollider rearLeft = CreateWheel(wheelRoot.transform, "RearLeft", new Vector3(leftX, radius, rearZ), radius, body.mass, 4);
+        WheelCollider rearRight = CreateWheel(wheelRoot.transform, "RearRight", new Vector3(rightX, radius, rearZ), radius, body.mass, 4);
 
         BusController bus = root.AddComponent<BusController>();
         bus.engineData = AssetDatabase.LoadAssetAtPath<EngineSystem>("Assets/_Game/ScriptableObjects/EngineSystem.asset");
@@ -434,7 +434,7 @@ public static class ImportedModelWiringGenerator
         collider.size = new Vector3(bounds.size.x * 0.9f, bounds.size.y * 0.82f, bounds.size.z * 0.92f);
     }
 
-    static WheelCollider CreateWheel(Transform parent, string name, Vector3 position, float radius)
+    static WheelCollider CreateWheel(Transform parent, string name, Vector3 position, float radius, float vehicleMass, int wheelCount)
     {
         GameObject wheelObject = new GameObject(name);
         wheelObject.transform.SetParent(parent, false);
@@ -445,10 +445,12 @@ public static class ImportedModelWiringGenerator
         wheel.suspensionDistance = Mathf.Clamp(radius * 0.55f, 0.18f, 0.32f);
         wheel.forceAppPointDistance = Mathf.Clamp(radius * 0.4f, 0.12f, 0.25f);
         JointSpring spring = wheel.suspensionSpring;
-        spring.spring = 42000f;
-        spring.damper = 5200f;
+        float loadPerWheel = Mathf.Max(1000f, vehicleMass) * Physics.gravity.magnitude / Mathf.Max(1, wheelCount);
+        spring.spring = Mathf.Clamp(loadPerWheel / Mathf.Max(0.06f, wheel.suspensionDistance * 0.45f), 60000f, 320000f);
+        spring.damper = Mathf.Max(5200f, 2f * Mathf.Sqrt(spring.spring * wheel.mass) * 0.65f);
         spring.targetPosition = 0.5f;
         wheel.suspensionSpring = spring;
+        wheel.ConfigureVehicleSubsteps(5f, 12, 15);
         return wheel;
     }
 

@@ -1,0 +1,693 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-16T17:26:02Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 293657146,
+  "lat": -27.4552603,
+  "lon": 153.0072205,
+  "tags": {
+    "addr:housenumber": "153",
+    "addr:street": "Musgrave Road",
+    "amenity": "fuel",
+    "name": "Quill Petroleum",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 304154478,
+  "lat": -27.4529055,
+  "lon": 153.0111692,
+  "tags": {
+    "amenity": "fuel",
+    "name": "Tony Reed Mechanical Repairs"
+  }
+},
+{
+  "type": "node",
+  "id": 311708457,
+  "lat": -27.4985916,
+  "lon": 153.0280321,
+  "tags": {
+    "addr:housenumber": "200",
+    "addr:postcode": "4102",
+    "addr:state": "QLD",
+    "addr:street": "Annerley Road",
+    "addr:suburb": "Dutton Park",
+    "amenity": "fuel",
+    "atm": "no",
+    "branch": "Dutton Park",
+    "brand": "Caltex",
+    "brand:wikidata": "Q277470",
+    "capacity": "8",
+    "compressed_air": "yes",
+    "fuel:diesel": "yes",
+    "fuel:e10": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_98": "yes",
+    "name": "Caltex",
+    "opening_hours": "Mo-Sa 05:00-22:00; Su 06:00-21:00",
+    "phone": "+61 7 3846 5375",
+    "self_service": "yes",
+    "toilets": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 327131035,
+  "lat": -27.4836057,
+  "lon": 153.0199268,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Liberty",
+    "brand:wikidata": "Q106687078",
+    "check_date": "2026-04-06",
+    "name": "Liberty"
+  }
+},
+{
+  "type": "node",
+  "id": 3480575513,
+  "lat": -27.4795507,
+  "lon": 153.0437028,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "building:levels": "1",
+    "compressed_air": "yes",
+    "name": "BP",
+    "website": "https://map.bp.com/en-AU/AU/gas-station/east-brisbane/bp-east-brisbane/1460"
+  }
+},
+{
+  "type": "node",
+  "id": 4417129115,
+  "lat": -27.4454324,
+  "lon": 153.0294657,
+  "tags": {
+    "addr:housenumber": "44",
+    "addr:postcode": "4006",
+    "addr:street": "Bowen Bridge Road",
+    "addr:suburb": "Herston",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "brand:wikipedia": "en:BP",
+    "name": "BP Bowen Bridge",
+    "opening_hours": "24/7",
+    "operator": "BP",
+    "website": "https://map.bp.com/en-AU/AU/gas-station/herston/bp-bowen-bridge/1410"
+  }
+},
+{
+  "type": "node",
+  "id": 5187489156,
+  "lat": -27.4460071,
+  "lon": 152.9974912,
+  "tags": {
+    "addr:housenumber": "161",
+    "addr:postcode": "4060",
+    "addr:state": "QLD",
+    "addr:street": "Waterworks Road",
+    "addr:suburb": "Ashgrove",
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "name": "BP Ashgrove",
+    "operator": "BP",
+    "website": "https://map.bp.com/en-AU/AU/gas-station/ashgrove/bp-ashgrove-waterworks-rd/1671"
+  }
+},
+{
+  "type": "node",
+  "id": 11984814903,
+  "lat": -27.4463656,
+  "lon": 153.0422056,
+  "tags": {
+    "addr:housenumber": "94",
+    "addr:postcode": "4006",
+    "addr:street": "Breakfast Creek Road",
+    "addr:suburb": "Newstead",
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "compressed_air": "yes",
+    "fuel:diesel": "yes",
+    "fuel:discount": "Coles",
+    "fuel:lpg": "yes",
+    "fuel:octane_91": "yes",
+    "fuel:octane_95": "yes",
+    "fuel:octane_98": "yes",
+    "name": "Shell Coles Express Newstead",
+    "opening_hours": "24/7",
+    "operator": "Shell",
+    "payment:coins": "yes",
+    "payment:mastercard": "yes",
+    "payment:notes": "yes",
+    "payment:visa": "yes",
+    "phone": "+61 7 3852 2712",
+    "shop": "convenience",
+    "source": "surv",
+    "website": "https://www.colesexpress.com.au/store-locator.aspx?locatorSearch=4006"
+  }
+},
+{
+  "type": "way",
+  "id": 39738334,
+  "nodes": [
+    476441493,
+    476441494,
+    476441495,
+    476441496,
+    476441497,
+    476441498,
+    476441493
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "building": "yes",
+    "compressed_air": "yes",
+    "name": "Shell",
+    "opening_hours": "24/7"
+  }
+},
+{
+  "type": "way",
+  "id": 258727395,
+  "nodes": [
+    13126404961,
+    7145887916,
+    2640601054,
+    7145887898,
+    2640601071,
+    7145887899,
+    13126404961
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Caltex",
+    "brand:wikidata": "Q277470",
+    "brand:wikipedia": "en:Caltex",
+    "compressed_air": "yes",
+    "name": "Caltex",
+    "operator": "caltex",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 375763802,
+  "nodes": [
+    3791100772,
+    3791100773,
+    14174737582,
+    6403430012,
+    3791100774,
+    14174737583,
+    3791100775,
+    14174737588,
+    4698420773,
+    6403430013,
+    3791100772
+  ],
+  "tags": {
+    "addr:housenumber": "20",
+    "addr:postcode": "4006",
+    "addr:street": "Commercial Road",
+    "addr:suburb": "Newstead",
+    "amenity": "fuel",
+    "branch": "Newstead",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "check_date": "2026-09-12",
+    "fuel:diesel": "yes",
+    "fuel:octane_91": "yes",
+    "layer": "1",
+    "name": "BP",
+    "opening_hours": "24/7",
+    "operator": "BP",
+    "phone": "+61 7 3252 4131",
+    "self_service": "yes",
+    "shop": "kiosk",
+    "website": "https://map.bp.com/en-AU/AU/gas-station/newstead/bp-newstead/1421"
+  }
+},
+{
+  "type": "way",
+  "id": 397448949,
+  "nodes": [
+    4002434937,
+    4622811386,
+    4622868142,
+    4622868143,
+    4622811589,
+    11724392132,
+    4319087105,
+    4002434932,
+    4002434933,
+    4002434938,
+    4319087103,
+    4319087104,
+    4002434934,
+    4002434935,
+    4002434936,
+    4002434937
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "brand:wikipedia": "en:Coles Express",
+    "compressed_air": "yes",
+    "landuse": "commercial",
+    "name": "Coles Express",
+    "opening_hours": "PH,Mo-Su 00:00-24:00",
+    "operator": "Coles Group",
+    "operator:wikidata": "Q1339055"
+  }
+},
+{
+  "type": "way",
+  "id": 621235494,
+  "nodes": [
+    5868612996,
+    5868612995,
+    5868612994,
+    5868612993,
+    5868612996
+  ],
+  "tags": {
+    "addr:city": "Brisbane",
+    "addr:housenumber": "96",
+    "addr:postcode": "4169",
+    "addr:street": "Wellington Road",
+    "addr:suburb": "East Brisbane",
+    "amenity": "fuel",
+    "brand": "7-Eleven",
+    "brand:wikidata": "Q259340",
+    "building": "retail",
+    "name": "7-Eleven",
+    "shop": "convenience"
+  }
+},
+{
+  "type": "way",
+  "id": 636691708,
+  "nodes": [
+    3884506535,
+    6003818453,
+    3884506540,
+    3884506533,
+    3884506534,
+    3884506535
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Shell",
+    "brand:wikidata": "Q110716465",
+    "compressed_air": "yes",
+    "name": "Shell",
+    "opening_hours": "24/7",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 780066256,
+  "nodes": [
+    5570152589,
+    7283799240,
+    7283799241,
+    5570152590,
+    5570152589
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "brand": "BP",
+    "brand:wikidata": "Q152057",
+    "brand:wikipedia": "en:BP",
+    "name": "BP",
+    "website": "https://map.bp.com/en-AU/AU/gas-station/milton/bp-milton-qld/1474"
+  }
+},
+{
+  "type": "way",
+  "id": 1396493290,
+  "nodes": [
+    5868612992,
+    5868612989,
+    5868612990,
+    5868612991,
+    5868612992
+  ],
+  "tags": {
+    "addr:housenumber": "508",
+    "addr:postcode": "4169",
+    "addr:state": "QLD",
+    "addr:street": "Vulture Street",
+    "addr:suburb": "East Brisbane",
+    "amenity": "fuel",
+    "brand": "7-Eleven",
+    "brand:wikidata": "Q259340",
+    "building": "roof",
+    "compressed_air": "yes",
+    "name": "7-Eleven"
+  }
+},
+{
+  "type": "node",
+  "id": 3884506533,
+  "lat": -27.4740895,
+  "lon": 153.0040042
+},
+{
+  "type": "node",
+  "id": 3884506534,
+  "lat": -27.4738019,
+  "lon": 153.0036490
+},
+{
+  "type": "node",
+  "id": 3884506535,
+  "lat": -27.4740880,
+  "lon": 153.0033639
+},
+{
+  "type": "node",
+  "id": 3884506540,
+  "lat": -27.4744179,
+  "lon": 153.0036735
+},
+{
+  "type": "node",
+  "id": 6003818453,
+  "lat": -27.4741253,
+  "lon": 153.0033067
+},
+{
+  "type": "node",
+  "id": 5570152589,
+  "lat": -27.4674537,
+  "lon": 153.0073507
+},
+{
+  "type": "node",
+  "id": 5570152590,
+  "lat": -27.4677627,
+  "lon": 153.0074778
+},
+{
+  "type": "node",
+  "id": 7283799240,
+  "lat": -27.4673083,
+  "lon": 153.0077800
+},
+{
+  "type": "node",
+  "id": 7283799241,
+  "lat": -27.4676271,
+  "lon": 153.0078774
+},
+{
+  "type": "node",
+  "id": 4002434932,
+  "lat": -27.4969597,
+  "lon": 153.0549493
+},
+{
+  "type": "node",
+  "id": 4002434933,
+  "lat": -27.4969269,
+  "lon": 153.0549480
+},
+{
+  "type": "node",
+  "id": 4002434934,
+  "lat": -27.4966315,
+  "lon": 153.0556227
+},
+{
+  "type": "node",
+  "id": 4002434935,
+  "lat": -27.4966389,
+  "lon": 153.0556562
+},
+{
+  "type": "node",
+  "id": 4002434936,
+  "lat": -27.4966511,
+  "lon": 153.0556784
+},
+{
+  "type": "node",
+  "id": 4002434937,
+  "lat": -27.4966906,
+  "lon": 153.0557128
+},
+{
+  "type": "node",
+  "id": 4002434938,
+  "lat": -27.4968987,
+  "lon": 153.0549594
+},
+{
+  "type": "node",
+  "id": 4319087103,
+  "lat": -27.4968784,
+  "lon": 153.0549816
+},
+{
+  "type": "node",
+  "id": 4319087104,
+  "lat": -27.4966374,
+  "lon": 153.0555866
+},
+{
+  "type": "node",
+  "id": 4319087105,
+  "lat": -27.4969970,
+  "lon": 153.0549633
+},
+{
+  "type": "node",
+  "id": 4622811386,
+  "lat": -27.4969185,
+  "lon": 153.0558678
+},
+{
+  "type": "node",
+  "id": 4622811589,
+  "lat": -27.4973755,
+  "lon": 153.0552207
+},
+{
+  "type": "node",
+  "id": 4622868142,
+  "lat": -27.4971099,
+  "lon": 153.0555101
+},
+{
+  "type": "node",
+  "id": 4622868143,
+  "lat": -27.4971911,
+  "lon": 153.0555653
+},
+{
+  "type": "node",
+  "id": 11724392132,
+  "lat": -27.4972809,
+  "lon": 153.0551564
+},
+{
+  "type": "node",
+  "id": 2640601054,
+  "lat": -27.4905359,
+  "lon": 153.0405830
+},
+{
+  "type": "node",
+  "id": 2640601071,
+  "lat": -27.4910275,
+  "lon": 153.0404746
+},
+{
+  "type": "node",
+  "id": 7145887898,
+  "lat": -27.4908611,
+  "lon": 153.0408506
+},
+{
+  "type": "node",
+  "id": 7145887899,
+  "lat": -27.4908258,
+  "lon": 153.0403680
+},
+{
+  "type": "node",
+  "id": 7145887916,
+  "lat": -27.4905564,
+  "lon": 153.0405237
+},
+{
+  "type": "node",
+  "id": 13126404961,
+  "lat": -27.4906643,
+  "lon": 153.0401714
+},
+{
+  "type": "node",
+  "id": 5868612989,
+  "lat": -27.4849005,
+  "lon": 153.0400179
+},
+{
+  "type": "node",
+  "id": 5868612990,
+  "lat": -27.4849995,
+  "lon": 153.0400016
+},
+{
+  "type": "node",
+  "id": 5868612991,
+  "lat": -27.4849676,
+  "lon": 153.0397562
+},
+{
+  "type": "node",
+  "id": 5868612992,
+  "lat": -27.4848686,
+  "lon": 153.0397726
+},
+{
+  "type": "node",
+  "id": 5868612993,
+  "lat": -27.4847656,
+  "lon": 153.0399679
+},
+{
+  "type": "node",
+  "id": 5868612994,
+  "lat": -27.4848537,
+  "lon": 153.0399534
+},
+{
+  "type": "node",
+  "id": 5868612995,
+  "lat": -27.4848292,
+  "lon": 153.0397650
+},
+{
+  "type": "node",
+  "id": 5868612996,
+  "lat": -27.4847411,
+  "lon": 153.0397796
+},
+{
+  "type": "node",
+  "id": 476441493,
+  "lat": -27.4452795,
+  "lon": 153.0084039
+},
+{
+  "type": "node",
+  "id": 476441494,
+  "lat": -27.4452329,
+  "lon": 153.0084865
+},
+{
+  "type": "node",
+  "id": 476441495,
+  "lat": -27.4453824,
+  "lon": 153.0085935
+},
+{
+  "type": "node",
+  "id": 476441496,
+  "lat": -27.4454744,
+  "lon": 153.0084303
+},
+{
+  "type": "node",
+  "id": 476441497,
+  "lat": -27.4454090,
+  "lon": 153.0083834
+},
+{
+  "type": "node",
+  "id": 476441498,
+  "lat": -27.4453635,
+  "lon": 153.0084641
+},
+{
+  "type": "node",
+  "id": 3791100772,
+  "lat": -27.4528889,
+  "lon": 153.0417550
+},
+{
+  "type": "node",
+  "id": 3791100773,
+  "lat": -27.4529224,
+  "lon": 153.0417765
+},
+{
+  "type": "node",
+  "id": 3791100774,
+  "lat": -27.4530102,
+  "lon": 153.0420226
+},
+{
+  "type": "node",
+  "id": 3791100775,
+  "lat": -27.4526381,
+  "lon": 153.0420969
+},
+{
+  "type": "node",
+  "id": 4698420773,
+  "lat": -27.4525904,
+  "lon": 153.0417965
+},
+{
+  "type": "node",
+  "id": 6403430012,
+  "lat": -27.4529609,
+  "lon": 153.0418320
+},
+{
+  "type": "node",
+  "id": 6403430013,
+  "lat": -27.4528301,
+  "lon": 153.0417525
+},
+{
+  "type": "node",
+  "id": 14174737582,
+  "lat": -27.4529463,
+  "lon": 153.0417976
+},
+{
+  "type": "node",
+  "id": 14174737583,
+  "lat": -27.4528712,
+  "lon": 153.0420504
+},
+{
+  "type": "node",
+  "id": 14174737588,
+  "lat": -27.4526143,
+  "lon": 153.0419472
+}
+
+  ]
+}

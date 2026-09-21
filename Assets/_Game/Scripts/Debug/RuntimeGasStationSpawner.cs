@@ -85,7 +85,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
         var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
         if (city == null) return null;
 
-        string path = Path.Combine(Application.streamingAssetsPath, "Cities", city.cityCode, "fuel.json");
+        string path = RuntimeCityContentStore.ResolveReadPath(city, "fuel.json");
         if (!File.Exists(path)) return null;
 
         string json = File.ReadAllText(path);

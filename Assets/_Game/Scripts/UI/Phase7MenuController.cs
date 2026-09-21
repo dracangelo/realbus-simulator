@@ -8,9 +8,17 @@ public class Phase7MenuController : MonoBehaviour
 {
     public static Phase7MenuController Instance { get; private set; }
     Canvas canvas;
-    GameObject settingsPanel, mobileSettingsPanel, creditsPanel, pausePanel, dailyPanel;
+    GameObject settingsPanel, mobileSettingsPanel, contentDownloadsPanel, vehiclePacksPanel, creditsPanel, pausePanel, dailyPanel;
     TextMeshProUGUI pauseScore;
     TextMeshProUGUI dailySummary;
+    TextMeshProUGUI contentCityLabel, contentStatusLabel;
+    TMP_InputField routeRelationInput;
+    TMP_InputField vehiclePackUrlInput;
+    Slider contentProgress;
+    Slider vehiclePackProgress;
+    TextMeshProUGUI vehiclePackStatusLabel;
+    CityDefinition[] downloadableCities = Array.Empty<CityDefinition>();
+    int contentCityIndex;
     bool paused;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -30,7 +38,12 @@ public class Phase7MenuController : MonoBehaviour
     }
 
     void Start() { StartCoroutine(BuildWhenReady()); }
-    void OnDestroy() { if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded; }
+    void OnDestroy()
+    {
+        if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded;
+        UnsubscribeContentDownloader();
+        UnsubscribeVehiclePackDownloader();
+    }
     void OnSceneLoaded(Scene scene, LoadSceneMode mode) { Resume(); StopAllCoroutines(); StartCoroutine(BuildWhenReady()); }
 
     System.Collections.IEnumerator BuildWhenReady()
@@ -52,6 +65,7 @@ public class Phase7MenuController : MonoBehaviour
 
     void BuildForScene()
     {
+        UnsubscribeContentDownloader();
         if (canvas != null) Destroy(canvas.gameObject);
         canvas = CreateCanvas();
         bool mainMenu = FindFirstObjectByType<MainMenuUI>() != null;
@@ -65,7 +79,7 @@ public class Phase7MenuController : MonoBehaviour
             CreateButton(canvas.transform, "Ⅱ", new Vector2(-28f, -210f), new Vector2(78f, 78f), TogglePause, Vector2.one, Vector2.one);
             CreateButton(canvas.transform, "CAM", new Vector2(-120f, -210f), new Vector2(78f, 78f), () => MobileCameraController.EnsureExists().CycleCamera(), Vector2.one, Vector2.one);
         }
-        BuildSettings(); BuildMobileSettings(); BuildCredits(); BuildPause(); BuildDaily();
+        BuildSettings(); BuildMobileSettings(); BuildContentDownloads(); BuildVehiclePacks(); BuildCredits(); BuildPause(); BuildDaily();
     }
 
     void BuildSettings()
@@ -85,10 +99,76 @@ public class Phase7MenuController : MonoBehaviour
         AddSetting("Colour-blind icons", () => OnOff(settings.Current.colourBlindIcons), () => { settings.Current.colourBlindIcons = !settings.Current.colourBlindIcons; settings.SaveAndApply(); }, ref y);
         AddSetting("Haptics", () => OnOff(settings.Current.haptics), () => { settings.Current.haptics = !settings.Current.haptics; settings.SaveAndApply(); }, ref y);
         AddSetting("Subtitles", () => OnOff(settings.Current.subtitles), () => { settings.Current.subtitles = !settings.Current.subtitles; settings.SaveAndApply(); }, ref y);
-        CreateButton(settingsPanel.transform, "MOBILE & PERFORMANCE", new Vector2(-230f, -440f), new Vector2(300f, 58f), ToggleMobileSettings);
-        CreateButton(settingsPanel.transform, "CREDITS", new Vector2(100f, -440f), new Vector2(200f, 58f), OpenCreditsFromSettings);
-        CreateButton(settingsPanel.transform, "CLOSE", new Vector2(300f, -440f), new Vector2(160f, 58f), ToggleSettings);
+        CreateButton(settingsPanel.transform, "MOBILE", new Vector2(-275f, -440f), new Vector2(210f, 58f), ToggleMobileSettings);
+        CreateButton(settingsPanel.transform, "DOWNLOADS", new Vector2(-45f, -440f), new Vector2(220f, 58f), ToggleContentDownloads);
+        CreateButton(settingsPanel.transform, "CREDITS", new Vector2(175f, -440f), new Vector2(180f, 58f), OpenCreditsFromSettings);
+        CreateButton(settingsPanel.transform, "CLOSE", new Vector2(330f, -440f), new Vector2(120f, 58f), ToggleSettings);
         settingsPanel.SetActive(false);
+    }
+
+    void BuildContentDownloads()
+    {
+        contentDownloadsPanel = Modal("ContentDownloadsPanel", new Vector2(1080f, 900f));
+        CreateText(contentDownloadsPanel.transform, "DOWNLOADABLE CITY CONTENT", 40f, new Vector2(0f, 380f), new Vector2(930f, 60f), TextAlignmentOptions.Center);
+        CreateText(contentDownloadsPanel.transform, "Keep the base game small. Download only the cities and routes you want.", 24f,
+            new Vector2(0f, 325f), new Vector2(900f, 50f), TextAlignmentOptions.Center);
+
+        downloadableCities = CityManager.Instance != null && CityManager.Instance.allCities != null
+            ? Array.FindAll(CityManager.Instance.allCities, city => city != null)
+            : Array.Empty<CityDefinition>();
+        CityDefinition selected = GameState.Instance?.selectedCity;
+        contentCityIndex = selected != null ? Array.IndexOf(downloadableCities, selected) : 0;
+        if (contentCityIndex < 0) contentCityIndex = 0;
+
+        CreateButton(contentDownloadsPanel.transform, "‹", new Vector2(-420f, 255f), new Vector2(70f, 62f), () => CycleContentCity(-1));
+        contentCityLabel = CreateText(contentDownloadsPanel.transform, "No cities available", 31f, new Vector2(0f, 255f), new Vector2(720f, 62f), TextAlignmentOptions.Center);
+        CreateButton(contentDownloadsPanel.transform, "›", new Vector2(420f, 255f), new Vector2(70f, 62f), () => CycleContentCity(1));
+
+        CreateButton(contentDownloadsPanel.transform, "WORLD DATA", new Vector2(-310f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.World));
+        CreateButton(contentDownloadsPanel.transform, "ALL ROUTES", new Vector2(0f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.Routes));
+        CreateButton(contentDownloadsPanel.transform, "COMPLETE CITY", new Vector2(310f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.CompleteCity));
+        CreateText(contentDownloadsPanel.transform, "World data: buildings, places and fuel  •  Routes: roads, stops and bus services", 21f,
+            new Vector2(0f, 93f), new Vector2(930f, 45f), TextAlignmentOptions.Center);
+
+        CreateText(contentDownloadsPanel.transform, "ONE ROUTE BY OSM RELATION ID", 23f, new Vector2(-230f, 28f), new Vector2(470f, 52f), TextAlignmentOptions.Left);
+        routeRelationInput = CreateInput(contentDownloadsPanel.transform, "Example: 123456", new Vector2(160f, 28f), new Vector2(310f, 58f));
+        CreateButton(contentDownloadsPanel.transform, "VEHICLE PACKS", new Vector2(-310f, -45f), new Vector2(260f, 60f), OpenVehiclePacks);
+        CreateButton(contentDownloadsPanel.transform, "DOWNLOAD ROUTE", new Vector2(310f, -45f), new Vector2(260f, 60f), DownloadSingleRoute);
+
+        contentProgress = CreateSlider(contentDownloadsPanel.transform, new Vector2(0f, -120f), new Vector2(850f, 24f));
+        contentStatusLabel = CreateText(contentDownloadsPanel.transform, "Ready", 23f, new Vector2(0f, -178f), new Vector2(900f, 80f), TextAlignmentOptions.Center);
+        CreateButton(contentDownloadsPanel.transform, "CANCEL", new Vector2(-330f, -285f), new Vector2(210f, 58f), () => RuntimeCityContentDownloader.EnsureExists().Cancel());
+        CreateButton(contentDownloadsPanel.transform, "REMOVE CITY DATA", new Vector2(-70f, -285f), new Vector2(270f, 58f), RemoveSelectedCityContent);
+        CreateButton(contentDownloadsPanel.transform, "BACK", new Vector2(300f, -285f), new Vector2(240f, 58f), ToggleContentDownloads);
+
+        RuntimeCityContentDownloader downloader = RuntimeCityContentDownloader.EnsureExists();
+        downloader.Changed += HandleContentDownloadChanged;
+        downloader.Completed += HandleContentDownloadCompleted;
+        RefreshContentCity();
+        contentDownloadsPanel.SetActive(false);
+    }
+
+    void BuildVehiclePacks()
+    {
+        vehiclePacksPanel = Modal("VehiclePacksPanel", new Vector2(1080f, 700f));
+        CreateText(vehiclePacksPanel.transform, "DOWNLOADABLE VEHICLE PACKS", 40f, new Vector2(0f, 270f), new Vector2(930f, 60f), TextAlignmentOptions.Center);
+        CreateText(vehiclePacksPanel.transform,
+            "Install optional buses without increasing the base game size. Packs must be official\nAssetBundles built for this device platform and Unity version.",
+            23f, new Vector2(0f, 190f), new Vector2(920f, 90f), TextAlignmentOptions.Center);
+        CreateText(vehiclePacksPanel.transform, "VEHICLE PACK HTTPS URL", 23f, new Vector2(-260f, 90f), new Vector2(420f, 52f), TextAlignmentOptions.Left);
+        vehiclePackUrlInput = CreateInput(vehiclePacksPanel.transform, "https://cdn.example.com/kenya-buses.bundle",
+            new Vector2(120f, 90f), new Vector2(570f, 60f), TMP_InputField.ContentType.Standard);
+        CreateButton(vehiclePacksPanel.transform, "DOWNLOAD & INSTALL", new Vector2(0f, 5f), new Vector2(350f, 62f), DownloadVehiclePack);
+        vehiclePackProgress = CreateSlider(vehiclePacksPanel.transform, new Vector2(0f, -70f), new Vector2(850f, 24f));
+        RuntimeVehiclePackDownloader downloader = RuntimeVehiclePackDownloader.EnsureExists();
+        vehiclePackStatusLabel = CreateText(vehiclePacksPanel.transform,
+            $"Installed storage: {RuntimeCityContentDownloader.FormatBytes(downloader.GetDownloadedBytes())}", 23f,
+            new Vector2(0f, -130f), new Vector2(900f, 70f), TextAlignmentOptions.Center);
+        CreateButton(vehiclePacksPanel.transform, "CANCEL", new Vector2(-330f, -245f), new Vector2(210f, 58f), downloader.Cancel);
+        CreateButton(vehiclePacksPanel.transform, "REMOVE PACKS", new Vector2(-50f, -245f), new Vector2(260f, 58f), downloader.RemoveDownloadedPacks);
+        CreateButton(vehiclePacksPanel.transform, "BACK", new Vector2(300f, -245f), new Vector2(240f, 58f), CloseVehiclePacks);
+        downloader.Changed += HandleVehiclePackChanged;
+        vehiclePacksPanel.SetActive(false);
     }
 
     void BuildMobileSettings()
@@ -178,6 +258,126 @@ public class Phase7MenuController : MonoBehaviour
         bool show = !mobileSettingsPanel.activeSelf; mobileSettingsPanel.SetActive(show);
         if (settingsPanel != null) settingsPanel.SetActive(!show);
     }
+
+    void ToggleContentDownloads()
+    {
+        if (contentDownloadsPanel == null) return;
+        bool show = !contentDownloadsPanel.activeSelf;
+        contentDownloadsPanel.SetActive(show);
+        if (settingsPanel != null) settingsPanel.SetActive(!show);
+        if (show) RefreshContentCity();
+    }
+
+    void OpenVehiclePacks()
+    {
+        if (contentDownloadsPanel != null) contentDownloadsPanel.SetActive(false);
+        if (vehiclePacksPanel != null) vehiclePacksPanel.SetActive(true);
+    }
+
+    void CloseVehiclePacks()
+    {
+        if (vehiclePacksPanel != null) vehiclePacksPanel.SetActive(false);
+        if (contentDownloadsPanel != null) contentDownloadsPanel.SetActive(true);
+    }
+
+    void DownloadVehiclePack()
+    {
+        RuntimeVehiclePackDownloader.EnsureExists().Download(vehiclePackUrlInput != null ? vehiclePackUrlInput.text : string.Empty);
+    }
+
+    void HandleVehiclePackChanged(string status, float progress)
+    {
+        if (vehiclePackStatusLabel != null)
+        {
+            long bytes = RuntimeVehiclePackDownloader.EnsureExists().GetDownloadedBytes();
+            vehiclePackStatusLabel.text = status + $"\n<size=19>Installed storage: {RuntimeCityContentDownloader.FormatBytes(bytes)}</size>";
+        }
+        if (vehiclePackProgress != null) vehiclePackProgress.value = progress;
+    }
+
+    void UnsubscribeVehiclePackDownloader()
+    {
+        RuntimeVehiclePackDownloader downloader = RuntimeVehiclePackDownloader.Instance;
+        if (downloader != null) downloader.Changed -= HandleVehiclePackChanged;
+    }
+
+    CityDefinition SelectedDownloadCity()
+    {
+        if (downloadableCities == null || downloadableCities.Length == 0) return null;
+        contentCityIndex = (contentCityIndex % downloadableCities.Length + downloadableCities.Length) % downloadableCities.Length;
+        return downloadableCities[contentCityIndex];
+    }
+
+    void CycleContentCity(int direction)
+    {
+        if (downloadableCities == null || downloadableCities.Length == 0) return;
+        contentCityIndex = (contentCityIndex + direction + downloadableCities.Length) % downloadableCities.Length;
+        RefreshContentCity();
+    }
+
+    void RefreshContentCity()
+    {
+        CityDefinition city = SelectedDownloadCity();
+        if (contentCityLabel == null) return;
+        if (city == null) { contentCityLabel.text = "No cities available"; return; }
+        long bytes = RuntimeCityContentStore.GetDownloadedBytes(city);
+        string files = $"{(RuntimeCityContentStore.IsDownloaded(city, "buildings.json") ? "WORLD ✓" : "WORLD —")}   " +
+            $"{(RuntimeCityContentStore.IsDownloaded(city, "routes.json") ? "ROUTES ✓" : "ROUTES —")}";
+        contentCityLabel.text = $"{city.country.ToUpperInvariant()}  /  {city.cityName.ToUpperInvariant()}\n<size=20>{files}  •  {RuntimeCityContentDownloader.FormatBytes(bytes)}</size>";
+    }
+
+    void DownloadContent(CityContentDownloadKind kind)
+    {
+        CityDefinition city = SelectedDownloadCity();
+        if (city == null) return;
+        RuntimeCityContentDownloader.EnsureExists().Download(city, kind);
+    }
+
+    void DownloadSingleRoute()
+    {
+        CityDefinition city = SelectedDownloadCity();
+        if (city == null) return;
+        if (!long.TryParse(routeRelationInput != null ? routeRelationInput.text : string.Empty, out long relationId) || relationId <= 0)
+        {
+            HandleContentDownloadChanged("Enter the numeric OSM relation ID shown on openstreetmap.org.", 0f);
+            return;
+        }
+        RuntimeCityContentDownloader.EnsureExists().Download(city, CityContentDownloadKind.SingleRoute, relationId);
+    }
+
+    void RemoveSelectedCityContent()
+    {
+        CityDefinition city = SelectedDownloadCity();
+        if (city == null) return;
+        RuntimeCityContentDownloader.EnsureExists().Delete(city);
+        RefreshContentCity();
+    }
+
+    void HandleContentDownloadChanged(string status, float progress)
+    {
+        if (contentStatusLabel != null) contentStatusLabel.text = status;
+        if (contentProgress != null) contentProgress.value = progress;
+    }
+
+    void HandleContentDownloadCompleted(CityDefinition city, bool success)
+    {
+        RefreshContentCity();
+        if (!success || city == null || !RuntimeCityContentStore.IsDownloaded(city, "routes.json")) return;
+        if (GameState.Instance != null && GameState.Instance.selectedCity == city)
+        {
+            OSMRouteImporter importer = OSMRouteImporter.Instance;
+            if (importer == null) importer = new GameObject("OSMRouteImporter").AddComponent<OSMRouteImporter>();
+            importer.TriggerImport(city);
+        }
+    }
+
+    void UnsubscribeContentDownloader()
+    {
+        RuntimeCityContentDownloader downloader = RuntimeCityContentDownloader.Instance;
+        if (downloader == null) return;
+        downloader.Changed -= HandleContentDownloadChanged;
+        downloader.Completed -= HandleContentDownloadCompleted;
+    }
     void BeginControlLayoutEdit()
     {
         MobileControlsUI mobile = FindFirstObjectByType<MobileControlsUI>(); if (mobile == null) return;
@@ -261,6 +461,32 @@ public class Phase7MenuController : MonoBehaviour
         Button b = o.GetComponent<Button>(); if (action != null) b.onClick.AddListener(() => action());
         TextMeshProUGUI t = CreateText(o.transform, label, 28f, Vector2.zero, size, TextAlignmentOptions.Center); t.color = UITheme.Background;
         return b;
+    }
+
+    TMP_InputField CreateInput(Transform parent, string placeholder, Vector2 position, Vector2 size,
+        TMP_InputField.ContentType contentType = TMP_InputField.ContentType.IntegerNumber)
+    {
+        GameObject root = new GameObject("RouteRelationInput", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
+        root.transform.SetParent(parent, false);
+        RectTransform rect = root.GetComponent<RectTransform>(); rect.sizeDelta = size; rect.anchoredPosition = position;
+        Image image = root.GetComponent<Image>(); image.color = UITheme.SurfaceBright; RuntimeUiShapes.Rounded(image);
+        TextMeshProUGUI text = CreateText(root.transform, string.Empty, 25f, Vector2.zero, size - new Vector2(28f, 0f), TextAlignmentOptions.Left);
+        TextMeshProUGUI hint = CreateText(root.transform, placeholder, 22f, Vector2.zero, size - new Vector2(28f, 0f), TextAlignmentOptions.Left);
+        hint.color = UITheme.TextMuted;
+        TMP_InputField input = root.GetComponent<TMP_InputField>(); input.textComponent = text; input.placeholder = hint; input.contentType = contentType;
+        return input;
+    }
+
+    Slider CreateSlider(Transform parent, Vector2 position, Vector2 size)
+    {
+        GameObject root = new GameObject("DownloadProgress", typeof(RectTransform), typeof(Slider)); root.transform.SetParent(parent, false);
+        RectTransform rect = root.GetComponent<RectTransform>(); rect.sizeDelta = size; rect.anchoredPosition = position;
+        Image background = new GameObject("Background", typeof(RectTransform), typeof(Image)).GetComponent<Image>(); background.transform.SetParent(root.transform, false);
+        RectTransform br = background.rectTransform; br.anchorMin = Vector2.zero; br.anchorMax = Vector2.one; br.offsetMin = br.offsetMax = Vector2.zero; background.color = UITheme.SurfaceBright;
+        Image fill = new GameObject("Fill", typeof(RectTransform), typeof(Image)).GetComponent<Image>(); fill.transform.SetParent(root.transform, false);
+        RectTransform fr = fill.rectTransform; fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one; fr.offsetMin = fr.offsetMax = Vector2.zero; fill.color = UITheme.Accent;
+        Slider slider = root.GetComponent<Slider>(); slider.fillRect = fr; slider.minValue = 0f; slider.maxValue = 1f; slider.value = 0f; slider.interactable = false;
+        return slider;
     }
 
     TextMeshProUGUI CreateText(Transform parent, string value, float fontSize, Vector2 position, Vector2 size, TextAlignmentOptions alignment)

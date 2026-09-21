@@ -195,7 +195,9 @@ public class RuntimeTarmacApplier : MonoBehaviour
         if (mat.HasProperty("_Metallic"))   mat.SetFloat("_Metallic",   metallic);
         if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", smoothness);
         if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
-        if (mat.HasProperty("_MainTex"))    mat.SetTextureScale("_MainTex", textureScale);
+        Texture2D asphalt = OSMRoadMeshBuilder.GetOrCreateAsphaltTexture();
+        if (mat.HasProperty("_BaseMap")) { mat.SetTexture("_BaseMap", asphalt); mat.SetTextureScale("_BaseMap", textureScale); }
+        if (mat.HasProperty("_MainTex")) { mat.SetTexture("_MainTex", asphalt); mat.SetTextureScale("_MainTex", textureScale); }
 
         // FIX: disable culling so roads are visible regardless of winding
         // order — belt-and-suspenders alongside the mesh fix in the builder.

@@ -26,7 +26,17 @@ MonoBehaviour:
   maxLon: 13.434999999999999
   roadsFileName: roads.xml
   buildingsFileName: buildings.xml
-  availableRoutes: []
+  availableRoutes:
+  - {fileID: 11400000, guid: e133da3b6718f855a8ca484ffe3731fc, type: 2}
+  - {fileID: 11400000, guid: aeaad6f68f7a6b53db152c82011cc1d8, type: 2}
+  - {fileID: 11400000, guid: caa04771e1d8661bf878b6647ec90054, type: 2}
+  - {fileID: 11400000, guid: cc2fcc83ec7f72d9e9253dffe41cc24a, type: 2}
+  - {fileID: 11400000, guid: 47877742d30f9f0e491747a0708ac895, type: 2}
+  - {fileID: 11400000, guid: 42e001077f008be328aa6da7c8b5e1e7, type: 2}
+  - {fileID: 11400000, guid: bf85292d19bc8075f9aa724978cd5790, type: 2}
+  - {fileID: 11400000, guid: c7643b0b63181c9a7aeb85d031083808, type: 2}
+  - {fileID: 11400000, guid: 38d15ac85cd7730238e1527a8955bdb3, type: 2}
+  - {fileID: 11400000, guid: 363f8bf3d46652e5f9a77b25eecd7efc, type: 2}
   spawnLat: 52.52
   spawnLon: 13.405
   isDownloaded: 1

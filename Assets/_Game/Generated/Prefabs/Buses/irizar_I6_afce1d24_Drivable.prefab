@@ -43,7 +43,7 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.5527679
   m_SuspensionSpring:
-    spring: 42000
+    spring: 224676.48
     damper: 5200
     targetPosition: 0.5
   m_SuspensionDistance: 0.30402234
@@ -149,7 +149,7 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.5527679
   m_SuspensionSpring:
-    spring: 42000
+    spring: 224676.48
     damper: 5200
     targetPosition: 0.5
   m_SuspensionDistance: 0.30402234
@@ -359,6 +359,7 @@ MonoBehaviour:
   hornAudio: {fileID: 0}
   centerOfMassY: 1.4003452
   antiRollForce: 8000
+  launchAssistAcceleration: 0.85
   engineData: {fileID: 11400000, guid: e62efad03e9902e418324690f55383b2, type: 2}
   transmissionData: {fileID: 11400000, guid: f3a5fb6e7040f5aaabbd3cb6c624f929, type: 2}
   modelRoot: {fileID: 6257604615008030197}
@@ -619,7 +620,7 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.5527679
   m_SuspensionSpring:
-    spring: 42000
+    spring: 224676.48
     damper: 5200
     targetPosition: 0.5
   m_SuspensionDistance: 0.30402234
@@ -690,7 +691,7 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.5527679
   m_SuspensionSpring:
-    spring: 42000
+    spring: 224676.48
     damper: 5200
     targetPosition: 0.5
   m_SuspensionDistance: 0.30402234

@@ -31,3 +31,7 @@ Generated from `Assets/unity models`. Re-run `Tools > RealBus > Setup > Wire All
 
 - **Gas** — `Assets/_Game/Resources/GasStationsGenerated/Gas_fd071b77.prefab`
 - **Gasstation** — `Assets/_Game/Resources/GasStationsGenerated/gasstation_3a29cada.prefab`
+
+## Road surfaces
+
+- **Radtypesremastered** — `Assets/_Game/Resources/RoadsGenerated/radtypesremastered_297a0871.prefab`

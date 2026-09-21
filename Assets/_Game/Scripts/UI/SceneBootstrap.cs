@@ -94,6 +94,11 @@ public class SceneBootstrap : MonoBehaviour
 
         if (gameState == null || cityManager == null) return;
 
+        // The explicit player selection is authoritative. CityManager may still
+        // contain the country/city that was active on the main menu.
+        if (gameState.selectedCountry != null && cityManager.activeCountry != gameState.selectedCountry)
+            cityManager.SetActiveCountry(gameState.selectedCountry);
+
         if (cityManager.activeCountry == null && cityManager.allCountries != null && cityManager.allCountries.Length > 0)
             cityManager.activeCountry = cityManager.allCountries[0];
 
@@ -116,7 +121,7 @@ public class SceneBootstrap : MonoBehaviour
         if (gameState.selectedCountry == null)
             gameState.selectedCountry = cityManager.activeCountry;
 
-        if (gameState.selectedCity == null)
+        if (gameState.selectedCity == null && cityManager.activeCity != null)
             gameState.selectedCity = cityManager.activeCity;
     }
 
@@ -266,6 +271,11 @@ public class SceneBootstrap : MonoBehaviour
             busController.gameObject.AddComponent<MaintenanceSystem>();
         if (busController.GetComponent<FuelSystem>() == null && busController.GetComponent<BatterySystem>() == null)
             busController.gameObject.AddComponent<FuelSystem>();
+
+        var visualRepair = busController.GetComponent<ImportedVehicleVisualRepair>();
+        if (visualRepair == null)
+            visualRepair = busController.gameObject.AddComponent<ImportedVehicleVisualRepair>();
+        visualRepair.RepairNow(busController.modelRoot != null ? busController.modelRoot : busController.transform);
     }
 
     void ApplySelectedBusSpec(BusController busController)
@@ -386,6 +396,7 @@ public class SceneBootstrap : MonoBehaviour
         roadBuilder.drawCenterLines = true;
         roadBuilder.useRoadModelInstances = true;
         roadBuilder.roadModelResourcePath = "RoadsGenerated";
+        roadBuilder.overrideRoadModelMaterials = true;
         roadBuilder.generateRoadBoundaries = true;
         roadBuilder.addPhysicalBoundaryColliders = true;
         roadBuilder.maxColliderSegmentLength = Mathf.Clamp(roadBuilder.maxColliderSegmentLength, 10f, 60f);
@@ -658,7 +669,7 @@ public class SceneBootstrap : MonoBehaviour
         if (city == null)
             return route;
 
-        string stopsPath = Path.Combine(Application.streamingAssetsPath, "Cities", city.cityCode, "stops.json");
+        string stopsPath = RuntimeCityContentStore.ResolveReadPath(city, "stops.json");
         if (!File.Exists(stopsPath))
             return route;
 
@@ -1095,8 +1106,7 @@ public class SceneBootstrap : MonoBehaviour
         if (city == null || string.IsNullOrWhiteSpace(city.cityCode))
             return null;
 
-        string cityDir = Path.Combine(Application.streamingAssetsPath, "Cities", city.cityCode);
-        string preferredJson = Path.Combine(cityDir, "roads.json");
+        string preferredJson = RuntimeCityContentStore.ResolveReadPath(city, "roads.json");
         if (File.Exists(preferredJson))
             return preferredJson;
 

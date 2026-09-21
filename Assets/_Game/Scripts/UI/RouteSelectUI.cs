@@ -32,6 +32,7 @@ public class RouteSelectUI : MonoBehaviour
     {
         UnlockManager.EnsureExists();
         yield return null;
+        yield return LoadPlayerDownloadedRoutes();
         ResolveRoutes();
         BuildCinematicScreen();
         SelectInitialRoute();
@@ -40,6 +41,21 @@ public class RouteSelectUI : MonoBehaviour
             canvasGroup.alpha = 0f;
             yield return StartCoroutine(UIAnimator.FadeIn(canvasGroup, .45f));
         }
+    }
+
+    IEnumerator LoadPlayerDownloadedRoutes()
+    {
+        CityDefinition city = GameState.Instance?.selectedCity;
+        if (city == null || !RuntimeCityContentStore.IsDownloaded(city, "routes.json")) yield break;
+
+        OSMRouteImporter importer = OSMRouteImporter.Instance;
+        if (importer == null) importer = new GameObject("OSMRouteImporter_DownloadedRoutes").AddComponent<OSMRouteImporter>();
+        importer.TriggerImport(city);
+        yield return null;
+        float timeout = Time.realtimeSinceStartup + 120f;
+        while (importer.importInProgress && Time.realtimeSinceStartup < timeout) yield return null;
+        if (!importer.importComplete)
+            Debug.LogWarning($"RouteSelectUI: Downloaded routes for {city.cityName} could not be prepared.");
     }
 
     void ResolveRoutes()

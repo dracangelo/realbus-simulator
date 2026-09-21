@@ -18,6 +18,7 @@
 - Mapbox tile streaming with distance-based detail levels.
 - Resilient Mapbox PNG/JPEG decoding and accurate authorization diagnostics.
 - Offline city downloads, cache limits, and LRU cleanup.
+- In-game optional downloads for city world data, all routes, or one OSM route.
 - GPS tracking, route previews, and runtime navigation lines.
 - Cinematic country, city, and route selectors with swipeable cards.
 
@@ -63,6 +64,7 @@
 - Five bus types with distinct capacity, physics, and energy profiles.
 - Grand Tour routes unlocked by completing every city route.
 - Garage fleet comparison and bus selection.
+- Downloadable platform-specific vehicle packs stored outside the base game.
 - Five affordable per-bus upgrades with clear benefits and trade-offs.
 - Six-zone livery editor with HSV color and opacity controls.
 - Eight preset liveries and shareable 12-character livery codes.
@@ -96,6 +98,7 @@
 - Physics, map, gameplay, realism, and progression test scenes.
 - Unity EditMode regression tests and coverage reporting.
 - Route, city, traffic, and OSM import editor tools.
+- Platform-specific downloadable vehicle-pack builder.
 - Runtime validation, logging, profiling, and diagnostic overlays.
 
 ## Remaining polish priorities

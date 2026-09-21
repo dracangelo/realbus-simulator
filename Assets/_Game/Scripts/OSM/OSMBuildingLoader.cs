@@ -24,10 +24,9 @@ public class OSMBuildingLoader : MonoBehaviour
 
     IEnumerator LoadFromStreamingAssets()
     {
-        string xmlPath = CityManager.Instance != null
-            ? CityManager.Instance.activeCity.GetBuildingsPath()
-            : System.IO.Path.Combine(Application.streamingAssetsPath, "Cities/NBO/buildings.xml");
-        string jsonPath = Path.ChangeExtension(xmlPath, ".json");
+        CityDefinition city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        string xmlPath = RuntimeCityContentStore.ResolveReadPath(city, "buildings.xml");
+        string jsonPath = RuntimeCityContentStore.ResolveReadPath(city, "buildings.json");
         string preferredPath = SelectPreferredBuildingsPath(xmlPath, jsonPath);
 
         string url = "file://" + preferredPath;
