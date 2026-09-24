@@ -26,18 +26,22 @@ public class RuntimeEnvironmentSpawner : MonoBehaviour
     public void SpawnAll()
     {
         var anchor = ResolveAnchor();
-        var specs = (spawnList != null && spawnList.Length > 0) ? spawnList : GetDefaultSpawns();
+        bool usingCustomList = spawnList != null && spawnList.Length > 0;
+        var specs = usingCustomList ? spawnList : GetDefaultSpawns();
         var parent = parentOverride != null ? parentOverride : transform;
+        int spawned = 0;
+        int skipped = 0;
 
         for (int i = 0; i < specs.Length; i++)
         {
             var spec = specs[i];
             if (string.IsNullOrWhiteSpace(spec.resourcePath)) continue;
 
-            var prefab = Resources.Load<GameObject>(spec.resourcePath);
+            var prefab = ResolvePrefab(spec.resourcePath);
             if (prefab == null)
             {
-                if (logSpawns)
+                skipped++;
+                if (logSpawns && usingCustomList)
                     Debug.LogWarning($"[RuntimeEnvironmentSpawner] Missing resource: {spec.resourcePath}");
                 continue;
             }
@@ -45,17 +49,43 @@ public class RuntimeEnvironmentSpawner : MonoBehaviour
             var worldPos = anchor + spec.localOffset;
             var rot = Quaternion.Euler(spec.rotationEuler);
             var go = Instantiate(prefab, worldPos, rot, parent);
+            ImportedVehicleVisualRepair.DisableEmbeddedCameras(go.transform);
             var scale = spec.localScale == Vector3.zero ? Vector3.one : spec.localScale;
             go.transform.localScale = Vector3.Scale(go.transform.localScale, scale * globalScale);
+            spawned++;
 
             if (logSpawns)
                 Debug.Log($"[RuntimeEnvironmentSpawner] Spawned {spec.resourcePath} at {worldPos}.");
         }
+
+        if (logSpawns && !usingCustomList)
+            Debug.Log($"[RuntimeEnvironmentSpawner] Spawned {spawned} available environment props; skipped {skipped} optional asset categories that are not installed.");
+    }
+
+    static GameObject ResolvePrefab(string resourcePath)
+    {
+        GameObject direct = Resources.Load<GameObject>(resourcePath);
+        if (direct != null) return direct;
+
+        string lower = resourcePath.ToLowerInvariant();
+        if (lower.Contains("gasstation"))
+            return First(Resources.LoadAll<GameObject>("GasStationsGenerated"));
+        if (lower.Contains("stops/") || lower.Contains("bus_stand"))
+            return First(Resources.LoadAll<GameObject>("BusStopsGenerated"));
+        if (lower.Contains("passenger/"))
+            return Resources.Load<GameObject>("BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx");
+
+        return null;
+    }
+
+    static GameObject First(GameObject[] prefabs)
+    {
+        return prefabs != null && prefabs.Length > 0 ? prefabs[0] : null;
     }
 
     Vector3 ResolveAnchor()
     {
-        var bus = FindFirstObjectByType<BusController>();
+        var bus = FindAnyObjectByType<BusController>();
         return bus != null ? bus.transform.position : Vector3.zero;
     }
 

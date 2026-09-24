@@ -54,7 +54,6 @@ public static class GameSceneRebuilder
         CreateFallbackGround();
         CreateCameraAndLighting(bus);
         CreateGameplayCanvas(bus, mapSystem);
-        CreateDiagnosticShowcase();
 
         EditorSceneManager.SaveScene(scene, ScenePath);
         EnsureSceneInBuildSettings(ScenePath);
@@ -131,6 +130,7 @@ public static class GameSceneRebuilder
         buildings.buildingLoadDistance = 650f;
         buildings.buildingUnloadDistance = 850f;
         buildings.maxBuildingsPerFrame = 500;
+        buildings.maxBuildingLoadsPerRefresh = 500;
 
         root.AddComponent<OSMRouteImporter>();
         root.AddComponent<OsmCityPopulationSystem>();
@@ -140,8 +140,8 @@ public static class GameSceneRebuilder
 
         var bootstrap = root.AddComponent<SceneBootstrap>();
         SetSerializedBool(bootstrap, "redirectIfNoManagers", false);
-        SetSerializedBool(bootstrap, "spawnSupplementalWorldProps", true);
-        SetSerializedBool(bootstrap, "spawnDebugPoiMarkers", true);
+        SetSerializedBool(bootstrap, "spawnSupplementalWorldProps", false);
+        SetSerializedBool(bootstrap, "spawnDebugPoiMarkers", false);
         SetSerializedBool(bootstrap, "suppressBuildingsForCurrentPhase", false);
         SetSerializedBool(bootstrap, "autoStartSelectedRoute", true);
 
@@ -286,8 +286,8 @@ public static class GameSceneRebuilder
         if (bus != null)
         {
             cameraGo.transform.SetParent(bus.transform, false);
-            cameraGo.transform.localPosition = new Vector3(0f, 4.0f, -9.0f);
-            cameraGo.transform.localRotation = Quaternion.Euler(14f, 0f, 0f);
+            cameraGo.transform.localPosition = new Vector3(0f, 5.2f, -12.5f);
+            cameraGo.transform.localRotation = Quaternion.Euler(12f, 0f, 0f);
         }
         else
         {

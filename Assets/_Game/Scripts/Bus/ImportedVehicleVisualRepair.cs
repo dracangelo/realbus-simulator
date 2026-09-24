@@ -10,10 +10,23 @@ using UnityEngine.Rendering;
 public class ImportedVehicleVisualRepair : MonoBehaviour
 {
     readonly List<Material> runtimeMaterials = new List<Material>();
+    bool repairApplied;
+
+    void Start()
+    {
+        // This component used to be added to generated buses without ever
+        // invoking RepairNow, leaving Built-in pipeline materials grey in URP.
+        RepairNow();
+    }
 
     public int RepairNow(Transform visualRoot = null)
     {
+        if (repairApplied && visualRoot == null)
+            return GetComponentsInChildren<Renderer>(true).Length;
+
         Transform root = visualRoot != null ? visualRoot : transform;
+        var bus = GetComponent<BusController>();
+        DisableEmbeddedCameras(bus != null ? bus.modelRoot : root);
         Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
         if (renderers.Length == 0)
         {
@@ -74,6 +87,8 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
             if (changed) renderer.sharedMaterials = materials;
         }
 
+        if (visualRoot == null)
+            repairApplied = true;
         Debug.Log($"ImportedVehicleVisualRepair: '{root.name}' has {renderers.Length} renderers; repaired {repaired} material slots for the active render pipeline.");
         return renderers.Length;
     }
@@ -89,9 +104,18 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
     static Texture ReadTexture(Material source)
     {
         if (source == null) return null;
-        if (source.HasProperty("_BaseMap")) return source.GetTexture("_BaseMap");
+        if (source.HasProperty("_BaseMap") && source.GetTexture("_BaseMap") != null) return source.GetTexture("_BaseMap");
         if (source.HasProperty("_MainTex")) return source.GetTexture("_MainTex");
         return null;
+    }
+
+    // Only pass an imported visual subtree, never the player root: gameplay
+    // cameras and their listener are legitimate siblings of that subtree.
+    public static void DisableEmbeddedCameras(Transform visualRoot)
+    {
+        if (visualRoot == null) return;
+        foreach (Camera camera in visualRoot.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
+        foreach (AudioListener listener in visualRoot.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;
     }
 
     void OnDestroy()

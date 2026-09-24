@@ -28,19 +28,35 @@ MonoBehaviour:
   buildingsFileName: buildings.xml
   availableRoutes:
   - {fileID: 11400000, guid: 549da4ee74c1381b38e7bfd11ab3fb72, type: 2}
+  - {fileID: 11400000, guid: 8fcb5ca823922962abd54d66ee8641a5, type: 2}
   - {fileID: 11400000, guid: a51ebbd929827570fa76880b689b8c45, type: 2}
+  - {fileID: 11400000, guid: f78bb849783af0d9483d3cd18c631f15, type: 2}
+  - {fileID: 11400000, guid: b20660fdc877ad4fab295c04df8a831c, type: 2}
   - {fileID: 11400000, guid: cb7094978cdb979a392e3cb34e04b27a, type: 2}
+  - {fileID: 11400000, guid: 845da2b5614f304d08af1814f871e541, type: 2}
   - {fileID: 11400000, guid: 88fd3bade52573683a7af98cc3ae6c2b, type: 2}
-  - {fileID: 11400000, guid: f7a8bdc58cf572945b4c6d9badc7593e, type: 2}
-  - {fileID: 11400000, guid: dafe5f9e408dbcb99bfbb23e3141f489, type: 2}
-  - {fileID: 11400000, guid: d34c5534f4df692e399ebf064ed522b3, type: 2}
-  - {fileID: 11400000, guid: 7c51aa7120f9f2fea9e5a953f3cbe502, type: 2}
+  - {fileID: 11400000, guid: be66117cf0f8c3b8fa3404ae05ce3745, type: 2}
+  - {fileID: 11400000, guid: 8b229b41599115f7f9fb97ad1792f7db, type: 2}
+  - {fileID: 11400000, guid: 35be2738c984cf83ba12a2597e3fc792, type: 2}
+  - {fileID: 11400000, guid: efcae521ab21e3e4d980ef48d803071e, type: 2}
+  - {fileID: 11400000, guid: 2d6526b3f03de15408aaecdd641b8858, type: 2}
+  - {fileID: 11400000, guid: 0bf5711dcf7ffdabaa178a2e5b449f28, type: 2}
+  - {fileID: 11400000, guid: 89ce07d61646c681b98fd75bb8990caa, type: 2}
+  - {fileID: 11400000, guid: 1000cef6a2d3ffbd3b5df8df007270f9, type: 2}
+  - {fileID: 11400000, guid: fbb4fad9c16106f048208c06b3e8923d, type: 2}
+  - {fileID: 11400000, guid: 94ba17a9d0cae1c3a8471ca6378f5f19, type: 2}
   - {fileID: 11400000, guid: b8cf72e94fee687bdaab591324e50e06, type: 2}
+  - {fileID: 11400000, guid: 1d7b2dac8e3b28907a813a7577b457eb, type: 2}
   - {fileID: 11400000, guid: ed5b32cfa745c4616a89bf280b96fc8c, type: 2}
+  - {fileID: 11400000, guid: c01d1ed04c31ba71ca664d9d34dbecb8, type: 2}
   - {fileID: 11400000, guid: 32df366a6d9fa1a6d89f483d02d01c78, type: 2}
+  - {fileID: 11400000, guid: 706fd1df1af039f8a847ba27242a4b28, type: 2}
   - {fileID: 11400000, guid: 7eba3902d7f7486b4a95d9b94b42fbed, type: 2}
-  - {fileID: 11400000, guid: 60cfe18c022f3f468a81b07a27d010be, type: 2}
-  - {fileID: 11400000, guid: 4ae5f5fd1feda63af8385ee76eee321b, type: 2}
+  - {fileID: 11400000, guid: eb52a23f2da09b327ae6e677e8cf2d41, type: 2}
+  - {fileID: 11400000, guid: 8c2a7f3e4ad76016e81db43aa3a47fcd, type: 2}
+  - {fileID: 11400000, guid: c0dc57962d6b2ba7faee90806f9351c1, type: 2}
+  - {fileID: 11400000, guid: 299a3a0914e163e318feec5c15134139, type: 2}
+  - {fileID: 11400000, guid: f0886037ffec1f88ca1802ea17084916, type: 2}
   spawnLat: 50.1109
   spawnLon: 8.6821
   isDownloaded: 1

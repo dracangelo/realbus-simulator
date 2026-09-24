@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-09-15T17:48:25Z",
+    "timestamp_osm_base": "2026-09-24T15:24:23Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -7418,8 +7418,8 @@
 {
   "type": "node",
   "id": 1537473378,
-  "lat": -1.2856061,
-  "lon": 36.8226780,
+  "lat": -1.2856383,
+  "lon": 36.8228336,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Mama Ngina Street",
@@ -14854,8 +14854,8 @@
 {
   "type": "node",
   "id": 5555073777,
-  "lat": -1.2856761,
-  "lon": 36.8211111,
+  "lat": -1.2854964,
+  "lon": 36.8212077,
   "tags": {
     "addr:city": "Nairobi",
     "addr:street": "Muindi Mbingu Street",
@@ -14941,18 +14941,6 @@
     "operator:type": "government",
     "tourism": "museum",
     "website": "https://judiciary.go.ke/museum/"
-  }
-},
-{
-  "type": "node",
-  "id": 5555074037,
-  "lat": -1.2870826,
-  "lon": 36.8252547,
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Aga Khan Walk",
-    "name": "Uchumi Supermarket",
-    "shop": "supermarket"
   }
 },
 {
@@ -15916,8 +15904,8 @@
 {
   "type": "node",
   "id": 6110577686,
-  "lat": -1.2879752,
-  "lon": 36.8265424,
+  "lat": -1.2880771,
+  "lon": 36.8266872,
   "tags": {
     "amenity": "pharmacy",
     "healthcare": "pharmacy",
@@ -15927,8 +15915,8 @@
 {
   "type": "node",
   "id": 6110623785,
-  "lat": -1.2881548,
-  "lon": 36.8266216,
+  "lat": -1.2881454,
+  "lon": 36.8265344,
   "tags": {
     "name": "Wei Wei",
     "shop": "gift"
@@ -21226,8 +21214,8 @@
 {
   "type": "node",
   "id": 9193162417,
-  "lat": -1.2921293,
-  "lon": 36.8214991,
+  "lat": -1.2920314,
+  "lon": 36.8214066,
   "tags": {
     "name": "Jade Collection Haile Sellasie Avenue",
     "shop": "clothes"
@@ -22113,7 +22101,9 @@
     "brand": "Marriott International",
     "name": "JW Marriott",
     "tourism": "hotel",
-    "website": "https://jw-marriott.marriott.com/"
+    "website": "https://jw-marriott.marriott.com/",
+    "wikidata": "Q1141173",
+    "wikipedia": "en:Marriott International"
   }
 },
 {
@@ -24427,8 +24417,8 @@
 {
   "type": "node",
   "id": 12901474090,
-  "lat": -1.2845940,
-  "lon": 36.8234146,
+  "lat": -1.2846449,
+  "lon": 36.8235259,
   "tags": {
     "name": "umoja",
     "shop": "shoes",
@@ -25580,6 +25570,121 @@
   }
 },
 {
+  "type": "node",
+  "id": 14183683081,
+  "lat": -1.2851712,
+  "lon": 36.8221942,
+  "tags": {
+    "name": "Shujaa Travel services",
+    "shop": "travel_agency"
+  }
+},
+{
+  "type": "node",
+  "id": 14183683083,
+  "lat": -1.2857002,
+  "lon": 36.8224711,
+  "tags": {
+    "brand": "safaricom",
+    "name": "Extelcom shop",
+    "shop": "mobile_phone"
+  }
+},
+{
+  "type": "node",
+  "id": 14190229887,
+  "lat": -1.2847187,
+  "lon": 36.8233623,
+  "tags": {
+    "brand": "Samsonite",
+    "brand:wikidata": "Q1203426",
+    "name": "Samsonite",
+    "shop": "bag"
+  }
+},
+{
+  "type": "node",
+  "id": 14190229888,
+  "lat": -1.2846839,
+  "lon": 36.8234467,
+  "tags": {
+    "brand": "Apple Store",
+    "brand:wikidata": "Q421253",
+    "name": "salute iWorld",
+    "shop": "electronics",
+    "short_name": "Apple"
+  }
+},
+{
+  "type": "node",
+  "id": 14196377412,
+  "lat": -1.2976700,
+  "lon": 36.7886776,
+  "tags": {
+    "contact:email": "fengshengfoods@gmail.com",
+    "name": "FengSheng Supermarket",
+    "phone": "+254 71 6809709",
+    "shop": "supermarket"
+  }
+},
+{
+  "type": "node",
+  "id": 14196436689,
+  "lat": -1.2601437,
+  "lon": 36.8011940,
+  "tags": {
+    "brand": "Samsonite",
+    "brand:wikidata": "Q1203426",
+    "name": "Samsonite",
+    "shop": "bag",
+    "website": "https://shop.samsonite.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14196436690,
+  "lat": -1.2564463,
+  "lon": 36.8029363,
+  "tags": {
+    "brand": "Samsonite",
+    "brand:wikidata": "Q1203426",
+    "name": "Samsonite",
+    "shop": "bag",
+    "website": "https://shop.samsonite.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 14200767075,
+  "lat": -1.2818254,
+  "lon": 36.8199854,
+  "tags": {
+    "name": "Auto Express",
+    "shop": "car_repair",
+    "website": "https://auto-xpress.co.ke/"
+  }
+},
+{
+  "type": "node",
+  "id": 14202006254,
+  "lat": -1.2880170,
+  "lon": 36.8266346,
+  "tags": {
+    "name": "Tecno",
+    "shop": "mobile_phone"
+  }
+},
+{
+  "type": "node",
+  "id": 14211998801,
+  "lat": -1.3116255,
+  "lon": 36.8070321,
+  "tags": {
+    "name": "Mash Poa Main Office",
+    "shop": "travel_agency"
+  }
+},
+{
   "type": "way",
   "id": 25473029,
   "bounds": {
@@ -26125,7 +26230,7 @@
     "addr:street": "Tom Mboya Street",
     "building": "yes",
     "building:colour": "#DEC88C",
-    "building:levels": "3",
+    "height": "12",
     "museum": "history",
     "name": "Kenya National Archives",
     "opening_hours": "Mo-Fr 08:00-17:00",
@@ -27336,45 +27441,6 @@
     "check_date": "2023-04-03",
     "name": "Tusky's OTC",
     "shop": "supermarket"
-  }
-},
-{
-  "type": "way",
-  "id": 123272005,
-  "bounds": {
-    "minlat": -1.2840779,
-    "minlon": 36.8233320,
-    "maxlat": -1.2838464,
-    "maxlon": 36.8235417
-  },
-  "nodes": [
-    1375293366,
-    1375293375,
-    6572438979,
-    1375293362,
-    1375293364,
-    1375293333,
-    1375293342,
-    1375293384,
-    1375293366
-  ],
-  "geometry": [
-    { "lat": -1.2838464, "lon": 36.8234638 },
-    { "lat": -1.2840064, "lon": 36.8233320 },
-    { "lat": -1.2840779, "lon": 36.8234189 },
-    { "lat": -1.2840422, "lon": 36.8234484 },
-    { "lat": -1.2840677, "lon": 36.8234794 },
-    { "lat": -1.2840141, "lon": 36.8235258 },
-    { "lat": -1.2839784, "lon": 36.8234857 },
-    { "lat": -1.2839105, "lon": 36.8235417 },
-    { "lat": -1.2838464, "lon": 36.8234638 }
-  ],
-  "tags": {
-    "addr:city": "Nairobi",
-    "addr:street": "Kimathi Street",
-    "building": "yes",
-    "name": "Oakwood Hotel",
-    "tourism": "hotel"
   }
 },
 {
@@ -33371,7 +33437,7 @@
   "type": "way",
   "id": 267025761,
   "bounds": {
-    "minlat": -1.3154985,
+    "minlat": -1.3155329,
     "minlon": 36.8058914,
     "maxlat": -1.3142986,
     "maxlon": 36.8079074
@@ -33381,10 +33447,10 @@
     5257671683,
     2725086395,
     9266334334,
-    9266288432,
+    5257671685,
     9266288433,
     9266288428,
-    9266288434,
+    5257671645,
     2725086389,
     2725086384,
     9266288435,
@@ -33400,12 +33466,12 @@
   "geometry": [
     { "lat": -1.3148469, "lon": 36.8058914 },
     { "lat": -1.3149149, "lon": 36.8061867 },
-    { "lat": -1.3154985, "lon": 36.8067808 },
+    { "lat": -1.3155329, "lon": 36.8067870 },
     { "lat": -1.3148022, "lon": 36.8077491 },
     { "lat": -1.3147631, "lon": 36.8078034 },
     { "lat": -1.3147370, "lon": 36.8078001 },
     { "lat": -1.3147111, "lon": 36.8078358 },
-    { "lat": -1.3146753, "lon": 36.8078852 },
+    { "lat": -1.3146781, "lon": 36.8078755 },
     { "lat": -1.3146351, "lon": 36.8079074 },
     { "lat": -1.3143160, "lon": 36.8075366 },
     { "lat": -1.3142986, "lon": 36.8073414 },

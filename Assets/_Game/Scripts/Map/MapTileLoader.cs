@@ -9,6 +9,8 @@ using System.Collections.Generic;
 /// </summary>
 public class MapTileLoader : MonoBehaviour
 {
+    [System.Serializable]
+    class TokenConfiguration { public string AccessToken; }
     [Header("Mapbox Settings")]
     public string mapboxToken = "";
     public string mapStyle = "mapbox/satellite-streets-v12";
@@ -87,6 +89,8 @@ public class MapTileLoader : MonoBehaviour
 
     IEnumerator InitWhenReady()
     {
+        // Awake may run before SceneBootstrap synchronizes the selected city.
+        yield return null;
         while (CityManager.Instance == null || CityManager.Instance.activeCity == null)
             yield return null;
         
@@ -99,6 +103,15 @@ public class MapTileLoader : MonoBehaviour
             mapStyle = "mapbox/satellite-v9";
         
         mapboxToken = string.IsNullOrWhiteSpace(mapboxToken) ? "" : mapboxToken.Trim();
+        if (string.IsNullOrEmpty(mapboxToken))
+        {
+            var config = Resources.Load<TextAsset>("Mapbox/MapboxConfiguration");
+            if (config != null)
+            {
+                try { mapboxToken = JsonUtility.FromJson<TokenConfiguration>(config.text)?.AccessToken?.Trim() ?? ""; }
+                catch (System.ArgumentException) { Debug.LogWarning("MapTileLoader: Mapbox configuration is not valid JSON."); }
+            }
+        }
         if (string.IsNullOrEmpty(mapboxToken))
         {
             Debug.LogError("MapTileLoader: No Mapbox token set!");

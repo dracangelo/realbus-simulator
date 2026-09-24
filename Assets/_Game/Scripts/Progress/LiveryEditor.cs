@@ -141,7 +141,10 @@ public class LiveryEditor : MonoBehaviour
             LiveryCodeCodec.TryDecode(savedCode, out currentLivery);
 
         currentLivery = currentLivery ?? new LiveryData();
-        Repaint();
+        // Imported meshes have their own UV layouts and material textures.
+        // Painting an unmasked white atlas over them erases the source artwork.
+        // Only models explicitly authored with a livery mask support repainting.
+        if (zoneMap != null) Repaint();
     }
 
     public void SetHSV(LiveryZone zone, float hue, float saturation, float value, float opacity)
@@ -241,7 +244,7 @@ public class LiveryEditor : MonoBehaviour
 
     void ApplyTextureToRenderers()
     {
-        if (targetRenderers == null)
+        if (targetRenderers == null || zoneMap == null)
             return;
         for (int i = 0; i < targetRenderers.Length; i++)
         {

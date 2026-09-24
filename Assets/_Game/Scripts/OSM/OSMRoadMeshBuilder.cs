@@ -481,6 +481,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             return false;
 
         var sample = Instantiate(roadVisualPrefab);
+        ImportedVehicleVisualRepair.DisableEmbeddedCameras(sample.transform);
         sample.name = "__RoadVisualBounds";
         sample.hideFlags = HideFlags.HideAndDontSave;
         sample.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -533,6 +534,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 position.y = modelBottomOffset;
 
                 var visual = Instantiate(roadVisualPrefab, position, rotation, parent);
+                ImportedVehicleVisualRepair.DisableEmbeddedCameras(visual.transform);
                 visual.name = $"RoadVisual_{i}_{pieceIndex}";
                 visual.transform.localScale = GetScaledRoadVisualScale(visual.transform.localScale, widthScale, lengthScale);
                 ApplyLayerRecursively(visual, parent.gameObject.layer);

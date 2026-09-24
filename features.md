@@ -8,6 +8,7 @@
 - Wet, paved, cobblestone, gravel, and dirt surface handling.
 - Cinematic mobile driving controls with pedals, steering buttons or wheel, gear, horn, and retarder.
 - Model-backed playable buses with generated physics, wheels, cameras, and docking points.
+- Imported camera isolation and preservation of original model materials.
 - Optional speed and stop-approach driving assists.
 
 ## Maps and routes
