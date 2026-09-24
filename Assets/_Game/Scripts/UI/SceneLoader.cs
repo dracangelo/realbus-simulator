@@ -21,6 +21,8 @@ public class SceneLoader : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         ConfigureLandscapeOrientation();
+        if (transform.parent != null)
+            transform.SetParent(null, true);
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
     }

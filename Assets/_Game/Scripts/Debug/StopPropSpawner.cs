@@ -117,6 +117,7 @@ public class StopPropSpawner : MonoBehaviour
             docking.dockingRadius = triggerDockingRadius;
 
             var model = Instantiate(prefab, stopRoot.transform);
+            ImportedVehicleVisualRepair.DisableEmbeddedCameras(model.transform);
             model.transform.localPosition = Vector3.up * stopModelVerticalOffset;
             model.transform.localRotation = Quaternion.Euler(0f, Random.Range(randomYawRange.x, randomYawRange.y), 0f);
             float scale = Random.Range(randomScaleRange.x, randomScaleRange.y);

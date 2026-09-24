@@ -29,10 +29,9 @@ public class OSMBuildingLoader : MonoBehaviour
         string jsonPath = RuntimeCityContentStore.ResolveReadPath(city, "buildings.json");
         string preferredPath = SelectPreferredBuildingsPath(xmlPath, jsonPath);
 
-        string url = "file://" + preferredPath;
-
         Debug.Log($"Buildings: Loading from {preferredPath}");
-
+#if UNITY_ANDROID && !UNITY_EDITOR
+        string url = preferredPath;
         using (var request = UnityWebRequest.Get(url))
         {
             yield return request.SendWebRequest();
@@ -61,6 +60,30 @@ public class OSMBuildingLoader : MonoBehaviour
 
             Debug.Log($"Buildings: Data ready — {osmData.ways.Count} ways");
         }
+#else
+        if (!File.Exists(preferredPath))
+        {
+            Debug.LogError($"Buildings load failed: File not found at {preferredPath}");
+            yield break;
+        }
+
+        // Large downloaded Overpass files are local in the Editor/desktop
+        // player. Reading them directly avoids file:// request failures and
+        // makes parsing start predictably.
+        string raw = File.ReadAllText(preferredPath);
+        Debug.Log($"Buildings: Loaded {raw.Length} bytes from disk");
+        yield return null;
+        osmData = preferredPath.EndsWith(".json")
+            ? OSMParser.ParseOverpassJson(raw)
+            : OSMParser.Parse(raw);
+        dataLoaded = osmData != null && osmData.ways != null && osmData.ways.Count > 0;
+        if (!dataLoaded)
+        {
+            Debug.LogWarning($"Buildings: No building ways were found in {preferredPath}. Download Buildings + POIs for the selected city.");
+            yield break;
+        }
+        Debug.Log($"Buildings: Data ready — {osmData.ways.Count} ways");
+#endif
     }
 
     string SelectPreferredBuildingsPath(string xmlPath, string jsonPath)

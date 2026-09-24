@@ -85,6 +85,8 @@ public class BusController : MonoBehaviour
         if (rb == null)
             return;
 
+        RepairWheelReferences();
+
         if (rb.mass <= 0.01f)
             rb.mass = 12000f;
         if (runtimeTransmissionInstance == null && transmissionData != null)
@@ -93,6 +95,18 @@ public class BusController : MonoBehaviour
         ConfigureSuspensionForVehicleMass();
 
         CaptureModelRootBasePosition();
+    }
+
+    void RepairWheelReferences()
+    {
+        WheelCollider[] discovered = GetComponentsInChildren<WheelCollider>(true);
+        if (CountWheels(allWheels) == 0) allWheels = discovered;
+        if (CountWheels(steerWheels) == 0 && discovered.Length >= 2)
+            steerWheels = new[] { discovered[0], discovered[1] };
+        if (CountWheels(driveWheels) == 0 && discovered.Length >= 2)
+            driveWheels = new[] { discovered[discovered.Length - 2], discovered[discovered.Length - 1] };
+        if (CountWheels(rearWheels) == 0)
+            rearWheels = driveWheels;
     }
 
     void OnDestroy()
@@ -137,7 +151,8 @@ public class BusController : MonoBehaviour
         // A route start owns the interlock during briefing, countdown and stops.
         // It must never remain latched while the mission is actively driving.
         MissionManager activeMission = MissionManager.Instance;
-        if (ServiceBrakeInterlock && activeMission != null && activeMission.missionState == MissionState.InProgress)
+        if (ServiceBrakeInterlock && ((activeMission != null && activeMission.missionState == MissionState.InProgress) ||
+            (FreeDriveSession.Instance != null && FreeDriveSession.Instance.sessionActive)))
             ServiceBrakeInterlock = false;
 
         currentSpeedKmh = rb.linearVelocity.magnitude * 3.6f;
@@ -451,6 +466,7 @@ public class BusController : MonoBehaviour
             Destroy(activeModelInstance);
 
         activeModelInstance = Instantiate(modelPrefab, parent);
+        ImportedVehicleVisualRepair.DisableEmbeddedCameras(activeModelInstance.transform);
         activeModelInstance.transform.localPosition = Vector3.zero;
         activeModelInstance.transform.localRotation = Quaternion.identity;
         activeModelInstance.transform.localScale = Vector3.one;

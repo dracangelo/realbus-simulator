@@ -17,6 +17,8 @@ public class MobileCameraController : MonoBehaviour
     Vector3 targetLocalPosition;
     Quaternion targetLocalRotation;
     float baseFieldOfView;
+    Bounds busLocalBounds;
+    Coroutine binding;
     readonly RaycastHit[] cameraHits = new RaycastHit[12];
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -35,26 +37,44 @@ public class MobileCameraController : MonoBehaviour
         Instance = this; DontDestroyOnLoad(gameObject); SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    void Start() { StartCoroutine(BindWhenReady()); }
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode) { ReleaseMirror(); StartCoroutine(BindWhenReady()); }
+    void Start() { Rebind(); }
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode) { Rebind(); }
+    void Rebind()
+    {
+        if (binding != null) StopCoroutine(binding);
+        ReleaseMirror();
+        bus = null;
+        targetCamera = null;
+        binding = StartCoroutine(BindWhenReady());
+    }
     void OnDestroy() { if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded; ReleaseMirror(); }
 
     IEnumerator BindWhenReady()
     {
+        // SceneBootstrap replaces the serialized bus during Start. Binding in
+        // sceneLoaded otherwise retains the disabled bus scheduled for removal.
+        yield return null;
         for (int frame = 0; frame < 120 && (bus == null || targetCamera == null); frame++)
         {
-            bus = FindFirstObjectByType<BusController>();
+            bus = MissionManager.Instance != null ? MissionManager.Instance.busController : null;
+            if (bus == null || !bus.isActiveAndEnabled) bus = FindAnyObjectByType<BusController>();
             targetCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
             if (bus == null || targetCamera == null) yield return null;
         }
+        binding = null;
         if (bus == null || targetCamera == null) { SetMirrorVisible(false); yield break; }
+        busLocalBounds = CalculateLocalVisualBounds(bus.transform);
         baseFieldOfView = targetCamera.fieldOfView; CurrentPreset = (BusCameraPreset)Mathf.Clamp(PlayerPrefs.GetInt("RealBus.CameraPreset", 0), 0, 3);
         ApplyPreset(true); EnsureMirror();
     }
 
-    void Update()
+    void LateUpdate()
     {
-        if (bus == null || targetCamera == null) return;
+        if (bus == null || !bus.isActiveAndEnabled || targetCamera == null)
+        {
+            if (binding == null && FindAnyObjectByType<BusController>() != null) Rebind();
+            return;
+        }
         if (PhotoModeController.Instance != null && PhotoModeController.Instance.IsPhotoModeActive) { SetMirrorVisible(false); return; }
         var keyboard = UnityEngine.InputSystem.Keyboard.current;
         if (keyboard != null && keyboard.cKey.wasPressedThisFrame) CycleCamera();
@@ -71,15 +91,50 @@ public class MobileCameraController : MonoBehaviour
         SubtitleManager.EnsureExists().Show("Camera", PresetLabel(CurrentPreset), 1.4f);
     }
 
+    public void SetPreset(BusCameraPreset preset)
+    {
+        CurrentPreset = preset;
+        ApplyPreset(true);
+    }
+
     void ApplyPreset(bool immediate)
     {
         if (bus == null || targetCamera == null) return;
         targetCamera.transform.SetParent(bus.transform, false);
-        if (CurrentPreset == BusCameraPreset.Cockpit) { targetLocalPosition = new Vector3(-0.42f, 2.55f, 1.75f); targetLocalRotation = Quaternion.Euler(3f, 0f, 0f); }
-        else if (CurrentPreset == BusCameraPreset.WideChase) { targetLocalPosition = new Vector3(0f, 4.2f, -11.5f); targetLocalRotation = Quaternion.Euler(13f, 0f, 0f); }
-        else if (CurrentPreset == BusCameraPreset.DoorView) { targetLocalPosition = new Vector3(0.9f, 2.35f, -1.2f); targetLocalRotation = Quaternion.Euler(5f, 35f, 0f); }
-        else { targetLocalPosition = new Vector3(0f, 3.2f, -7.5f); targetLocalRotation = Quaternion.Euler(14f, 0f, 0f); }
+        float width = Mathf.Max(2.2f, busLocalBounds.size.x);
+        float height = Mathf.Max(2.8f, busLocalBounds.size.y);
+        float length = Mathf.Max(7f, busLocalBounds.size.z);
+        float rear = busLocalBounds.min.z;
+        float front = busLocalBounds.max.z;
+        if (CurrentPreset == BusCameraPreset.Cockpit) { targetLocalPosition = new Vector3(-width * .22f, busLocalBounds.min.y + height * .72f, front - length * .18f); targetLocalRotation = Quaternion.Euler(3f, 0f, 0f); }
+        else if (CurrentPreset == BusCameraPreset.WideChase) { targetLocalPosition = new Vector3(0f, busLocalBounds.max.y + height * .45f, rear - length * .72f); targetLocalRotation = Quaternion.Euler(12f, 0f, 0f); }
+        else if (CurrentPreset == BusCameraPreset.DoorView) { targetLocalPosition = new Vector3(busLocalBounds.max.x + .35f, busLocalBounds.min.y + height * .65f, busLocalBounds.center.z - length * .12f); targetLocalRotation = Quaternion.Euler(5f, 35f, 0f); }
+        else { targetLocalPosition = new Vector3(0f, busLocalBounds.max.y + height * .2f, rear - length * .42f); targetLocalRotation = Quaternion.Euler(12f, 0f, 0f); }
         if (immediate) { targetCamera.transform.localPosition = targetLocalPosition; targetCamera.transform.localRotation = targetLocalRotation; }
+    }
+
+    static Bounds CalculateLocalVisualBounds(Transform root)
+    {
+        var controller = root.GetComponent<BusController>();
+        Transform visual = controller != null && controller.modelRoot != null ? controller.modelRoot : root;
+        Renderer[] renderers = visual.GetComponentsInChildren<Renderer>(true);
+        if (renderers.Length == 0) return new Bounds(new Vector3(0f, 1.5f, 0f), new Vector3(2.5f, 3f, 10f));
+        Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+        Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+        foreach (Renderer renderer in renderers)
+        {
+            // Transform mesh-local corners, not a rotated world AABB. The
+            // latter inflates the bus dimensions after a route spawn rotation.
+            Bounds b = renderer.localBounds;
+            for (int x = -1; x <= 1; x += 2)
+            for (int y = -1; y <= 1; y += 2)
+            for (int z = -1; z <= 1; z += 2)
+            {
+                Vector3 corner = root.InverseTransformPoint(renderer.transform.TransformPoint(b.center + Vector3.Scale(b.extents, new Vector3(x, y, z))));
+                min = Vector3.Min(min, corner); max = Vector3.Max(max, corner);
+            }
+        }
+        return new Bounds((min + max) * .5f, max - min);
     }
 
     Vector3 ResolveCollisionSafePosition(Vector3 desiredLocal)

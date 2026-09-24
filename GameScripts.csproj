@@ -68,6 +68,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/MobileCameraController.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/StopApproachUI.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/SceneCatalog.cs" />
+    <Compile Include="Assets/_Game/Scripts/Bus/RuntimeVehiclePackDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DynamicEventSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/BusRouteParser.cs" />
     <Compile Include="Assets/_Game/Scripts/Util/RuntimeDistanceCuller.cs" />
@@ -129,6 +130,7 @@
     <Compile Include="Assets/_Game/Scripts/Weather/TimeOfDaySystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DockingZone.cs" />
+    <Compile Include="Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/MaintenanceSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/SkyController.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MapTestBootstrap.cs" />
@@ -140,6 +142,7 @@
     <Compile Include="Assets/_Game/Scripts/Map/MapOrigin.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MapTileLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/CityPinPulse.cs" />
+    <Compile Include="Assets/_Game/Scripts/City/RuntimeCityContentDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/OfflineMapsUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/FogController.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficParticipant.cs" />
@@ -216,6 +219,7 @@
     <Compile Include="Assets/_Game/Scripts/Progress/SaveManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Progress/UnlockManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AIRoadGraph.cs" />
+    <Compile Include="Assets/_Game/Scripts/City/RuntimeCityContentStore.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/VehiclePolishEffects.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MissionBriefingUI.cs" />

@@ -126,7 +126,8 @@ public class RealBusAudioManager : MonoBehaviour
 
     void PlayOneShotOn(AudioSource source, AudioClip clip, float volume)
     {
-        if (clip != null && source != null) source.PlayOneShot(clip, volume * SettingsManager.EnsureExists().Current.effectsVolume);
+        if (clip != null && source != null && source.isActiveAndEnabled && source.gameObject.activeInHierarchy)
+            source.PlayOneShot(clip, volume * SettingsManager.EnsureExists().Current.effectsVolume);
     }
 
     void ApplyProductionProfile()
@@ -157,7 +158,7 @@ public class RealBusAudioManager : MonoBehaviour
     {
         GameObject child = new GameObject(label); child.transform.SetParent(owner.transform, false);
         AudioSource source = AddSource(child, true, spatial ? 0.82f : 0f); source.clip = clip; source.volume = volume;
-        if (clip != null) source.Play(); return source;
+        if (clip != null && source.isActiveAndEnabled && source.gameObject.activeInHierarchy) source.Play(); return source;
     }
 
     static AudioSource AddSource(GameObject owner, bool loop, float spatialBlend)
@@ -167,7 +168,8 @@ public class RealBusAudioManager : MonoBehaviour
 
     static void Configure(AudioSource source, float volume, float pitch)
     {
-        if (source == null) return; source.volume = volume; source.pitch = pitch;
+        if (source == null || !source.isActiveAndEnabled || !source.gameObject.activeInHierarchy) return;
+        source.volume = volume; source.pitch = pitch;
         if (source.clip != null && !source.isPlaying) source.Play();
     }
 

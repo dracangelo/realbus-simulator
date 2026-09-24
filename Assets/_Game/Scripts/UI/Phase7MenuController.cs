@@ -76,7 +76,7 @@ public class Phase7MenuController : MonoBehaviour
         }
         if (gameplay)
         {
-            CreateButton(canvas.transform, "Ⅱ", new Vector2(-28f, -210f), new Vector2(78f, 78f), TogglePause, Vector2.one, Vector2.one);
+            CreateButton(canvas.transform, "II", new Vector2(-28f, -210f), new Vector2(78f, 78f), TogglePause, Vector2.one, Vector2.one);
             CreateButton(canvas.transform, "CAM", new Vector2(-120f, -210f), new Vector2(78f, 78f), () => MobileCameraController.EnsureExists().CycleCamera(), Vector2.one, Vector2.one);
         }
         BuildSettings(); BuildMobileSettings(); BuildContentDownloads(); BuildVehiclePacks(); BuildCredits(); BuildPause(); BuildDaily();

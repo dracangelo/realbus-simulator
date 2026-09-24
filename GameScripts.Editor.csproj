@@ -58,6 +58,7 @@
     <Compile Include="Assets/_Game/Scripts/Editor/CountryImporter.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/Phase3MapTools.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/AIRoadGraphGenerator.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/GameSceneRebuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/RouteEditorWindow.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/ImportedModelWiringGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CityJsonBulkDownloader.cs" />
@@ -68,9 +69,12 @@
     <Compile Include="Assets/_Game/Scripts/Editor/StreamingAssetsCityFolderGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/Mainmenubuiler.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CityCatalogGenerator.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/LegacyPluginImporterUpgrader.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/RealBusSetupWizard.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/VehiclePackBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/FuelAmenityDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/RouteDebugVisualiser.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/GameplaySmokeCheck.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/_Game/Scripts/Editor/GameScripts.Editor.asmdef" />

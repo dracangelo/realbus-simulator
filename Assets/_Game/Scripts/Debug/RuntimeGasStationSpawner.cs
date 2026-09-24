@@ -68,7 +68,8 @@ public class RuntimeGasStationSpawner : MonoBehaviour
                 continue;
 
             world.y += yOffset;
-            Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
+            var station = Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
+            ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
             placed.Add(world);
             spawned++;
 
@@ -117,7 +118,8 @@ public class RuntimeGasStationSpawner : MonoBehaviour
                 continue;
 
             world.y += yOffset;
-            Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
+            var station = Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
+            ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
             placed.Add(world);
             spawned++;
         }

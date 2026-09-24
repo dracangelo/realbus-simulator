@@ -201,6 +201,7 @@ public class VehiclePool : MonoBehaviour
             if (picked == null || picked.prefab == null) continue;
 
             GameObject go = Instantiate(picked.prefab, transform);
+            ImportedVehicleVisualRepair.DisableEmbeddedCameras(go.transform);
             var ai = go.GetComponent<AIVehicleController>();
             if (ai == null) ai = go.AddComponent<AIVehicleController>();
             ai.vehicleType = picked.type;

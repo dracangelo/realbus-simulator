@@ -80,6 +80,7 @@ public class OsmCityPopulationSystem : MonoBehaviour
     int spawnedRoadsideVehicles;
     int spawnedCrowdActors;
     int spawnedBenches;
+    Transform populationRoot;
 
     void Start()
     {
@@ -129,10 +130,17 @@ public class OsmCityPopulationSystem : MonoBehaviour
 
     void PrepareRoot()
     {
+        if (populationRoot == null)
+        {
+            populationRoot = new GameObject("City Population").transform;
+            populationRoot.SetParent(transform, false);
+        }
         if (clearExistingChildrenBeforePopulate)
         {
-            for (int i = transform.childCount - 1; i >= 0; i--)
-                Destroy(transform.GetChild(i).gameObject);
+            // MapSystem also owns fuel stations and other streamed content.
+            // Never clear another spawner's children when refreshing population.
+            for (int i = populationRoot.childCount - 1; i >= 0; i--)
+                Destroy(populationRoot.GetChild(i).gameObject);
         }
 
         placedTrees.Clear();
@@ -173,7 +181,8 @@ public class OsmCityPopulationSystem : MonoBehaviour
                 if (prefab == null)
                     return;
 
-                var tree = Instantiate(prefab, candidate + Vector3.up * objectLift, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
+                var tree = Instantiate(prefab, candidate + Vector3.up * objectLift, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), populationRoot);
+                ImportedVehicleVisualRepair.DisableEmbeddedCameras(tree.transform);
                 float scale = Random.Range(treeScaleRange.x, treeScaleRange.y);
                 tree.transform.localScale = Vector3.Scale(tree.transform.localScale, Vector3.one * scale);
                 placedTrees.Add(candidate);
@@ -211,7 +220,8 @@ public class OsmCityPopulationSystem : MonoBehaviour
                     return;
 
                 Quaternion rotation = Quaternion.LookRotation(side > 0f ? forward : -forward, Vector3.up);
-                var vehicle = Instantiate(prefab, candidate + Vector3.up * objectLift, rotation, transform);
+                var vehicle = Instantiate(prefab, candidate + Vector3.up * objectLift, rotation, populationRoot);
+                ImportedVehicleVisualRepair.DisableEmbeddedCameras(vehicle.transform);
                 float scale = Random.Range(roadsideVehicleScaleRange.x, roadsideVehicleScaleRange.y);
                 vehicle.transform.localScale = Vector3.Scale(vehicle.transform.localScale, Vector3.one * scale);
                 placedRoadsideVehicles.Add(candidate);
@@ -290,7 +300,8 @@ public class OsmCityPopulationSystem : MonoBehaviour
             if (prefab == null)
                 return;
 
-            var tree = Instantiate(prefab, candidate + Vector3.up * objectLift, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
+            var tree = Instantiate(prefab, candidate + Vector3.up * objectLift, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), populationRoot);
+            ImportedVehicleVisualRepair.DisableEmbeddedCameras(tree.transform);
             float scale = Random.Range(treeScaleRange.x, treeScaleRange.y);
             tree.transform.localScale = Vector3.Scale(tree.transform.localScale, Vector3.one * scale);
             placedTrees.Add(candidate);
@@ -314,7 +325,8 @@ public class OsmCityPopulationSystem : MonoBehaviour
         if (prefab == null)
             return;
 
-        Instantiate(prefab, candidate + Vector3.up * objectLift, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
+        var bench = Instantiate(prefab, candidate + Vector3.up * objectLift, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), populationRoot);
+        ImportedVehicleVisualRepair.DisableEmbeddedCameras(bench.transform);
         placedBenches.Add(candidate);
         spawnedBenches++;
     }
@@ -335,7 +347,8 @@ public class OsmCityPopulationSystem : MonoBehaviour
                 return;
 
             Quaternion rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-            var actor = Instantiate(prefab, candidate + Vector3.up * objectLift, rotation, transform);
+            var actor = Instantiate(prefab, candidate + Vector3.up * objectLift, rotation, populationRoot);
+            ImportedVehicleVisualRepair.DisableEmbeddedCameras(actor.transform);
             float scale = Random.Range(crowdScaleRange.x, crowdScaleRange.y);
             actor.transform.localScale = Vector3.Scale(actor.transform.localScale, Vector3.one * scale);
             placedCrowd.Add(candidate);

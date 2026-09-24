@@ -7,6 +7,7 @@ using System.IO;
 using UnityEditor;
 #endif
 
+[DefaultExecutionOrder(-200)]
 public class SceneBootstrap : MonoBehaviour
 {
     [SerializeField] bool redirectIfNoManagers = true;
@@ -38,7 +39,10 @@ public class SceneBootstrap : MonoBehaviour
         new GameObject("SceneBootstrap (Runtime)").AddComponent<SceneBootstrap>();
     }
 
-    void Awake()
+    // All scene singletons must finish Awake before setup can resolve them.
+    // Run before loader/controller Start methods, but never create competing
+    // managers or temporary singleton converters during scene deserialization.
+    void Start()
     {
         if (redirectIfNoManagers && SceneLoader.Instance == null)
         {
@@ -76,6 +80,14 @@ public class SceneBootstrap : MonoBehaviour
 #endif
 
         SyncSelectionStateFromManagers();
+        var city = CityManager.Instance.activeCity;
+        if (city != null)
+        {
+            var converter = FindAnyObjectByType<CoordinateConverter>();
+            if (converter != null) converter.SetCityOrigin(city);
+            var tiles = FindAnyObjectByType<MapTileLoader>();
+            if (tiles != null) { tiles.centreLat = city.centreLat; tiles.centreLon = city.centreLon; }
+        }
     }
 
     void EnsureDriverShiftSystem()
@@ -101,6 +113,9 @@ public class SceneBootstrap : MonoBehaviour
 
         if (cityManager.activeCountry == null && cityManager.allCountries != null && cityManager.allCountries.Length > 0)
             cityManager.activeCountry = cityManager.allCountries[0];
+
+        if (gameState.selectedCity != null)
+            cityManager.SetActiveCity(gameState.selectedCity);
 
         if (cityManager.activeCity == null)
         {
@@ -846,7 +861,11 @@ public class SceneBootstrap : MonoBehaviour
     void EnsurePoiVisualizer()
     {
         if (!spawnDebugPoiMarkers)
+        {
+            foreach (var visualizer in FindObjectsByType<RuntimeOsmPoiVisualizer>(FindObjectsSortMode.None))
+                visualizer.enabled = false;
             return;
+        }
 
         if (FindObjectOfType<RuntimeOsmPoiVisualizer>() != null)
             return;
@@ -1064,13 +1083,9 @@ public class SceneBootstrap : MonoBehaviour
             if (response == null || response.elements == null || response.elements.Count == 0)
                 return null;
 
-            var converterGo = new GameObject("CoordinateConverter_RuntimeGraphTemp");
-            var converter = converterGo.AddComponent<CoordinateConverter>();
-            converter.mapOrigin = ScriptableObject.CreateInstance<MapOrigin>();
-            converter.mapOrigin.SetFromCity(city);
-
+            var converter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
+            if (converter == null) return null;
             var roadGraph = RoadGraph.BuildFromOverpassWays(response, converter);
-            Destroy(converterGo);
 
             if (roadGraph == null || roadGraph.nodes == null || roadGraph.nodes.Count == 0)
                 return null;

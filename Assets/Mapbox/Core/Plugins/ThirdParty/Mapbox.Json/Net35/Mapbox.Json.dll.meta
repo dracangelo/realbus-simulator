@@ -1,13 +1,20 @@
 fileFormatVersion: 2
 guid: 5c4fdb215216a4b30aa29f0fa1b4ab1d
-timeCreated: 1489780328
-licenseType: Pro
 PluginImporter:
-  serializedVersion: 1
+  externalObjects: {}
+  serializedVersion: 3
   iconMap: {}
   executionOrder: {}
+  defineConstraints: []
   isPreloaded: 0
+  isOverridable: 0
+  isExplicitlyReferenced: 0
+  validateReferences: 1
   platformData:
+    Android:
+      enabled: 1
+      settings:
+        CPU: AnyCPU
     Any:
       enabled: 0
       settings: {}
@@ -17,30 +24,10 @@ PluginImporter:
         CPU: AnyCPU
         DefaultValueInitialized: true
         OS: AnyOS
-    Linux:
-      enabled: 1
-      settings:
-        CPU: x86
-    Android:
-      enabled: 1
-      settings:
-        CPU: AnyCPU
     Linux64:
       enabled: 1
       settings:
         CPU: x86_64
-    LinuxUniversal:
-      enabled: 1
-      settings:
-        CPU: AnyCPU
-    OSXIntel:
-      enabled: 1
-      settings:
-        CPU: AnyCPU
-    OSXIntel64:
-      enabled: 1
-      settings:
-        CPU: AnyCPU
     OSXUniversal:
       enabled: 1
       settings:
@@ -63,8 +50,8 @@ PluginImporter:
     iOS:
       enabled: 1
       settings:
-        CompileFlags: 
-        FrameworkDependencies: 
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+        CompileFlags:
+        FrameworkDependencies:
+  userData:
+  assetBundleName:
+  assetBundleVariant:
