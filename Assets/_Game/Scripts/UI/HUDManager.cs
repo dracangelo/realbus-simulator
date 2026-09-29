@@ -27,7 +27,7 @@ public class HUDManager : MonoBehaviour
     public static HUDManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        HUDManager existing = FindFirstObjectByType<HUDManager>();
+        HUDManager existing = FindAnyObjectByType<HUDManager>();
         if (existing != null) return existing;
         return new GameObject("HUDManager").AddComponent<HUDManager>();
     }
@@ -47,10 +47,10 @@ public class HUDManager : MonoBehaviour
     IEnumerator BindWhenReady()
     {
         yield return null;
-        bus = FindFirstObjectByType<BusController>();
+        bus = FindAnyObjectByType<BusController>();
         if (bus == null) { SetVisible(false); yield break; }
         mission = MissionManager.Instance;
-        passengers = PassengerManager.Instance != null ? PassengerManager.Instance : FindFirstObjectByType<PassengerManager>();
+        passengers = PassengerManager.Instance != null ? PassengerManager.Instance : FindAnyObjectByType<PassengerManager>();
         fuel = bus.GetComponent<FuelSystem>();
         battery = bus.GetComponent<BatterySystem>();
         temperature = bus.GetComponent<EngineTemperatureSystem>();

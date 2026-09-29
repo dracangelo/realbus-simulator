@@ -10,6 +10,8 @@ public class MobileCameraController : MonoBehaviour
 {
     public static MobileCameraController Instance { get; private set; }
     public BusCameraPreset CurrentPreset { get; private set; }
+    [Tooltip("Optional rear-view inset. Off by default to keep cockpit a single viewport.")]
+    public bool showRearViewInset = false;
     Camera targetCamera, mirrorCamera;
     BusController bus;
     RenderTexture mirrorTexture;
@@ -27,7 +29,7 @@ public class MobileCameraController : MonoBehaviour
     public static MobileCameraController EnsureExists()
     {
         if (Instance != null) return Instance;
-        MobileCameraController existing = FindFirstObjectByType<MobileCameraController>();
+        MobileCameraController existing = FindAnyObjectByType<MobileCameraController>();
         return existing != null ? existing : new GameObject("MobileCameraController").AddComponent<MobileCameraController>();
     }
 
@@ -58,14 +60,14 @@ public class MobileCameraController : MonoBehaviour
         {
             bus = MissionManager.Instance != null ? MissionManager.Instance.busController : null;
             if (bus == null || !bus.isActiveAndEnabled) bus = FindAnyObjectByType<BusController>();
-            targetCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+            targetCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
             if (bus == null || targetCamera == null) yield return null;
         }
         binding = null;
         if (bus == null || targetCamera == null) { SetMirrorVisible(false); yield break; }
         busLocalBounds = CalculateLocalVisualBounds(bus.transform);
         baseFieldOfView = targetCamera.fieldOfView; CurrentPreset = (BusCameraPreset)Mathf.Clamp(PlayerPrefs.GetInt("RealBus.CameraPreset", 0), 0, 3);
-        ApplyPreset(true); EnsureMirror();
+        ApplyPreset(true);
     }
 
     void LateUpdate()
@@ -78,11 +80,11 @@ public class MobileCameraController : MonoBehaviour
         if (PhotoModeController.Instance != null && PhotoModeController.Instance.IsPhotoModeActive) { SetMirrorVisible(false); return; }
         var keyboard = UnityEngine.InputSystem.Keyboard.current;
         if (keyboard != null && keyboard.cKey.wasPressedThisFrame) CycleCamera();
-        Vector3 desired = ResolveCollisionSafePosition(targetLocalPosition);
-        targetCamera.transform.localPosition = Vector3.Lerp(targetCamera.transform.localPosition, desired, 1f - Mathf.Exp(-8f * Time.unscaledDeltaTime));
-        targetCamera.transform.localRotation = Quaternion.Slerp(targetCamera.transform.localRotation, targetLocalRotation, 1f - Mathf.Exp(-9f * Time.unscaledDeltaTime));
+        UpdateCameraPose(false);
         targetCamera.fieldOfView = Mathf.Lerp(targetCamera.fieldOfView, baseFieldOfView + Mathf.InverseLerp(20f, 90f, bus.currentSpeedKmh) * 5f, Time.unscaledDeltaTime * 3f);
-        SetMirrorVisible(CurrentPreset == BusCameraPreset.Cockpit && QualitySettings.GetQualityLevel() > 0);
+        bool mirrorVisible = showRearViewInset && CurrentPreset == BusCameraPreset.Cockpit && QualitySettings.GetQualityLevel() > 0;
+        if (mirrorVisible) EnsureMirror();
+        SetMirrorVisible(mirrorVisible);
     }
 
     public void CycleCamera()
@@ -100,17 +102,40 @@ public class MobileCameraController : MonoBehaviour
     void ApplyPreset(bool immediate)
     {
         if (bus == null || targetCamera == null) return;
-        targetCamera.transform.SetParent(bus.transform, false);
+        // Keep the screen camera outside the physics hierarchy: inheriting
+        // chassis roll made the entire map appear to tip during steering.
+        targetCamera.transform.SetParent(null, true);
         float width = Mathf.Max(2.2f, busLocalBounds.size.x);
         float height = Mathf.Max(2.8f, busLocalBounds.size.y);
         float length = Mathf.Max(7f, busLocalBounds.size.z);
         float rear = busLocalBounds.min.z;
         float front = busLocalBounds.max.z;
-        if (CurrentPreset == BusCameraPreset.Cockpit) { targetLocalPosition = new Vector3(-width * .22f, busLocalBounds.min.y + height * .72f, front - length * .18f); targetLocalRotation = Quaternion.Euler(3f, 0f, 0f); }
+        if (CurrentPreset == BusCameraPreset.Cockpit) { targetLocalPosition = new Vector3(-width * .22f, busLocalBounds.min.y + height * .53f, front - length * .115f); targetLocalRotation = Quaternion.Euler(8f, 0f, 0f); }
         else if (CurrentPreset == BusCameraPreset.WideChase) { targetLocalPosition = new Vector3(0f, busLocalBounds.max.y + height * .45f, rear - length * .72f); targetLocalRotation = Quaternion.Euler(12f, 0f, 0f); }
         else if (CurrentPreset == BusCameraPreset.DoorView) { targetLocalPosition = new Vector3(busLocalBounds.max.x + .35f, busLocalBounds.min.y + height * .65f, busLocalBounds.center.z - length * .12f); targetLocalRotation = Quaternion.Euler(5f, 35f, 0f); }
         else { targetLocalPosition = new Vector3(0f, busLocalBounds.max.y + height * .2f, rear - length * .42f); targetLocalRotation = Quaternion.Euler(12f, 0f, 0f); }
-        if (immediate) { targetCamera.transform.localPosition = targetLocalPosition; targetCamera.transform.localRotation = targetLocalRotation; }
+        if (immediate) UpdateCameraPose(true);
+    }
+
+    public static Quaternion HorizonRotation(Quaternion vehicleRotation)
+    {
+        Vector3 forward = Vector3.ProjectOnPlane(vehicleRotation * Vector3.forward, Vector3.up);
+        if (forward.sqrMagnitude < .001f) forward = Vector3.forward;
+        return Quaternion.LookRotation(forward.normalized, Vector3.up);
+    }
+
+    void UpdateCameraPose(bool immediate)
+    {
+        Quaternion heading = HorizonRotation(bus.transform.rotation);
+        bool onboard = CurrentPreset == BusCameraPreset.Cockpit || CurrentPreset == BusCameraPreset.DoorView;
+        Vector3 desired = onboard ? bus.transform.TransformPoint(targetLocalPosition)
+            : bus.transform.position + heading * targetLocalPosition;
+        if (!onboard) desired = ResolveCollisionSafePosition(desired);
+        // Stay inside the moving cockpit; chase views get world-space damping.
+        bool snap = immediate || onboard || (desired - targetCamera.transform.position).sqrMagnitude > 1600f;
+        targetCamera.transform.position = snap ? desired : Vector3.Lerp(targetCamera.transform.position, desired, 1f - Mathf.Exp(-8f * Time.unscaledDeltaTime));
+        Quaternion rotation = heading * targetLocalRotation;
+        targetCamera.transform.rotation = immediate ? rotation : Quaternion.Slerp(targetCamera.transform.rotation, rotation, 1f - Mathf.Exp(-9f * Time.unscaledDeltaTime));
     }
 
     static Bounds CalculateLocalVisualBounds(Transform root)
@@ -137,13 +162,12 @@ public class MobileCameraController : MonoBehaviour
         return new Bounds((min + max) * .5f, max - min);
     }
 
-    Vector3 ResolveCollisionSafePosition(Vector3 desiredLocal)
+    Vector3 ResolveCollisionSafePosition(Vector3 desired)
     {
-        if (CurrentPreset == BusCameraPreset.Cockpit || CurrentPreset == BusCameraPreset.DoorView) return desiredLocal;
-        Vector3 pivot = bus.transform.TransformPoint(new Vector3(0f, 2.5f, 0f)); Vector3 desired = bus.transform.TransformPoint(desiredLocal); Vector3 direction = desired - pivot; float distance = direction.magnitude;
+        Vector3 pivot = bus.transform.position + Vector3.up * 2.5f; Vector3 direction = desired - pivot; float distance = direction.magnitude;
         int hitCount = Physics.RaycastNonAlloc(pivot, direction.normalized, cameraHits, distance, ~0, QueryTriggerInteraction.Ignore); float nearest = distance;
         for (int i = 0; i < hitCount; i++) if (!cameraHits[i].transform.IsChildOf(bus.transform)) nearest = Mathf.Min(nearest, cameraHits[i].distance);
-        return bus.transform.InverseTransformPoint(pivot + direction.normalized * Mathf.Max(1.2f, nearest - 0.3f));
+        return pivot + direction.normalized * Mathf.Max(1.2f, nearest - 0.3f);
     }
 
     void EnsureMirror()

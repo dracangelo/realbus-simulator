@@ -100,7 +100,7 @@ public class VehiclePool : MonoBehaviour
             return;
         }
 
-        var bus = FindFirstObjectByType<BusController>();
+        var bus = FindAnyObjectByType<BusController>();
         if (bus != null) playerBus = bus.transform;
         TryResolveRoadGraph();
         WarmPool();
@@ -144,7 +144,7 @@ public class VehiclePool : MonoBehaviour
 
         if (playerBus == null)
         {
-            var bus = FindFirstObjectByType<BusController>();
+            var bus = FindAnyObjectByType<BusController>();
             if (bus != null) playerBus = bus.transform;
         }
 
@@ -269,7 +269,7 @@ public class VehiclePool : MonoBehaviour
         if (roadGraph != null && roadGraph.NodeCount > 0)
             return true;
 
-        var graphs = FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var graphs = FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude);
         if (graphs == null || graphs.Length == 0)
             return false;
 

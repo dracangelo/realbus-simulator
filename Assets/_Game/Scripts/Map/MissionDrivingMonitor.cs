@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Bus-side telemetry when the mission services live on separate GameObjects.</summary>
 public class MissionDrivingMonitor : MonoBehaviour
 {
-    public RoadGraph roadGraph;
+    [System.NonSerialized] public RoadGraph roadGraph;
     public float defaultSpeedLimitKmh = 50f;
     BusController bus;
     float speedingSeconds;

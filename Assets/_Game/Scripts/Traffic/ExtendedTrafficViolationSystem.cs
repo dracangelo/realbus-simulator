@@ -67,9 +67,9 @@ public class ExtendedTrafficViolationSystem : MonoBehaviour
     void Start()
     {
         if (busController == null)
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
         if (roadGraph == null)
-            roadGraph = FindFirstObjectByType<AIRoadGraph>();
+            roadGraph = FindAnyObjectByType<AIRoadGraph>();
     }
 
     void Update()

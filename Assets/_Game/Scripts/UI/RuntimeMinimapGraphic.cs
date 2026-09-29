@@ -17,7 +17,7 @@ public class RuntimeMinimapGraphic : MaskableGraphic
         Rect r = rectTransform.rect;
         float radius = Mathf.Min(r.width, r.height) * 0.5f;
         AddCircle(vh, Vector2.zero, radius, color, 40);
-        if (bus == null) bus = FindFirstObjectByType<BusController>();
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
         if (mission == null) mission = MissionManager.Instance;
         if (bus == null) return;
 

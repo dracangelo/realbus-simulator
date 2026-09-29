@@ -23,22 +23,22 @@
 		/// <summary>
 		/// Property Display Names seen in the editor
 		/// </summary>
-		public Dictionary<string, List<string>> PropertyDisplayNames = new Dictionary<string, List<string>>();
+		[NonSerialized] public Dictionary<string, List<string>> PropertyDisplayNames = new Dictionary<string, List<string>>();
 
 		/// <summary>
 		/// The description of the property in a layer
 		/// </summary>
-		public Dictionary<string, Dictionary<string, string>> LayerPropertyDescriptionDictionary = new Dictionary<string, Dictionary<string, string>>();
+		[NonSerialized] public Dictionary<string, Dictionary<string, string>> LayerPropertyDescriptionDictionary = new Dictionary<string, Dictionary<string, string>>();
 
 		/// <summary>
 		/// List of data sources (tileset ids) linked to a layer name
 		/// </summary>
-		public Dictionary<string, List<string>> LayerSourcesDictionary = new Dictionary<string, List<string>>();
+		[NonSerialized] public Dictionary<string, List<string>> LayerSourcesDictionary = new Dictionary<string, List<string>>();
 
 		/// <summary>
 		/// Dictionary containting the list of layers in a source
 		/// </summary>
-		public Dictionary<string, List<string>> SourceLayersDictionary = new Dictionary<string, List<string>>();
+		[NonSerialized] public Dictionary<string, List<string>> SourceLayersDictionary = new Dictionary<string, List<string>>();
 
 		public void ClearData()
 		{

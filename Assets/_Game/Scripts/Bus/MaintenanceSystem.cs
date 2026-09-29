@@ -35,9 +35,9 @@ public class MaintenanceSystem : MonoBehaviour
     void Awake()
     {
         if (busController == null)
-            busController = GetComponent<BusController>() ?? FindFirstObjectByType<BusController>();
+            busController = GetComponent<BusController>() ?? FindAnyObjectByType<BusController>();
         if (passengerManager == null)
-            passengerManager = FindFirstObjectByType<PassengerManager>();
+            passengerManager = FindAnyObjectByType<PassengerManager>();
 
         EnsureAxleArray();
         LoadFromGameState();

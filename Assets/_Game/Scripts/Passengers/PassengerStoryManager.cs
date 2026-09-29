@@ -35,7 +35,7 @@ public class PassengerStoryManager : MonoBehaviour
     public static PassengerStoryManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        PassengerStoryManager existing = FindFirstObjectByType<PassengerStoryManager>();
+        PassengerStoryManager existing = FindAnyObjectByType<PassengerStoryManager>();
         return existing != null ? existing : new GameObject("PassengerStoryManager").AddComponent<PassengerStoryManager>();
     }
 

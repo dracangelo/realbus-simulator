@@ -9,7 +9,6 @@ public class MissionManager : MonoBehaviour
     const float SpawnRaycastDistance = 2000f;
     const float SpawnClearanceAboveGround = 1.2f;
     const float SpawnOffsetBehindStartStopMeters = 14f;
-    const float SpawnOffsetSideMeters = 5f;
     const float StopApproachDistanceMeters = 50f;
     const float WaitForRoadsTimeoutSeconds = 8f;
     const float SpawnRoadSearchRadiusMeters = 45f;
@@ -79,7 +78,7 @@ public class MissionManager : MonoBehaviour
     public bool RecalculateGuidanceFromBus()
     {
         if (busController == null || currentRoute == null) return false;
-        AIRoadGraph graph = FindFirstObjectByType<AIRoadGraph>();
+        AIRoadGraph graph = FindAnyObjectByType<AIRoadGraph>();
         if (graph != null && TryBuildGraphGuidancePath(graph, busController.transform.position, currentStopIndex,
             diversionActive ? blockedDiversionNodes : null, out Vector3[] recalculated))
         {
@@ -167,17 +166,28 @@ public class MissionManager : MonoBehaviour
 
         Vector3 startPos = GPSManager.Instance.GpsToWorld(spawnLat, spawnLon);
         startPos = ApplySpawnOffsetFromRouteStart(startPos);
-        startPos = SnapSpawnToNearestRoad(startPos);
-        startPos.y = ResolveSpawnHeight(startPos);
         if (repositionBusOnStart)
         {
             if (pendingCheckpoint != null)
-                busController.transform.SetPositionAndRotation(pendingCheckpoint.busPosition, pendingCheckpoint.busRotation);
+                busController.Teleport(pendingCheckpoint.busPosition, pendingCheckpoint.busRotation);
             else
-                busController.transform.position = startPos;
+            {
+                Vector3 heading = busController.transform.forward;
+                if (currentRoute.stops.Length > 1)
+                    heading = GPSManager.Instance.GpsToWorld(currentRoute.stops[1].latitude, currentRoute.stops[1].longitude) - startPos;
+                heading = RoadSpawnResolver.RouteHeading(currentRoute, startPos, heading);
+                if (RoadSpawnResolver.TryResolve(busController, startPos, heading, SpawnRoadSearchRadiusMeters, out var roadPosition, out var roadRotation))
+                    busController.Teleport(roadPosition, roadRotation);
+                else
+                {
+                    startPos.y = ResolveSpawnHeight(startPos);
+                    busController.Teleport(startPos, busController.transform.rotation);
+                }
+            }
             var body = busController.GetComponent<Rigidbody>();
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
+            Debug.Log($"MissionManager: Player spawned at {body.position}, heading {body.rotation.eulerAngles.y:F1} degrees.");
         }
 
         Debug.Log("Mission starting...");
@@ -222,7 +232,7 @@ public class MissionManager : MonoBehaviour
         currentStopIndex = Mathf.Clamp(checkpoint.stopIndex, 0, currentRoute.stops.Length - 1);
         ElapsedSeconds = Mathf.Max(0f, checkpoint.elapsedSeconds);
         DistanceDrivenKm = Mathf.Max(0f, checkpoint.distanceDrivenKm);
-        busController.transform.SetPositionAndRotation(checkpoint.busPosition, checkpoint.busRotation);
+        busController.Teleport(checkpoint.busPosition, checkpoint.busRotation);
         Rigidbody body = busController.GetComponent<Rigidbody>();
         if (body != null)
         {
@@ -277,7 +287,7 @@ public class MissionManager : MonoBehaviour
         if (Physics.Raycast(castStart, Vector3.down, out RaycastHit hit, SpawnRaycastDistance, ~0, QueryTriggerInteraction.Ignore))
             return hit.point.y + SpawnClearanceAboveGround;
 
-        var mapLoader = FindFirstObjectByType<MapTileLoader>();
+        var mapLoader = FindAnyObjectByType<MapTileLoader>();
         if (mapLoader != null)
             return mapLoader.tileSurfaceY + SpawnClearanceAboveGround;
 
@@ -294,49 +304,6 @@ public class MissionManager : MonoBehaviour
                 yield break;
             yield return null;
         }
-    }
-
-    Vector3 SnapSpawnToNearestRoad(Vector3 spawnPos)
-    {
-        var roads = OSMRoadMeshBuilder.Instance;
-        if (roads == null || !roads.roadsBuilt)
-            return spawnPos;
-
-        Vector3 probe = spawnPos + Vector3.up * 2f;
-        Collider[] nearby = Physics.OverlapSphere(probe, SpawnRoadSearchRadiusMeters, ~0, QueryTriggerInteraction.Ignore);
-        if (nearby == null || nearby.Length == 0)
-            return spawnPos;
-
-        Vector3 best = spawnPos;
-        float bestSqr = float.MaxValue;
-
-        for (int i = 0; i < nearby.Length; i++)
-        {
-            var col = nearby[i];
-            if (col == null) continue;
-            if (!IsRoadCollider(col)) continue;
-
-            Vector3 p = col.ClosestPoint(probe);
-            Vector2 delta = new Vector2(p.x - spawnPos.x, p.z - spawnPos.z);
-            float sqr = delta.sqrMagnitude;
-            if (sqr < bestSqr)
-            {
-                bestSqr = sqr;
-                best = new Vector3(p.x, spawnPos.y, p.z);
-            }
-        }
-
-        return bestSqr < float.MaxValue ? best : spawnPos;
-    }
-
-    bool IsRoadCollider(Collider col)
-    {
-        if (col == null) return false;
-        var t = col.transform;
-        if (t.name.StartsWith("Road_")) return true;
-        if (t.parent != null && t.parent.name == "OSM_Roads") return true;
-        if (t.root != null && t.root.name == "OSM_Roads") return true;
-        return false;
     }
 
     Vector3 ApplySpawnOffsetFromRouteStart(Vector3 startPos)
@@ -358,9 +325,10 @@ public class MissionManager : MonoBehaviour
                 forward = routeDirection.normalized;
         }
 
-        var right = Vector3.Cross(Vector3.up, forward).normalized;
-        var offset = (-forward * SpawnOffsetBehindStartStopMeters) + (right * SpawnOffsetSideMeters);
-        return startPos + offset;
+        forward = RoadSpawnResolver.RouteHeading(currentRoute, startPos, forward).normalized;
+        // RoadSpawnResolver owns the lateral lane offset. A second, hard-coded
+        // right offset biases the search onto the opposing carriageway.
+        return startPos - forward * SpawnOffsetBehindStartStopMeters;
     }
 
     void Update()
@@ -574,8 +542,8 @@ public class MissionManager : MonoBehaviour
             : 0f;
 
         float fuelRefuelCost = 0f;
-        var fuelSystem = FindFirstObjectByType<FuelSystem>();
-        var batterySystem = FindFirstObjectByType<BatterySystem>();
+        var fuelSystem = FindAnyObjectByType<FuelSystem>();
+        var batterySystem = FindAnyObjectByType<BatterySystem>();
         if (MissionEndedAtDepot())
         {
             if (batterySystem != null)
@@ -585,7 +553,7 @@ public class MissionManager : MonoBehaviour
         }
 
         float maintenanceCost = 0f;
-        var maintenanceSystem = FindFirstObjectByType<MaintenanceSystem>();
+        var maintenanceSystem = FindAnyObjectByType<MaintenanceSystem>();
         if (maintenanceSystem != null)
             maintenanceCost = maintenanceSystem.AutoServiceAndGetCost();
 
@@ -687,7 +655,7 @@ public class MissionManager : MonoBehaviour
         if (currentRoute == null || currentRoute.stops == null || currentRoute.stops.Length == 0 || busController == null)
             return false;
 
-        var graph = FindFirstObjectByType<AIRoadGraph>();
+        var graph = FindAnyObjectByType<AIRoadGraph>();
         if (graph == null || graph.NodeCount == 0 || GPSManager.Instance == null)
             return false;
 
@@ -732,7 +700,7 @@ public class MissionManager : MonoBehaviour
             return;
         }
 
-        var graph = FindFirstObjectByType<AIRoadGraph>();
+        var graph = FindAnyObjectByType<AIRoadGraph>();
         if (graph == null || busController == null || !TryBuildGraphGuidancePath(graph, busController.transform.position, currentStopIndex, blockedDiversionNodes, out var diversionPath))
         {
             ClearTemporaryDiversion();

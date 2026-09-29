@@ -80,6 +80,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     [Header("State")]
     public bool roadsBuilt = false;
+    public RoadSurfaceIndex SurfaceIndex { get; private set; }
     private GameObject roadsParent;
     private GameObject roadVisualPrefab;
     private bool roadVisualPrefabLoadAttempted;
@@ -114,6 +115,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     void BuildRoads(OSMData data)
     {
+        roadsBuilt = false;
+        SurfaceIndex = RoadSurfaceIndex.Build(data, GPSManager.Instance.GpsToWorld);
         var colliderMaterial = ResolveRoadPhysicsMaterial();
 
         if (roadsParent != null)
@@ -171,23 +174,23 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             mr.receiveShadows = false;
 
             if (ShouldUseRoadModelVisuals())
-                BuildRoadModelVisuals(roadObj.transform, points, width);
+                BuildRoadModelVisuals(roadObj.transform, points, width, way.id);
 
             if (!string.IsNullOrEmpty(roadTag) && IsValidTag(roadTag))
                 roadObj.tag = roadTag;
 
             if (renderRoadSurface && drawCenterLines && way.ShouldDrawCenterLine())
-                BuildCenterLine(points);
+                BuildCenterLine(points, way.id);
 
             if (generateRoadBoundaries && (includeServiceRoadBoundaries || way.GetRoadType() != "service"))
             {
-                BuildRoadBoundaries(points, width);
+                BuildRoadBoundaries(points, width, way.id);
                 if (addPhysicalBoundaryColliders)
-                    BuildPhysicalRoadBoundaries(roadObj.transform, sourcePoints, sourceNodeIds, data, width);
+                    BuildPhysicalRoadBoundaries(roadObj.transform, sourcePoints, sourceNodeIds, data, width, way.id);
             }
 
             if (autoGenerateMedianBarriers && way.ShouldGenerateMedianBarrier())
-                BuildMedianBarrier(roadObj.transform, points, way.GetRoadWidth());
+                BuildMedianBarrier(roadObj.transform, points, way.GetRoadWidth(), way.GetOneWayDirectionSign(), way.id);
 
             roadCount++;
         }
@@ -248,16 +251,18 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             else                            fwd = (points[i + 1] - points[i - 1]).normalized;
 
             // right = Cross(up, forward) → points to road's right side
-            Vector3 right = Vector3.Cross(Vector3.up, fwd).normalized;
-
-            verts.Add(points[i] - right * halfWidth);   // left  (even index)
-            verts.Add(points[i] + right * halfWidth);   // right (odd index)
+            Vector3 offset = RoadJoinOffset(points, i, halfWidth);
+            verts.Add(points[i] - offset);
+            verts.Add(points[i] + offset);
 
             if (i > 0)
                 uvProgress += Vector3.Distance(points[i], points[i - 1]) / Mathf.Max(0.01f, width);
 
-            uvs.Add(new Vector2(0f, uvProgress));
-            uvs.Add(new Vector2(1f, uvProgress));
+            // Matching world-space asphalt UVs prevent intersecting road
+            // strips from showing two differently aligned textures.
+            var left = verts[verts.Count - 2]; var right = verts[verts.Count - 1];
+            uvs.Add(new Vector2(left.x, left.z) * .1f);
+            uvs.Add(new Vector2(right.x, right.z) * .1f);
 
             if (i > 0)
             {
@@ -291,7 +296,25 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     // NOT as a child of a road segment. This avoids the local-space conversion bug
     // where InverseTransformPoint was used on a parent at world origin (worked by
     // accident, broke when parent had any transform offset).
-    void BuildCenterLine(List<Vector3> points)
+    public static Vector3 RoadJoinOffset(IList<Vector3> points, int i, float halfWidth)
+    {
+        Vector3 incoming = i > 0 ? points[i] - points[i - 1] : points[1] - points[0];
+        Vector3 outgoing = i + 1 < points.Count ? points[i + 1] - points[i] : incoming;
+        incoming.y = outgoing.y = 0;
+        Vector3 normal = Vector3.Cross(Vector3.up, incoming.normalized);
+        Vector3 miter = (normal + Vector3.Cross(Vector3.up, outgoing.normalized)).normalized;
+        if (miter.sqrMagnitude < .01f) return normal * halfWidth;
+        return miter * Mathf.Min(halfWidth * 2f, halfWidth / Mathf.Max(.5f, Vector3.Dot(miter, normal)));
+    }
+
+    void BuildCenterLine(List<Vector3> points, long wayId)
+    {
+        for (int i = 1; i < points.Count; i++)
+            foreach (var run in SurfaceIndex.ClearRuns(points[i - 1], points[i], wayId, 1f))
+                BuildCenterLinePiece(new List<Vector3> { Vector3.Lerp(points[i - 1], points[i], run.x), Vector3.Lerp(points[i - 1], points[i], run.y) });
+    }
+
+    void BuildCenterLinePiece(List<Vector3> points)
     {
         if (points == null || points.Count < 2) return;
 
@@ -323,7 +346,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         lr.SetPositions(worldPts);
     }
 
-    void BuildRoadBoundaries(List<Vector3> points, float roadWidth)
+    void BuildRoadBoundaries(List<Vector3> points, float roadWidth, long wayId)
     {
         if (points == null || points.Count < 2) return;
 
@@ -337,26 +360,25 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 : i == points.Count - 1 ? points[i] - points[i - 1] : points[i + 1] - points[i - 1];
             forward.y = 0f;
             if (forward.sqrMagnitude < .001f) forward = Vector3.forward;
-            Vector3 side = Vector3.Cross(Vector3.up, forward.normalized);
+            Vector3 side = RoadJoinOffset(points, i, offset);
             Vector3 basePoint = points[i];
             basePoint.y = roadYOffset + boundaryHeight;
-            left[i] = basePoint - side * offset;
-            right[i] = basePoint + side * offset;
+            left[i] = basePoint - side;
+            right[i] = basePoint + side;
         }
 
-        Mesh leftMesh = BuildRoadSegmentMesh(new List<Vector3>(left), Mathf.Max(.1f, boundaryWidth));
-        Mesh rightMesh = BuildRoadSegmentMesh(new List<Vector3>(right), Mathf.Max(.1f, boundaryWidth));
-        if (leftMesh == null || rightMesh == null) return;
-
-        var combine = new[]
-        {
-            new CombineInstance { mesh = leftMesh, transform = Matrix4x4.identity },
-            new CombineInstance { mesh = rightMesh, transform = Matrix4x4.identity }
-        };
+        var combine = new List<CombineInstance>();
+        foreach (var edge in new[] { left, right })
+            for (int i = 1; i < edge.Length; i++)
+                foreach (var run in SurfaceIndex.ClearRuns(edge[i - 1], edge[i], wayId, Mathf.Max(2f, junctionOpeningMeters * .5f)))
+                {
+                    var mesh = BuildRoadSegmentMesh(new List<Vector3> { Vector3.Lerp(edge[i - 1], edge[i], run.x), Vector3.Lerp(edge[i - 1], edge[i], run.y) }, Mathf.Max(.1f, boundaryWidth));
+                    if (mesh != null) combine.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.identity });
+                }
+        if (combine.Count == 0) return;
         Mesh combined = new Mesh { name = "RoadBoundaries", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
-        combined.CombineMeshes(combine, true, false);
-        Destroy(leftMesh);
-        Destroy(rightMesh);
+        combined.CombineMeshes(combine.ToArray(), true, false);
+        foreach (var item in combine) Destroy(item.mesh);
 
         GameObject boundary = new GameObject("RoadBoundaries");
         boundary.transform.SetParent(roadsParent.transform, false);
@@ -378,7 +400,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         return runtimeBoundaryMaterial;
     }
 
-    void BuildPhysicalRoadBoundaries(Transform parent, List<Vector3> points, List<long> nodeIds, OSMData data, float roadWidth)
+    void BuildPhysicalRoadBoundaries(Transform parent, List<Vector3> points, List<long> nodeIds, OSMData data, float roadWidth, long wayId)
     {
         if (parent == null || points == null || nodeIds == null || points.Count < 2 || nodeIds.Count != points.Count)
             return;
@@ -399,17 +421,22 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (length < 1f) continue;
 
             Vector3 direction = segment / length;
-            float startGap = data != null && data.IsIntersectionNode(nodeIds[i - 1]) ? junctionOpeningMeters : 0f;
-            float endGap = data != null && data.IsIntersectionNode(nodeIds[i]) ? junctionOpeningMeters : 0f;
-            float usableLength = length - startGap - endGap;
-            if (usableLength < 1f) continue;
-
             Vector3 right = Vector3.Cross(Vector3.up, direction);
-            Vector3 center = from + direction * (startGap + usableLength * .5f);
-            center.y = roadYOffset + colliderHeight * .5f;
             Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
-            CreateBoundaryCollider(root.transform, $"Left_{i}", center - right * sideOffset, rotation, colliderWidth, colliderHeight, usableLength);
-            CreateBoundaryCollider(root.transform, $"Right_{i}", center + right * sideOffset, rotation, colliderWidth, colliderHeight, usableLength);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Vector3 a = from + RoadJoinOffset(points, i - 1, sideOffset) * side;
+                Vector3 b = to + RoadJoinOffset(points, i, sideOffset) * side;
+                Quaternion edgeRotation = Quaternion.LookRotation((b - a).normalized, Vector3.up);
+                foreach (var run in SurfaceIndex.ClearRuns(a, b, wayId, Mathf.Max(2f, junctionOpeningMeters * .5f)))
+                {
+                    float usableLength = Vector3.Distance(a, b) * (run.y - run.x);
+                    if (usableLength < .5f) continue;
+                    Vector3 center = Vector3.Lerp(a, b, (run.x + run.y) * .5f);
+                    center.y = roadYOffset + colliderHeight * .5f;
+                    CreateBoundaryCollider(root.transform, $"Edge_{side}_{i}", center, edgeRotation, colliderWidth, colliderHeight, usableLength);
+                }
+            }
         }
     }
 
@@ -502,7 +529,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         return bounds.size.sqrMagnitude > 0.0001f;
     }
 
-    void BuildRoadModelVisuals(Transform parent, List<Vector3> points, float width)
+    void BuildRoadModelVisuals(Transform parent, List<Vector3> points, float width, long wayId)
     {
         float sourceLength = GetRoadModelLength();
         float sourceWidth = GetRoadModelWidth();
@@ -521,6 +548,10 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 continue;
 
             Vector3 direction = segment / segmentLength;
+            // Rectangular imported pieces cannot bend. Use the continuous
+            // generated mesh at corners instead of overlapping rigid tiles.
+            if ((i > 1 && Vector3.Angle(direction, from - points[i - 2]) > 5f) ||
+                (i + 1 < points.Count && Vector3.Angle(direction, points[i + 1] - to) > 5f)) continue;
             int pieceCount = Mathf.Max(1, Mathf.CeilToInt(segmentLength / sourceLength));
             float pieceLength = segmentLength / pieceCount;
             float widthScale = width / sourceWidth;
@@ -532,9 +563,16 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 float distance = pieceLength * (pieceIndex + 0.5f);
                 Vector3 position = from + direction * distance;
                 position.y = modelBottomOffset;
+                Vector3 side = Vector3.Cross(Vector3.up, direction) * width * .5f;
+                Vector3 along = direction * pieceLength * .5f;
+                var footprint = new[] { position - along - side, position + along - side, position + along + side, position - along + side };
+                if (SurfaceIndex.OverlapsFootprint(footprint, 2f, wayId)) continue;
 
                 var visual = Instantiate(roadVisualPrefab, position, rotation, parent);
                 ImportedVehicleVisualRepair.DisableEmbeddedCameras(visual.transform);
+                // Only the generated road surface/kerbs own driveable physics.
+                foreach (var collider in visual.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+                foreach (var body in visual.GetComponentsInChildren<Rigidbody>(true)) { body.isKinematic = true; body.detectCollisions = false; }
                 visual.name = $"RoadVisual_{i}_{pieceIndex}";
                 visual.transform.localScale = GetScaledRoadVisualScale(visual.transform.localScale, widthScale, lengthScale);
                 ApplyLayerRecursively(visual, parent.gameObject.layer);
@@ -552,7 +590,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         }
     }
 
-    void BuildMedianBarrier(Transform parent, List<Vector3> points, float roadWidth)
+    void BuildMedianBarrier(Transform parent, List<Vector3> points, float roadWidth, int directionSign, long wayId)
     {
         EnsureMedianBarrierPrefabLoaded();
         if (medianBarrierPrefab == null || points == null || points.Count < 2)
@@ -574,8 +612,13 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             for (int pieceIndex = 0; pieceIndex <= pieceCount; pieceIndex++)
             {
                 float distance = Mathf.Min(segmentLength, pieceIndex * medianBarrierSpacingMeters);
-                Vector3 position = from + direction * distance;
+                // An OSM one-way way represents an entire carriageway. Its
+                // centreline is NOT the median between opposing traffic.
+                bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
+                float medianSide = (leftTraffic ? 1f : -1f) * (directionSign < 0 ? -1f : 1f);
+                Vector3 position = from + direction * distance + Vector3.Cross(Vector3.up, direction) * medianSide * (roadWidth * .5f + .4f);
                 position.y = roadYOffset + medianBarrierLift;
+                if (SurfaceIndex.Contains(position, Mathf.Max(3f, medianBarrierSpacingMeters), wayId)) continue;
 
                 var barrier = Instantiate(medianBarrierPrefab, position, rotation, parent);
                 barrier.name = $"MedianBarrier_{i}_{pieceIndex}";

@@ -95,7 +95,7 @@ public class XPSystem : MonoBehaviour
         if (Instance != null)
             return Instance;
 
-        var existing = FindFirstObjectByType<XPSystem>();
+        var existing = FindAnyObjectByType<XPSystem>();
         if (existing != null)
             return existing;
 

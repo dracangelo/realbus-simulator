@@ -26,7 +26,7 @@ public class GameScriptsTests
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
 
-        foreach (var gameObject in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+        foreach (var gameObject in Object.FindObjectsByType<GameObject>())
         {
             Object.DestroyImmediate(gameObject);
         }

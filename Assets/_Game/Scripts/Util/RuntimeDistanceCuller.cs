@@ -108,7 +108,7 @@ public sealed class RuntimeDistanceCuller : MonoBehaviour
     void ResolveViewerReferences()
     {
         if (viewerCamera == null)
-            viewerCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+            viewerCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
 
         if (viewerTransform != null)
             return;
@@ -119,7 +119,7 @@ public sealed class RuntimeDistanceCuller : MonoBehaviour
             return;
         }
 
-        var bus = FindFirstObjectByType<BusController>();
+        var bus = FindAnyObjectByType<BusController>();
         if (bus != null)
             viewerTransform = bus.transform;
     }

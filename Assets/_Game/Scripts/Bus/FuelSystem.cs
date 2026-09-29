@@ -36,11 +36,11 @@ public class FuelSystem : MonoBehaviour
     void Awake()
     {
         if (busController == null)
-            busController = GetComponent<BusController>() ?? FindFirstObjectByType<BusController>();
+            busController = GetComponent<BusController>() ?? FindAnyObjectByType<BusController>();
         if (passengerManager == null)
-            passengerManager = FindFirstObjectByType<PassengerManager>();
+            passengerManager = FindAnyObjectByType<PassengerManager>();
         if (freeDriveSession == null)
-            freeDriveSession = FindFirstObjectByType<FreeDriveSession>();
+            freeDriveSession = FindAnyObjectByType<FreeDriveSession>();
 
         LoadFromGameState();
         SyncSessionFuelDisplay();
@@ -102,7 +102,7 @@ public class FuelSystem : MonoBehaviour
     public float GetLoadFactor()
     {
         if (passengerManager == null)
-            passengerManager = FindFirstObjectByType<PassengerManager>();
+            passengerManager = FindAnyObjectByType<PassengerManager>();
 
         if (passengerManager == null)
             return 1f;
@@ -210,7 +210,7 @@ public class FuelSystem : MonoBehaviour
     void SyncSessionFuelDisplay()
     {
         if (freeDriveSession == null)
-            freeDriveSession = FindFirstObjectByType<FreeDriveSession>();
+            freeDriveSession = FindAnyObjectByType<FreeDriveSession>();
         if (freeDriveSession == null)
             return;
 

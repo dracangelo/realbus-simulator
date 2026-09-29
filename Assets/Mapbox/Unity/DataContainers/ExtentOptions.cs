@@ -11,6 +11,7 @@
 		void SetOptions();
 	}
 
+	[System.Serializable]
 	public class ExtentOptions : ITileProviderOptions
 	{
 		public virtual void SetOptions(ExtentOptions extentOptions)

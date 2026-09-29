@@ -9,6 +9,9 @@ using UnityEngine.Rendering;
 /// </summary>
 public class ImportedVehicleVisualRepair : MonoBehaviour
 {
+    [Tooltip("Tint untextured, neutral body panels when the FBX contains no body artwork.")]
+    public bool useFallbackBodyColor = true;
+    public Color fallbackBodyColor = new Color(0.08f, 0.28f, 0.22f, 1f);
     readonly List<Material> runtimeMaterials = new List<Material>();
     bool repairApplied;
 
@@ -35,7 +38,7 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
         }
 
         bool urpActive = GraphicsSettings.currentRenderPipeline != null;
-        Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
+        Shader targetShader = Shader.Find(urpActive ? "Universal Render Pipeline/Lit" : "Standard");
         var replacements = new Dictionary<Material, Material>();
         int repaired = 0;
 
@@ -54,7 +57,13 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
                     source.shader.name.Contains("InternalErrorShader");
                 bool legacyInUrp = urpActive && source != null && source.shader != null &&
                     !source.shader.name.StartsWith("Universal Render Pipeline/");
-                if ((!invalid && !legacyInUrp) || urpLit == null) continue;
+                string materialName = source != null ? source.name.ToLowerInvariant() : "";
+                bool glass = materialName.Contains("glass") || materialName.Contains("kaca");
+                Color sourceColor = ReadColor(source);
+                bool bodyPanel = materialName == "bodi" || materialName == "body" || materialName == "karoseri";
+                bool fallbackPaint = useFallbackBodyColor && bodyPanel && ReadTexture(source) == null &&
+                    Mathf.Abs(sourceColor.r - sourceColor.g) < .03f && Mathf.Abs(sourceColor.g - sourceColor.b) < .03f && sourceColor.r > .2f;
+                if ((!invalid && !legacyInUrp && !glass && !fallbackPaint) || targetShader == null) continue;
 
                 if (source != null && replacements.TryGetValue(source, out Material cached))
                 {
@@ -63,20 +72,22 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
                     continue;
                 }
 
-                Material replacement = new Material(urpLit) { name = (source != null ? source.name : renderer.name) + " (URP Runtime)" };
-                Color color = ReadColor(source);
-                bool glass = renderer.name.ToLowerInvariant().Contains("glass") || (source != null && source.name.ToLowerInvariant().Contains("glass"));
+                Material replacement = !invalid && !legacyInUrp ? new Material(source) : new Material(targetShader);
+                replacement.name = (source != null ? source.name : renderer.name) + " (Runtime)";
+                Color color = fallbackPaint ? fallbackBodyColor : sourceColor;
                 color.a = glass ? Mathf.Clamp(color.a, 0.22f, 0.55f) : Mathf.Max(color.a, 0.9f);
-                replacement.SetColor("_BaseColor", color);
+                replacement.SetColor(replacement.HasProperty("_BaseColor") ? "_BaseColor" : "_Color", color);
                 Texture texture = ReadTexture(source);
-                if (texture != null) replacement.SetTexture("_BaseMap", texture);
-                replacement.SetFloat("_Smoothness", glass ? 0.82f : 0.34f);
-                if (glass)
+                if (texture != null)
                 {
-                    replacement.SetFloat("_Surface", 1f);
-                    replacement.SetFloat("_ZWrite", 0f);
-                    replacement.renderQueue = 3000;
+                    string destination = replacement.HasProperty("_BaseMap") ? "_BaseMap" : "_MainTex";
+                    string original = source.HasProperty("_BaseMap") && source.GetTexture("_BaseMap") != null ? "_BaseMap" : "_MainTex";
+                    replacement.SetTexture(destination, texture);
+                    replacement.SetTextureScale(destination, source.GetTextureScale(original));
+                    replacement.SetTextureOffset(destination, source.GetTextureOffset(original));
                 }
+                if (replacement.HasProperty("_Smoothness")) replacement.SetFloat("_Smoothness", glass ? 0.82f : 0.34f);
+                if (glass) ConfigureGlass(replacement);
 
                 runtimeMaterials.Add(replacement);
                 if (source != null) replacements[source] = replacement;
@@ -99,6 +110,20 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
         if (source.HasProperty("_BaseColor")) return source.GetColor("_BaseColor");
         if (source.HasProperty("_Color")) return source.GetColor("_Color");
         return Color.white;
+    }
+
+    public static void ConfigureGlass(Material material)
+    {
+        if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
+        if (material.HasProperty("_Mode")) material.SetFloat("_Mode", 2f);
+        if (material.HasProperty("_SrcBlend")) material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        if (material.HasProperty("_DstBlend")) material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        if (material.HasProperty("_ZWrite")) material.SetFloat("_ZWrite", 0f);
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.DisableKeyword("_ALPHATEST_ON");
+        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        material.EnableKeyword(material.HasProperty("_Surface") ? "_SURFACE_TYPE_TRANSPARENT" : "_ALPHABLEND_ON");
+        material.renderQueue = (int)RenderQueue.Transparent;
     }
 
     static Texture ReadTexture(Material source)

@@ -180,7 +180,7 @@ public class AIRoadGraphGenerator : EditorWindow
 
     CoordinateConverter FindOrCreateConverter(OverpassResponse response)
     {
-        var converter = FindFirstObjectByType<CoordinateConverter>();
+        var converter = FindAnyObjectByType<CoordinateConverter>();
         if (converter != null)
             return converter;
 

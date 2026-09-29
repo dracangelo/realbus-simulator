@@ -10,7 +10,7 @@ public class OsmTrafficSignalSpawner : MonoBehaviour
     public TextAsset localSignalJson;
     public string endpoint = "https://overpass-api.de/api/interpreter";
     public float radiusMeters = 2000f;
-    public RoadGraph graph;
+    [System.NonSerialized] public RoadGraph graph;
     readonly HashSet<long> spawned = new HashSet<long>();
 
     [ContextMenu("Load traffic signals")]

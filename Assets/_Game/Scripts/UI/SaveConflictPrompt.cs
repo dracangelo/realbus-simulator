@@ -11,7 +11,7 @@ public class SaveConflictPrompt : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        if (FindFirstObjectByType<SaveConflictPrompt>() == null)
+        if (FindAnyObjectByType<SaveConflictPrompt>() == null)
             new GameObject("SaveConflictPrompt").AddComponent<SaveConflictPrompt>();
     }
 
@@ -63,7 +63,7 @@ public class SaveConflictPrompt : MonoBehaviour
         if (panel != null)
             return;
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = FindAnyObjectByType<Canvas>();
         if (canvas == null)
             return;
 

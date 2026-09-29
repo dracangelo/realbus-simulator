@@ -43,7 +43,7 @@ public class RouteGhostRecorder : MonoBehaviour
     public static RouteGhostRecorder EnsureExists()
     {
         if (Instance != null) return Instance;
-        RouteGhostRecorder existing = FindFirstObjectByType<RouteGhostRecorder>();
+        RouteGhostRecorder existing = FindAnyObjectByType<RouteGhostRecorder>();
         return existing != null ? existing : new GameObject("RouteGhostRecorder").AddComponent<RouteGhostRecorder>();
     }
 
@@ -61,7 +61,7 @@ public class RouteGhostRecorder : MonoBehaviour
     {
         for (int frame = 0; frame < 180; frame++)
         {
-            MissionManager candidate = MissionManager.Instance; BusController candidateBus = FindFirstObjectByType<BusController>();
+            MissionManager candidate = MissionManager.Instance; BusController candidateBus = FindAnyObjectByType<BusController>();
             if (candidate != null && candidateBus != null) { Bind(candidate, candidateBus); yield break; }
             yield return null;
         }

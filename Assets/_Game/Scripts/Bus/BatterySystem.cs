@@ -31,11 +31,11 @@ public class BatterySystem : MonoBehaviour
     void Awake()
     {
         if (busController == null)
-            busController = GetComponent<BusController>() ?? FindFirstObjectByType<BusController>();
+            busController = GetComponent<BusController>() ?? FindAnyObjectByType<BusController>();
         if (passengerManager == null)
-            passengerManager = FindFirstObjectByType<PassengerManager>();
+            passengerManager = FindAnyObjectByType<PassengerManager>();
         if (freeDriveSession == null)
-            freeDriveSession = FindFirstObjectByType<FreeDriveSession>();
+            freeDriveSession = FindAnyObjectByType<FreeDriveSession>();
 
         LoadFromGameState();
         SyncSessionDisplay();
@@ -118,7 +118,7 @@ public class BatterySystem : MonoBehaviour
     float GetLoadFactor()
     {
         if (passengerManager == null)
-            passengerManager = FindFirstObjectByType<PassengerManager>();
+            passengerManager = FindAnyObjectByType<PassengerManager>();
 
         if (passengerManager == null)
             return 1f;
@@ -179,7 +179,7 @@ public class BatterySystem : MonoBehaviour
     void SyncSessionDisplay()
     {
         if (freeDriveSession == null)
-            freeDriveSession = FindFirstObjectByType<FreeDriveSession>();
+            freeDriveSession = FindAnyObjectByType<FreeDriveSession>();
         if (freeDriveSession == null)
             return;
 

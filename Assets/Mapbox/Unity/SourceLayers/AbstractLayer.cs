@@ -17,9 +17,10 @@
 		public ModifierBase modifier;
 	}
 
+	[System.Serializable]
 	public class AbstractLayer
 	{
-		public event System.EventHandler UpdateLayer;
+		[field: System.NonSerialized] public event System.EventHandler UpdateLayer;
 		protected virtual void NotifyUpdateLayer(LayerUpdateArgs layerUpdateArgs)
 		{
 			System.EventHandler handler = UpdateLayer;

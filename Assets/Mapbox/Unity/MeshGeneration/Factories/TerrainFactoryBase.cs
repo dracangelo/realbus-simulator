@@ -13,7 +13,7 @@ namespace Mapbox.Unity.MeshGeneration.Factories
 {
 	public class TerrainFactoryBase : AbstractTileFactory
 	{
-		public TerrainStrategy Strategy;
+		[NonSerialized] public TerrainStrategy Strategy;
 		[SerializeField]
 		protected ElevationLayerProperties _elevationOptions = new ElevationLayerProperties();
 		protected TerrainDataFetcher DataFetcher;

@@ -22,7 +22,7 @@ public class LoadingScreenUI : MonoBehaviour
     public static LoadingScreenUI EnsureExists()
     {
         if (Instance != null) return Instance;
-        LoadingScreenUI existing = FindFirstObjectByType<LoadingScreenUI>();
+        LoadingScreenUI existing = FindAnyObjectByType<LoadingScreenUI>();
         return existing != null ? existing : new GameObject("LoadingScreen").AddComponent<LoadingScreenUI>();
     }
 

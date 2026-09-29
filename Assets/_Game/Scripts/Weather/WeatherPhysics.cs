@@ -47,7 +47,7 @@ public class WeatherPhysics : MonoBehaviour
     void Start()
     {
         if (busController == null)
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
 
         if (busController != null && busController.GetComponent<RoadSurfaceFrictionController>() == null)
             CacheOriginalFriction();

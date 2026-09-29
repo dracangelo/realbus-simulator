@@ -53,7 +53,7 @@ namespace Mapbox.Unity.Map
 
 		public IMapReadable Map { get { return _map; } }
 		public Dictionary<UnwrappedTileId, UnityTile> ActiveTiles { get { return _activeTiles; } }
-		public Dictionary<UnwrappedTileId, int> _tileProgress;
+		[NonSerialized] public Dictionary<UnwrappedTileId, int> _tileProgress;
 
 		public event Action<ModuleState> OnMapVisualizerStateChanged = delegate { };
 		public event Action<UnityTile> OnTileFinished = delegate { };

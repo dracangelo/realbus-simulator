@@ -21,7 +21,7 @@ public class ScheduledTrafficTier : MonoBehaviour
     {
         if (Time.time < nextUpdate) return;
         nextUpdate = Time.time + 0.2f;
-        if (player == null) { var bus = FindFirstObjectByType<BusController>(); if (bus != null) player = bus.transform; }
+        if (player == null) { var bus = FindAnyObjectByType<BusController>(); if (bus != null) player = bus.transform; }
         if (player == null) return;
         float distance = Vector3.Distance(player.position, transform.position);
         if (distance > 400f) { GetComponent<AIBusRouteRunner>()?.Despawn(); return; }

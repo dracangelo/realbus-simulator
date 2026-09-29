@@ -516,7 +516,7 @@ public class OsmCityPopulationSystem : MonoBehaviour
         if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, raycastHeight * 2f, ~0, QueryTriggerInteraction.Ignore))
             return hit.point.y;
 
-        var mapLoader = FindFirstObjectByType<MapTileLoader>();
+        var mapLoader = FindAnyObjectByType<MapTileLoader>();
         return mapLoader != null ? mapLoader.tileSurfaceY : candidate.y;
     }
 

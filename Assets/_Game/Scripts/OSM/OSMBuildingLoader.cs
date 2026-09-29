@@ -9,6 +9,7 @@ public class OSMBuildingLoader : MonoBehaviour
 
     [Header("State")]
     public bool dataLoaded = false;
+    public bool loadCompleted { get; private set; }
     public OSMData osmData;
 
     void Awake()
@@ -17,9 +18,11 @@ public class OSMBuildingLoader : MonoBehaviour
         Instance = this;
     }
 
-    void Start()
+    IEnumerator Start()
     {
-        StartCoroutine(LoadFromStreamingAssets());
+        yield return LoadFromStreamingAssets();
+        if (osmData == null) osmData = new OSMData();
+        loadCompleted = true;
     }
 
     IEnumerator LoadFromStreamingAssets()
@@ -29,64 +32,46 @@ public class OSMBuildingLoader : MonoBehaviour
         string jsonPath = RuntimeCityContentStore.ResolveReadPath(city, "buildings.json");
         string preferredPath = SelectPreferredBuildingsPath(xmlPath, jsonPath);
 
-        Debug.Log($"Buildings: Loading from {preferredPath}");
-#if UNITY_ANDROID && !UNITY_EDITOR
-        string url = preferredPath;
-        using (var request = UnityWebRequest.Get(url))
+        // An optional, converted Overture pack replaces OSM (Overture already
+        // contains OSM footprints). Never render both sources on top of each other.
+        string overturePath = RuntimeCityContentStore.ResolveReadPath(city, "overture-buildings.json");
+        string overtureRaw = null;
+        yield return ReadText(overturePath, text => overtureRaw = text);
+        if (!string.IsNullOrWhiteSpace(overtureRaw))
         {
-            yield return request.SendWebRequest();
-
-            if (request.result != UnityWebRequest.Result.Success)
+            osmData = OSMParser.ParseOverpassJson(overtureRaw);
+            if (HasBuildings(osmData))
             {
-                Debug.LogError($"Buildings load failed: {request.error}");
-                Debug.LogError($"Path tried: {preferredPath}");
+                dataLoaded = true;
+                Debug.Log($"Buildings: Using Overture pack with {osmData.ways.Count} footprints.");
                 yield break;
             }
+            Debug.LogWarning("Buildings: Optional Overture pack is empty; falling back to OSM.");
+        }
 
-            string raw = request.downloadHandler.text;
-            Debug.Log($"Buildings: Loaded {raw.Length} bytes from disk");
-
-            osmData = preferredPath.EndsWith(".json")
+        // Android packaged assets use jar:file URLs, whereas downloaded city
+        // files are ordinary disk paths. Do not send disk paths to a web request.
+        string alternatePath = preferredPath == jsonPath ? xmlPath : jsonPath;
+        foreach (string path in new[] { preferredPath, alternatePath })
+        {
+            string raw = null;
+            yield return ReadText(path, text => raw = text);
+            if (string.IsNullOrWhiteSpace(raw)) continue;
+            Debug.Log($"Buildings: Loaded {raw.Length} bytes from {path}");
+            yield return null;
+            osmData = path.EndsWith(".json")
                 ? OSMParser.ParseOverpassJson(raw)
                 : OSMParser.Parse(raw);
-            dataLoaded = osmData != null && osmData.ways != null && osmData.ways.Count > 0;
-
-            if (!dataLoaded)
-            {
-                Debug.LogWarning($"Buildings: No building ways were found in {preferredPath}. " +
-                    "Use Tools > RealBus > OSM > Download Buildings + POIs For Active City; most non-Nairobi city folders currently contain placeholder building files.");
-                yield break;
-            }
-
+            dataLoaded = HasBuildings(osmData);
+            if (!dataLoaded) continue;
             Debug.Log($"Buildings: Data ready — {osmData.ways.Count} ways");
-        }
-#else
-        if (!File.Exists(preferredPath))
-        {
-            Debug.LogError($"Buildings load failed: File not found at {preferredPath}");
             yield break;
         }
-
-        // Large downloaded Overpass files are local in the Editor/desktop
-        // player. Reading them directly avoids file:// request failures and
-        // makes parsing start predictably.
-        string raw = File.ReadAllText(preferredPath);
-        Debug.Log($"Buildings: Loaded {raw.Length} bytes from disk");
-        yield return null;
-        osmData = preferredPath.EndsWith(".json")
-            ? OSMParser.ParseOverpassJson(raw)
-            : OSMParser.Parse(raw);
-        dataLoaded = osmData != null && osmData.ways != null && osmData.ways.Count > 0;
-        if (!dataLoaded)
-        {
-            Debug.LogWarning($"Buildings: No building ways were found in {preferredPath}. Download Buildings + POIs for the selected city.");
-            yield break;
-        }
-        Debug.Log($"Buildings: Data ready — {osmData.ways.Count} ways");
-#endif
+        osmData = new OSMData();
+        Debug.LogWarning("Buildings: No usable footprint pack found; procedural fill can use the road network. Download Buildings + POIs or import Overture for mapped buildings.");
     }
 
-    string SelectPreferredBuildingsPath(string xmlPath, string jsonPath)
+    public static string SelectPreferredBuildingsPath(string xmlPath, string jsonPath)
     {
         bool hasJson = File.Exists(jsonPath) && new FileInfo(jsonPath).Length > 32;
         bool hasUsefulXml = File.Exists(xmlPath) && new FileInfo(xmlPath).Length > 64;
@@ -96,6 +81,35 @@ public class OSMBuildingLoader : MonoBehaviour
         if (hasUsefulXml)
             return xmlPath;
 
-        return File.Exists(jsonPath) ? jsonPath : xmlPath;
+        // File.Exists cannot inspect assets inside an Android APK. Try JSON
+        // first and let the loader fall back to XML if absent or empty.
+        return jsonPath;
+    }
+
+    static bool HasBuildings(OSMData data) => data?.ways != null && data.ways.Exists(way => way.IsBuilding());
+
+    static IEnumerator ReadText(string path, System.Action<string> completed)
+    {
+        if (!path.Contains("://"))
+        {
+            completed(File.Exists(path) ? ReadLocalFile(path) : null);
+            yield break;
+        }
+        using (var request = UnityWebRequest.Get(path))
+        {
+            request.timeout = 30;
+            yield return request.SendWebRequest();
+            completed(request.result == UnityWebRequest.Result.Success ? request.downloadHandler.text : null);
+        }
+    }
+
+    static string ReadLocalFile(string path)
+    {
+        try { return File.ReadAllText(path); }
+        catch (System.Exception error) when (error is IOException || error is System.UnauthorizedAccessException)
+        {
+            Debug.LogWarning($"Buildings: Cannot read {path}: {error.Message}. Continuing with available fallback data.");
+            return null;
+        }
     }
 }

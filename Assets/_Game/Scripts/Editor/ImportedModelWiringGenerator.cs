@@ -198,7 +198,7 @@ public static class ImportedModelWiringGenerator
         GameObject root = new GameObject(displayName + " Drivable");
         Rigidbody body = root.AddComponent<Rigidbody>();
         body.mass = Mathf.Lerp(7600f, 15000f, Mathf.InverseLerp(8f, 14f, visualBounds.size.z));
-        body.linearDamping = 0.15f;
+        body.linearDamping = 0f; // BusController applies aerodynamic resistance.
         body.angularDamping = 0.5f;
         body.interpolation = RigidbodyInterpolation.Interpolate;
         body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;

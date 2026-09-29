@@ -14,6 +14,7 @@ namespace Mapbox.MapMatching
     /// <summary>
     /// A Waypoint from a Directions API call.
     /// </summary>
+    [System.Serializable]
     public class Tracepoint: Waypoint
 	{
 		/// <summary>

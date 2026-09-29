@@ -7,9 +7,9 @@ namespace Mapbox.Unity.MeshGeneration.Components
 
 	public class FeatureBehaviour : MonoBehaviour
 	{
-		public VectorEntity VectorEntity;
+		[NonSerialized] public VectorEntity VectorEntity;
 		public Transform Transform;
-		public VectorFeatureUnity Data;
+		[NonSerialized] public VectorFeatureUnity Data;
 
 		[Multiline(5)]
 		public string DataString;

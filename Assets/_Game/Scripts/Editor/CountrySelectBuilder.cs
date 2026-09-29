@@ -22,7 +22,7 @@ public static class CountrySelectBuilder
     [MenuItem("Tools/Real Bus Sim/Build Country Select Scene")]
     public static void Build()
     {
-        if (Object.FindObjectOfType<Canvas>() != null)
+        if (Object.FindAnyObjectByType<Canvas>() != null)
         {
             bool ok = EditorUtility.DisplayDialog(
                 "Country Select Builder",
@@ -225,7 +225,7 @@ public static class CountrySelectBuilder
             13, FontStyles.Normal, C_TEXT_DIM, new Vector2(540f, 24f),
             new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 42f), TextAlignmentOptions.MidlineRight);
 
-        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             GameObject es = new GameObject("EventSystem");
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();

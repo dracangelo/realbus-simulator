@@ -47,7 +47,7 @@ public class MobileResilienceManager : MonoBehaviour
     public static MobileResilienceManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        MobileResilienceManager existing = FindFirstObjectByType<MobileResilienceManager>();
+        MobileResilienceManager existing = FindAnyObjectByType<MobileResilienceManager>();
         return existing != null ? existing : new GameObject("MobileResilienceManager").AddComponent<MobileResilienceManager>();
     }
 

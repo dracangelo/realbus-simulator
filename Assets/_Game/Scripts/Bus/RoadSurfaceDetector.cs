@@ -46,7 +46,7 @@ public class RoadSurfaceDetector : MonoBehaviour
     void Start()
     {
         if (busController == null)
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
 
         int wheelCount = busController != null && busController.allWheels != null ? busController.allWheels.Length : 0;
         perWheelSurfaceMultiplier = new float[Mathf.Max(0, wheelCount)];

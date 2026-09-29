@@ -45,10 +45,10 @@ public class PhotoModeController : MonoBehaviour
     void Start()
     {
         if (targetCamera == null)
-            targetCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+            targetCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
         if (busTransform == null)
         {
-            var bus = FindFirstObjectByType<BusController>();
+            var bus = FindAnyObjectByType<BusController>();
             if (bus != null)
                 busTransform = bus.transform;
         }
@@ -83,7 +83,7 @@ public class PhotoModeController : MonoBehaviour
             return;
 
         if (targetCamera == null)
-            targetCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+            targetCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
         if (targetCamera == null)
             return;
 

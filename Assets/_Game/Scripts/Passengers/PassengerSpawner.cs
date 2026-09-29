@@ -46,7 +46,7 @@ public class PassengerSpawner : MonoBehaviour
 
     public BusStopData[] BuildRandomStopsFromRoadGraph(int desiredCount = -1, int startNodeIndex = -1)
     {
-        var graph = roadGraph != null ? roadGraph : FindFirstObjectByType<AIRoadGraph>();
+        var graph = roadGraph != null ? roadGraph : FindAnyObjectByType<AIRoadGraph>();
         if (graph == null || graph.NodeCount == 0)
         {
             Debug.LogWarning("[PassengerSpawner] Cannot generate stops because AIRoadGraph is missing or empty.");
@@ -55,7 +55,7 @@ public class PassengerSpawner : MonoBehaviour
 
         var converter = coordinateConverter != null ? coordinateConverter : CoordinateConverter.Instance;
         if (converter == null)
-            converter = FindFirstObjectByType<CoordinateConverter>();
+            converter = FindAnyObjectByType<CoordinateConverter>();
 
         if (converter == null)
         {

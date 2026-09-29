@@ -142,7 +142,7 @@ public class GameplayTestBootstrap : MonoBehaviour
             if (i == 0) { startPosition = point + Vector3.up * 0.4f; startRotation = rotation; }
         }
         route.SyncLegacyStopsFromBusStops();
-        var canvas = FindFirstObjectByType<UnityEngine.Canvas>();
+        var canvas = FindAnyObjectByType<UnityEngine.Canvas>();
         if (canvas != null)
         {
             var preview = new GameObject("Briefing route map", typeof(RectTransform), typeof(RouteMapGraphic));

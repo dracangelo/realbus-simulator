@@ -52,7 +52,7 @@ public class TimeOfDaySystem : MonoBehaviour
         if (directionalSun == null && skyController != null)
             directionalSun = skyController.sunLight;
         if (skyController == null)
-            skyController = FindFirstObjectByType<SkyController>();
+            skyController = FindAnyObjectByType<SkyController>();
 
         AutoBindLights();
         currentTimeMinutes = ScheduleManager.Instance != null ? ScheduleManager.Instance.currentTimeMinutes : startTimeMinutes;
@@ -139,17 +139,14 @@ public class TimeOfDaySystem : MonoBehaviour
             busHeadLights = FindLightsByName("head", "front");
         if (busInteriorLights == null || busInteriorLights.Length == 0)
             busInteriorLights = FindLightsByName("interior", "cabin", "saloon");
-        if (streetLightObjects == null || streetLightObjects.Length == 0)
-            streetLightObjects = FindObjectsByName("street", "lamp");
-        if (busHeadLightObjects == null || busHeadLightObjects.Length == 0)
-            busHeadLightObjects = FindObjectsByName("head", "front");
-        if (busInteriorLightObjects == null || busInteriorLightObjects.Length == 0)
-            busInteriorLightObjects = FindObjectsByName("interior", "cabin", "saloon");
+        // GameObject arrays are explicit visual-only assignments. Guessing them
+        // by name disabled FrontLeft/FrontRight WheelColliders during daylight.
+        // Automatic discovery must only ever bind actual Light components.
     }
 
     Light[] FindLightsByName(params string[] nameTokens)
     {
-        var allLights = FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var allLights = FindObjectsByType<Light>(FindObjectsInactive.Include);
         var matches = new System.Collections.Generic.List<Light>();
 
         for (int i = 0; i < allLights.Length; i++)
@@ -172,31 +169,6 @@ public class TimeOfDaySystem : MonoBehaviour
         return matches.ToArray();
     }
 
-    GameObject[] FindObjectsByName(params string[] nameTokens)
-    {
-        var allTransforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        var matches = new System.Collections.Generic.List<GameObject>();
-
-        for (int i = 0; i < allTransforms.Length; i++)
-        {
-            var transformRef = allTransforms[i];
-            if (transformRef == null || transformRef == transform)
-                continue;
-
-            string lower = transformRef.name.ToLowerInvariant();
-            for (int tokenIndex = 0; tokenIndex < nameTokens.Length; tokenIndex++)
-            {
-                if (lower.Contains(nameTokens[tokenIndex]))
-                {
-                    matches.Add(transformRef.gameObject);
-                    break;
-                }
-            }
-        }
-
-        return matches.ToArray();
-    }
-
     void ApplyManagedObjects(GameObject[] objects, bool active)
     {
         if (objects == null)
@@ -206,6 +178,13 @@ public class TimeOfDaySystem : MonoBehaviour
         {
             var target = objects[i];
             if (target == null)
+                continue;
+
+            // Protect stale serialized assignments too. A lighting toggle must
+            // never deactivate vehicle physics, a camera, or their ancestors.
+            if (target.GetComponentInChildren<Collider>(true) != null ||
+                target.GetComponentInChildren<Rigidbody>(true) != null ||
+                target.GetComponentInChildren<Camera>(true) != null)
                 continue;
 
             target.SetActive(active);

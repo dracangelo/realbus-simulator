@@ -28,7 +28,7 @@ public static class MainMenuBuilder
     [MenuItem("Tools/Real Bus Sim/Build Main Menu Scene")]
     public static void Build()
     {
-        if (Object.FindObjectOfType<Canvas>() != null)
+        if (Object.FindAnyObjectByType<Canvas>() != null)
         {
             bool ok = EditorUtility.DisplayDialog(
                 "Main Menu Builder",
@@ -182,7 +182,7 @@ public static class MainMenuBuilder
             new Vector2(280f, 24f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(0f, 0f), TextAlignmentOptions.BottomRight);
 
         // Event System
-        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             GameObject es = new GameObject("EventSystem");
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -280,7 +280,6 @@ public static class MainMenuBuilder
         // Starting Y = -90 so rows sit below the header text.
         float rowY   = -90f;
         float rowH   = 40f;  // height of each standard row
-        float repH   = 64f;  // taller row for reputation (has progress bar below)
 
         // Top divider
         BuildHRule(panel.transform, "Divider_Top", rowY);
@@ -742,7 +741,7 @@ public static class MainMenuBuilder
 
     static T FindOrCreateManager<T>(Transform parent, string name) where T : MonoBehaviour
     {
-        T existing = Object.FindObjectOfType<T>();
+        T existing = Object.FindAnyObjectByType<T>();
         if (existing != null)
         {
             existing.name = name;

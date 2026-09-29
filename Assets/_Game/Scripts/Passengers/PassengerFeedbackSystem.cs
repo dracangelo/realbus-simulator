@@ -19,7 +19,7 @@ public class PassengerFeedbackSystem : MonoBehaviour
     public static PassengerFeedbackSystem EnsureExists()
     {
         if (Instance != null) return Instance;
-        PassengerFeedbackSystem existing = FindFirstObjectByType<PassengerFeedbackSystem>();
+        PassengerFeedbackSystem existing = FindAnyObjectByType<PassengerFeedbackSystem>();
         return existing != null ? existing : new GameObject("PassengerFeedbackSystem").AddComponent<PassengerFeedbackSystem>();
     }
 
@@ -35,8 +35,8 @@ public class PassengerFeedbackSystem : MonoBehaviour
 
     void Bind()
     {
-        passengers = PassengerManager.Instance != null ? PassengerManager.Instance : FindFirstObjectByType<PassengerManager>();
-        bus = FindFirstObjectByType<BusController>();
+        passengers = PassengerManager.Instance != null ? PassengerManager.Instance : FindAnyObjectByType<PassengerManager>();
+        bus = FindAnyObjectByType<BusController>();
         lastPassengerCount = passengers != null ? passengers.currentPassengers : 0;
         lastMoodBand = passengers != null ? MoodBand(passengers.averageSatisfaction) : -1;
         lastWeather = WeatherSystem.Instance != null ? WeatherSystem.Instance.currentWeather : WeatherState.Clear;
@@ -78,7 +78,7 @@ public class PassengerFeedbackSystem : MonoBehaviour
         {
             if (reaction.voiceClips != null && reaction.voiceClips.Length > 0)
                 RealBusAudioManager.EnsureExists().PlayPassengerVoice(reaction.voiceClips[Random.Range(0, reaction.voiceClips.Length)]);
-            PassengerVisualPool visuals = FindFirstObjectByType<PassengerVisualPool>();
+            PassengerVisualPool visuals = FindAnyObjectByType<PassengerVisualPool>();
             if (visuals != null) visuals.TriggerReaction(reaction.animatorTrigger);
         }
     }

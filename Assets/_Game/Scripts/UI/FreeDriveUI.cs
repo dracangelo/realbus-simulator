@@ -197,7 +197,7 @@ public class FreeDriveUI : MonoBehaviour
     void OnEnable()
     {
         if (fuelSystem == null)
-            fuelSystem = FindFirstObjectByType<FuelSystem>();
+            fuelSystem = FindAnyObjectByType<FuelSystem>();
     }
 
     void TogglePhotoMode()

@@ -123,7 +123,7 @@ public class GarageProgressionPanel : MonoBehaviour
 
         liveryEditor = gameObject.GetComponent<LiveryEditor>();
         if (liveryEditor == null) liveryEditor = gameObject.AddComponent<LiveryEditor>();
-        BusController bus = FindFirstObjectByType<BusController>();
+        BusController bus = FindAnyObjectByType<BusController>();
         Renderer[] renderers = bus != null ? bus.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
         liveryEditor.Initialize(activeBus.busId, renderers);
 

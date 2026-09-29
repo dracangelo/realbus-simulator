@@ -17,7 +17,7 @@ public class PassengerVisualPool : MonoBehaviour
     void Start()
     {
         if (passengers == null) passengers = PassengerManager.Instance;
-        if (bus == null) bus = FindFirstObjectByType<BusController>();
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
         material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         material.color = new Color(0.15f, 0.55f, 0.75f);
         for (int i = 0; i < visualBudget; i++)

@@ -28,7 +28,7 @@ public class BalanceTelemetryRecorder : MonoBehaviour
     public static BalanceTelemetryRecorder EnsureExists()
     {
         if (Instance != null) return Instance;
-        BalanceTelemetryRecorder existing = FindFirstObjectByType<BalanceTelemetryRecorder>();
+        BalanceTelemetryRecorder existing = FindAnyObjectByType<BalanceTelemetryRecorder>();
         return existing != null ? existing : new GameObject("BalanceTelemetryRecorder").AddComponent<BalanceTelemetryRecorder>();
     }
 

@@ -72,7 +72,7 @@ public class CityPredownloader : MonoBehaviour
 
     void Start()
     {
-        _cache = OfflineCacheManager.Instance ?? FindFirstObjectByType<OfflineCacheManager>();
+        _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
     }
 
     // ── Public API ─────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ public class CityPredownloader : MonoBehaviour
 
     IEnumerator DownloadRoutine(CityDefinition city)
     {
-        _cache = OfflineCacheManager.Instance ?? FindFirstObjectByType<OfflineCacheManager>();
+        _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
         _activeCity = city;
         isDownloading   = true;
         isCancelled     = false;
@@ -247,7 +247,7 @@ public class CityPredownloader : MonoBehaviour
         }
         if (verifyCache)
         {
-            _cache = OfflineCacheManager.Instance ?? FindFirstObjectByType<OfflineCacheManager>();
+            _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
             if (_cache != null)
             {
                 int cached = 0;

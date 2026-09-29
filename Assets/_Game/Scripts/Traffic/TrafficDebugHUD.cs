@@ -34,7 +34,7 @@ public class TrafficDebugHUD : MonoBehaviour
         GUILayout.Label($"FPS: {smoothedFps:0.0}");
 
         if (vehiclePool == null)
-            vehiclePool = FindFirstObjectByType<VehiclePool>();
+            vehiclePool = FindAnyObjectByType<VehiclePool>();
 
         if (vehiclePool != null)
         {

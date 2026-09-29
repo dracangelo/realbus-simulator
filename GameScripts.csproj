@@ -89,6 +89,7 @@
     <Compile Include="Assets/_Game/Scripts/Map/MissionResult.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/FreeDriveSession.cs" />
     <Compile Include="Assets/_Game/Scripts/Util/MiniJSON.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/RoadSpawnResolver.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/GpsTracker.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/GameplayTestBootstrap.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/SaveConflictPrompt.cs" />
@@ -113,6 +114,7 @@
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeGasStationSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusController.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CoordinateConverter.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/OvertureBuildingConverter.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/XPBar.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMRoadMeshBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/GPSManager.cs" />
@@ -128,6 +130,7 @@
     <Compile Include="Assets/_Game/Scripts/City/CityConfig.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/SplineVehicle.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/TimeOfDaySystem.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/LiveCityStreamer.cs" />
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerSpawner.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DockingZone.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs" />
@@ -170,6 +173,7 @@
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeTarmacApplier.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MobileControlsUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/ScheduleManager.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/ProceduralBuildingFill.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RouteRecoverySystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/RainController.cs" />
     <Compile Include="Assets/_Game/Scripts/Debug/StopPropSpawner.cs" />
@@ -179,6 +183,7 @@
     <Compile Include="Assets/_Game/Scripts/Progress/LiveryEditor.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/HUDManager.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMTypes.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/RoadSurfaceIndex.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MobilePerformanceManager.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMParser.cs" />
     <Compile Include="Assets/_Game/Scripts/Progress/BalanceTelemetryRecorder.cs" />
@@ -189,6 +194,7 @@
     <Compile Include="Assets/_Game/Scripts/OSM/OverpassQueryBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerReactionLibrary.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/SettingsManager.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/LiveCityCatalog.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/SnowController.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/RoadSurfaceType.cs" />
     <Compile Include="Assets/_Game/Scripts/Progress/UpgradeDefinition.cs" />

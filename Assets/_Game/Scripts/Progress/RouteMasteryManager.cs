@@ -26,7 +26,7 @@ public class RouteMasteryManager : MonoBehaviour
     public static RouteMasteryManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        RouteMasteryManager existing = FindFirstObjectByType<RouteMasteryManager>();
+        RouteMasteryManager existing = FindAnyObjectByType<RouteMasteryManager>();
         return existing != null ? existing : new GameObject("RouteMasteryManager").AddComponent<RouteMasteryManager>();
     }
 

@@ -23,7 +23,7 @@ public class AccessibilityManager : MonoBehaviour
     public static AccessibilityManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        AccessibilityManager existing = FindFirstObjectByType<AccessibilityManager>();
+        AccessibilityManager existing = FindAnyObjectByType<AccessibilityManager>();
         return existing != null ? existing : new GameObject("AccessibilityManager").AddComponent<AccessibilityManager>();
     }
 
@@ -50,7 +50,7 @@ public class AccessibilityManager : MonoBehaviour
     public void ApplyReadableText()
     {
         RealBusSettings settings = SettingsManager.EnsureExists().Current;
-        TMP_Text[] labels = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        TMP_Text[] labels = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include);
         for (int i = 0; i < labels.Length; i++)
         {
             TMP_Text label = labels[i];

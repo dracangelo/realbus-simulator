@@ -41,6 +41,8 @@ public class MapTileLoader : MonoBehaviour
     public float deferredTileStartDelay = 0.03f;
     public int maxTileFailureLogs = 8;
     public bool haltDownloadsAfterAuthFailure = true;
+    public bool followPlayer = true;
+    float nextFollowCheck;
 
     [Header("Tile Visual Quality")]
     public bool forceSharpTileFiltering = true;
@@ -66,7 +68,7 @@ public class MapTileLoader : MonoBehaviour
 
         cacheManager = OfflineCacheManager.Instance != null
             ? OfflineCacheManager.Instance
-            : FindFirstObjectByType<OfflineCacheManager>();
+            : FindAnyObjectByType<OfflineCacheManager>();
 
         if (loadOnAwake)
             BeginInitialLoad();
@@ -76,6 +78,22 @@ public class MapTileLoader : MonoBehaviour
     {
         if (!loadOnAwake)
             BeginInitialLoad();
+    }
+
+    void Update()
+    {
+        if (!followPlayer || loadVersion == 0 || authFailureDetected || CoordinateConverter.Instance == null ||
+            CoordinateConverter.Instance.mapOrigin == null || !CoordinateConverter.Instance.mapOrigin.IsValid() ||
+            Time.unscaledTime < nextFollowCheck) return;
+        nextFollowCheck = Time.unscaledTime + 2f;
+        var bus = MissionManager.Instance != null ? MissionManager.Instance.busController : null;
+        if (bus == null) return;
+        var location = WorldPositionToGps(bus.transform.position);
+        int x = LonToTileX(location.lon, zoomLevel);
+        int y = LatToTileY(location.lat, zoomLevel);
+        if (Mathf.Abs(x - centerTileX) > Mathf.Max(0, tilesX / 2 - 1) ||
+            Mathf.Abs(y - centerTileY) > Mathf.Max(0, tilesY / 2 - 1))
+            LoadMap(location.lat, location.lon, zoomLevel);
     }
 
     public void BeginInitialLoad()
@@ -226,7 +244,10 @@ public class MapTileLoader : MonoBehaviour
         }
 
         if (version != loadVersion || tex == null)
+        {
+            if (tex != null) Destroy(tex);
             yield break;
+        }
 
         CreateTileQuad(tex, offsetX, offsetY, tileX, tileY);
     }
@@ -318,13 +339,24 @@ public class MapTileLoader : MonoBehaviour
     void ClearTiles()
     {
         foreach (var tile in activeTiles)
-            if (tile != null) Destroy(tile);
+            if (tile != null)
+            {
+                var renderer = tile.GetComponent<Renderer>();
+                if (renderer != null && renderer.sharedMaterial != null)
+                {
+                    Destroy(renderer.sharedMaterial.mainTexture);
+                    Destroy(renderer.sharedMaterial);
+                }
+                Destroy(tile);
+            }
         activeTiles.Clear();
         loggedFirstTile = false;
         centerTileLoaded = false;
         tileFailureLogCount = 0;
         loggedAuthFailureHint = false;
     }
+
+    void OnDestroy() { ClearTiles(); }
 
     IEnumerator WarnIfNoTilesLoaded(int version)
     {
@@ -430,6 +462,10 @@ public class MapTileLoader : MonoBehaviour
 
     public Vector3 GpsToWorldPosition(double lat, double lon)
     {
+        // Changing the download centre must not move the world's coordinate origin.
+        var origin = CoordinateConverter.Instance != null ? CoordinateConverter.Instance.mapOrigin : null;
+        if (origin != null && origin.IsValid())
+            return CoordinateConverter.LocalOriginGeoToWorld(lat, lon, origin.originLat, origin.originLon);
         double metersPerDegreeLat = 111320.0;
         double metersPerDegreeLon = 111320.0 *
             System.Math.Cos(centreLat * System.Math.PI / 180.0);
@@ -442,6 +478,9 @@ public class MapTileLoader : MonoBehaviour
 
     public (double lat, double lon) WorldPositionToGps(Vector3 worldPos)
     {
+        var origin = CoordinateConverter.Instance != null ? CoordinateConverter.Instance.mapOrigin : null;
+        if (origin != null && origin.IsValid())
+            return CoordinateConverter.LocalOriginWorldToGeo(worldPos, origin.originLat, origin.originLon);
         double metersPerDegreeLat = 111320.0;
         double metersPerDegreeLon = 111320.0 *
             System.Math.Cos(centreLat * System.Math.PI / 180.0);

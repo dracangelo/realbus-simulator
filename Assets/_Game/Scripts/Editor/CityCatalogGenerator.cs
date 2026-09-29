@@ -170,7 +170,7 @@ public class CityCatalogGenerator : EditorWindow
     static void WireMainMenu()
     {
         var scene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
-        CityManager cityManager = Object.FindObjectOfType<CityManager>();
+        CityManager cityManager = Object.FindAnyObjectByType<CityManager>();
         if (cityManager == null)
             return;
 
@@ -185,7 +185,7 @@ public class CityCatalogGenerator : EditorWindow
             cityManager.activeCity = cityManager.allCities[0];
         EditorUtility.SetDirty(cityManager);
 
-        GameState gameState = Object.FindObjectOfType<GameState>();
+        GameState gameState = Object.FindAnyObjectByType<GameState>();
         if (gameState != null)
         {
             if (gameState.selectedCountry == null)

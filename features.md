@@ -9,13 +9,17 @@
 - Cinematic mobile driving controls with pedals, steering buttons or wheel, gear, horn, and retarder.
 - Model-backed playable buses with generated physics, wheels, cameras, and docking points.
 - Imported camera isolation and preservation of original model materials.
+- Fallback body paint and transparent glass for untextured bus imports.
 - Optional speed and stop-approach driving assists.
+- Single-viewport cockpit and horizon-stabilized chase cameras.
+- Speed-sensitive steering and chassis-mass suspension damping.
 
 ## Maps and routes
 
 - OpenStreetMap road, building, stop, signal, and route importing.
 - Imported routes automatically link to their geographic city with repaired metrics and duplicate filtering.
 - Road-following route generation with one-way-road support.
+- Junction-aware kerbs, clipped road overlays, and continuous bend joins.
 - Mapbox tile streaming with distance-based detail levels.
 - Resilient Mapbox PNG/JPEG decoding and accurate authorization diagnostics.
 - Offline city downloads, cache limits, and LRU cleanup.
@@ -26,7 +30,9 @@
 ## Gameplay
 
 - Free-drive and scheduled mission modes.
+- Route-direction, country-side lane spawning with barrier clearance checks.
 - Guided, accuracy-graded docking against the real bus door and physical stop prefab.
+- Road-width-aware stop placement with off-road shelters and reachable kerb anchors.
 - Door controls, kneeling, boarding, and alighting.
 - Timetables with early, on-time, late, and severely late arrivals.
 - Punctuality, satisfaction, safety, and efficiency scoring.
@@ -54,8 +60,13 @@
 - Runtime stress testing with CSV performance reports.
 - Real gas-station models spawn at OpenStreetMap fuel locations.
 - Varied-height OSM buildings with façade and roof materials.
+- Optional city-scoped Overture building import (Tools > RealBus > OSM).
+- Capped, streamed fictional buildings in unmapped urban roadside gaps.
+- Road-clearance filtering for mapped and procedural building footprints.
 - Vehicle-proximity building streaming and physical road-edge boundaries with junction openings.
 - Imported road-surface models with automatic procedural-road fallback.
+- Nearby imported trees, plants, rocks, billboards, benches, and ambient pedestrians.
+- Road/building-safe scenery streaming with prop and triangle budgets.
 - Adaptive 30/45/60 FPS targets, resolution scaling, and thermal response.
 
 ## Progression and customization
@@ -98,6 +109,7 @@
 
 - Physics, map, gameplay, realism, and progression test scenes.
 - Unity EditMode regression tests and coverage reporting.
+- Unity 6.6-compatible object searches and explicit Mapbox serialization.
 - Route, city, traffic, and OSM import editor tools.
 - Platform-specific downloadable vehicle-pack builder.
 - Runtime validation, logging, profiling, and diagnostic overlays.

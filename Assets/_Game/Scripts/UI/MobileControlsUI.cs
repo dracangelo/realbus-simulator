@@ -150,7 +150,7 @@ public class MobileControlsUI : MonoBehaviour
 
     void Update()
     {
-        if (busController == null)
+        if (busController == null || !busController.isActiveAndEnabled)
         {
             RebindBusController();
             if (busController == null) return;
@@ -171,13 +171,14 @@ public class MobileControlsUI : MonoBehaviour
     void RebindBusController()
     {
         if (busController != null && busController.isActiveAndEnabled) return;
-        busController = FindFirstObjectByType<BusController>();
+        busController = FindAnyObjectByType<BusController>();
     }
 
     void SelectDriveOrShiftUp()
     {
         if (busController == null || busController.transmissionData == null) return;
-        if (busController.transmissionData.currentGear < 0) busController.SelectReverse(false);
+        if (busController.currentSpeedKmh < 1f) busController.SelectReverse(false);
+        else if (busController.transmissionData.currentGear < 0) return;
         else busController.transmissionData.ShiftUp();
     }
 

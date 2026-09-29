@@ -80,6 +80,12 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     Transform streamingTarget;
     float streamingTimer;
     bool streamRefreshRunning;
+    [Header("Unmapped Areas")]
+    public bool enableProceduralFill = true;
+    readonly HashSet<Vector2Int> mappedOccupancy = new HashSet<Vector2Int>();
+    readonly Dictionary<Vector2Int, List<List<Vector3>>> mappedPolygons = new Dictionary<Vector2Int, List<List<Vector3>>>();
+    readonly Dictionary<GameObject, List<Vector3>> syntheticPolygons = new Dictionary<GameObject, List<Vector3>>();
+    const float OccupancyCellSize = 20f;
 
     void Awake()
     {
@@ -89,6 +95,8 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
     void Start()
     {
+        if (enableProceduralFill && GetComponent<ProceduralBuildingFill>() == null)
+            gameObject.AddComponent<ProceduralBuildingFill>();
         StartCoroutine(WaitForDataThenBuild());
     }
 
@@ -107,8 +115,10 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
     IEnumerator WaitForDataThenBuild()
     {
-        while (OSMBuildingLoader.Instance == null || !OSMBuildingLoader.Instance.dataLoaded || GPSManager.Instance == null)
+        while (OSMBuildingLoader.Instance == null || !OSMBuildingLoader.Instance.loadCompleted || GPSManager.Instance == null)
             yield return new WaitForSeconds(0.5f);
+        while (OSMRoadMeshBuilder.Instance != null && !OSMRoadMeshBuilder.Instance.roadsBuilt)
+            yield return null;
 
         Debug.Log(
             $"Buildings: Building meshes... " +
@@ -126,12 +136,16 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         buildingBuckets.Clear();
         recordsById.Clear();
         activeBuildings.Clear();
+        mappedOccupancy.Clear();
+        mappedPolygons.Clear();
+        syntheticPolygons.Clear();
         buildingsBuilt = false;
 
         int buildingCount = 0;
         int skippedDistance = 0;
         int skippedInvalidFootprint = 0;
         int skippedMissingNodes = 0;
+        int skippedRoadOverlap = 0;
         int frameCount = 0;
         float maxDistSq = maxBuildingDistance * maxBuildingDistance;
         float frameStart = Time.realtimeSinceStartup;
@@ -184,6 +198,15 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             if (signedArea < 0f)
                 footprint.Reverse();
 
+            // The displayed road width can exceed the source centreline's
+            // real carriageway width. Keep imported OSM/Overture buildings off
+            // that playable surface too, not only procedural buildings.
+            if (OSMRoadMeshBuilder.Instance?.SurfaceIndex?.OverlapsFootprint(footprint, .75f) == true)
+            {
+                skippedRoadOverlap++;
+                continue;
+            }
+
             // ── Distance culling: compute centroid XZ, skip if too far away
             if (enableDistanceCulling)
             {
@@ -214,6 +237,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             };
 
             recordsById[record.id] = record;
+            MarkMappedFootprint(record.footprint);
             Vector2Int cell = WorldToStreamingCell(record.center);
             if (!buildingBuckets.TryGetValue(cell, out var bucket))
                 buildingBuckets[cell] = bucket = new List<BuildingRecord>();
@@ -239,6 +263,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         }
 
         buildingsBuilt = true;
+        if (skippedRoadOverlap > 0) Debug.Log($"Buildings: Omitted {skippedRoadOverlap} footprints overlapping playable roads; source files unchanged.");
         if (streamAroundVehicle)
             yield return StartCoroutine(RefreshStreamedBuildings());
         Debug.Log(
@@ -325,9 +350,59 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         return buildingObj;
     }
 
+    void MarkMappedFootprint(List<Vector3> footprint)
+    {
+        Vector3 min = footprint[0], max = min;
+        foreach (var point in footprint) { min = Vector3.Min(min, point); max = Vector3.Max(max, point); }
+        for (int x = Mathf.FloorToInt(min.x / OccupancyCellSize); x <= Mathf.FloorToInt(max.x / OccupancyCellSize); x++)
+        for (int z = Mathf.FloorToInt(min.z / OccupancyCellSize); z <= Mathf.FloorToInt(max.z / OccupancyCellSize); z++)
+        {
+            var key = new Vector2Int(x, z);
+            mappedOccupancy.Add(key);
+            if (!mappedPolygons.TryGetValue(key, out var polygons)) mappedPolygons[key] = polygons = new List<List<Vector3>>();
+            polygons.Add(footprint);
+        }
+    }
+
+    // Precise clearance for street furniture; coarse 20m occupancy is intentionally
+    // retained for fictional building infill, but would reject whole sidewalks.
+    public bool OverlapsBuilding(Vector3 center, float radius)
+    {
+        for (int x = Mathf.FloorToInt((center.x - radius) / OccupancyCellSize); x <= Mathf.FloorToInt((center.x + radius) / OccupancyCellSize); x++)
+        for (int z = Mathf.FloorToInt((center.z - radius) / OccupancyCellSize); z <= Mathf.FloorToInt((center.z + radius) / OccupancyCellSize); z++)
+            if (mappedPolygons.TryGetValue(new Vector2Int(x, z), out var polygons))
+                foreach (var polygon in polygons)
+                    if (LiveCityStreamer.OverlapsPolygon(center, radius, polygon)) return true;
+        foreach (var polygon in syntheticPolygons.Values)
+            if (LiveCityStreamer.OverlapsPolygon(center, radius, polygon)) return true;
+        return false;
+    }
+
+    public bool HasMappedFootprint(Vector3 center, float radius)
+    {
+        for (int x = Mathf.FloorToInt((center.x - radius) / OccupancyCellSize); x <= Mathf.FloorToInt((center.x + radius) / OccupancyCellSize); x++)
+        for (int z = Mathf.FloorToInt((center.z - radius) / OccupancyCellSize); z <= Mathf.FloorToInt((center.z + radius) / OccupancyCellSize); z++)
+            if (mappedOccupancy.Contains(new Vector2Int(x, z))) return true;
+        return false;
+    }
+
+    public GameObject CreateSyntheticBuilding(List<Vector3> footprint, float height, long id)
+    {
+        if (OSMRoadMeshBuilder.Instance?.SurfaceIndex?.OverlapsFootprint(footprint, .75f) == true) return null;
+        if (GetSignedAreaXZ(footprint) < 0f) footprint.Reverse();
+        var instance = CreateBuildingObject(new BuildingRecord {
+            id = id, label = "Synthetic", kind = BuildingKind.House, footprint = footprint, height = height
+        });
+        if (instance != null) syntheticPolygons[instance] = footprint;
+        return instance;
+    }
+
+    public void ReleaseSyntheticBuilding(GameObject building) { DestroyBuildingObject(building); }
+
     void DestroyBuildingObject(GameObject building)
     {
         if (building == null) return;
+        syntheticPolygons.Remove(building);
         MeshFilter filter = building.GetComponent<MeshFilter>();
         if (filter != null && filter.sharedMesh != null) Destroy(filter.sharedMesh);
         Destroy(building);
@@ -350,7 +425,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     {
         if (streamingTarget != null && streamingTarget.gameObject.activeInHierarchy)
             return;
-        BusController bus = FindFirstObjectByType<BusController>();
+        BusController bus = FindAnyObjectByType<BusController>();
         streamingTarget = bus != null ? bus.transform : Camera.main != null ? Camera.main.transform : null;
     }
 

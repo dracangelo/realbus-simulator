@@ -11,6 +11,8 @@ public class DockingZone : MonoBehaviour
     public float headingToleranceDegrees = 25f;
     public string stopName;
     public int stopIndex = -1;
+    [Tooltip("0 preserves authored door anchors; -1/+1 selects the generated left/right kerb anchor.")]
+    public int roadsideDockingSide;
 
     public static DockingZone CurrentDockedZone { get; private set; }
 
@@ -39,7 +41,7 @@ public class DockingZone : MonoBehaviour
     IEnumerator InitNextFrame()
     {
         yield return null; // wait for BusStop.cs to position this GameObject
-        busController = FindFirstObjectByType<BusController>();
+        busController = FindAnyObjectByType<BusController>();
         Debug.Log($"DockingZone '{stopName}' ready at position: {transform.position}");
     }
 
@@ -123,8 +125,15 @@ public class DockingZone : MonoBehaviour
 
     void EvaluateDockingState()
     {
-        Vector3 local = transform.InverseTransformPoint(busController.dockingReference != null
-            ? busController.dockingReference.position : busController.transform.position);
+        Vector3 dockPosition = busController.dockingReference != null
+            ? busController.dockingReference.position : busController.transform.position;
+        if (roadsideDockingSide != 0 && busController.dockingReference != null && busController.dockingReference.name == "DockingReference")
+        {
+            Vector3 anchor = busController.transform.InverseTransformPoint(dockPosition);
+            anchor.x = Mathf.Abs(anchor.x) * Mathf.Sign(roadsideDockingSide);
+            dockPosition = busController.transform.TransformPoint(anchor);
+        }
+        Vector3 local = transform.InverseTransformPoint(dockPosition);
         currentKerbOffsetMeters = Mathf.Abs(local.x);
         currentStopSignOffsetMeters = Mathf.Abs(local.z);
 

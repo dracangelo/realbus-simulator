@@ -15,7 +15,7 @@ public class SubtitleManager : MonoBehaviour
     public static SubtitleManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        SubtitleManager existing = FindFirstObjectByType<SubtitleManager>();
+        SubtitleManager existing = FindAnyObjectByType<SubtitleManager>();
         return existing != null ? existing : new GameObject("SubtitleManager").AddComponent<SubtitleManager>();
     }
 

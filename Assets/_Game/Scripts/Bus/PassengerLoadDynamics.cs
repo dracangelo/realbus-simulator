@@ -36,7 +36,11 @@ public class PassengerLoadDynamics : MonoBehaviour
         int count = passengerManager != null ? passengerManager.currentPassengers : testPassengerCount;
         float load = Mathf.Max(0, count) * Mathf.Max(0f, passengerMassKg);
         previousTotal = Mathf.Max(1f, emptyMassKg) + load;
+        Vector3 center = CombinedCenter(emptyMassKg, new Vector3(0f, bus.centerOfMassY, 0f), load, passengerCenter);
+        if (Mathf.Approximately(body.mass, previousTotal) && (body.centerOfMass - center).sqrMagnitude < 0.000001f)
+            return;
         body.mass = previousTotal;
-        body.centerOfMass = CombinedCenter(emptyMassKg, new Vector3(0f, bus.centerOfMassY, 0f), load, passengerCenter);
+        body.centerOfMass = center;
+        bus.ConfigureSuspensionForVehicleMass();
     }
 }

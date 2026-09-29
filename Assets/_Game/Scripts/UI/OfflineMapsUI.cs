@@ -18,7 +18,7 @@ public class OfflineMapsUI : MonoBehaviour
     void Start()
     {
         if (predownloader == null)
-            predownloader = FindFirstObjectByType<CityPredownloader>();
+            predownloader = FindAnyObjectByType<CityPredownloader>();
 
         PopulateCities();
         if (cancelButton != null) cancelButton.onClick.AddListener(() => predownloader?.CancelDownload());

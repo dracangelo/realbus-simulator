@@ -22,7 +22,7 @@ public class DailyChallengeManager : MonoBehaviour
     public static DailyChallengeManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        DailyChallengeManager existing = FindFirstObjectByType<DailyChallengeManager>();
+        DailyChallengeManager existing = FindAnyObjectByType<DailyChallengeManager>();
         return existing != null ? existing : new GameObject("DailyChallengeManager").AddComponent<DailyChallengeManager>();
     }
 

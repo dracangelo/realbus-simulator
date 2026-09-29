@@ -12,6 +12,7 @@ namespace Mapbox.MapMatching
 	/// <summary>
 	/// A Match object from a Map Matching API call.
 	/// </summary>
+	[System.Serializable]
 	public class MatchObject : Route
 	{
 		/// <summary>

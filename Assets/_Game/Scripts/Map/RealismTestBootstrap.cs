@@ -74,7 +74,7 @@ public class RealismTestBootstrap : MonoBehaviour
     {
         var root = new GameObject("Realism weather");
         var sky = root.AddComponent<SkyController>();
-        foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None)) if (light.type == LightType.Directional) { sky.sunLight = light; break; }
+        foreach (var light in FindObjectsByType<Light>()) if (light.type == LightType.Directional) { sky.sunLight = light; break; }
         var rain = root.AddComponent<RainController>();
         var fog = root.AddComponent<FogController>();
         weather = root.AddComponent<WeatherSystem>();
@@ -91,7 +91,7 @@ public class RealismTestBootstrap : MonoBehaviour
         var particleMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default"));
         particleMaterial.color = new Color(0.65f, 0.8f, 0.9f, 0.55f);
         rainParticles.GetComponent<ParticleSystemRenderer>().sharedMaterial = particleMaterial;
-        var roads = FindFirstObjectByType<RoadNetworkSurface>();
+        var roads = FindAnyObjectByType<RoadNetworkSurface>();
         if (roads != null) { rain.wetRoadRenderers = roads.GetComponentsInChildren<Renderer>(); roads.gameObject.AddComponent<RoadGeometryLod>().viewer = bus.transform; }
         wiper = GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
         wiper.name = "Wiper"; Destroy(wiper.GetComponent<Collider>()); wiper.SetParent(bus.transform, false);
@@ -172,7 +172,7 @@ public class RealismTestBootstrap : MonoBehaviour
 
     void BuildCrossing()
     {
-        var signal = FindFirstObjectByType<TrafficLight>(); if (signal == null) return;
+        var signal = FindAnyObjectByType<TrafficLight>(); if (signal == null) return;
         var a = new GameObject("Crossing A").transform; var b = new GameObject("Crossing B").transform;
         a.SetParent(transform, false); b.SetParent(transform, false);
         a.position = signal.transform.position + signal.transform.right * 5f + signal.transform.forward * 5f + Vector3.up * 0.9f;

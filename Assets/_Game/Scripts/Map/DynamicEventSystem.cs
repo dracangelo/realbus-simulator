@@ -76,7 +76,7 @@ public class DynamicEventSystem : MonoBehaviour
     void Start()
     {
         if (busController == null)
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
     }
 
     void Update()

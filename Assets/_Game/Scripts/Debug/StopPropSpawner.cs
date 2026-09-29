@@ -35,13 +35,15 @@ public class StopPropSpawner : MonoBehaviour
     {
         while ((MissionManager.Instance == null || MissionManager.Instance.currentRoute == null) || GPSManager.Instance == null)
             yield return null;
+        while (OSMRoadMeshBuilder.Instance == null || !OSMRoadMeshBuilder.Instance.roadsBuilt)
+            yield return null;
 
         SpawnStopProps();
     }
 
     public void SpawnStopProps()
     {
-        var mission = FindFirstObjectByType<MissionManager>();
+        var mission = FindAnyObjectByType<MissionManager>();
         var route = mission != null ? mission.currentRoute : null;
         if (route == null || route.stops == null || route.stops.Length == 0)
         {
@@ -67,7 +69,14 @@ public class StopPropSpawner : MonoBehaviour
             return;
         }
 
+        var roads = OSMRoadMeshBuilder.Instance?.SurfaceIndex;
+        if (roads == null)
+        {
+            Debug.LogWarning("[StopPropSpawner] Road placement data is not ready. Waiting prevents props being placed in traffic lanes.");
+            return;
+        }
         ClearSpawnedProps();
+        bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
 
         int stopCount = spawnOnlyFirstStopAtMissionStart ? Mathf.Min(1, route.stops.Length) : route.stops.Length;
         for (int i = 0; i < stopCount; i++)
@@ -99,8 +108,17 @@ public class StopPropSpawner : MonoBehaviour
                 ? GetRouteYaw(route, i)
                 : 0f;
             Quaternion routeRotation = Quaternion.Euler(0f, yaw, 0f);
-            Vector3 offset = routeRotation * new Vector3(lateralOffset * Mathf.Sign(stopSide), 0f, forwardOffset);
-            Vector3 worldPos = stopPos + offset;
+            Vector3 heading = RoadSpawnResolver.RouteHeading(route, stopPos, routeRotation * Vector3.forward);
+            if (!roads.TryRoadside(stopPos, heading, leftTraffic, out Vector3 worldPos, out routeRotation))
+            {
+                Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; skipping its prop rather than blocking a lane.");
+                continue;
+            }
+            worldPos.y = OSMRoadMeshBuilder.Instance.roadYOffset;
+            Vector3 outward = routeRotation * Vector3.right * (leftTraffic ? -1f : 1f);
+            // The bus's door target stays just inside the road edge so the
+            // chassis never has to climb the physical kerb to finish docking.
+            worldPos -= outward * 1.2f;
 
             var stopRoot = new GameObject($"RuntimeStop_{i:00}_{SanitizeName(stop.stopName)}");
             stopRoot.transform.SetParent(transform, false);
@@ -115,6 +133,7 @@ public class StopPropSpawner : MonoBehaviour
             docking.stopName = stop.stopName;
             docking.stopIndex = i;
             docking.dockingRadius = triggerDockingRadius;
+            docking.roadsideDockingSide = leftTraffic ? -1 : 1;
 
             var model = Instantiate(prefab, stopRoot.transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(model.transform);
@@ -122,6 +141,29 @@ public class StopPropSpawner : MonoBehaviour
             model.transform.localRotation = Quaternion.Euler(0f, Random.Range(randomYawRange.x, randomYawRange.y), 0f);
             float scale = Random.Range(randomScaleRange.x, randomScaleRange.y);
             model.transform.localScale = Vector3.Scale(model.transform.localScale, Vector3.one * scale);
+
+            // Keep the docking anchor at the kerb; move the actual shelter
+            // farther onto the pavement until its entire footprint is clear.
+            bool clear = false;
+            for (int attempt = 0; attempt < 16; attempt++)
+            {
+                var renderers = model.GetComponentsInChildren<Renderer>();
+                if (renderers.Length == 0) break;
+                Bounds bounds = renderers[0].bounds;
+                foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
+                Physics.SyncTransforms();
+                foreach (var collider in model.GetComponentsInChildren<Collider>())
+                    if (collider.enabled && !collider.isTrigger) bounds.Encapsulate(collider.bounds);
+                var footprint = new[] { new Vector3(bounds.min.x, 0, bounds.min.z), new Vector3(bounds.max.x, 0, bounds.min.z),
+                    new Vector3(bounds.max.x, 0, bounds.max.z), new Vector3(bounds.min.x, 0, bounds.max.z) };
+                if (!roads.OverlapsFootprint(footprint, .8f)) { clear = true; break; }
+                model.transform.position += outward;
+            }
+            if (!clear)
+            {
+                Destroy(model);
+                Debug.LogWarning($"[StopPropSpawner] Shelter cannot fit safely at '{stop.stopName}'; retaining only its kerb docking anchor.");
+            }
 
             if (logSpawns)
                 Debug.Log($"[StopPropSpawner] Spawned {propPath} at stop '{stop.stopName}'.");

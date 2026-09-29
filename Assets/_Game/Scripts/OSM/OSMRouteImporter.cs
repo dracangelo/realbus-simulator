@@ -78,7 +78,7 @@ public class OSMRouteImporter : MonoBehaviour
 
     void Start()
     {
-        _converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+        _converter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
         if (autoImportOnStart)
             StartCoroutine(WaitForCityThenImport());
     }
@@ -295,7 +295,7 @@ public class OSMRouteImporter : MonoBehaviour
 
     static CoordinateConverter EnsureConverter(CityDefinition city)
     {
-        CoordinateConverter converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+        CoordinateConverter converter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
         if (converter == null) converter = new GameObject("CoordinateConverter_RuntimeRoutes").AddComponent<CoordinateConverter>();
         converter.SetCityOrigin(city);
         return converter;

@@ -33,7 +33,7 @@ namespace Mapbox.Unity.Map
 		[SerializeField] protected TerrainLayer _terrain = new TerrainLayer();
 		[SerializeField] protected VectorLayer _vectorData = new VectorLayer();
 		[SerializeField] protected AbstractTileProvider _tileProvider;
-		[SerializeField] protected HashSet<UnwrappedTileId> _currentExtent;
+		[NonSerialized] protected HashSet<UnwrappedTileId> _currentExtent;
 		[SerializeField] protected EditorPreviewOptions _previewOptions = new EditorPreviewOptions();
 		private List<UnwrappedTileId> tilesToProcess;
 

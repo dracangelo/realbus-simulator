@@ -7,7 +7,7 @@ namespace Mapbox.Editor
 	[CustomEditor(typeof(MapImageFactory))]
 	public class MapImageFactoryEditor : FactoryEditor
 	{
-		public SerializedProperty layerProperties;
+		[System.NonSerialized] public SerializedProperty layerProperties;
 		private MonoScript script;
 
 		void OnEnable()

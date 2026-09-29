@@ -11,7 +11,7 @@ using UnityEngine;
 ///   3. Local-origin flat-earth approximation (deterministic, unit-testable)
 ///
 /// Performance: hot-path calls (GeoToWorldPosition / WorldToGeoPosition) are
-/// O(1) with no allocations.  FindFirstObjectByType is only called during
+/// O(1) with no allocations.  FindAnyObjectByType is only called during
 /// Start() and SetCityOrigin(), never per-frame.
 /// </summary>
 public class CoordinateConverter : UnityEngine.MonoBehaviour
@@ -55,7 +55,7 @@ public class CoordinateConverter : UnityEngine.MonoBehaviour
     void Start()
     {
         if (mapTileLoader == null)
-            mapTileLoader = FindFirstObjectByType<MapTileLoader>();
+            mapTileLoader = FindAnyObjectByType<MapTileLoader>();
 
         // Auto-seed origin from active city if no asset was assigned.
         if (mapOrigin == null || !mapOrigin.IsValid())
@@ -294,8 +294,8 @@ public class CoordinateConverter : UnityEngine.MonoBehaviour
 
     static Type FindType(string fullName)
     {
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-        for (int i = 0; i < assemblies.Length; i++)
+        var assemblies = UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies();
+        for (int i = 0; i < assemblies.Count; i++)
         {
             Type type = assemblies[i].GetType(fullName, throwOnError: false);
             if (type != null)

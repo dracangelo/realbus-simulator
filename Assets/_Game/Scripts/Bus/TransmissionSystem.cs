@@ -18,8 +18,9 @@ public class TransmissionSystem : ScriptableObject
     {
         if (!automatic || currentGear < 0 || gearRatios == null || gearRatios.Length == 0) return false;
         int previous = currentGear;
-        if (rpm >= maxRpm * 0.8f) ShiftUp();
-        else if (rpm <= maxRpm * 0.35f) ShiftDown();
+        float upshift = maxRpm * .8f, downshift = maxRpm * .35f;
+        if (rpm >= upshift || Mathf.Approximately(rpm, upshift)) ShiftUp();
+        else if (rpm <= downshift || Mathf.Approximately(rpm, downshift)) ShiftDown();
         return previous != currentGear;
     }
 

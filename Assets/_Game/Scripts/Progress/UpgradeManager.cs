@@ -26,7 +26,7 @@ public class UpgradeManager : MonoBehaviour
         if (Instance != null)
             return Instance;
 
-        var existing = FindFirstObjectByType<UpgradeManager>();
+        var existing = FindAnyObjectByType<UpgradeManager>();
         if (existing != null)
             return existing;
 
@@ -156,11 +156,11 @@ public class UpgradeManager : MonoBehaviour
 
     void ApplyToActiveVehicle(BusSpec bus)
     {
-        BusController controller = FindFirstObjectByType<BusController>();
+        BusController controller = FindAnyObjectByType<BusController>();
         if (controller != null) controller.ApplyBusSpec(bus);
 
-        FuelSystem fuel = FindFirstObjectByType<FuelSystem>();
-        BatterySystem battery = FindFirstObjectByType<BatterySystem>();
+        FuelSystem fuel = FindAnyObjectByType<FuelSystem>();
+        BatterySystem battery = FindAnyObjectByType<BatterySystem>();
         if (bus.IsElectric)
         {
             if (fuel != null) fuel.enabled = false;

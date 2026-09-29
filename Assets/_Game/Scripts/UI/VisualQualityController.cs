@@ -13,7 +13,7 @@ public class VisualQualityController : MonoBehaviour
     public static VisualQualityController EnsureExists()
     {
         if (Instance != null) return Instance;
-        VisualQualityController existing = FindFirstObjectByType<VisualQualityController>();
+        VisualQualityController existing = FindAnyObjectByType<VisualQualityController>();
         return existing != null ? existing : new GameObject("VisualQualityController").AddComponent<VisualQualityController>();
     }
 
@@ -29,7 +29,7 @@ public class VisualQualityController : MonoBehaviour
 
     public void ApplyScenePolish()
     {
-        BusController bus = FindFirstObjectByType<BusController>();
+        BusController bus = FindAnyObjectByType<BusController>();
         if (bus == null) return;
         if (bus.GetComponent<CosmeticDamageSystem>() == null) bus.gameObject.AddComponent<CosmeticDamageSystem>();
         if (bus.GetComponent<VehiclePolishEffects>() == null) bus.gameObject.AddComponent<VehiclePolishEffects>();
@@ -70,7 +70,7 @@ public class VisualQualityController : MonoBehaviour
     void DisableMotionBlurOnLow()
     {
         if (QualitySettings.GetQualityLevel() > 0) return;
-        Behaviour[] behaviours = FindObjectsByType<Behaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Behaviour[] behaviours = FindObjectsByType<Behaviour>(FindObjectsInactive.Include);
         for (int i = 0; i < behaviours.Length; i++)
             if (behaviours[i] != null && behaviours[i].GetType().Name.IndexOf("MotionBlur", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 behaviours[i].enabled = false;

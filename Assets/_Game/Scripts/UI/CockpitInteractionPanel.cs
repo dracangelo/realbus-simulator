@@ -17,7 +17,7 @@ public class CockpitInteractionPanel : MonoBehaviour
     public static CockpitInteractionPanel EnsureExists()
     {
         if (Instance != null) return Instance;
-        CockpitInteractionPanel existing = FindFirstObjectByType<CockpitInteractionPanel>();
+        CockpitInteractionPanel existing = FindAnyObjectByType<CockpitInteractionPanel>();
         return existing != null ? existing : new GameObject("CockpitInteractionPanel").AddComponent<CockpitInteractionPanel>();
     }
 
@@ -35,7 +35,7 @@ public class CockpitInteractionPanel : MonoBehaviour
     {
         for (int frame = 0; frame < 120; frame++)
         {
-            bus = FindFirstObjectByType<BusController>();
+            bus = FindAnyObjectByType<BusController>();
             if (bus != null) { Build(); yield break; }
             yield return null;
         }

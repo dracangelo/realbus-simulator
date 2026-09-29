@@ -2,9 +2,10 @@
 
 namespace Mapbox.Unity.Map
 {
+	[System.Serializable]
 	public abstract class MapboxDataProperty
 	{
-		public event System.EventHandler PropertyHasChanged;
+		[field: System.NonSerialized] public event System.EventHandler PropertyHasChanged;
 		protected virtual void OnPropertyHasChanged(System.EventArgs e)
 		{
 			System.EventHandler handler = PropertyHasChanged;

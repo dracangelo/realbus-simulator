@@ -27,7 +27,7 @@ public class Phase7MenuController : MonoBehaviour
     public static Phase7MenuController EnsureExists()
     {
         if (Instance != null) return Instance;
-        Phase7MenuController existing = FindFirstObjectByType<Phase7MenuController>();
+        Phase7MenuController existing = FindAnyObjectByType<Phase7MenuController>();
         return existing != null ? existing : new GameObject("Phase7Menus").AddComponent<Phase7MenuController>();
     }
 
@@ -50,7 +50,7 @@ public class Phase7MenuController : MonoBehaviour
     {
         for (int i = 0; i < 120; i++)
         {
-            if (FindFirstObjectByType<MainMenuUI>() != null || FindFirstObjectByType<BusController>() != null) break;
+            if (FindAnyObjectByType<MainMenuUI>() != null || FindAnyObjectByType<BusController>() != null) break;
             yield return null;
         }
         BuildForScene();
@@ -58,7 +58,7 @@ public class Phase7MenuController : MonoBehaviour
 
     void Update()
     {
-        if (FindFirstObjectByType<BusController>() == null) return;
+        if (FindAnyObjectByType<BusController>() == null) return;
         if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
             TogglePause();
     }
@@ -68,8 +68,8 @@ public class Phase7MenuController : MonoBehaviour
         UnsubscribeContentDownloader();
         if (canvas != null) Destroy(canvas.gameObject);
         canvas = CreateCanvas();
-        bool mainMenu = FindFirstObjectByType<MainMenuUI>() != null;
-        bool gameplay = FindFirstObjectByType<BusController>() != null;
+        bool mainMenu = FindAnyObjectByType<MainMenuUI>() != null;
+        bool gameplay = FindAnyObjectByType<BusController>() != null;
         if (mainMenu)
         {
             CreateButton(canvas.transform, "SETTINGS", new Vector2(-160f, -48f), new Vector2(210f, 60f), ToggleSettings, new Vector2(1f, 1f));
@@ -184,7 +184,7 @@ public class Phase7MenuController : MonoBehaviour
         AddSettingTo(mobileSettingsPanel, "Steering response", () => Mathf.RoundToInt(settings.Current.steeringSensitivity * 100f) + "%", () => { settings.Current.steeringSensitivity = CycleRange(settings.Current.steeringSensitivity, 0.5f, 1.5f, 0.25f); settings.SaveAndApply(); }, ref y);
         AddSettingTo(mobileSettingsPanel, "Steering dead zone", () => Mathf.RoundToInt(settings.Current.steeringDeadZone * 100f) + "%", () => { settings.Current.steeringDeadZone = CycleRange(settings.Current.steeringDeadZone, 0f, 0.2f, 0.05f); settings.SaveAndApply(); }, ref y);
         AddSettingTo(mobileSettingsPanel, "Reduced motion", () => OnOff(settings.Current.reducedMotion), () => { settings.Current.reducedMotion = !settings.Current.reducedMotion; settings.SaveAndApply(); }, ref y);
-        if (FindFirstObjectByType<MobileControlsUI>() != null)
+        if (FindAnyObjectByType<MobileControlsUI>() != null)
             CreateButton(mobileSettingsPanel.transform, "EDIT CONTROL LAYOUT", new Vector2(-170f, -320f), new Vector2(320f, 58f), BeginControlLayoutEdit);
         CreateButton(mobileSettingsPanel.transform, "BACK", new Vector2(210f, -320f), new Vector2(260f, 58f), ToggleMobileSettings);
         mobileSettingsPanel.SetActive(false);
@@ -209,8 +209,9 @@ public class Phase7MenuController : MonoBehaviour
     {
         creditsPanel = Modal("CreditsPanel", new Vector2(760f, 440f));
         CreateText(creditsPanel.transform, "REALBUS", 48f, new Vector2(0f, 145f), new Vector2(650f, 70f), TextAlignmentOptions.Center);
-        CreateText(creditsPanel.transform, "Design, engineering and simulation team\nOpen map and weather data providers\nBuilt with Unity", 29f, new Vector2(0f, 25f), new Vector2(650f, 180f), TextAlignmentOptions.Center);
-        CreateButton(creditsPanel.transform, "BACK TO SETTINGS", new Vector2(0f, -150f), new Vector2(320f, 58f), CloseCreditsToSettings);
+        CreateText(creditsPanel.transform, "Built with Unity\nMaps: Mapbox / OpenStreetMap contributors\nOptional buildings: Overture Maps and sources\nProcedural buildings are fictional", 24f, new Vector2(0f, 25f), new Vector2(650f, 180f), TextAlignmentOptions.Center);
+        CreateButton(creditsPanel.transform, "BUILDING DATA", new Vector2(-165f, -150f), new Vector2(290f, 58f), () => Application.OpenURL("https://docs.overturemaps.org/attribution/"));
+        CreateButton(creditsPanel.transform, "BACK TO SETTINGS", new Vector2(165f, -150f), new Vector2(290f, 58f), CloseCreditsToSettings);
         creditsPanel.SetActive(false);
     }
 
@@ -380,7 +381,7 @@ public class Phase7MenuController : MonoBehaviour
     }
     void BeginControlLayoutEdit()
     {
-        MobileControlsUI mobile = FindFirstObjectByType<MobileControlsUI>(); if (mobile == null) return;
+        MobileControlsUI mobile = FindAnyObjectByType<MobileControlsUI>(); if (mobile == null) return;
         MobileControlLayoutEditor editor = mobile.GetComponent<MobileControlLayoutEditor>(); if (editor == null) editor = mobile.gameObject.AddComponent<MobileControlLayoutEditor>();
         editor.Bind(mobile); if (settingsPanel != null) settingsPanel.SetActive(false); if (mobileSettingsPanel != null) mobileSettingsPanel.SetActive(false); if (pausePanel != null) pausePanel.SetActive(false); editor.SetEditing(true);
     }

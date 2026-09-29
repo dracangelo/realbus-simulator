@@ -106,7 +106,7 @@ public static class SampleWorldGenerator
     static void WireMainMenu(CountryDefinition[] countries, CityDefinition[] cities)
     {
         var scene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
-        CityManager cityManager = Object.FindObjectOfType<CityManager>();
+        CityManager cityManager = Object.FindAnyObjectByType<CityManager>();
 
         if (cityManager == null)
         {
@@ -120,7 +120,7 @@ public static class SampleWorldGenerator
         cityManager.activeCity = cities.Length > 0 ? cities[0] : null;
         EditorUtility.SetDirty(cityManager);
 
-        GameState gameState = Object.FindObjectOfType<GameState>();
+        GameState gameState = Object.FindAnyObjectByType<GameState>();
         if (gameState != null)
         {
             gameState.selectedCountry = cityManager.activeCountry;

@@ -41,7 +41,7 @@ namespace Mapbox.Unity.MeshGeneration.Factories
 		{
 			if (_map == null)
 			{
-				_map = FindObjectOfType<AbstractMap>();
+				_map = FindAnyObjectByType<AbstractMap>();
 			}
 			_directions = MapboxAccess.Instance.Directions;
 			_map.OnInitialized += Query;

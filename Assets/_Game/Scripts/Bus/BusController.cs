@@ -79,6 +79,23 @@ public class BusController : MonoBehaviour
     public bool ParkingBrakeActive => parkingBrakeActive;
     public Rigidbody Rigidbody => rb;
 
+    public void Teleport(Vector3 position, Quaternion rotation)
+    {
+        // Update the physics pose too: interpolation can otherwise restore the
+        // old rigidbody pose after a Transform-only route-start teleport.
+        var body = rb != null ? rb : GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.position = position;
+            body.rotation = rotation;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            body.WakeUp();
+        }
+        transform.SetPositionAndRotation(position, rotation);
+        Physics.SyncTransforms();
+    }
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -91,6 +108,11 @@ public class BusController : MonoBehaviour
             rb.mass = 12000f;
         if (runtimeTransmissionInstance == null && transmissionData != null)
             ApplyRuntimeTransmission(transmissionData);
+        // AerodynamicsSystem (or ApplyAerodynamics below) already owns drag.
+        // The old 0.15/s damping adds ~15 kN resistance at 30 km/h to a 12 t
+        // bus, enough to stall acceleration just after the first upshift.
+        rb.linearDamping = 0f;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
         ConfigureSuspensionForVehicleMass();
 
@@ -218,11 +240,14 @@ public class BusController : MonoBehaviour
             float requiredSpring = Mathf.Clamp(loadPerWheel / desiredCompression, 60000f, 320000f);
             JointSpring spring = wheel.suspensionSpring;
             spring.spring = Mathf.Max(spring.spring, requiredSpring);
-            spring.damper = Mathf.Max(spring.damper, 2f * Mathf.Sqrt(spring.spring * Mathf.Max(20f, wheel.mass)) * 0.65f);
+            // Damp the supported chassis mass, not the much lighter wheel.
+            spring.damper = Mathf.Max(spring.damper, 2f * Mathf.Sqrt(spring.spring * rb.mass / wheelCount) * 0.65f);
             spring.targetPosition = Mathf.Clamp(spring.targetPosition, 0.45f, 0.6f);
             wheel.suspensionSpring = spring;
-            wheel.ConfigureVehicleSubsteps(5f, 12, 15);
         }
+        // Configure substeps once and recalculate loads after mass/COM changes.
+        foreach (WheelCollider wheel in allWheels)
+            if (wheel != null) { wheel.ConfigureVehicleSubsteps(5f, 12, 15); wheel.ResetSprungMasses(); break; }
     }
 
     bool HasGroundedDriveWheel()
@@ -301,13 +326,23 @@ public class BusController : MonoBehaviour
 
     void ApplySteering()
     {
-        float limit = Mathf.Lerp(maxSteerAngle, 8f, Mathf.Clamp01(currentSpeedKmh / 80f));
+        float limit = SafeSteeringLimit(maxSteerAngle, wheelbase, currentSpeedKmh);
         currentSteerAngle = Mathf.Lerp(currentSteerAngle, limit * Mathf.Clamp(steerInput, -1f, 1f),
             1f - Mathf.Pow(1f - Mathf.Clamp01(steerSpeed), Time.fixedDeltaTime / 0.02f));
         Vector2 angles = AckermannAngles(currentSteerAngle, wheelbase, trackWidth);
         if (steerWheels == null) return;
         for (int i = 0; i < steerWheels.Length; i++)
             if (steerWheels[i] != null) steerWheels[i].steerAngle = i % 2 == 0 ? angles.x : angles.y;
+    }
+
+    public static float SafeSteeringLimit(float parkingAngle, float axleDistance, float speedKmh)
+    {
+        // Limit commanded lateral acceleration to 0.3 g. Retain the full
+        // parking angle at walking speed instead of allowing 30-degree turns
+        // at urban traffic speeds, which can overturn a tall bus.
+        float speed = Mathf.Abs(speedKmh) / 3.6f;
+        float dynamicLimit = Mathf.Atan(3f * Mathf.Max(1f, axleDistance) / Mathf.Max(1f, speed * speed)) * Mathf.Rad2Deg;
+        return Mathf.Min(Mathf.Abs(parkingAngle), dynamicLimit);
     }
 
     void ApplyAntiRoll()
@@ -496,8 +531,12 @@ public class BusController : MonoBehaviour
             if (wheel == null) continue;
             var spring = wheel.suspensionSpring;
             float drop = kneelingSuspensionActive ? kneelingDropMeters / Mathf.Max(0.01f, wheel.suspensionDistance) : 0f;
-            spring.targetPosition = Mathf.Lerp(spring.targetPosition, Mathf.Clamp01(originalSuspensionTargets[i] + drop), Time.fixedDeltaTime * kneelingLerpSpeed);
-            wheel.suspensionSpring = spring;
+            float target = Mathf.Lerp(spring.targetPosition, Mathf.Clamp01(originalSuspensionTargets[i] + drop), Time.fixedDeltaTime * kneelingLerpSpeed);
+            if (!Mathf.Approximately(target, spring.targetPosition))
+            {
+                spring.targetPosition = target;
+                wheel.suspensionSpring = spring;
+            }
         }
     }
 

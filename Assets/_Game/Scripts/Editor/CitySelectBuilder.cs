@@ -24,7 +24,7 @@ public static class CitySelectBuilder
     [MenuItem("Tools/Real Bus Sim/Build City Select Scene")]
     public static void Build()
     {
-        if (Object.FindObjectOfType<Canvas>() != null)
+        if (Object.FindAnyObjectByType<Canvas>() != null)
         {
             bool ok = EditorUtility.DisplayDialog(
                 "City Select Builder",
@@ -190,7 +190,7 @@ public static class CitySelectBuilder
             C_TEXT_MUTED, new Vector2(260f, 48f), TextAlignmentOptions.Center);
         backButtonText.characterSpacing = 4f;
 
-        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             GameObject es = new GameObject("EventSystem");
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();

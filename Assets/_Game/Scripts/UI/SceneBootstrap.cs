@@ -33,7 +33,7 @@ public class SceneBootstrap : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void EnsureGameplaySceneHasBootstrap()
     {
-        if (FindFirstObjectByType<MissionManager>() == null || FindFirstObjectByType<SceneBootstrap>() != null)
+        if (FindAnyObjectByType<MissionManager>() == null || FindAnyObjectByType<SceneBootstrap>() != null)
             return;
 
         new GameObject("SceneBootstrap (Runtime)").AddComponent<SceneBootstrap>();
@@ -142,7 +142,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void ConfigureGameplaySceneForDirectPlay()
     {
-        var missionManager = FindObjectOfType<MissionManager>();
+        var missionManager = FindAnyObjectByType<MissionManager>();
         if (missionManager == null) return;
 
         EnsureRuntimeLogger();
@@ -170,7 +170,7 @@ public class SceneBootstrap : MonoBehaviour
             missionManager.missionData = missionToUse;
 
         if (missionManager.busController == null)
-            missionManager.busController = FindObjectOfType<BusController>();
+            missionManager.busController = FindAnyObjectByType<BusController>();
 
         missionManager.busController = InstantiateSelectedDrivableBus(missionManager.busController);
 
@@ -213,7 +213,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void ConfigureSelectedRouteStart(MissionManager missionManager, BusRoute selectedRoute)
     {
-        FreeDriveSession freeDrive = FindObjectOfType<FreeDriveSession>();
+        FreeDriveSession freeDrive = FindAnyObjectByType<FreeDriveSession>();
         bool hasSelectedMission = autoStartSelectedRoute && selectedRoute != null && selectedRoute.GetStopCount() >= 2;
         if (freeDrive != null)
         {
@@ -254,7 +254,7 @@ public class SceneBootstrap : MonoBehaviour
 
         Vector3 position = sceneBus.transform.position;
         Quaternion rotation = sceneBus.transform.rotation;
-        Camera gameplayCamera = Camera.main != null ? Camera.main : FindObjectOfType<Camera>();
+        Camera gameplayCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
         if (gameplayCamera != null && gameplayCamera.transform.IsChildOf(sceneBus.transform))
             gameplayCamera.transform.SetParent(null, true);
 
@@ -306,7 +306,7 @@ public class SceneBootstrap : MonoBehaviour
         busController.ApplyBusSpec(spec);
         GameState.Instance?.vehicleState?.ApplyBusSpec(spec, preserveEnergyPercent: true);
 
-        var passengerManager = FindObjectOfType<PassengerManager>();
+        var passengerManager = FindAnyObjectByType<PassengerManager>();
         if (passengerManager != null)
             passengerManager.ApplyBusSpec(spec);
 
@@ -344,10 +344,10 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureGpsManager()
     {
-        if (FindObjectOfType<GPSManager>() != null)
+        if (FindAnyObjectByType<GPSManager>() != null)
             return;
 
-        var mapLoader = FindObjectOfType<MapTileLoader>();
+        var mapLoader = FindAnyObjectByType<MapTileLoader>();
         if (mapLoader == null)
         {
             Debug.LogWarning("SceneBootstrap: No MapTileLoader found, so GPSManager cannot resolve map coordinates yet.");
@@ -363,7 +363,7 @@ public class SceneBootstrap : MonoBehaviour
         if (busController == null)
             return;
 
-        var tracker = FindObjectOfType<GpsTracker>();
+        var tracker = FindAnyObjectByType<GpsTracker>();
         if (tracker == null)
         {
             var go = new GameObject("GpsTracker");
@@ -372,12 +372,12 @@ public class SceneBootstrap : MonoBehaviour
 
         tracker.busTransform = busController.transform;
         if (tracker.converter == null)
-            tracker.converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+            tracker.converter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
     }
 
     void EnsurePhotoMode(BusController busController)
     {
-        var photoMode = FindObjectOfType<PhotoModeController>();
+        var photoMode = FindAnyObjectByType<PhotoModeController>();
         if (photoMode == null)
         {
             var go = new GameObject("PhotoModeController");
@@ -385,21 +385,21 @@ public class SceneBootstrap : MonoBehaviour
         }
 
         if (photoMode.targetCamera == null)
-            photoMode.targetCamera = Camera.main != null ? Camera.main : FindObjectOfType<Camera>();
+            photoMode.targetCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
         if (photoMode.busTransform == null && busController != null)
             photoMode.busTransform = busController.transform;
     }
 
     void EnsureRuntimeRoadSystems()
     {
-        var osmLoader = FindObjectOfType<OSMLoader>();
+        var osmLoader = FindAnyObjectByType<OSMLoader>();
         if (osmLoader == null)
         {
             var loaderGo = new GameObject("OSMLoader");
             osmLoader = loaderGo.AddComponent<OSMLoader>();
         }
 
-        var roadBuilder = FindObjectOfType<OSMRoadMeshBuilder>();
+        var roadBuilder = FindAnyObjectByType<OSMRoadMeshBuilder>();
         if (roadBuilder == null)
         {
             var roadsGo = new GameObject("OSMRoadMeshBuilder");
@@ -417,7 +417,7 @@ public class SceneBootstrap : MonoBehaviour
         roadBuilder.maxColliderSegmentLength = Mathf.Clamp(roadBuilder.maxColliderSegmentLength, 10f, 60f);
         roadBuilder.SetRoadSurfaceVisible(true);
 
-        var mapLoader = FindObjectOfType<MapTileLoader>();
+        var mapLoader = FindAnyObjectByType<MapTileLoader>();
         if (mapLoader != null)
         {
             roadBuilder.roadYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.02f);
@@ -448,28 +448,28 @@ public class SceneBootstrap : MonoBehaviour
 
     void ConfigureOptionalTileStreaming(BusController busController)
     {
-        var streaming = FindObjectOfType<TileStreamManager>();
+        var streaming = FindAnyObjectByType<TileStreamManager>();
         if (streaming == null)
             return;
 
         streaming.busController = busController;
         streaming.busTransform = busController != null ? busController.transform : null;
         if (streaming.converter == null)
-            streaming.converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+            streaming.converter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
         if (streaming.cache == null)
-            streaming.cache = OfflineCacheManager.Instance ?? FindFirstObjectByType<OfflineCacheManager>();
+            streaming.cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
         if (streaming.gpsTracker == null)
-            streaming.gpsTracker = GpsTracker.Instance ?? FindFirstObjectByType<GpsTracker>();
+            streaming.gpsTracker = GpsTracker.Instance ?? FindAnyObjectByType<GpsTracker>();
         if (streaming.mapTileLoader == null)
-            streaming.mapTileLoader = FindObjectOfType<MapTileLoader>();
+            streaming.mapTileLoader = FindAnyObjectByType<MapTileLoader>();
     }
 
     void EnsureTrafficViolationSystem()
     {
-        if (FindObjectOfType<ExtendedTrafficViolationSystem>() != null)
+        if (FindAnyObjectByType<ExtendedTrafficViolationSystem>() != null)
             return;
 
-        var bus = FindObjectOfType<BusController>();
+        var bus = FindAnyObjectByType<BusController>();
         if (bus == null)
             return;
 
@@ -479,23 +479,23 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureDynamicEventSystem()
     {
-        if (FindObjectOfType<DynamicEventSystem>() != null)
+        if (FindAnyObjectByType<DynamicEventSystem>() != null)
             return;
 
         var go = new GameObject("DynamicEventSystem");
         var system = go.AddComponent<DynamicEventSystem>();
-        system.busController = FindObjectOfType<BusController>();
+        system.busController = FindAnyObjectByType<BusController>();
     }
 
     void EnsurePassengerSystems()
     {
-        if (FindObjectOfType<PassengerSpawner>() == null)
+        if (FindAnyObjectByType<PassengerSpawner>() == null)
         {
             var spawnerGo = new GameObject("PassengerSpawner");
             spawnerGo.AddComponent<PassengerSpawner>();
         }
 
-        var passengerManager = FindObjectOfType<PassengerManager>();
+        var passengerManager = FindAnyObjectByType<PassengerManager>();
         if (passengerManager == null)
         {
             var managerGo = new GameObject("PassengerManager");
@@ -503,7 +503,7 @@ public class SceneBootstrap : MonoBehaviour
         }
 
         if (passengerManager.passengerSpawner == null)
-            passengerManager.passengerSpawner = FindObjectOfType<PassengerSpawner>();
+            passengerManager.passengerSpawner = FindAnyObjectByType<PassengerSpawner>();
     }
 
     void EnsureAiTrafficSystems()
@@ -512,7 +512,7 @@ public class SceneBootstrap : MonoBehaviour
         if (graph == null)
             return;
 
-        var pool = FindObjectOfType<VehiclePool>();
+        var pool = FindAnyObjectByType<VehiclePool>();
         if (pool == null)
         {
             var go = new GameObject("VehiclePool");
@@ -523,7 +523,7 @@ public class SceneBootstrap : MonoBehaviour
         pool.allowAutoResolveRoadGraph = true;
         ConfigureVehiclePoolPrefabs(pool);
 
-        var busSpawner = FindObjectOfType<AIBusScheduleSpawner>();
+        var busSpawner = FindAnyObjectByType<AIBusScheduleSpawner>();
         if (busSpawner == null)
         {
             var go = new GameObject("AIBusScheduleSpawner");
@@ -564,7 +564,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureWeatherSystems()
     {
-        var skyController = FindObjectOfType<SkyController>();
+        var skyController = FindAnyObjectByType<SkyController>();
         if (skyController == null)
         {
             var skyGo = new GameObject("SkyController");
@@ -572,15 +572,15 @@ public class SceneBootstrap : MonoBehaviour
             skyController.sunLight = RenderSettings.sun;
         }
 
-        var rainController = FindObjectOfType<RainController>();
+        var rainController = FindAnyObjectByType<RainController>();
         if (rainController == null)
             rainController = new GameObject("RainController").AddComponent<RainController>();
 
-        var fogController = FindObjectOfType<FogController>();
+        var fogController = FindAnyObjectByType<FogController>();
         if (fogController == null)
             fogController = new GameObject("FogController").AddComponent<FogController>();
 
-        var weatherSystem = FindObjectOfType<WeatherSystem>();
+        var weatherSystem = FindAnyObjectByType<WeatherSystem>();
         if (weatherSystem == null)
         {
             var go = new GameObject("WeatherSystem");
@@ -590,7 +590,7 @@ public class SceneBootstrap : MonoBehaviour
         weatherSystem.rainController = rainController;
         weatherSystem.fogController = fogController;
 
-        if (FindObjectOfType<TimeOfDaySystem>() == null)
+        if (FindAnyObjectByType<TimeOfDaySystem>() == null)
         {
             var go = new GameObject("TimeOfDaySystem");
             var timeSystem = go.AddComponent<TimeOfDaySystem>();
@@ -711,7 +711,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureRuntimeLogger()
     {
-        if (FindObjectOfType<RuntimeSpawnLogger>() != null)
+        if (FindAnyObjectByType<RuntimeSpawnLogger>() != null)
             return;
 
         var loggerGo = new GameObject("RuntimeSpawnLogger");
@@ -720,7 +720,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsurePedestrianSpawner()
     {
-        var existing = FindObjectOfType<PedestrianSpawner>();
+        var existing = FindAnyObjectByType<PedestrianSpawner>();
         if (existing != null)
         {
             if (existing.pedestrianPrefab == null)
@@ -747,7 +747,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureEnvironmentSpawner()
     {
-        if (FindObjectOfType<RuntimeEnvironmentSpawner>() != null)
+        if (FindAnyObjectByType<RuntimeEnvironmentSpawner>() != null)
             return;
 
         var go = new GameObject("RuntimeEnvironmentSpawner");
@@ -756,7 +756,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureStopPropSpawner()
     {
-        var existing = FindObjectOfType<StopPropSpawner>();
+        var existing = FindAnyObjectByType<StopPropSpawner>();
         if (existing != null)
         {
             existing.spawnOnlyFirstStopAtMissionStart = spawnOnlyFirstStopPropsAtMissionStart;
@@ -770,7 +770,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureGasStationSpawner()
     {
-        if (FindObjectOfType<RuntimeGasStationSpawner>() != null)
+        if (FindAnyObjectByType<RuntimeGasStationSpawner>() != null)
             return;
 
         var go = new GameObject("RuntimeGasStationSpawner");
@@ -779,7 +779,7 @@ public class SceneBootstrap : MonoBehaviour
 
     void EnsureTarmacApplier()
     {
-        if (FindObjectOfType<RuntimeTarmacApplier>() != null)
+        if (FindAnyObjectByType<RuntimeTarmacApplier>() != null)
             return;
 
         var go = new GameObject("RuntimeTarmacApplier");
@@ -790,11 +790,11 @@ public class SceneBootstrap : MonoBehaviour
     {
         if (suppressBuildingsForCurrentPhase && !autoPopulateCityFromOsm)
         {
-            var buildingLoader = FindObjectOfType<OSMBuildingLoader>();
+            var buildingLoader = FindAnyObjectByType<OSMBuildingLoader>();
             if (buildingLoader != null)
                 buildingLoader.enabled = false;
 
-            var buildingBuilder = FindObjectOfType<OSMBuildingMeshBuilder>();
+            var buildingBuilder = FindAnyObjectByType<OSMBuildingMeshBuilder>();
             if (buildingBuilder != null)
                 buildingBuilder.enabled = false;
 
@@ -805,17 +805,17 @@ public class SceneBootstrap : MonoBehaviour
             return;
         }
 
-        if (FindObjectOfType<OSMBuildingLoader>() == null)
+        if (FindAnyObjectByType<OSMBuildingLoader>() == null)
         {
             var loaderGo = new GameObject("OSMBuildingLoader");
             loaderGo.AddComponent<OSMBuildingLoader>();
         }
         else
         {
-            FindObjectOfType<OSMBuildingLoader>().enabled = true;
+            FindAnyObjectByType<OSMBuildingLoader>().enabled = true;
         }
 
-        var builder = FindObjectOfType<OSMBuildingMeshBuilder>();
+        var builder = FindAnyObjectByType<OSMBuildingMeshBuilder>();
         if (builder == null)
         {
             var builderGo = new GameObject("OSMBuildingMeshBuilder");
@@ -826,7 +826,7 @@ public class SceneBootstrap : MonoBehaviour
             builder.enabled = true;
         }
 
-        var mapLoader = FindObjectOfType<MapTileLoader>();
+        var mapLoader = FindAnyObjectByType<MapTileLoader>();
         if (mapLoader != null)
             builder.buildingBaseYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.2f);
 
@@ -847,7 +847,17 @@ public class SceneBootstrap : MonoBehaviour
         if (!autoPopulateCityFromOsm)
             return;
 
-        var populator = FindObjectOfType<OsmCityPopulationSystem>();
+        // Stream the imported scenery instead of spawning the old whole-city scatter.
+        if (Resources.Load<LiveCityCatalog>("LiveCityCatalog") != null)
+        {
+            foreach (var legacy in FindObjectsByType<OsmCityPopulationSystem>())
+            { legacy.populateOnStart = false; legacy.StopAllCoroutines(); legacy.enabled = false; }
+            if (FindAnyObjectByType<LiveCityStreamer>() == null)
+                new GameObject("Live City").AddComponent<LiveCityStreamer>();
+            return;
+        }
+
+        var populator = FindAnyObjectByType<OsmCityPopulationSystem>();
         if (populator == null)
         {
             var go = new GameObject("OsmCityPopulationSystem");
@@ -862,12 +872,12 @@ public class SceneBootstrap : MonoBehaviour
     {
         if (!spawnDebugPoiMarkers)
         {
-            foreach (var visualizer in FindObjectsByType<RuntimeOsmPoiVisualizer>(FindObjectsSortMode.None))
+            foreach (var visualizer in FindObjectsByType<RuntimeOsmPoiVisualizer>())
                 visualizer.enabled = false;
             return;
         }
 
-        if (FindObjectOfType<RuntimeOsmPoiVisualizer>() != null)
+        if (FindAnyObjectByType<RuntimeOsmPoiVisualizer>() != null)
             return;
 
         var go = new GameObject("RuntimeOsmPoiVisualizer");
@@ -944,11 +954,11 @@ public class SceneBootstrap : MonoBehaviour
         RenderSettings.fogStartDistance = 5000f;
         RenderSettings.fogEndDistance = 10000f;
 
-        var fogController = FindObjectOfType<FogController>();
+        var fogController = FindAnyObjectByType<FogController>();
         if (fogController != null)
             fogController.enabled = false;
 
-        var weatherSystem = FindObjectOfType<WeatherSystem>();
+        var weatherSystem = FindAnyObjectByType<WeatherSystem>();
         if (weatherSystem != null)
         {
             weatherSystem.forceWeather = true;
@@ -957,14 +967,14 @@ public class SceneBootstrap : MonoBehaviour
             weatherSystem.enabled = false;
         }
 
-        var skyController = FindObjectOfType<SkyController>();
+        var skyController = FindAnyObjectByType<SkyController>();
         if (skyController != null)
             skyController.SetSky(WeatherState.Clear, 0f, 24f);
     }
 
     void ApplyBusScaleFromMap()
     {
-        var bus = FindObjectOfType<BusController>();
+        var bus = FindAnyObjectByType<BusController>();
         if (bus == null) return;
 
         // GPSToWorld already returns metre-scaled coordinates. Scaling a Rigidbody
@@ -982,7 +992,7 @@ public class SceneBootstrap : MonoBehaviour
 
         var cam = Camera.main;
         if (cam == null)
-            cam = FindObjectOfType<Camera>();
+            cam = FindAnyObjectByType<Camera>();
         if (cam == null)
             return;
 
@@ -1002,7 +1012,7 @@ public class SceneBootstrap : MonoBehaviour
         if (!disableCinemachineVirtualCamerasForDirectPlay)
             return;
 
-        var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+        var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include);
         for (int i = 0; i < behaviours.Length; i++)
         {
             var behaviour = behaviours[i];
@@ -1047,7 +1057,7 @@ public class SceneBootstrap : MonoBehaviour
         if (usableGraph == null)
             usableGraph = TryRebuildAlignedRoadGraph(route);
 
-        var vehiclePool = FindObjectOfType<VehiclePool>();
+        var vehiclePool = FindAnyObjectByType<VehiclePool>();
         if (vehiclePool != null)
         {
             vehiclePool.roadGraph = usableGraph;
@@ -1056,7 +1066,7 @@ public class SceneBootstrap : MonoBehaviour
                 Debug.LogWarning("SceneBootstrap: VehiclePool AIRoadGraph is misaligned with the active city. Traffic graph usage disabled for this direct-play run.");
         }
 
-        var pedestrianSpawner = FindObjectOfType<PedestrianSpawner>();
+        var pedestrianSpawner = FindAnyObjectByType<PedestrianSpawner>();
         if (pedestrianSpawner != null)
         {
             pedestrianSpawner.roadGraph = usableGraph;
@@ -1090,7 +1100,7 @@ public class SceneBootstrap : MonoBehaviour
             if (roadGraph == null || roadGraph.nodes == null || roadGraph.nodes.Count == 0)
                 return null;
 
-            var airGraph = FindFirstObjectByType<AIRoadGraph>();
+            var airGraph = FindAnyObjectByType<AIRoadGraph>();
             if (airGraph == null)
             {
                 var graphGo = new GameObject("AIRoadGraph");
@@ -1189,7 +1199,7 @@ public class SceneBootstrap : MonoBehaviour
 
     AIRoadGraph FindUsableRoadGraph(BusRoute route = null)
     {
-        var graphs = FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var graphs = FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude);
         if (graphs == null || graphs.Length == 0)
             return null;
 

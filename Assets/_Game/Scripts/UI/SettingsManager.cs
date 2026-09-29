@@ -41,7 +41,7 @@ public class SettingsManager : MonoBehaviour
     public static SettingsManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        SettingsManager existing = FindFirstObjectByType<SettingsManager>();
+        SettingsManager existing = FindAnyObjectByType<SettingsManager>();
         return existing != null ? existing : new GameObject("SettingsManager").AddComponent<SettingsManager>();
     }
 
@@ -86,7 +86,7 @@ public class SettingsManager : MonoBehaviour
         AudioListener.volume = Current.masterVolume;
         if (QualitySettings.names.Length > 0 && QualitySettings.GetQualityLevel() != Current.qualityLevel)
             QualitySettings.SetQualityLevel(Current.qualityLevel, true);
-        MobileControlsUI[] controls = FindObjectsByType<MobileControlsUI>(FindObjectsSortMode.None);
+        MobileControlsUI[] controls = FindObjectsByType<MobileControlsUI>();
         for (int i = 0; i < controls.Length; i++) controls[i].ApplyControlPreferences(Current);
         if (VisualQualityController.Instance != null) VisualQualityController.Instance.ApplyScenePolish();
     }

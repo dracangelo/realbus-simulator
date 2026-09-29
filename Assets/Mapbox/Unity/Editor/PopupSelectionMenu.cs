@@ -3,7 +3,6 @@ using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.IO;
-using System.Reflection;
 using Mapbox.Unity;
 using Mapbox.Unity.Map;
 
@@ -34,18 +33,10 @@ namespace Mapbox.Editor
 			{
 				_modTypes = new List<Type>();
 
-				AppDomain currentDomain = AppDomain.CurrentDomain;
-				Assembly[] assemblies = currentDomain.GetAssemblies();
-				for (int i = 0; i < assemblies.Length; i++)
+				foreach (Type type in TypeCache.GetTypesDerivedFrom(_type))
 				{
-					Type[] types = assemblies[i].GetTypes();
-					for (int j = 0; j < types.Length; j++)
-					{
-						if (types[j].IsSubclassOf(_type))
-						{
-							_modTypes.Add(types[j]);
-						}
-					}
+					if (type.IsSubclassOf(_type) && !type.IsAbstract && !type.ContainsGenericParameters)
+						_modTypes.Add(type);
 				}
 			}
 

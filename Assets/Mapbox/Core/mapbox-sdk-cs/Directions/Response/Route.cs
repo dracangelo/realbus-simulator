@@ -14,6 +14,7 @@ namespace Mapbox.Directions
     /// <summary>
     /// A Route from a Directions API call.
     /// </summary>
+    [System.Serializable]
     public class Route
 	{
 		/// <summary>

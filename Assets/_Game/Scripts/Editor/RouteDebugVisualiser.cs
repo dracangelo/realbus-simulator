@@ -15,7 +15,7 @@ public class RouteDebugVisualiser : MonoBehaviour
     void OnDrawGizmos()
     {
         if (route == null) return;
-        if (converter == null) converter = CoordinateConverter.Instance != null ? CoordinateConverter.Instance : FindFirstObjectByType<CoordinateConverter>();
+        if (converter == null) converter = CoordinateConverter.Instance != null ? CoordinateConverter.Instance : FindAnyObjectByType<CoordinateConverter>();
 
         var points = GetRouteWorldPoints();
         if (points == null || points.Length < 2) return;

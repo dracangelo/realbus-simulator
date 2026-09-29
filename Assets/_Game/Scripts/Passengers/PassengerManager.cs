@@ -114,7 +114,7 @@ public class PassengerManager : MonoBehaviour
 
     void Start()
     {
-        busController = FindFirstObjectByType<BusController>();
+        busController = FindAnyObjectByType<BusController>();
     }
 
     void Update()

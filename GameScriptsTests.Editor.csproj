@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/RoadGraphTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/LiveCityTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/CoordinateConverterTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/GameplayRulesTests.cs" />
@@ -62,6 +63,7 @@
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/Phase3MapTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/Phase6ProgressionTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusRouteDataTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.asmdef" />

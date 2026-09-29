@@ -15,7 +15,7 @@ public class Phase6ProgressionTests
         ResetSingleton<GameState>();
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
-        foreach (GameObject gameObject in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+        foreach (GameObject gameObject in Object.FindObjectsByType<GameObject>())
             Object.DestroyImmediate(gameObject);
     }
 

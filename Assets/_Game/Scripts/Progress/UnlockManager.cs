@@ -24,7 +24,7 @@ public class UnlockManager : MonoBehaviour
         if (Instance != null)
             return Instance;
 
-        var existing = FindFirstObjectByType<UnlockManager>();
+        var existing = FindAnyObjectByType<UnlockManager>();
         if (existing != null)
             return existing;
 

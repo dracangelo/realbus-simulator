@@ -275,7 +275,7 @@ namespace Mapbox.Unity.MeshGeneration.Filters
 	[Serializable]
 	public class LayerPropertyContainsFilterComparer : LayerHasPropertyFilterComparer
 	{
-		public List<object> ValueSet;
+		[NonSerialized] public List<object> ValueSet;
 
 		protected override bool PropertyComparer(object property)
 		{

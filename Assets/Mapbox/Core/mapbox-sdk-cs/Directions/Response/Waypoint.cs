@@ -13,6 +13,7 @@ namespace Mapbox.Directions
     /// <summary>
     /// A Waypoint from a Directions API call.
     /// </summary>
+    [System.Serializable]
     public class Waypoint
 	{
 		/// <summary>

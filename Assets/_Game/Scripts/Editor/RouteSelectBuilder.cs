@@ -23,7 +23,7 @@ public static class RouteSelectBuilder
     [MenuItem("Tools/Real Bus Sim/Build Route Select Scene")]
     public static void Build()
     {
-        if (Object.FindObjectOfType<Canvas>() != null)
+        if (Object.FindAnyObjectByType<Canvas>() != null)
         {
             bool ok = EditorUtility.DisplayDialog(
                 "Route Select Builder",
@@ -159,7 +159,7 @@ public static class RouteSelectBuilder
             C_TEXT_MUTED, new Vector2(280f, 52f), TextAlignmentOptions.Center);
         backButtonText.characterSpacing = 3f;
 
-        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             GameObject es = new GameObject("EventSystem");
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();

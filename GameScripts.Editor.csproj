@@ -66,6 +66,8 @@
     <Compile Include="Assets/_Game/Scripts/Editor/RouteSelectBuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/SampleWorldGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CountrySelectBuilder.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/OvertureBuildingImporter.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/LiveCityModelImporter.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/StreamingAssetsCityFolderGenerator.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/Mainmenubuiler.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CityCatalogGenerator.cs" />

@@ -125,15 +125,15 @@ public class TileStreamManager : MonoBehaviour
     void Start()
     {
         if (converter == null)
-            converter = CoordinateConverter.Instance != null ? CoordinateConverter.Instance : FindFirstObjectByType<CoordinateConverter>();
+            converter = CoordinateConverter.Instance != null ? CoordinateConverter.Instance : FindAnyObjectByType<CoordinateConverter>();
         if (cache == null)
-            cache = OfflineCacheManager.Instance != null ? OfflineCacheManager.Instance : FindFirstObjectByType<OfflineCacheManager>();
+            cache = OfflineCacheManager.Instance != null ? OfflineCacheManager.Instance : FindAnyObjectByType<OfflineCacheManager>();
         if (gpsTracker == null)
-            gpsTracker = GpsTracker.Instance != null ? GpsTracker.Instance : FindFirstObjectByType<GpsTracker>();
+            gpsTracker = GpsTracker.Instance != null ? GpsTracker.Instance : FindAnyObjectByType<GpsTracker>();
         if (busController == null)
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
         if (mapTileLoader == null)
-            mapTileLoader = FindFirstObjectByType<MapTileLoader>();
+            mapTileLoader = FindAnyObjectByType<MapTileLoader>();
         if (busTransform == null)
         {
             if (busController != null)
@@ -141,7 +141,7 @@ public class TileStreamManager : MonoBehaviour
         }
         SyncMapSettingsFromLoader();
         if (loadingUI == null)
-            loadingUI = FindFirstObjectByType<TileStreamingLoadingUI>();
+            loadingUI = FindAnyObjectByType<TileStreamingLoadingUI>();
     }
 
     void Update()

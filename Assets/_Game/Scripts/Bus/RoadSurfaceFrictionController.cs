@@ -28,11 +28,11 @@ public class RoadSurfaceFrictionController : MonoBehaviour
     void Start()
     {
         if (busController == null)
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
         if (surfaceDetector == null)
-            surfaceDetector = FindFirstObjectByType<RoadSurfaceDetector>();
+            surfaceDetector = FindAnyObjectByType<RoadSurfaceDetector>();
         if (maintenanceSystem == null)
-            maintenanceSystem = FindFirstObjectByType<MaintenanceSystem>();
+            maintenanceSystem = FindAnyObjectByType<MaintenanceSystem>();
     }
 
     void Update()

@@ -133,7 +133,7 @@ public class RouteEditorWindow : EditorWindow
     void OnSceneGUI(SceneView sv)
     {
         if (route == null) return;
-        var conv = converter != null ? converter : FindFirstObjectByType<CoordinateConverter>();
+        var conv = converter != null ? converter : FindAnyObjectByType<CoordinateConverter>();
         if (conv == null) return;
 
         Handles.color = routeColor;
@@ -193,7 +193,7 @@ public class RouteEditorWindow : EditorWindow
 
     void RebuildValidatedPath()
     {
-        var conv = converter != null ? converter : FindFirstObjectByType<CoordinateConverter>();
+        var conv = converter != null ? converter : FindAnyObjectByType<CoordinateConverter>();
         if (route == null || validationRoads == null || conv == null || route.busStops == null)
         {
             EditorUtility.DisplayDialog("Route validation", "Assign a route, road JSON, and coordinate converter.", "OK");
@@ -283,7 +283,7 @@ public class RouteEditorWindow : EditorWindow
 
     void AddStopAtWorld(Vector3 world)
     {
-        var conv = converter != null ? converter : FindFirstObjectByType<CoordinateConverter>();
+        var conv = converter != null ? converter : FindAnyObjectByType<CoordinateConverter>();
         if (conv == null) return;
         AddStopAtWorld(world, conv);
     }
@@ -360,7 +360,7 @@ public class RouteEditorWindow : EditorWindow
         int startIndex = 0;
         if (mergeDeduplicateJunction)
         {
-            var conv = converter != null ? converter : FindFirstObjectByType<CoordinateConverter>();
+            var conv = converter != null ? converter : FindAnyObjectByType<CoordinateConverter>();
             if (conv != null)
             {
                 Vector3 aLast = conv.GeoToWorldPosition(route.busStops[^1].latitude, route.busStops[^1].longitude);
@@ -403,7 +403,7 @@ public class RouteEditorWindow : EditorWindow
 
     void RecomputeMetrics(BusRoute r)
     {
-        var conv = converter != null ? converter : FindFirstObjectByType<CoordinateConverter>();
+        var conv = converter != null ? converter : FindAnyObjectByType<CoordinateConverter>();
         if (conv == null)
         {
             r.distanceKm = 0f;

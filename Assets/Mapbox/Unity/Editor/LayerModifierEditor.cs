@@ -7,7 +7,7 @@
 	[CustomEditor(typeof(LayerModifier))]
 	public class LayerModifierEditor : Editor
 	{
-		public SerializedProperty layerId_Prop;
+		[System.NonSerialized] public SerializedProperty layerId_Prop;
 		private MonoScript script;
 
 		void OnEnable()

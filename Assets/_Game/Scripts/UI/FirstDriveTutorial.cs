@@ -21,7 +21,7 @@ public class FirstDriveTutorial : MonoBehaviour
     public static FirstDriveTutorial EnsureExists()
     {
         if (Instance != null) return Instance;
-        FirstDriveTutorial existing = FindFirstObjectByType<FirstDriveTutorial>();
+        FirstDriveTutorial existing = FindAnyObjectByType<FirstDriveTutorial>();
         return existing != null ? existing : new GameObject("FirstDriveTutorial").AddComponent<FirstDriveTutorial>();
     }
 
@@ -39,7 +39,7 @@ public class FirstDriveTutorial : MonoBehaviour
     {
         for (int i = 0; i < 120; i++)
         {
-            bus = FindFirstObjectByType<BusController>();
+            bus = FindAnyObjectByType<BusController>();
             if (bus != null) break;
             yield return null;
         }
@@ -48,7 +48,7 @@ public class FirstDriveTutorial : MonoBehaviour
 
     void BindScene()
     {
-        bus = FindFirstObjectByType<BusController>();
+        bus = FindAnyObjectByType<BusController>();
         if (bus == null) { Hide(); return; }
         if (bus.GetComponent<DrivingAssistSystem>() == null) bus.gameObject.AddComponent<DrivingAssistSystem>();
         if (PlayerPrefs.GetInt(CompletionKey, 0) != 0) { Hide(); return; }

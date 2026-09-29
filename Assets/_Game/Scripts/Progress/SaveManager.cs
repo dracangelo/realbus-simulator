@@ -106,7 +106,7 @@ public class SaveManager : MonoBehaviour
         if (Instance != null)
             return Instance;
 
-        var existing = FindFirstObjectByType<SaveManager>();
+        var existing = FindAnyObjectByType<SaveManager>();
         if (existing != null)
             return existing;
 
@@ -728,7 +728,7 @@ public class SaveManager : MonoBehaviour
         if (GameState.Instance != null)
             return GameState.Instance;
 
-        var existing = FindFirstObjectByType<GameState>();
+        var existing = FindAnyObjectByType<GameState>();
         if (existing != null)
             return existing;
 

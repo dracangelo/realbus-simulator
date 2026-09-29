@@ -15,7 +15,8 @@ public class OSMWay
 {
     public long id;
     public List<long> nodeRefs = new List<long>();
-    public Dictionary<string, string> tags = new Dictionary<string, string>();
+    // Populated by OSMParser, not Unity's scene serializer.
+    [System.NonSerialized] public Dictionary<string, string> tags = new Dictionary<string, string>();
 
     public bool IsRoad()
     {
@@ -190,9 +191,9 @@ public class OSMData
 {
     public List<OSMNode> nodes = new List<OSMNode>();
     public List<OSMWay> ways = new List<OSMWay>();
-    public Dictionary<long, OSMNode> nodeMap = new Dictionary<long, OSMNode>();
-    public Dictionary<long, int> roadNodeUseCounts = new Dictionary<long, int>();
-    public HashSet<long> intersectionNodeIds = new HashSet<long>();
+    [System.NonSerialized] public Dictionary<long, OSMNode> nodeMap = new Dictionary<long, OSMNode>();
+    [System.NonSerialized] public Dictionary<long, int> roadNodeUseCounts = new Dictionary<long, int>();
+    [System.NonSerialized] public HashSet<long> intersectionNodeIds = new HashSet<long>();
 
     public void BuildNodeMap()
     {

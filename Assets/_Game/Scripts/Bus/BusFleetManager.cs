@@ -30,7 +30,7 @@ public class BusFleetManager : MonoBehaviour
         if (Instance != null)
             return Instance;
 
-        var existing = FindFirstObjectByType<BusFleetManager>();
+        var existing = FindAnyObjectByType<BusFleetManager>();
         if (existing != null)
             return existing;
 

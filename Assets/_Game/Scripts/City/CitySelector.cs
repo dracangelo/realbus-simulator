@@ -125,7 +125,7 @@ public class CitySelector : MonoBehaviour
             Debug.LogWarning("City is locked: " + runtimeCity.cityName);
             yield break;
         }
-        var streamer = FindFirstObjectByType<TileStreamManager>();
+        var streamer = FindAnyObjectByType<TileStreamManager>();
         if (streamer != null) streamer.ResetStreaming();
 
         // ── Step 2: Register & activate ───────────────────────────────
@@ -195,13 +195,13 @@ public class CitySelector : MonoBehaviour
     {
         if (coordinateConverter == null)
             coordinateConverter = CoordinateConverter.Instance
-                ?? FindFirstObjectByType<CoordinateConverter>();
+                ?? FindAnyObjectByType<CoordinateConverter>();
 
         if (mapTileLoader == null)
-            mapTileLoader = FindFirstObjectByType<MapTileLoader>();
+            mapTileLoader = FindAnyObjectByType<MapTileLoader>();
 
         if (routeImporter == null)
             routeImporter = OSMRouteImporter.Instance
-                ?? FindFirstObjectByType<OSMRouteImporter>();
+                ?? FindAnyObjectByType<OSMRouteImporter>();
     }
 }

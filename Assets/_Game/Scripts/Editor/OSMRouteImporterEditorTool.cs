@@ -11,7 +11,7 @@ using System.Linq;
 // Tools → RealBus → OSM → Auto-Generate Bus Routes (Overpass)
 //
 // Fix summary (vs previous version):
-//   - OverpassQueryBuilder.RoadsQuery now uses `out geom` instead of
+//   - EditorOverpassQueryBuilder.RoadsQuery now uses `out geom` instead of
 //     (._;>;) recursive node fetch — eliminates the primary cause of 504s
 //   - Highway whitelist reduces payload size and server processing time
 //   - Server-side timeout raised to 180 s; Unity request.timeout to 220 s
@@ -138,7 +138,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
         else
         {
             status = "Downloading roads (this may take up to 3 min)…";
-            string roadsQuery = OverpassQueryBuilder.RoadsQuery(minLat, minLon, maxLat, maxLon);
+            string roadsQuery = EditorOverpassQueryBuilder.RoadsQuery(minLat, minLon, maxLat, maxLon);
             yield return PostOverpass(roadsQuery, j => roadsJson = j);
             if (string.IsNullOrEmpty(roadsJson))
             {
@@ -166,7 +166,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
         else
         {
             status = $"Road graph built ({graph.nodes.Count} nodes). Downloading bus stops…";
-            string stopsQuery = OverpassQueryBuilder.StopsQuery(minLat, minLon, maxLat, maxLon);
+            string stopsQuery = EditorOverpassQueryBuilder.StopsQuery(minLat, minLon, maxLat, maxLon);
             yield return PostOverpass(stopsQuery, j => stopsJson = j);
             if (string.IsNullOrEmpty(stopsJson))
             {
@@ -755,7 +755,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
     // ── coordinate converter ──────────────────────────────────────────────────
     void EnsureEditorConverter()
     {
-        converter = FindFirstObjectByType<CoordinateConverter>();
+        converter = FindAnyObjectByType<CoordinateConverter>();
         if (converter != null) return;
 
         var go = new GameObject("CoordinateConverter_EditorTemp");
@@ -1013,7 +1013,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
 }
 
 // =============================================================================
-// OverpassQueryBuilder
+// EditorOverpassQueryBuilder
 // Centralises all query strings so they're easy to audit and tweak.
 //
 // CRITICAL: roads use `out geom` NOT `out body` + (._;>;)
@@ -1021,7 +1021,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
 //   (._;>;) recursively fetches every referenced node separately — on a
 //   large bbox this can 10× the result set and reliably causes 504s.
 // =============================================================================
-public static class OverpassQueryBuilder
+public static class EditorOverpassQueryBuilder
 {
     // Drivable highway classes. Excludes footway, cycleway, path, steps,
     // construction, proposed, etc. — none of which buses use.

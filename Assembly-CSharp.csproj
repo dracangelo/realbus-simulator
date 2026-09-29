@@ -267,8 +267,8 @@
     <Compile Include="Assets/Mapbox/Unity/MeshGeneration/Modifiers/GameObjectModifiers/TextureModifier.cs" />
     <Compile Include="Assets/Mapbox/Unity/SourceLayers/IImageryLayer.cs" />
     <Compile Include="Assets/Mapbox/Examples/8_VoxelMap/Scripts/TextureScaler.cs" />
-    <Compile Include="Assets/Mapbox/Examples/5_Playground/Scripts/RasterTileExample.cs" />
     <Compile Include="Assets/Mapbox/Unity/SourceLayers/ImageryLayer.cs" />
+    <Compile Include="Assets/Mapbox/Examples/5_Playground/Scripts/RasterTileExample.cs" />
     <Compile Include="Assets/Mapbox/Examples/2_AstronautGame/AstronautGame/Astronaut/CharacterMovement.cs" />
     <Compile Include="Assets/Mapbox/Unity/MeshGeneration/Modifiers/ModifierStackBase.cs" />
     <Compile Include="Assets/Mapbox/Unity/Location/UnityLocationWrappers/MapboxLocationInfoMock.cs" />

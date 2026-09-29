@@ -8,7 +8,6 @@ public class FreeDriveSession : MonoBehaviour
     const float SpawnRaycastDistance = 2000f;
     const float SpawnClearanceAboveGround = 1.2f;
     const float SpawnOffsetBehindStartStopMeters = 14f;
-    const float SpawnOffsetSideMeters = 5f;
     const float WaitForRoadsTimeoutSeconds = 8f;
     const float SpawnRoadSearchRadiusMeters = 45f;
 
@@ -38,7 +37,7 @@ public class FreeDriveSession : MonoBehaviour
 
     void Start()
     {
-        busController = FindFirstObjectByType<BusController>();
+        busController = FindAnyObjectByType<BusController>();
         fuelLitres = ResolveInitialFuelLitres();
         fuelLevel = Mathf.Clamp01(fuelLitres / Mathf.Max(1f, fuelCapacityLitres)) * 100f;
 
@@ -77,7 +76,7 @@ public class FreeDriveSession : MonoBehaviour
     {
         while (busController == null)
         {
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
             yield return null;
         }
 
@@ -93,7 +92,7 @@ public class FreeDriveSession : MonoBehaviour
     {
         while (busController == null)
         {
-            busController = FindFirstObjectByType<BusController>();
+            busController = FindAnyObjectByType<BusController>();
             yield return null;
         }
 
@@ -112,7 +111,7 @@ public class FreeDriveSession : MonoBehaviour
     public void StartSession()
     {
         if (sessionActive) return;
-        if (busController == null) busController = FindFirstObjectByType<BusController>();
+        if (busController == null) busController = FindAnyObjectByType<BusController>();
         MissionManager.Instance?.AbortMissionForFreeDrive();
         PassengerManager.Instance?.ResetForFreeDriveMode();
 
@@ -152,9 +151,17 @@ public class FreeDriveSession : MonoBehaviour
 
         Vector3 startPos = GPSManager.Instance.GpsToWorld(lat, lon);
         startPos = ApplySpawnOffsetFromRouteStart(startPos, selectedRoute);
-        startPos = SnapSpawnToNearestRoad(startPos);
-        startPos.y = ResolveSpawnHeight(startPos);
-        busController.transform.position = startPos;
+        Vector3 heading = busController.transform.forward;
+        if (selectedRoute != null && selectedRoute.stops != null && selectedRoute.stops.Length > 1)
+            heading = GPSManager.Instance.GpsToWorld(selectedRoute.stops[1].latitude, selectedRoute.stops[1].longitude) - startPos;
+        heading = RoadSpawnResolver.RouteHeading(selectedRoute, startPos, heading);
+        if (RoadSpawnResolver.TryResolve(busController, startPos, heading, SpawnRoadSearchRadiusMeters, out var roadPosition, out var roadRotation))
+            busController.Teleport(roadPosition, roadRotation);
+        else
+        {
+            startPos.y = ResolveSpawnHeight(startPos);
+            busController.Teleport(startPos, busController.transform.rotation);
+        }
 
         var rb = busController.GetComponent<Rigidbody>();
         if (rb != null)
@@ -177,7 +184,7 @@ public class FreeDriveSession : MonoBehaviour
         if (Physics.Raycast(castStart, Vector3.down, out RaycastHit hit, SpawnRaycastDistance, ~0, QueryTriggerInteraction.Ignore))
             return hit.point.y + SpawnClearanceAboveGround;
 
-        var mapLoader = FindFirstObjectByType<MapTileLoader>();
+        var mapLoader = FindAnyObjectByType<MapTileLoader>();
         if (mapLoader != null)
             return mapLoader.tileSurfaceY + SpawnClearanceAboveGround;
 
@@ -194,49 +201,6 @@ public class FreeDriveSession : MonoBehaviour
                 yield break;
             yield return null;
         }
-    }
-
-    Vector3 SnapSpawnToNearestRoad(Vector3 spawnPos)
-    {
-        var roads = OSMRoadMeshBuilder.Instance;
-        if (roads == null || !roads.roadsBuilt)
-            return spawnPos;
-
-        Vector3 probe = spawnPos + Vector3.up * 2f;
-        Collider[] nearby = Physics.OverlapSphere(probe, SpawnRoadSearchRadiusMeters, ~0, QueryTriggerInteraction.Ignore);
-        if (nearby == null || nearby.Length == 0)
-            return spawnPos;
-
-        Vector3 best = spawnPos;
-        float bestSqr = float.MaxValue;
-
-        for (int i = 0; i < nearby.Length; i++)
-        {
-            var col = nearby[i];
-            if (col == null) continue;
-            if (!IsRoadCollider(col)) continue;
-
-            Vector3 p = col.ClosestPoint(probe);
-            Vector2 delta = new Vector2(p.x - spawnPos.x, p.z - spawnPos.z);
-            float sqr = delta.sqrMagnitude;
-            if (sqr < bestSqr)
-            {
-                bestSqr = sqr;
-                best = new Vector3(p.x, spawnPos.y, p.z);
-            }
-        }
-
-        return bestSqr < float.MaxValue ? best : spawnPos;
-    }
-
-    bool IsRoadCollider(Collider col)
-    {
-        if (col == null) return false;
-        var t = col.transform;
-        if (t.name.StartsWith("Road_")) return true;
-        if (t.parent != null && t.parent.name == "OSM_Roads") return true;
-        if (t.root != null && t.root.name == "OSM_Roads") return true;
-        return false;
     }
 
     Vector3 ApplySpawnOffsetFromRouteStart(Vector3 startPos, BusRoute route)
@@ -258,9 +222,8 @@ public class FreeDriveSession : MonoBehaviour
                 forward = routeDirection.normalized;
         }
 
-        var right = Vector3.Cross(Vector3.up, forward).normalized;
-        var offset = (-forward * SpawnOffsetBehindStartStopMeters) + (right * SpawnOffsetSideMeters);
-        return startPos + offset;
+        forward = RoadSpawnResolver.RouteHeading(route, startPos, forward).normalized;
+        return startPos - forward * SpawnOffsetBehindStartStopMeters;
     }
 
     public void EndSession()

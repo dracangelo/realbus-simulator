@@ -91,11 +91,11 @@ public class GpsTracker : MonoBehaviour
     void Start()
     {
         if (converter == null)
-            converter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+            converter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
 
         if (busTransform == null)
         {
-            var bus = FindFirstObjectByType<BusController>();
+            var bus = FindAnyObjectByType<BusController>();
             if (bus != null) busTransform = bus.transform;
         }
 

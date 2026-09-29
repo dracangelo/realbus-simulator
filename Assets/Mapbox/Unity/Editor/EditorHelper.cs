@@ -22,7 +22,7 @@
 		{
 			if (Application.isEditor)
 			{
-				AbstractMap abstractMap = UnityEngine.Object.FindObjectOfType<AbstractMap>();
+				AbstractMap abstractMap = UnityEngine.Object.FindAnyObjectByType<AbstractMap>();
 
 				if (abstractMap == null)
 				{

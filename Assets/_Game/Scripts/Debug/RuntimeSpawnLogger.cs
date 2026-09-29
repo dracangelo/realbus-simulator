@@ -37,15 +37,15 @@ public class RuntimeSpawnLogger : MonoBehaviour
 
     void LogSnapshot()
     {
-        var mission = FindFirstObjectByType<MissionManager>();
+        var mission = FindAnyObjectByType<MissionManager>();
         var route = mission != null ? mission.currentRoute : null;
         int routeStops = route != null && route.stops != null ? route.stops.Length : 0;
 
-        var passengerManager = FindFirstObjectByType<PassengerManager>();
-        var passengerSpawner = FindFirstObjectByType<PassengerSpawner>();
-        var roadGraph = FindFirstObjectByType<AIRoadGraph>();
-        var vehiclePool = FindFirstObjectByType<VehiclePool>();
-        var pedestrianSpawner = FindFirstObjectByType<PedestrianSpawner>();
+        var passengerManager = FindAnyObjectByType<PassengerManager>();
+        var passengerSpawner = FindAnyObjectByType<PassengerSpawner>();
+        var roadGraph = FindAnyObjectByType<AIRoadGraph>();
+        var vehiclePool = FindAnyObjectByType<VehiclePool>();
+        var pedestrianSpawner = FindAnyObjectByType<PedestrianSpawner>();
 
         string trafficSummary = "n/a";
         if (vehiclePool != null)

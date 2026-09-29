@@ -10,7 +10,7 @@ public class SignalViolationDetector : MonoBehaviour
     Vector3 previous;
     bool sampled;
 
-    void Start() { busController = FindFirstObjectByType<BusController>(); }
+    void Start() { busController = FindAnyObjectByType<BusController>(); }
     void FixedUpdate()
     {
         if (busController == null || trafficLight == null) return;

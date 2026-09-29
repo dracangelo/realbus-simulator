@@ -21,7 +21,7 @@ public class RoadTrafficBridge : MonoBehaviour
             Graph.nodes[i] = new AIRoadGraph.RoadNode { id = i.ToString(), point = point, laneCount = 1, speedLimitKmh = speed, nextNodeIndices = next };
             if (i % 100 == 99) yield return null;
         }
-        foreach (var signal in FindObjectsByType<TrafficLight>(FindObjectsSortMode.None))
+        foreach (var signal in FindObjectsByType<TrafficLight>())
         {
             int index = Graph.GetNearestNodeIndex(signal.transform.position);
             if (index >= 0 && Vector3.Distance(Graph.GetNodePosition(index), signal.transform.position) < 25f)

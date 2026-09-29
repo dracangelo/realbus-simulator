@@ -34,13 +34,13 @@ public class GPSManager : MonoBehaviour
     void ResolveCoordinateConverter()
     {
         if (coordinateConverter == null)
-            coordinateConverter = CoordinateConverter.Instance ?? FindFirstObjectByType<CoordinateConverter>();
+            coordinateConverter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
     }
 
     void ResolveMapTileLoader()
     {
         if (mapTileLoader == null)
-            mapTileLoader = FindFirstObjectByType<MapTileLoader>();
+            mapTileLoader = FindAnyObjectByType<MapTileLoader>();
     }
 
     /// <summary>

@@ -22,7 +22,7 @@ public class StopTrigger : MonoBehaviour
     {
         yield return null; // wait for BusStop.cs to position this GameObject
 
-        var bus = FindFirstObjectByType<BusController>();
+        var bus = FindAnyObjectByType<BusController>();
         if (bus != null) busTransform = bus.transform;
 
         Debug.Log($"StopTrigger '{stopName}' ready at position: {transform.position}");

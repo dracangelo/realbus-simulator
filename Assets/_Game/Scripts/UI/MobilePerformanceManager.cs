@@ -21,7 +21,7 @@ public class MobilePerformanceManager : MonoBehaviour
     public static MobilePerformanceManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        MobilePerformanceManager existing = FindFirstObjectByType<MobilePerformanceManager>();
+        MobilePerformanceManager existing = FindAnyObjectByType<MobilePerformanceManager>();
         return existing != null ? existing : new GameObject("MobilePerformanceManager").AddComponent<MobilePerformanceManager>();
     }
 

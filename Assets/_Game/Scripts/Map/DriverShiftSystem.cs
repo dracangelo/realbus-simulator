@@ -98,9 +98,9 @@ public class DriverShiftSystem : MonoBehaviour
     public void RunPreDriveInspection()
     {
         var vehicleState = GameState.Instance != null ? GameState.Instance.vehicleState : null;
-        var maintenanceSystem = FindFirstObjectByType<MaintenanceSystem>();
-        var fuelSystem = FindFirstObjectByType<FuelSystem>();
-        var batterySystem = FindFirstObjectByType<BatterySystem>();
+        var maintenanceSystem = FindAnyObjectByType<MaintenanceSystem>();
+        var fuelSystem = FindAnyObjectByType<FuelSystem>();
+        var batterySystem = FindAnyObjectByType<BatterySystem>();
 
         float lowestTyreCondition = 100f;
         if (maintenanceSystem != null)

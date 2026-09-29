@@ -73,7 +73,7 @@ public class ScoreTracker : MonoBehaviour
 
     void Start()
     {
-        var bus = FindFirstObjectByType<BusController>();
+        var bus = FindAnyObjectByType<BusController>();
         if (bus != null) busRigidbody = bus.GetComponent<Rigidbody>();
     }
 

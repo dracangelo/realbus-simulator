@@ -27,7 +27,7 @@ public class RealBusAudioManager : MonoBehaviour
     public static RealBusAudioManager EnsureExists()
     {
         if (Instance != null) return Instance;
-        RealBusAudioManager existing = FindFirstObjectByType<RealBusAudioManager>();
+        RealBusAudioManager existing = FindAnyObjectByType<RealBusAudioManager>();
         return existing != null ? existing : new GameObject("RealBusAudioManager").AddComponent<RealBusAudioManager>();
     }
 
@@ -48,7 +48,7 @@ public class RealBusAudioManager : MonoBehaviour
 
     void BindScene()
     {
-        bus = FindFirstObjectByType<BusController>();
+        bus = FindAnyObjectByType<BusController>();
         if (bus != null)
         {
             idleSource = EnsureLoop(bus.gameObject, engineIdle, "Engine Idle", 0.9f);
@@ -106,7 +106,7 @@ public class RealBusAudioManager : MonoBehaviour
 
     void HookButtons()
     {
-        Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include);
         for (int i = 0; i < buttons.Length; i++)
             if (hookedButtons.Add(buttons[i])) buttons[i].onClick.AddListener(PlayUIClick);
     }
