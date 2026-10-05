@@ -2,6 +2,28 @@
 
 No scene rebuild is needed. Restart Play Mode after importing data.
 
+## Player downloads and traffic lanes
+
+In **Settings > Downloads**, choose a city and mark it **Favourite**. Players can
+download only an **Offline Map**, **World Data**, **All Routes**, or one bus route
+by its numeric OpenStreetMap relation ID. Downloads are stored in the app's private
+`DownloadedCities` folder, so they do not increase the base install size. **Remove
+City** removes its downloaded OSM files and the map tiles within its saved area.
+
+Offline maps use the same Mapbox token, style, and zoom as gameplay. Map downloads
+need a valid token with style access; they do not include 3D buildings or routes.
+World data includes buildings/POIs/fuel; route data includes roads, stops, and bus
+relations. The one-route action intentionally still downloads the local road network
+and stops needed to drive that route. Content is checked before replacing the
+built-in equivalent and partial downloads are retained to resume later.
+
+Road meshes and AI traffic now use OSM `lanes`, `width`, `oneway`, and `maxspeed`
+metadata. Two-way traffic stays on the country-correct half of the road; one-way
+traffic uses all tagged lanes. Missing lane data uses conservative road-type defaults.
+This is road-level lane fidelity, not lane-connection data: OSM does not reliably
+provide turn arrows, every intersection lane assignment, or traffic restrictions in
+the current download query.
+
 ## Live-city models
 
 Use **Tools > RealBus > Setup > Build Live City Models** after adding or replacing

@@ -23,6 +23,8 @@
 - Mapbox tile streaming with distance-based detail levels.
 - Resilient Mapbox PNG/JPEG decoding and accurate authorization diagnostics.
 - Offline city downloads, cache limits, and LRU cleanup.
+- Player favourites plus selective offline-map, world-data, all-route, or one-route downloads.
+- OSM lane-aware road dividers and AI traffic on the correct side of each carriageway.
 - In-game optional downloads for city world data, all routes, or one OSM route.
 - GPS tracking, route previews, and runtime navigation lines.
 - Cinematic country, city, and route selectors with swipeable cards.

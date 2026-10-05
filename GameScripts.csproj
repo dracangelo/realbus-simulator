@@ -147,6 +147,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/CityPinPulse.cs" />
     <Compile Include="Assets/_Game/Scripts/City/RuntimeCityContentDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/OfflineMapsUI.cs" />
+    <Compile Include="Assets/_Game/Scripts/City/PlayerCityLibrary.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/FogController.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficParticipant.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RouteVisualizer.cs" />

@@ -179,8 +179,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (!string.IsNullOrEmpty(roadTag) && IsValidTag(roadTag))
                 roadObj.tag = roadTag;
 
-            if (renderRoadSurface && drawCenterLines && way.ShouldDrawCenterLine())
-                BuildCenterLine(points, way.id);
+            if (renderRoadSurface && drawCenterLines)
+                BuildLaneMarkings(points, way, width);
 
             if (generateRoadBoundaries && (includeServiceRoadBoundaries || way.GetRoadType() != "service"))
             {
@@ -314,7 +314,31 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 BuildCenterLinePiece(new List<Vector3> { Vector3.Lerp(points[i - 1], points[i], run.x), Vector3.Lerp(points[i - 1], points[i], run.y) });
     }
 
-    void BuildCenterLinePiece(List<Vector3> points)
+    void BuildLaneMarkings(List<Vector3> points, OSMWay way, float roadWidth)
+    {
+        int lanes = Mathf.Max(1, way.GetLaneCount());
+        if (lanes < 2) return;
+        float laneWidth = roadWidth / lanes;
+        for (int divider = 1; divider < lanes; divider++)
+        {
+            float offset = -roadWidth * .5f + laneWidth * divider;
+            bool centre = !way.IsOneWay() && divider == lanes / 2;
+            Color colour = centre ? centerLineColor : Color.white;
+            float width = centre ? centerLineWidth : Mathf.Max(.12f, centerLineWidth * .62f);
+            var shifted = new List<Vector3>(points.Count);
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector3 forward = i == points.Count - 1 ? points[i] - points[i - 1] : points[i + 1] - points[i];
+                forward.y = 0f;
+                shifted.Add(points[i] + Vector3.Cross(Vector3.up, forward.normalized) * offset);
+            }
+            for (int i = 1; i < shifted.Count; i++)
+                foreach (var run in SurfaceIndex.ClearRuns(shifted[i - 1], shifted[i], way.id, .35f))
+                    BuildCenterLinePiece(new List<Vector3> { Vector3.Lerp(shifted[i - 1], shifted[i], run.x), Vector3.Lerp(shifted[i - 1], shifted[i], run.y) }, colour, width);
+        }
+    }
+
+    void BuildCenterLinePiece(List<Vector3> points, Color? overrideColor = null, float? overrideWidth = null)
     {
         if (points == null || points.Count < 2) return;
 
@@ -324,14 +348,14 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         var lr = go.AddComponent<LineRenderer>();
         lr.positionCount  = points.Count;
         lr.useWorldSpace  = true;   // FIX: world-space positions, no transform math needed
-        lr.startWidth     = centerLineWidth;
-        lr.endWidth       = centerLineWidth;
+        lr.startWidth     = overrideWidth ?? centerLineWidth;
+        lr.endWidth       = overrideWidth ?? centerLineWidth;
         lr.numCapVertices = 2;
         lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         lr.receiveShadows    = false;
 
         var mat = new Material(ResolveShader());
-        mat.color = centerLineColor;
+        mat.color = overrideColor ?? centerLineColor;
         // Ensure the line draws on top of the road mesh
         mat.renderQueue = 2450;
         lr.material = mat;

@@ -72,10 +72,14 @@ public class SplineVehicle : MonoBehaviour
         if (!roadGraph.IsValidNode(targetNodeIndex))
             return;
 
+        // Match the full-physics controller: lanes belong to the directed
+        // edge, so clamp after a turn onto a road with fewer lanes.
+        laneIndex = Mathf.Clamp(laneIndex, 0, Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex)) - 1);
+
         Vector3 target = roadGraph.GetNodePosition(targetNodeIndex);
         Vector3 segment = (target - roadGraph.GetNodePosition(currentNodeIndex)).normalized;
         emergencyYieldSeconds = Mathf.Max(0f, emergencyYieldSeconds - Time.deltaTime);
-        target += Vector3.Cross(Vector3.up, segment) * (roadGraph.GetLaneOffset(currentNodeIndex, laneIndex) - (emergencyYieldSeconds > 0f ? 3f : 0f));
+        target += Vector3.Cross(Vector3.up, segment) * (roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex) - (emergencyYieldSeconds > 0f ? 3f : 0f));
         Vector3 to = target - transform.position;
         to.y = 0f;
         float dist = to.magnitude;

@@ -124,22 +124,24 @@ public class Phase7MenuController : MonoBehaviour
         contentCityLabel = CreateText(contentDownloadsPanel.transform, "No cities available", 31f, new Vector2(0f, 255f), new Vector2(720f, 62f), TextAlignmentOptions.Center);
         CreateButton(contentDownloadsPanel.transform, "›", new Vector2(420f, 255f), new Vector2(70f, 62f), () => CycleContentCity(1));
 
-        CreateButton(contentDownloadsPanel.transform, "WORLD DATA", new Vector2(-310f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.World));
-        CreateButton(contentDownloadsPanel.transform, "ALL ROUTES", new Vector2(0f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.Routes));
-        CreateButton(contentDownloadsPanel.transform, "COMPLETE CITY", new Vector2(310f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.CompleteCity));
-        CreateText(contentDownloadsPanel.transform, "World data: buildings, places and fuel  •  Routes: roads, stops and bus services", 21f,
-            new Vector2(0f, 93f), new Vector2(930f, 45f), TextAlignmentOptions.Center);
+        CreateButton(contentDownloadsPanel.transform, "OFFLINE MAP", new Vector2(-310f, 150f), new Vector2(270f, 68f), DownloadOfflineMap);
+        CreateButton(contentDownloadsPanel.transform, "WORLD DATA", new Vector2(0f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.World));
+        CreateButton(contentDownloadsPanel.transform, "ALL ROUTES", new Vector2(310f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.Routes));
+        CreateButton(contentDownloadsPanel.transform, "FAVOURITE", new Vector2(-180f, 80f), new Vector2(250f, 54f), ToggleFavouriteCity);
+        CreateButton(contentDownloadsPanel.transform, "COMPLETE CITY", new Vector2(180f, 80f), new Vector2(250f, 54f), () => DownloadContent(CityContentDownloadKind.CompleteCity));
+        CreateText(contentDownloadsPanel.transform, "Map: offline road imagery  •  World: buildings, places, fuel  •  Routes: roads, stops, services", 19f,
+            new Vector2(0f, 25f), new Vector2(930f, 42f), TextAlignmentOptions.Center);
 
-        CreateText(contentDownloadsPanel.transform, "ONE ROUTE BY OSM RELATION ID", 23f, new Vector2(-230f, 28f), new Vector2(470f, 52f), TextAlignmentOptions.Left);
-        routeRelationInput = CreateInput(contentDownloadsPanel.transform, "Example: 123456", new Vector2(160f, 28f), new Vector2(310f, 58f));
-        CreateButton(contentDownloadsPanel.transform, "VEHICLE PACKS", new Vector2(-310f, -45f), new Vector2(260f, 60f), OpenVehiclePacks);
-        CreateButton(contentDownloadsPanel.transform, "DOWNLOAD ROUTE", new Vector2(310f, -45f), new Vector2(260f, 60f), DownloadSingleRoute);
+        CreateText(contentDownloadsPanel.transform, "ONE ROUTE BY OSM RELATION ID", 23f, new Vector2(-230f, -45f), new Vector2(470f, 52f), TextAlignmentOptions.Left);
+        routeRelationInput = CreateInput(contentDownloadsPanel.transform, "Example: 123456", new Vector2(160f, -45f), new Vector2(310f, 58f));
+        CreateButton(contentDownloadsPanel.transform, "VEHICLE PACKS", new Vector2(-310f, -115f), new Vector2(260f, 60f), OpenVehiclePacks);
+        CreateButton(contentDownloadsPanel.transform, "DOWNLOAD ROUTE", new Vector2(310f, -115f), new Vector2(260f, 60f), DownloadSingleRoute);
 
-        contentProgress = CreateSlider(contentDownloadsPanel.transform, new Vector2(0f, -120f), new Vector2(850f, 24f));
-        contentStatusLabel = CreateText(contentDownloadsPanel.transform, "Ready", 23f, new Vector2(0f, -178f), new Vector2(900f, 80f), TextAlignmentOptions.Center);
-        CreateButton(contentDownloadsPanel.transform, "CANCEL", new Vector2(-330f, -285f), new Vector2(210f, 58f), () => RuntimeCityContentDownloader.EnsureExists().Cancel());
-        CreateButton(contentDownloadsPanel.transform, "REMOVE CITY DATA", new Vector2(-70f, -285f), new Vector2(270f, 58f), RemoveSelectedCityContent);
-        CreateButton(contentDownloadsPanel.transform, "BACK", new Vector2(300f, -285f), new Vector2(240f, 58f), ToggleContentDownloads);
+        contentProgress = CreateSlider(contentDownloadsPanel.transform, new Vector2(0f, -185f), new Vector2(850f, 24f));
+        contentStatusLabel = CreateText(contentDownloadsPanel.transform, "Ready", 23f, new Vector2(0f, -240f), new Vector2(900f, 70f), TextAlignmentOptions.Center);
+        CreateButton(contentDownloadsPanel.transform, "CANCEL", new Vector2(-330f, -330f), new Vector2(210f, 58f), () => { RuntimeCityContentDownloader.EnsureExists().Cancel(); FindAnyObjectByType<CityPredownloader>()?.CancelDownload(); });
+        CreateButton(contentDownloadsPanel.transform, "REMOVE CITY", new Vector2(-70f, -330f), new Vector2(270f, 58f), RemoveSelectedCityContent);
+        CreateButton(contentDownloadsPanel.transform, "BACK", new Vector2(300f, -330f), new Vector2(240f, 58f), ToggleContentDownloads);
 
         RuntimeCityContentDownloader downloader = RuntimeCityContentDownloader.EnsureExists();
         downloader.Changed += HandleContentDownloadChanged;
@@ -322,10 +324,35 @@ public class Phase7MenuController : MonoBehaviour
         if (contentCityLabel == null) return;
         if (city == null) { contentCityLabel.text = "No cities available"; return; }
         long bytes = RuntimeCityContentStore.GetDownloadedBytes(city);
-        string files = $"{(RuntimeCityContentStore.IsDownloaded(city, "buildings.json") ? "WORLD ✓" : "WORLD —")}   " +
+        CityPredownloader maps = FindAnyObjectByType<CityPredownloader>();
+        if (maps == null) maps = new GameObject("CityPredownloader").AddComponent<CityPredownloader>();
+        var mapStatus = maps.GetStatus(city, true);
+        string files = $"{(PlayerCityLibrary.IsFavourite(city) ? "★ FAVOURITE" : "☆ NOT FAVOURITE")}   " +
+            $"{(mapStatus != null && mapStatus.cached > 0 ? "MAP ✓" : "MAP —")}   " +
+            $"{(RuntimeCityContentStore.IsDownloaded(city, "buildings.json") ? "WORLD ✓" : "WORLD —")}   " +
             $"{(RuntimeCityContentStore.IsDownloaded(city, "routes.json") ? "ROUTES ✓" : "ROUTES —")}";
-        contentCityLabel.text = $"{city.country.ToUpperInvariant()}  /  {city.cityName.ToUpperInvariant()}\n<size=20>{files}  •  {RuntimeCityContentDownloader.FormatBytes(bytes)}</size>";
+        contentCityLabel.text = $"{city.country.ToUpperInvariant()}  /  {city.cityName.ToUpperInvariant()}\n<size=18>{files}  •  {RuntimeCityContentDownloader.FormatBytes(bytes)}</size>";
     }
+
+    void ToggleFavouriteCity()
+    {
+        CityDefinition city = SelectedDownloadCity(); if (city == null) return;
+        PlayerCityLibrary.SetFavourite(city, !PlayerCityLibrary.IsFavourite(city));
+        RefreshContentCity();
+    }
+
+    void DownloadOfflineMap()
+    {
+        CityDefinition city = SelectedDownloadCity(); if (city == null) return;
+        CityPredownloader maps = FindAnyObjectByType<CityPredownloader>();
+        if (maps == null) maps = new GameObject("CityPredownloader").AddComponent<CityPredownloader>();
+        maps.OnProgress -= HandleContentDownloadProgress; maps.OnProgress += HandleContentDownloadProgress;
+        maps.OnComplete -= HandleMapDownloadComplete; maps.OnComplete += HandleMapDownloadComplete;
+        maps.StartDownloadForCity(city);
+    }
+
+    void HandleContentDownloadProgress(float progress) => HandleContentDownloadChanged("Downloading offline map…", progress);
+    void HandleMapDownloadComplete(bool cancelled) { HandleContentDownloadChanged(cancelled ? "Map download cancelled." : "Offline map ready.", 1f); RefreshContentCity(); }
 
     void DownloadContent(CityContentDownloadKind kind)
     {
@@ -351,6 +378,8 @@ public class Phase7MenuController : MonoBehaviour
         CityDefinition city = SelectedDownloadCity();
         if (city == null) return;
         RuntimeCityContentDownloader.EnsureExists().Delete(city);
+        FindAnyObjectByType<CityPredownloader>()?.DeleteDownloadedMap(city);
+        PlayerCityLibrary.SetFavourite(city, false);
         RefreshContentCity();
     }
 

@@ -216,11 +216,12 @@ public class VehiclePool : MonoBehaviour
             rb.interpolation = RigidbodyInterpolation.None;
 
             int startNode = PickNearbySpawnNode();
-            int laneCount = 1;
-            if (roadGraph.nodes != null && startNode >= 0 && startNode < roadGraph.nodes.Length && roadGraph.nodes[startNode] != null)
-                laneCount = Mathf.Max(1, roadGraph.nodes[startNode].laneCount);
+            // Resolve a legal directed road link before choosing its lane.
+            ai.Init(roadGraph, startNode, 0, ai.vehicleType);
+            int targetNode = ai.targetNodeIndex;
+            int laneCount = Mathf.Max(1, roadGraph.GetLaneCount(startNode, targetNode));
             int lane = Random.Range(0, laneCount);
-            ai.Init(roadGraph, startNode, lane, ai.vehicleType);
+            ai.laneIndex = lane;
             spline.Init(roadGraph, startNode, ai.targetNodeIndex, lane, 0f);
 
             SetTier(go, ai, spline, rb, SimulationTier.Dormant, true);

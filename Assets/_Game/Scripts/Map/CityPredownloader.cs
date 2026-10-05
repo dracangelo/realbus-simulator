@@ -14,6 +14,7 @@ using System.Collections.Generic;
 /// </summary>
 public class CityPredownloader : MonoBehaviour
 {
+    [System.Serializable] class TokenConfiguration { public string AccessToken; }
     [System.Serializable]
     public class CityDownloadStatus
     {
@@ -73,6 +74,7 @@ public class CityPredownloader : MonoBehaviour
     void Start()
     {
         _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
+        SyncMapConfiguration();
     }
 
     // ── Public API ─────────────────────────────────────────────────────
@@ -80,7 +82,32 @@ public class CityPredownloader : MonoBehaviour
     public void StartDownloadForCity(CityDefinition city)
     {
         if (isDownloading || city == null) return;
+        SyncMapConfiguration();
+        if (string.IsNullOrWhiteSpace(mapboxToken))
+        {
+            Debug.LogWarning("[CityPredownloader] Map download needs the same Mapbox token used by MapTileLoader.");
+            return;
+        }
         StartCoroutine(DownloadRoutine(city));
+    }
+
+    void SyncMapConfiguration()
+    {
+        var loader = FindAnyObjectByType<MapTileLoader>();
+        if (loader != null)
+        {
+            if (!string.IsNullOrWhiteSpace(loader.mapboxToken)) mapboxToken = loader.mapboxToken.Trim();
+            if (!string.IsNullOrWhiteSpace(loader.mapStyle)) mapStyle = loader.mapStyle;
+            zoomLevel = loader.zoomLevel;
+            tileWorldSize = loader.tileWorldSize;
+        }
+        if (!string.IsNullOrWhiteSpace(mapboxToken)) return;
+        var config = Resources.Load<TextAsset>("Mapbox/MapboxConfiguration");
+        if (config == null) return;
+        try { mapboxToken = JsonUtility.FromJson<TokenConfiguration>(config.text)?.AccessToken?.Trim() ?? string.Empty; }
+        catch (System.ArgumentException) { Debug.LogWarning("[CityPredownloader] Mapbox configuration is not valid JSON."); }
+        // Match MapTileLoader's normal satellite choice when no active loader is present.
+        if (mapStyle == "mapbox/satellite-streets-v12") mapStyle = "mapbox/satellite-v9";
     }
 
     public void CancelDownload()
@@ -88,6 +115,21 @@ public class CityPredownloader : MonoBehaviour
         if (!isDownloading) return;
         isCancelled = true;
         Debug.Log("[CityPredownloader] Download cancelled by user.");
+    }
+
+    /// <summary>Removes only tiles covered by this city's saved offline area.</summary>
+    public void DeleteDownloadedMap(CityDefinition city)
+    {
+        if (city == null || isDownloading) return;
+        _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
+        if (_cache != null)
+            foreach (var tile in GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize))
+            {
+                string path = _cache.GetTileCachePath(mapStyle, zoomLevel, tile.x, tile.y);
+                try { if (System.IO.File.Exists(path)) System.IO.File.Delete(path); } catch (System.IO.IOException) { }
+            }
+        PlayerPrefs.DeleteKey(StatusKey(city)); PlayerPrefs.Save();
+        Debug.Log($"[CityPredownloader] Removed cached map tiles for {city.cityName}.");
     }
 
     // ── Tile key helpers (static so MapTileLoader can share the same math) ──

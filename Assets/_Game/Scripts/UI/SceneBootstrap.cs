@@ -905,7 +905,17 @@ public class SceneBootstrap : MonoBehaviour
         AddVehiclePrefab(entries, AIVehicleController.VehicleType.Bus, 0.15f, "BussimAssets/bus-models/White Modern Coach Bus");
 
         if (entries.Count == 0)
-            return;
+        {
+            // Optional traffic packs should improve variety, not be a requirement
+            // for a populated city. Keep this low-poly fallback local to runtime.
+            entries.Add(new VehiclePool.VehiclePrefabEntry
+            {
+                type = AIVehicleController.VehicleType.Car,
+                prefab = CreateFallbackTrafficVehicle(),
+                weight = 1f
+            });
+            Debug.Log("SceneBootstrap: Optional AI traffic models are absent; using the built-in low-poly traffic fallback.");
+        }
 
         pool.prefabs = entries.ToArray();
         pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, 64);
@@ -943,6 +953,54 @@ public class SceneBootstrap : MonoBehaviour
         }
 
         return null;
+    }
+
+    GameObject CreateFallbackTrafficVehicle()
+    {
+        var root = new GameObject("Runtime Traffic Car (Fallback)");
+        root.hideFlags = HideFlags.DontSave;
+        var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        body.name = "Body";
+        body.transform.SetParent(root.transform, false);
+        body.transform.localPosition = new Vector3(0f, .55f, 0f);
+        body.transform.localScale = new Vector3(1.8f, .75f, 4.2f);
+        var bodyRenderer = body.GetComponent<Renderer>();
+        bodyRenderer.sharedMaterial = CreateFallbackTrafficMaterial("TrafficBody", new Color(.12f, .35f, .68f));
+
+        var cabin = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cabin.name = "Cabin";
+        cabin.transform.SetParent(root.transform, false);
+        cabin.transform.localPosition = new Vector3(0f, 1.15f, -.25f);
+        cabin.transform.localScale = new Vector3(1.55f, .55f, 2.15f);
+        var cabinCollider = cabin.GetComponent<Collider>();
+        if (cabinCollider != null) Destroy(cabinCollider);
+        cabin.GetComponent<Renderer>().sharedMaterial = CreateFallbackTrafficMaterial("TrafficGlass", new Color(.06f, .12f, .18f));
+
+        for (int side = -1; side <= 1; side += 2)
+        for (int axle = -1; axle <= 1; axle += 2)
+        {
+            var wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            wheel.name = "Wheel";
+            wheel.transform.SetParent(root.transform, false);
+            wheel.transform.localPosition = new Vector3(side * 1f, .35f, axle * 1.35f);
+            wheel.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            wheel.transform.localScale = Vector3.one * .48f;
+            var wheelCollider = wheel.GetComponent<Collider>();
+            if (wheelCollider != null) Destroy(wheelCollider);
+            wheel.GetComponent<Renderer>().sharedMaterial = CreateFallbackTrafficMaterial("TrafficTyre", new Color(.035f, .035f, .04f));
+        }
+
+        root.SetActive(false);
+        return root;
+    }
+
+    Material CreateFallbackTrafficMaterial(string name, Color color)
+    {
+        bool urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline != null;
+        var shader = Shader.Find(urp ? "Universal Render Pipeline/Lit" : "Standard");
+        var material = new Material(shader) { name = name + " (Runtime)", color = color };
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+        return material;
     }
 
     void EnsureClearVisibility()
@@ -1175,22 +1233,34 @@ public class SceneBootstrap : MonoBehaviour
             int[] nextNodeIndices = sourceNode.edges != null
                 ? new int[sourceNode.edges.Count]
                 : System.Array.Empty<int>();
+            int[] laneCounts = sourceNode.edges != null ? new int[sourceNode.edges.Count] : System.Array.Empty<int>();
+            float[] laneWidths = sourceNode.edges != null ? new float[sourceNode.edges.Count] : System.Array.Empty<float>();
+            bool[] oneWays = sourceNode.edges != null ? new bool[sourceNode.edges.Count] : System.Array.Empty<bool>();
 
             if (sourceNode.edges != null)
             {
                 for (int edgeIndex = 0; edgeIndex < sourceNode.edges.Count; edgeIndex++)
-                    nextNodeIndices[edgeIndex] = sourceNode.edges[edgeIndex].to;
+                {
+                    var edge = sourceNode.edges[edgeIndex];
+                    nextNodeIndices[edgeIndex] = edge.to;
+                    laneCounts[edgeIndex] = Mathf.Max(1, edge.laneCount);
+                    laneWidths[edgeIndex] = Mathf.Max(2.6f, edge.laneWidth);
+                    oneWays[edgeIndex] = edge.oneWay;
+                }
             }
 
             nodes[i] = new AIRoadGraph.RoadNode
             {
                 id = $"N{i:0000}",
                 point = pointGo.transform,
-                laneCount = 2,
-                laneWidth = 3.3f,
+                laneCount = laneCounts.Length > 0 ? laneCounts[0] : 1,
+                laneWidth = laneWidths.Length > 0 ? laneWidths[0] : 3.1f,
                 speedLimitKmh = speedLimit,
                 trafficLight = null,
-                nextNodeIndices = nextNodeIndices
+                nextNodeIndices = nextNodeIndices,
+                outgoingLaneCounts = laneCounts,
+                outgoingLaneWidths = laneWidths,
+                outgoingOneWays = oneWays
             };
         }
 

@@ -59,6 +59,22 @@ public class ImportedGameplayRegressionTests
         Assert.That(typeof(OSMData).GetField("nodeMap").IsNotSerialized, Is.True);
     }
 
+    [Test]
+    public void LaneAwareTraffic_ClampsAChangedRoadToItsAvailableLanes()
+    {
+        var graph = Child("Lane graph").AddComponent<AIRoadGraph>();
+        var a = Child("A").transform; var b = Child("B").transform;
+        b.position = Vector3.forward * 20f;
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = a, nextNodeIndices = new[] { 1 }, outgoingLaneCounts = new[] { 3 }, outgoingLaneWidths = new[] { 3.3f }, outgoingOneWays = new[] { true } },
+            new AIRoadGraph.RoadNode { point = b, nextNodeIndices = new[] { 0 }, outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 3.1f }, outgoingOneWays = new[] { false } }
+        };
+        Assert.That(graph.GetLaneCount(0, 1), Is.EqualTo(3));
+        Assert.That(graph.GetLaneCount(1, 0), Is.EqualTo(1));
+        Assert.That(graph.GetLaneOffset(1, 0, 99), Is.EqualTo(graph.GetLaneOffset(1, 0, 0)).Within(.001f));
+    }
+
     GameObject root;
 
     [SetUp] public void Setup() { root = new GameObject("Regression fixture"); }

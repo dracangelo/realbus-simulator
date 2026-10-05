@@ -105,10 +105,15 @@ public class AIVehicleController : MonoBehaviour
         if (!roadGraph.IsValidNode(targetNodeIndex))
             return;
 
+        // A turn can enter a narrower road. Keep the chosen lane valid for
+        // this directed edge instead of carrying a two-lane index into a
+        // single-lane street.
+        laneIndex = Mathf.Clamp(laneIndex, 0, Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex)) - 1);
+
         Vector3 current = transform.position;
         Vector3 target = roadGraph.GetNodePosition(targetNodeIndex);
         Vector3 segment = (target - roadGraph.GetNodePosition(currentNodeIndex)).normalized;
-        target += Vector3.Cross(Vector3.up, segment) * (roadGraph.GetLaneOffset(currentNodeIndex, laneIndex) + laneShift);
+        target += Vector3.Cross(Vector3.up, segment) * (roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex) + laneShift);
         Vector3 travelDir = (target - current);
         travelDir.y = 0f;
         float distance = travelDir.magnitude;
@@ -136,7 +141,7 @@ public class AIVehicleController : MonoBehaviour
         bool legitimateStop = isYieldingToEmergency || roadGraph.IsRedSignal(targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, safeFollowingDistance + 2f);
         if (moved > 0.04f || currentSpeedKmh > 2f || legitimateStop) { stuckSeconds = 0f; return; }
         stuckSeconds += Time.fixedDeltaTime;
-        if (stuckSeconds >= 12f && recoveryLaneTimer <= 0f && roadGraph.nodes[currentNodeIndex].laneCount > 1)
+        if (stuckSeconds >= 12f && recoveryLaneTimer <= 0f && roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex) > 1)
         {
             float side = laneIndex == 0 ? Mathf.Abs(overtakingLaneShift) : -Mathf.Abs(overtakingLaneShift);
             if (TrafficParticipant.PassingLaneClear(transform, side, 25f)) { laneShift = side; recoveryLaneTimer = 5f; stuckSeconds = 0f; return; }
@@ -175,7 +180,7 @@ public class AIVehicleController : MonoBehaviour
             }
         }
 
-        if (!isOvertaking && roadGraph.nodes[currentNodeIndex].laneCount > 1 && !roadGraph.IsRedSignal(targetNodeIndex))
+        if (!isOvertaking && roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex) > 1 && !roadGraph.IsRedSignal(targetNodeIndex))
         {
             var stoppedBus = TrafficParticipant.StoppedBusAhead(transform, safeFollowingDistance * 2.5f);
             if (stoppedBus != null && TrafficParticipant.PassingLaneClear(transform, overtakingLaneShift))

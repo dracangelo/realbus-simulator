@@ -13,6 +13,9 @@ public class AIRoadGraph : MonoBehaviour
         public float speedLimitKmh = 40f;
         public TrafficLight trafficLight;
         public int[] nextNodeIndices;
+        public int[] outgoingLaneCounts;
+        public float[] outgoingLaneWidths;
+        public bool[] outgoingOneWays;
     }
 
     [Header("Road Graph")]
@@ -162,6 +165,36 @@ public class AIRoadGraph : MonoBehaviour
         // Center lanes around road middle: e.g. 2 lanes -> -0.5,+0.5 multipliers.
         float centered = laneIndex - (lanes - 1) * 0.5f;
         return centered * width;
+    }
+
+    public int GetLaneCount(int fromNode, int toNode)
+    {
+        if (!IsValidNode(fromNode)) return 1;
+        RoadNode node = nodes[fromNode];
+        for (int i = 0; node.nextNodeIndices != null && i < node.nextNodeIndices.Length; i++)
+            if (node.nextNodeIndices[i] == toNode && node.outgoingLaneCounts != null && i < node.outgoingLaneCounts.Length)
+                return Mathf.Max(1, node.outgoingLaneCounts[i]);
+        return Mathf.Max(1, node.laneCount);
+    }
+
+    public float GetLaneOffset(int fromNode, int toNode, int laneIndex)
+    {
+        if (!IsValidNode(fromNode) || !IsValidNode(toNode)) return 0f;
+        RoadNode node = nodes[fromNode];
+        int link = -1;
+        for (int i = 0; node.nextNodeIndices != null && i < node.nextNodeIndices.Length; i++) if (node.nextNodeIndices[i] == toNode) { link = i; break; }
+        int lanes = GetLaneCount(fromNode, toNode);
+        float width = link >= 0 && node.outgoingLaneWidths != null && link < node.outgoingLaneWidths.Length
+            ? node.outgoingLaneWidths[link] : node.laneWidth;
+        bool oneWay = link >= 0 && node.outgoingOneWays != null && link < node.outgoingOneWays.Length && node.outgoingOneWays[link];
+        laneIndex = Mathf.Clamp(laneIndex, 0, lanes - 1);
+        float centered = (laneIndex - (lanes - 1) * .5f) * Mathf.Max(2.5f, width);
+        if (oneWay) return centered;
+        // A directed link uses only its real direction of travel. Kenya/Tanzania/Uganda
+        // use the left half; other countries use the right half.
+        bool left = CityManager.Instance?.activeCountry?.DrivesOnLeft ?? true;
+        float side = left ? -1f : 1f;
+        return side * (lanes * width * .5f - width * .5f) + centered;
     }
 
     public int GetNearestNodeIndex(Vector3 worldPos)

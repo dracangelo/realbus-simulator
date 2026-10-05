@@ -48,6 +48,10 @@ public class RoadGraph
         public RoadType roadType;
         /// <summary>Pre-computed travel cost in seconds.</summary>
         public float    travelTimeSec;
+        // OSM lane data is carried to runtime traffic instead of being guessed.
+        public int      laneCount;
+        public float    laneWidth;
+        public bool     oneWay;
     }
 
     // ── Storage ────────────────────────────────────────────────────────
@@ -219,6 +223,9 @@ public class RoadGraph
             var  roadType = ParseRoadType(elem.tags);
             float speed   = ParseSpeedLimit(elem.tags, roadType);
             bool oneWay   = IsOneWay(elem.tags, roadType);
+            int totalLanes = ParseLaneCount(elem.tags, roadType, oneWay);
+            float laneWidth = ParseLaneWidth(elem.tags, totalLanes, roadType);
+            int travelLanes = oneWay ? totalLanes : Mathf.Max(1, totalLanes / 2);
 
             int prev = -1;
             for (int pointIndex = 0; pointIndex < elem.geometry.Count; pointIndex++)
@@ -229,9 +236,9 @@ public class RoadGraph
                 if (prev >= 0 && n != prev)
                 {
                     bool reverse = elem.tags.TryGetValue("oneway", out var direction) && direction == "-1";
-                    graph.AddEdge(reverse ? n : prev, reverse ? prev : n, speed, roadType);
+                    graph.AddEdge(reverse ? n : prev, reverse ? prev : n, speed, roadType, travelLanes, laneWidth, oneWay);
                     if (!oneWay)
-                        graph.AddEdge(n, prev, speed, roadType);
+                        graph.AddEdge(n, prev, speed, roadType, travelLanes, laneWidth, false);
                 }
                 prev = n;
             }
@@ -303,7 +310,7 @@ public class RoadGraph
 
     // ── Private: edge management ───────────────────────────────────────
 
-    void AddEdge(int from, int to, float speedKmh, RoadType type)
+    void AddEdge(int from, int to, float speedKmh, RoadType type, int laneCount, float laneWidth, bool oneWay)
     {
         if (!ValidNode(from) || !ValidNode(to)) return;
 
@@ -318,7 +325,10 @@ public class RoadGraph
             to            = to,
             speedLimitKmh = speedKmh,
             roadType      = type,
-            travelTimeSec = travelSec
+            travelTimeSec = travelSec,
+            laneCount     = Mathf.Clamp(laneCount, 1, 4),
+            laneWidth     = Mathf.Clamp(laneWidth, 2.6f, 4.2f),
+            oneWay        = oneWay
         });
     }
 
@@ -379,6 +389,28 @@ public class RoadGraph
             return ow == "yes" || ow == "1" || ow == "true" || ow == "-1";
         // Motorways and trunk roads are implicitly one-way per carriageway in OSM.
         return type == RoadType.Motorway || (tags.TryGetValue("junction", out var junction) && junction == "roundabout");
+    }
+
+    static int ParseLaneCount(Dictionary<string, string> tags, RoadType type, bool oneWay)
+    {
+        if (tags != null && tags.TryGetValue("lanes", out string raw) && int.TryParse(raw, out int lanes))
+            return Mathf.Clamp(lanes, 1, 8);
+        return type switch
+        {
+            RoadType.Motorway or RoadType.Trunk => oneWay ? 2 : 4,
+            RoadType.Primary or RoadType.Secondary => 2,
+            RoadType.Service => 1,
+            _ => 2
+        };
+    }
+
+    static float ParseLaneWidth(Dictionary<string, string> tags, int lanes, RoadType type)
+    {
+        if (tags != null && tags.TryGetValue("width", out string raw) &&
+            float.TryParse(raw.ToLowerInvariant().Replace("m", "").Trim(), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float width))
+            return Mathf.Clamp(width / Mathf.Max(1, lanes), 2.6f, 4.2f);
+        return type is RoadType.Motorway or RoadType.Trunk ? 3.6f : type is RoadType.Primary or RoadType.Secondary ? 3.3f : 3.1f;
     }
 
     // ── Private: A* helpers ────────────────────────────────────────────
