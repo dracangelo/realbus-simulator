@@ -149,9 +149,12 @@ public class RuntimeTarmacApplier : MonoBehaviour
         foreach (var mr in root.GetComponentsInChildren<MeshRenderer>(true))
         {
             if (mr == null) continue;
-            // Kerbs/boundary strips have their own contrasting material. Painting
-            // them with asphalt made them visually disappear into the roadway.
-            if (mr.gameObject.name == "RoadBoundaries" || HasNamedAncestor(mr.transform, "RoadVisual_")) continue;
+            // Kerbs/boundary strips and painted lane markings have their own materials.
+            // Painting them with asphalt made them visually disappear into the roadway.
+            if (mr.gameObject.name == "RoadBoundaries" ||
+                mr.gameObject.name == "RoadMarkings" ||
+                mr.gameObject.name.Contains("Marking") ||
+                HasNamedAncestor(mr.transform, "RoadVisual_")) continue;
             mr.enabled  = true;
             mr.material = runtimeMaterial;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -171,11 +174,8 @@ public class RuntimeTarmacApplier : MonoBehaviour
 
     Material CreateTarmacMaterial()
     {
-        // Use the same shader preference chain as OSMRoadMeshBuilder.
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-            ?? Shader.Find("Universal Render Pipeline/Unlit")
-            ?? Shader.Find("Standard")
-            ?? Shader.Find("Unlit/Color");
+        // The same shader the road builder uses, so tarmac and roadway match.
+        Shader shader = BuiltInShaders.Lit;
 
         if (shader == null)
         {
@@ -196,7 +196,6 @@ public class RuntimeTarmacApplier : MonoBehaviour
         if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", smoothness);
         if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
         Texture2D asphalt = OSMRoadMeshBuilder.GetOrCreateAsphaltTexture();
-        if (mat.HasProperty("_BaseMap")) { mat.SetTexture("_BaseMap", asphalt); mat.SetTextureScale("_BaseMap", textureScale); }
         if (mat.HasProperty("_MainTex")) { mat.SetTexture("_MainTex", asphalt); mat.SetTextureScale("_MainTex", textureScale); }
 
         // FIX: disable culling so roads are visible regardless of winding
@@ -204,8 +203,6 @@ public class RuntimeTarmacApplier : MonoBehaviour
         if (mat.HasProperty("_Cull"))
             mat.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
 
-        // URP opaque surface
-        if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 0f);
         if (mat.HasProperty("_ZWrite"))  mat.SetFloat("_ZWrite",  1f);
 
         if (debugLogging) Debug.Log($"[RuntimeTarmacApplier] Tarmac material created: color={tarmacColor}, queue={mat.renderQueue}");

@@ -114,7 +114,7 @@ public class LiveryEditor : MonoBehaviour
     [SerializeField] Renderer[] targetRenderers = Array.Empty<Renderer>();
     [SerializeField] Texture2D zoneMap;
     [SerializeField] int textureSize = 512;
-    [SerializeField] string textureProperty = "_BaseMap";
+    [SerializeField] string textureProperty = "_MainTex";
     [SerializeField] LiveryData currentLivery = new LiveryData();
 
     RenderTexture liveryTexture;

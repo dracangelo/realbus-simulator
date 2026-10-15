@@ -11,6 +11,10 @@ UNITY_LOG_FILE="${RESULTS_DIR}/${TEST_PLATFORM}-unity.log"
 COVERAGE_DIR="${RESULTS_DIR}/Coverage"
 
 mkdir -p "${RESULTS_DIR}" "${COVERAGE_DIR}"
+# Drop any previous results file. Unity writes it only when the tests actually
+# execute, so a stale file left in place would otherwise be reported below as
+# this run's summary when compilation aborts before any test runs.
+rm -f "${TEST_RESULTS_FILE}"
 
 if [[ ! -x "${UNITY_BIN}" ]]; then
   echo "Unity executable not found at: ${UNITY_BIN}" >&2
@@ -31,6 +35,12 @@ echo "Log:     ${UNITY_LOG_FILE}"
 echo "Coverage:${COVERAGE_DIR}"
 echo
 
+# Unity exits non-zero when tests fail, which is a normal outcome here, so the
+# status is captured rather than aborting the script: the result summary below
+# must still be printed (it is the whole point of the run), and the status is
+# re-raised at the end so callers can still detect a failing suite.
+UNITY_STATUS=0
+set +e
 "${RUNNER_PREFIX[@]}" "${UNITY_BIN}" \
   -batchmode \
   -projectPath "${PROJECT_ROOT}" \
@@ -43,6 +53,18 @@ echo
   -enableCodeCoverage \
   -coverageResultsPath "${COVERAGE_DIR}" \
   -coverageOptions "generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+GameScripts,+GameScripts.Editor,-GameScriptsTests.Editor"
+UNITY_STATUS=$?
+set -e
+
+# A compile failure aborts the run before any test executes. Say so explicitly
+# and show the real compiler errors instead of surfacing a stale summary.
+if grep -q "error CS" "${UNITY_LOG_FILE}" 2>/dev/null; then
+  echo >&2
+  echo "Scripts did not compile, so no tests ran. First compiler errors:" >&2
+  grep -m 10 "error CS" "${UNITY_LOG_FILE}" >&2 || true
+  echo >&2
+  exit 1
+fi
 
 if [[ ! -f "${TEST_RESULTS_FILE}" ]]; then
   echo >&2
@@ -72,3 +94,11 @@ if [[ -z "$(find "${COVERAGE_DIR}" -mindepth 1 -print -quit 2>/dev/null)" ]]; th
   echo
   echo "Coverage directory is empty. If tests ran, inspect ${UNITY_LOG_FILE} for coverage-package warnings."
 fi
+
+if [[ "${UNITY_STATUS}" -ne 0 ]]; then
+  echo
+  echo "Unity exited with status ${UNITY_STATUS} (2 means the suite reported failures; see the summary above)." >&2
+fi
+
+# Preserve Unity's status so a failing suite is still visible to callers.
+exit "${UNITY_STATUS}"

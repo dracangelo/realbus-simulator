@@ -44,6 +44,17 @@ public static class UITheme
     public static readonly Color Error               = HEX("#FF7351");
     public static readonly Color ErrorContainer      = HEX("#B92902");
 
+    // ── Bus & Transit Theme ─────────────────────────────────────────
+    public static readonly Color BusAmber            = HEX("#FFB81C"); // destination sign LED amber
+    public static readonly Color BusAmberDim         = HEX("#C4850A"); // dimmed LED matrix amber
+    public static readonly Color BusStopRed          = HEX("#EF4444"); // stop request bell button red
+    public static readonly Color BusStopRedGlow      = HEX("#F87171"); // active stop request indicator
+    public static readonly Color TransitNavy         = HEX("#0E141B"); // deep cockpit dashboard slate
+    public static readonly Color TransitPanel        = HEX("#161F28"); // transit instrument panel
+    public static readonly Color TransitCard         = HEX("#1D2733"); // card/ticket container
+    public static readonly Color TransitBorder       = HEX("#2D3B4C"); // instrument bezel outline
+    public static readonly Color TransitLedGreen     = HEX("#10B981"); // route on-service / fare valid
+
     // ── Continent colors ────────────────────────────────────────────
     public static readonly Color Africa              = HEX("#FF9159"); // orange
     public static readonly Color Europe              = HEX("#15A4FF"); // blue

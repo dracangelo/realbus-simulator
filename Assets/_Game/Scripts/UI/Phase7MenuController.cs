@@ -1,9 +1,15 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// Responsive bus-themed settings and overlay menus for RealBus.
+/// Includes LED matrix destination sign headers, transit equipment ticket cards,
+/// responsive scrollable tabs, and iconic bus-stop bell close buttons.
+/// </summary>
 public class Phase7MenuController : MonoBehaviour
 {
     public static Phase7MenuController Instance { get; private set; }
@@ -21,6 +27,12 @@ public class Phase7MenuController : MonoBehaviour
     int contentCityIndex;
     bool paused;
 
+    // Tabs inside settings
+    readonly List<GameObject> settingsCategoryPages = new List<GameObject>();
+    readonly List<Image> settingsTabImages = new List<Image>();
+    readonly List<TextMeshProUGUI> settingsTabTexts = new List<TextMeshProUGUI>();
+    int currentSettingsTab = 0;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap() { EnsureExists(); }
 
@@ -34,17 +46,26 @@ public class Phase7MenuController : MonoBehaviour
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this; DontDestroyOnLoad(gameObject); SceneManager.sceneLoaded += OnSceneLoaded;
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void Start() { StartCoroutine(BuildWhenReady()); }
+
     void OnDestroy()
     {
         if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded;
         UnsubscribeContentDownloader();
         UnsubscribeVehiclePackDownloader();
     }
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode) { Resume(); StopAllCoroutines(); StartCoroutine(BuildWhenReady()); }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Resume();
+        StopAllCoroutines();
+        StartCoroutine(BuildWhenReady());
+    }
 
     System.Collections.IEnumerator BuildWhenReady()
     {
@@ -59,7 +80,8 @@ public class Phase7MenuController : MonoBehaviour
     void Update()
     {
         if (FindAnyObjectByType<BusController>() == null) return;
-        if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+        var keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             TogglePause();
     }
 
@@ -70,48 +92,491 @@ public class Phase7MenuController : MonoBehaviour
         canvas = CreateCanvas();
         bool mainMenu = FindAnyObjectByType<MainMenuUI>() != null;
         bool gameplay = FindAnyObjectByType<BusController>() != null;
+
         if (mainMenu)
         {
-            CreateButton(canvas.transform, "SETTINGS", new Vector2(-160f, -48f), new Vector2(210f, 60f), ToggleSettings, new Vector2(1f, 1f));
+            CreateButton(canvas.transform, "⚙ SETTINGS", new Vector2(-160f, -48f), new Vector2(210f, 60f), ToggleSettings, new Vector2(1f, 1f), null, "btn.settings");
         }
         if (gameplay)
         {
             CreateButton(canvas.transform, "II", new Vector2(-28f, -210f), new Vector2(78f, 78f), TogglePause, Vector2.one, Vector2.one);
             CreateButton(canvas.transform, "CAM", new Vector2(-120f, -210f), new Vector2(78f, 78f), () => MobileCameraController.EnsureExists().CycleCamera(), Vector2.one, Vector2.one);
         }
-        BuildSettings(); BuildMobileSettings(); BuildContentDownloads(); BuildVehiclePacks(); BuildCredits(); BuildPause(); BuildDaily();
+
+        BuildSettings();
+        BuildMobileSettings();
+        BuildContentDownloads();
+        BuildVehiclePacks();
+        BuildCredits();
+        BuildPause();
+        BuildDaily();
     }
+
+    // ── BUS-THEMED RESPONSIVE SETTINGS ──────────────────────────────
 
     void BuildSettings()
     {
-        settingsPanel = Modal("SettingsPanel", new Vector2(820f, 980f));
-        CreateText(settingsPanel.transform, "SETTINGS", 42f, new Vector2(0f, 430f), new Vector2(700f, 60f), TextAlignmentOptions.Center);
+        settingsPanel = Modal("SettingsPanel", new Vector2(960f, 880f), out RectTransform panel);
+        settingsCategoryPages.Clear();
+        settingsTabImages.Clear();
+        settingsTabTexts.Clear();
+
+        // 1. LED Destination Header
+        BuildLedHeader(panel, "hdr.settings.title", "hdr.settings.subtitle", "badge.depotOnline");
+
+        // 2. Responsive Transit Category Tabs
+        string[] tabNames = { "tab.controls", "tab.audio", "tab.display", "tab.accessibility" };
+        GameObject tabBar = new GameObject("TabBar", typeof(RectTransform));
+        tabBar.transform.SetParent(panel, false);
+        RectTransform tbr = tabBar.GetComponent<RectTransform>();
+        tbr.anchorMin = new Vector2(0f, 1f);
+        tbr.anchorMax = new Vector2(1f, 1f);
+        tbr.pivot = new Vector2(0.5f, 1f);
+        tbr.anchoredPosition = new Vector2(0f, -95f);
+        tbr.sizeDelta = new Vector2(-32f, 50f);
+
+        float tabWidth = (960f - 32f - (tabNames.Length - 1) * 8f) / tabNames.Length;
+        for (int i = 0; i < tabNames.Length; i++)
+        {
+            int index = i;
+            GameObject tabBtn = new GameObject("Tab_" + tabNames[i], typeof(RectTransform), typeof(Image), typeof(Button));
+            tabBtn.transform.SetParent(tabBar.transform, false);
+            RectTransform tr = tabBtn.GetComponent<RectTransform>();
+            tr.anchorMin = new Vector2(0f, 0.5f);
+            tr.anchorMax = new Vector2(0f, 0.5f);
+            tr.pivot = new Vector2(0f, 0.5f);
+            tr.sizeDelta = new Vector2(tabWidth, 46f);
+            tr.anchoredPosition = new Vector2(i * (tabWidth + 8f), 0f);
+
+            Image img = tabBtn.GetComponent<Image>();
+            img.color = i == 0 ? UITheme.BusAmber : UITheme.TransitCard;
+            RuntimeUiShapes.Rounded(img);
+            settingsTabImages.Add(img);
+
+            TextMeshProUGUI txt = CreateLocalizedText(tabBtn.transform, tabNames[i], 22f, Vector2.zero, tr.sizeDelta, TextAlignmentOptions.Center);
+            txt.color = i == 0 ? UITheme.Background : UITheme.TextSecondary;
+            settingsTabTexts.Add(txt);
+
+            Button btn = tabBtn.GetComponent<Button>();
+            btn.onClick.AddListener(() => SwitchSettingsTab(index));
+        }
+
+        // 3. Scrollable Content Area
+        GameObject scrollObj = new GameObject("SettingsScrollView", typeof(RectTransform), typeof(ScrollRect));
+        scrollObj.transform.SetParent(panel, false);
+        RectTransform sr = scrollObj.GetComponent<RectTransform>();
+        sr.anchorMin = Vector2.zero;
+        sr.anchorMax = Vector2.one;
+        sr.offsetMin = new Vector2(16f, 82f);
+        sr.offsetMax = new Vector2(-16f, -155f);
+
+        GameObject viewport = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+        viewport.transform.SetParent(scrollObj.transform, false);
+        RectTransform vr = viewport.GetComponent<RectTransform>();
+        vr.anchorMin = Vector2.zero;
+        vr.anchorMax = Vector2.one;
+        vr.offsetMin = vr.offsetMax = Vector2.zero;
+
+        ScrollRect scrollRect = scrollObj.GetComponent<ScrollRect>();
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
+        scrollRect.scrollSensitivity = 28f;
+        scrollRect.viewport = vr;
+
         SettingsManager settings = SettingsManager.EnsureExists();
-        float y = 340f;
-        AddSetting("Controls", () => SettingsManager.ControlLabel(settings.Current.controlScheme), settings.CycleControl, ref y);
-        AddSetting("Quality", () => QualitySettings.names.Length > 0 ? QualitySettings.names[settings.Current.qualityLevel] : "Default", settings.CycleQuality, ref y);
-        AddSetting("Language", () => settings.Current.language.ToString(), settings.CycleLanguage, ref y);
-        AddSetting("Master volume", () => Mathf.RoundToInt(settings.Current.masterVolume * 100f) + "%", () => { settings.Current.masterVolume = CycleVolume(settings.Current.masterVolume); settings.SaveAndApply(); }, ref y);
-        AddSetting("Music volume", () => Mathf.RoundToInt(settings.Current.musicVolume * 100f) + "%", () => { settings.Current.musicVolume = CycleVolume(settings.Current.musicVolume); settings.SaveAndApply(); }, ref y);
-        AddSetting("Effects volume", () => Mathf.RoundToInt(settings.Current.effectsVolume * 100f) + "%", () => { settings.Current.effectsVolume = CycleVolume(settings.Current.effectsVolume); settings.SaveAndApply(); }, ref y);
-        AddSetting("Large text", () => OnOff(settings.Current.largeText), () => { settings.Current.largeText = !settings.Current.largeText; settings.SaveAndApply(); }, ref y);
-        AddSetting("High contrast", () => OnOff(settings.Current.highContrast), () => { settings.Current.highContrast = !settings.Current.highContrast; settings.SaveAndApply(); }, ref y);
-        AddSetting("Colour-blind icons", () => OnOff(settings.Current.colourBlindIcons), () => { settings.Current.colourBlindIcons = !settings.Current.colourBlindIcons; settings.SaveAndApply(); }, ref y);
-        AddSetting("Haptics", () => OnOff(settings.Current.haptics), () => { settings.Current.haptics = !settings.Current.haptics; settings.SaveAndApply(); }, ref y);
-        AddSetting("Subtitles", () => OnOff(settings.Current.subtitles), () => { settings.Current.subtitles = !settings.Current.subtitles; settings.SaveAndApply(); }, ref y);
-        CreateButton(settingsPanel.transform, "MOBILE", new Vector2(-275f, -440f), new Vector2(210f, 58f), ToggleMobileSettings);
-        CreateButton(settingsPanel.transform, "DOWNLOADS", new Vector2(-45f, -440f), new Vector2(220f, 58f), ToggleContentDownloads);
-        CreateButton(settingsPanel.transform, "CREDITS", new Vector2(175f, -440f), new Vector2(180f, 58f), OpenCreditsFromSettings);
-        CreateButton(settingsPanel.transform, "CLOSE", new Vector2(330f, -440f), new Vector2(120f, 58f), ToggleSettings);
+
+        // Page 0: Controls
+        GameObject pageControls = CreateScrollPage(viewport.transform, "Page_Controls");
+        settingsCategoryPages.Add(pageControls);
+        AddTransitSettingCard(pageControls.transform, "set.steeringScheme", "set.steeringScheme.desc",
+            () => SettingsManager.ControlLabel(settings.Current.controlScheme), settings.CycleControl);
+        AddTransitSettingCard(pageControls.transform, "set.drivingAssists", "set.drivingAssists.desc",
+            () => OnOff(settings.Current.drivingAssists), () => { settings.Current.drivingAssists = !settings.Current.drivingAssists; settings.SaveAndApply(); });
+        AddTransitSettingCard(pageControls.transform, "set.leftHanded", "set.leftHanded.desc",
+            () => OnOff(settings.Current.leftHandedControls), () => { settings.Current.leftHandedControls = !settings.Current.leftHandedControls; settings.SaveAndApply(); });
+        AddTransitSettingCard(pageControls.transform, "set.touchSize", "set.touchSize.desc",
+            () => Mathf.RoundToInt(settings.Current.touchControlScale * 100f) + "%", () => { settings.Current.touchControlScale = CycleRange(settings.Current.touchControlScale, 0.75f, 1.25f, 0.125f); settings.SaveAndApply(); });
+        AddTransitSettingCard(pageControls.transform, "set.steeringResponse", "set.steeringResponse.desc",
+            () => Mathf.RoundToInt(settings.Current.steeringSensitivity * 100f) + "%", () => { settings.Current.steeringSensitivity = CycleRange(settings.Current.steeringSensitivity, 0.5f, 1.5f, 0.25f); settings.SaveAndApply(); });
+        AddTransitSettingCard(pageControls.transform, "set.steeringDeadZone", "set.steeringDeadZone.desc",
+            () => Mathf.RoundToInt(settings.Current.steeringDeadZone * 100f) + "%", () => { settings.Current.steeringDeadZone = CycleRange(settings.Current.steeringDeadZone, 0f, 0.2f, 0.05f); settings.SaveAndApply(); });
+        if (FindAnyObjectByType<MobileControlsUI>() != null)
+        {
+            AddTransitActionCard(pageControls.transform, "set.customLayout", "set.customLayout.desc",
+                "set.customLayout.action", BeginControlLayoutEdit);
+        }
+
+        // Page 1: Audio
+        GameObject pageAudio = CreateScrollPage(viewport.transform, "Page_Audio");
+        settingsCategoryPages.Add(pageAudio);
+        AddTransitSettingCard(pageAudio.transform, "set.masterVolume", "set.masterVolume.desc",
+            () => Mathf.RoundToInt(settings.Current.masterVolume * 100f) + "%", () => { settings.Current.masterVolume = CycleVolume(settings.Current.masterVolume); settings.SaveAndApply(); });
+        AddTransitSettingCard(pageAudio.transform, "set.sfx", "set.sfx.desc",
+            () => Mathf.RoundToInt(settings.Current.effectsVolume * 100f) + "%", () => { settings.Current.effectsVolume = CycleVolume(settings.Current.effectsVolume); settings.SaveAndApply(); });
+        AddTransitSettingCard(pageAudio.transform, "set.music", "set.music.desc",
+            () => Mathf.RoundToInt(settings.Current.musicVolume * 100f) + "%", () => { settings.Current.musicVolume = CycleVolume(settings.Current.musicVolume); settings.SaveAndApply(); });
+        AddTransitSettingCard(pageAudio.transform, "set.subtitles", "set.subtitles.desc",
+            () => OnOff(settings.Current.subtitles), () => { settings.Current.subtitles = !settings.Current.subtitles; settings.SaveAndApply(); });
+        AddTransitSettingCard(pageAudio.transform, "set.haptics", "set.haptics.desc",
+            () => OnOff(settings.Current.haptics), () => { settings.Current.haptics = !settings.Current.haptics; settings.SaveAndApply(); });
+
+        // Page 2: Display
+        GameObject pageDisplay = CreateScrollPage(viewport.transform, "Page_Display");
+        settingsCategoryPages.Add(pageDisplay);
+        AddTransitSettingCard(pageDisplay.transform, "set.quality", "set.quality.desc",
+            () => QualitySettings.names.Length > 0 ? QualitySettings.names[settings.Current.qualityLevel] : "Default", settings.CycleQuality);
+        AddTransitSettingCard(pageDisplay.transform, "set.framerate", "set.framerate.desc",
+            () => settings.Current.targetFrameRate + " FPS", settings.CycleFrameRate);
+        AddTransitSettingCard(pageDisplay.transform, "set.adaptive", "set.adaptive.desc",
+            () => OnOff(settings.Current.adaptivePerformance), () => { settings.Current.adaptivePerformance = !settings.Current.adaptivePerformance; settings.SaveAndApply(); });
+        AddTransitSettingCard(pageDisplay.transform, "set.reducedMotion", "set.reducedMotion.desc",
+            () => OnOff(settings.Current.reducedMotion), () => { settings.Current.reducedMotion = !settings.Current.reducedMotion; settings.SaveAndApply(); });
+
+        // Page 3: Accessibility & Depot
+        GameObject pageAccess = CreateScrollPage(viewport.transform, "Page_Access");
+        settingsCategoryPages.Add(pageAccess);
+        AddTransitSettingCard(pageAccess.transform, "set.language", "set.language.desc",
+            () => settings.Current.language.ToString(), settings.CycleLanguage);
+        AddTransitSettingCard(pageAccess.transform, "set.largeText", "set.largeText.desc",
+            () => OnOff(settings.Current.largeText), () => { settings.Current.largeText = !settings.Current.largeText; settings.SaveAndApply(); });
+        AddTransitSettingCard(pageAccess.transform, "set.highContrast", "set.highContrast.desc",
+            () => OnOff(settings.Current.highContrast), () => { settings.Current.highContrast = !settings.Current.highContrast; settings.SaveAndApply(); });
+        AddTransitSettingCard(pageAccess.transform, "set.colourBlind", "set.colourBlind.desc",
+            () => OnOff(settings.Current.colourBlindIcons), () => { settings.Current.colourBlindIcons = !settings.Current.colourBlindIcons; settings.SaveAndApply(); });
+        AddTransitActionCard(pageAccess.transform, "set.depot", "set.depot.desc",
+            "set.depot.action", ToggleContentDownloads);
+        AddTransitActionCard(pageAccess.transform, "set.credits", "set.credits.desc",
+            "set.credits.action", OpenCreditsFromSettings);
+
+        SwitchSettingsTab(0);
+
+        // 4. Pinned Transit Footer Bar
+        GameObject footer = new GameObject("FooterBar", typeof(RectTransform));
+        footer.transform.SetParent(panel, false);
+        RectTransform fr = footer.GetComponent<RectTransform>();
+        fr.anchorMin = Vector2.zero;
+        fr.anchorMax = new Vector2(1f, 0f);
+        fr.pivot = new Vector2(0.5f, 0f);
+        fr.anchoredPosition = Vector2.zero;
+        fr.sizeDelta = new Vector2(0f, 75f);
+
+        // Iconic Bus Stop Bell Close Button (Red)
+        CreateStyledButton(footer.transform, "⯀ STOP / CLOSE", new Vector2(-300f, 38f), new Vector2(260f, 52f),
+            ToggleSettings, UITheme.BusStopRed, UITheme.TextPrimary, null, null, "btn.stopClose");
+
+        CreateStyledButton(footer.transform, "DEPOT DOWNLOADS", new Vector2(10f, 38f), new Vector2(240f, 52f),
+            ToggleContentDownloads, UITheme.TransitCard, UITheme.BusAmber, null, null, "btn.depotDownloads");
+
+        CreateStyledButton(footer.transform, "MOBILE OPTIMIZE", new Vector2(280f, 38f), new Vector2(220f, 52f),
+            ToggleMobileSettings, UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.mobileOptimize");
+
         settingsPanel.SetActive(false);
     }
 
+    void SwitchSettingsTab(int tabIndex)
+    {
+        currentSettingsTab = tabIndex;
+        for (int i = 0; i < settingsCategoryPages.Count; i++)
+        {
+            bool active = (i == tabIndex);
+            settingsCategoryPages[i].SetActive(active);
+            if (i < settingsTabImages.Count && settingsTabImages[i] != null)
+                settingsTabImages[i].color = active ? UITheme.BusAmber : UITheme.TransitCard;
+            if (i < settingsTabTexts.Count && settingsTabTexts[i] != null)
+                settingsTabTexts[i].color = active ? UITheme.Background : UITheme.TextSecondary;
+        }
+
+        ScrollRect sr = settingsPanel.GetComponentInChildren<ScrollRect>();
+        if (sr != null && tabIndex < settingsCategoryPages.Count)
+        {
+            sr.content = settingsCategoryPages[tabIndex].GetComponent<RectTransform>();
+            sr.verticalNormalizedPosition = 1f;
+        }
+    }
+
+    GameObject CreateScrollPage(Transform parent, string name)
+    {
+        GameObject page = new GameObject(name, typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        page.transform.SetParent(parent, false);
+        RectTransform pr = page.GetComponent<RectTransform>();
+        pr.anchorMin = new Vector2(0f, 1f);
+        pr.anchorMax = new Vector2(1f, 1f);
+        pr.pivot = new Vector2(0.5f, 1f);
+        pr.anchoredPosition = Vector2.zero;
+        pr.sizeDelta = Vector2.zero;
+
+        VerticalLayoutGroup vlg = page.GetComponent<VerticalLayoutGroup>();
+        vlg.padding = new RectOffset(8, 8, 8, 12);
+        vlg.spacing = 8f;
+        vlg.childAlignment = TextAnchor.UpperCenter;
+        vlg.childControlWidth = true;
+        vlg.childControlHeight = false;
+        vlg.childForceExpandWidth = true;
+        vlg.childForceExpandHeight = false;
+
+        ContentSizeFitter csf = page.GetComponent<ContentSizeFitter>();
+        csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        return page;
+    }
+
+    void AddTransitSettingCard(Transform parent, string titleKey, string descriptionKey, Func<string> getValue, Action onClick)
+    {
+        GameObject card = new GameObject("Card_" + titleKey.Replace(".", "_"), typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+        card.transform.SetParent(parent, false);
+        LayoutElement le = card.GetComponent<LayoutElement>();
+        le.preferredHeight = 70f;
+        le.minHeight = 70f;
+
+        Image cardImg = card.GetComponent<Image>();
+        cardImg.color = UITheme.TransitCard;
+        RuntimeUiShapes.Rounded(cardImg);
+
+        // Left LED Amber Accent Strip
+        GameObject strip = new GameObject("AccentStrip", typeof(RectTransform), typeof(Image));
+        strip.transform.SetParent(card.transform, false);
+        RectTransform str = strip.GetComponent<RectTransform>();
+        str.anchorMin = new Vector2(0f, 0f);
+        str.anchorMax = new Vector2(0f, 1f);
+        str.pivot = new Vector2(0f, 0.5f);
+        str.sizeDelta = new Vector2(5f, 0f);
+        str.anchoredPosition = Vector2.zero;
+        strip.GetComponent<Image>().color = UITheme.BusAmber;
+
+        // Label and description
+        GameObject labelObj = new GameObject("Labels", typeof(RectTransform));
+        labelObj.transform.SetParent(card.transform, false);
+        RectTransform lr = labelObj.GetComponent<RectTransform>();
+        lr.anchorMin = new Vector2(0f, 0f);
+        lr.anchorMax = new Vector2(0.68f, 1f);
+        lr.offsetMin = new Vector2(20f, 6f);
+        lr.offsetMax = new Vector2(-8f, -6f);
+
+        TextMeshProUGUI titleTxt = CreateLocalizedText(labelObj.transform, titleKey, 24f, new Vector2(0f, 14f), new Vector2(520f, 28f), TextAlignmentOptions.Left);
+        titleTxt.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        titleTxt.color = UITheme.TextPrimary;
+
+        TextMeshProUGUI descTxt = CreateLocalizedText(labelObj.transform, descriptionKey, 17f, new Vector2(0f, -14f), new Vector2(520f, 24f), TextAlignmentOptions.Left);
+        descTxt.color = UITheme.TextSecondary;
+
+        // Interactive Button on Right
+        GameObject btnObj = new GameObject("Btn_Value", typeof(RectTransform), typeof(Image), typeof(Button));
+        btnObj.transform.SetParent(card.transform, false);
+        RectTransform br = btnObj.GetComponent<RectTransform>();
+        br.anchorMin = new Vector2(1f, 0.5f);
+        br.anchorMax = new Vector2(1f, 0.5f);
+        br.pivot = new Vector2(1f, 0.5f);
+        br.sizeDelta = new Vector2(240f, 50f);
+        br.anchoredPosition = new Vector2(-16f, 0f);
+
+        Image btnImg = btnObj.GetComponent<Image>();
+        btnImg.color = UITheme.TransitPanel;
+        RuntimeUiShapes.Rounded(btnImg);
+        RuntimeUiShapes.SoftShadow(btnImg, 0.35f, 5f);
+
+        TextMeshProUGUI valTxt = CreateText(btnObj.transform, getValue(), 23f, Vector2.zero, br.sizeDelta, TextAlignmentOptions.Center);
+        valTxt.color = UITheme.BusAmber;
+        valTxt.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+
+        Button btn = btnObj.GetComponent<Button>();
+        btn.onClick.AddListener(() =>
+        {
+            onClick();
+            valTxt.text = getValue();
+        });
+    }
+
+    void AddTransitActionCard(Transform parent, string titleKey, string descriptionKey, string actionKey, Action onClick)
+    {
+        GameObject card = new GameObject("CardAction_" + titleKey.Replace(".", "_"), typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+        card.transform.SetParent(parent, false);
+        LayoutElement le = card.GetComponent<LayoutElement>();
+        le.preferredHeight = 70f;
+        le.minHeight = 70f;
+
+        Image cardImg = card.GetComponent<Image>();
+        cardImg.color = UITheme.TransitCard;
+        RuntimeUiShapes.Rounded(cardImg);
+
+        // Labels
+        GameObject labelObj = new GameObject("Labels", typeof(RectTransform));
+        labelObj.transform.SetParent(card.transform, false);
+        RectTransform lr = labelObj.GetComponent<RectTransform>();
+        lr.anchorMin = new Vector2(0f, 0f);
+        lr.anchorMax = new Vector2(0.68f, 1f);
+        lr.offsetMin = new Vector2(20f, 6f);
+        lr.offsetMax = new Vector2(-8f, -6f);
+
+        TextMeshProUGUI titleTxt = CreateLocalizedText(labelObj.transform, titleKey, 24f, new Vector2(0f, 14f), new Vector2(520f, 28f), TextAlignmentOptions.Left);
+        titleTxt.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        titleTxt.color = UITheme.TextPrimary;
+
+        TextMeshProUGUI descTxt = CreateLocalizedText(labelObj.transform, descriptionKey, 17f, new Vector2(0f, -14f), new Vector2(520f, 24f), TextAlignmentOptions.Left);
+        descTxt.color = UITheme.TextSecondary;
+
+        // Button
+        CreateStyledButton(card.transform, Localization.Get(actionKey), new Vector2(-16f, 0f), new Vector2(240f, 50f),
+            onClick, UITheme.Accent, UITheme.Background, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), actionKey);
+    }
+
+    void BuildLedHeader(Transform parent, string titleKey, string subtitleKey, string badgeKey = null)
+    {
+        GameObject header = new GameObject("LedHeader", typeof(RectTransform), typeof(Image));
+        header.transform.SetParent(parent, false);
+        RectTransform hr = header.GetComponent<RectTransform>();
+        hr.anchorMin = new Vector2(0f, 1f);
+        hr.anchorMax = new Vector2(1f, 1f);
+        hr.pivot = new Vector2(0.5f, 1f);
+        hr.sizeDelta = new Vector2(0f, 85f);
+        hr.anchoredPosition = Vector2.zero;
+
+        Image img = header.GetComponent<Image>();
+        img.color = UITheme.TransitNavy;
+        RuntimeUiShapes.Rounded(img);
+
+        // LED Matrix amber title
+        TextMeshProUGUI t1 = CreateLocalizedText(header.transform, titleKey, 30f, new Vector2(24f, 14f), new Vector2(650f, 36f), TextAlignmentOptions.Left);
+        t1.color = UITheme.BusAmber;
+        t1.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+
+        TextMeshProUGUI t2 = CreateLocalizedText(header.transform, subtitleKey, 19f, new Vector2(24f, -18f), new Vector2(650f, 28f), TextAlignmentOptions.Left);
+        t2.color = UITheme.TextSecondary;
+
+        if (!string.IsNullOrEmpty(badgeKey))
+        {
+            GameObject badgeObj = new GameObject("Badge", typeof(RectTransform), typeof(Image));
+            badgeObj.transform.SetParent(header.transform, false);
+            RectTransform br = badgeObj.GetComponent<RectTransform>();
+            br.anchorMin = new Vector2(1f, 0.5f);
+            br.anchorMax = new Vector2(1f, 0.5f);
+            br.pivot = new Vector2(1f, 0.5f);
+            br.sizeDelta = new Vector2(160f, 36f);
+            br.anchoredPosition = new Vector2(-24f, 0f);
+            Image bImg = badgeObj.GetComponent<Image>();
+            bImg.color = UITheme.TransitPanel;
+            RuntimeUiShapes.Rounded(bImg);
+
+            TextMeshProUGUI bt = CreateLocalizedText(badgeObj.transform, badgeKey, 18f, Vector2.zero, br.sizeDelta, TextAlignmentOptions.Center);
+            bt.color = UITheme.TransitLedGreen;
+            bt.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        }
+    }
+
+    // ── MOBILE SETTINGS MODAL ───────────────────────────────────────
+
+    void BuildMobileSettings()
+    {
+        mobileSettingsPanel = Modal("MobileSettingsPanel", new Vector2(880f, 780f), out RectTransform panel);
+        BuildLedHeader(panel, "hdr.mobile.title", "hdr.mobile.subtitle", "badge.optimized");
+
+        GameObject scrollObj = new GameObject("MobileScrollView", typeof(RectTransform), typeof(ScrollRect));
+        scrollObj.transform.SetParent(panel, false);
+        RectTransform sr = scrollObj.GetComponent<RectTransform>();
+        sr.anchorMin = Vector2.zero;
+        sr.anchorMax = Vector2.one;
+        sr.offsetMin = new Vector2(16f, 82f);
+        sr.offsetMax = new Vector2(-16f, -95f);
+
+        GameObject viewport = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+        viewport.transform.SetParent(scrollObj.transform, false);
+        RectTransform vr = viewport.GetComponent<RectTransform>();
+        vr.anchorMin = Vector2.zero;
+        vr.anchorMax = Vector2.one;
+        vr.offsetMin = vr.offsetMax = Vector2.zero;
+
+        ScrollRect scrollRect = scrollObj.GetComponent<ScrollRect>();
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.viewport = vr;
+
+        GameObject page = CreateScrollPage(viewport.transform, "MobilePage");
+        scrollRect.content = page.GetComponent<RectTransform>();
+
+        SettingsManager settings = SettingsManager.EnsureExists();
+        AddTransitSettingCard(page.transform, "set.framerate", "set.framerate.desc",
+            () => settings.Current.targetFrameRate + " FPS", settings.CycleFrameRate);
+        AddTransitSettingCard(page.transform, "set.adaptive", "set.adaptive.desc",
+            () => OnOff(settings.Current.adaptivePerformance), () => { settings.Current.adaptivePerformance = !settings.Current.adaptivePerformance; settings.SaveAndApply(); });
+        AddTransitSettingCard(page.transform, "set.drivingAssists", "set.drivingAssists.desc",
+            () => OnOff(settings.Current.drivingAssists), () => { settings.Current.drivingAssists = !settings.Current.drivingAssists; settings.SaveAndApply(); });
+        AddTransitSettingCard(page.transform, "set.leftHanded", "set.leftHanded.desc",
+            () => OnOff(settings.Current.leftHandedControls), () => { settings.Current.leftHandedControls = !settings.Current.leftHandedControls; settings.SaveAndApply(); });
+        AddTransitSettingCard(page.transform, "set.touchSize", "set.touchSize.desc",
+            () => Mathf.RoundToInt(settings.Current.touchControlScale * 100f) + "%", () => { settings.Current.touchControlScale = CycleRange(settings.Current.touchControlScale, 0.75f, 1.25f, 0.125f); settings.SaveAndApply(); });
+        AddTransitSettingCard(page.transform, "set.steeringResponse", "set.steeringResponse.desc",
+            () => Mathf.RoundToInt(settings.Current.steeringSensitivity * 100f) + "%", () => { settings.Current.steeringSensitivity = CycleRange(settings.Current.steeringSensitivity, 0.5f, 1.5f, 0.25f); settings.SaveAndApply(); });
+        AddTransitSettingCard(page.transform, "set.steeringDeadZone", "set.steeringDeadZone.desc",
+            () => Mathf.RoundToInt(settings.Current.steeringDeadZone * 100f) + "%", () => { settings.Current.steeringDeadZone = CycleRange(settings.Current.steeringDeadZone, 0f, 0.2f, 0.05f); settings.SaveAndApply(); });
+        AddTransitSettingCard(page.transform, "set.reducedMotion", "set.reducedMotion.desc",
+            () => OnOff(settings.Current.reducedMotion), () => { settings.Current.reducedMotion = !settings.Current.reducedMotion; settings.SaveAndApply(); });
+
+        if (FindAnyObjectByType<MobileControlsUI>() != null)
+            AddTransitActionCard(page.transform, "set.customLayout", "set.customLayout.desc",
+                "set.customLayout.action", BeginControlLayoutEdit);
+
+        // Footer
+        GameObject footer = new GameObject("Footer", typeof(RectTransform));
+        footer.transform.SetParent(panel, false);
+        RectTransform fr = footer.GetComponent<RectTransform>();
+        fr.anchorMin = Vector2.zero;
+        fr.anchorMax = new Vector2(1f, 0f);
+        fr.pivot = new Vector2(0.5f, 0f);
+        fr.sizeDelta = new Vector2(0f, 75f);
+        fr.anchoredPosition = Vector2.zero;
+
+        CreateStyledButton(footer.transform, "⯀ STOP / BACK", new Vector2(0f, 38f), new Vector2(280f, 52f),
+            ToggleMobileSettings, UITheme.BusStopRed, UITheme.TextPrimary, null, null, "btn.stopBack");
+
+        mobileSettingsPanel.SetActive(false);
+    }
+
+    // ── BUS-THEMED PAUSE MENU ───────────────────────────────────────
+
+    void BuildPause()
+    {
+        pausePanel = Modal("PausePanel", new Vector2(860f, 680f), out RectTransform panel);
+        BuildLedHeader(panel, "hdr.pause.title", "hdr.pause.subtitle", "badge.standby");
+
+        // Passenger info card
+        GameObject card = new GameObject("ScoreCard", typeof(RectTransform), typeof(Image));
+        card.transform.SetParent(panel, false);
+        RectTransform cr = card.GetComponent<RectTransform>();
+        cr.anchorMin = new Vector2(0.5f, 0.5f);
+        cr.anchorMax = new Vector2(0.5f, 0.5f);
+        cr.pivot = new Vector2(0.5f, 0.5f);
+        cr.sizeDelta = new Vector2(800f, 190f);
+        cr.anchoredPosition = new Vector2(0f, 130f);
+        Image cardImg = card.GetComponent<Image>();
+        cardImg.color = UITheme.TransitCard;
+        RuntimeUiShapes.Rounded(cardImg);
+
+        pauseScore = CreateText(card.transform, "Free drive session\n\nW/S DRIVE  •  A/D STEER  •  E/Q GEAR\nX REVERSE  •  P PARKING BRAKE", 24f,
+            Vector2.zero, new Vector2(760f, 160f), TextAlignmentOptions.Center);
+        pauseScore.color = UITheme.BusAmber;
+
+        // Big transit action buttons
+        CreateStyledButton(panel, "⯈ RESUME SERVICE", new Vector2(0f, -20f), new Vector2(400f, 60f),
+            TogglePause, UITheme.TransitLedGreen, UITheme.Background, null, null, "btn.resumeService");
+
+        CreateStyledButton(panel, "⚙ OPERATOR SETTINGS", new Vector2(0f, -95f), new Vector2(400f, 56f),
+            ToggleSettings, UITheme.TransitCard, UITheme.BusAmber, null, null, "btn.operatorSettings");
+
+        CreateStyledButton(panel, "🎮 EDIT CONTROLS", new Vector2(0f, -165f), new Vector2(400f, 56f),
+            BeginControlLayoutEdit, UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.editControls");
+
+        CreateStyledButton(panel, "🚏 DEPOT / MAIN MENU", new Vector2(0f, -235f), new Vector2(400f, 56f),
+            () => { Resume(); SceneLoader.Instance?.LoadMainMenu(); }, UITheme.TransitNavy, UITheme.TextSecondary, null, null, "btn.depotMainMenu");
+
+        pausePanel.SetActive(false);
+    }
+
+    // ── CONTENT DOWNLOADS MODAL ─────────────────────────────────────
+
     void BuildContentDownloads()
     {
-        contentDownloadsPanel = Modal("ContentDownloadsPanel", new Vector2(1080f, 900f));
-        CreateText(contentDownloadsPanel.transform, "DOWNLOADABLE CITY CONTENT", 40f, new Vector2(0f, 380f), new Vector2(930f, 60f), TextAlignmentOptions.Center);
-        CreateText(contentDownloadsPanel.transform, "Keep the base game small. Download only the cities and routes you want.", 24f,
-            new Vector2(0f, 325f), new Vector2(900f, 50f), TextAlignmentOptions.Center);
+        contentDownloadsPanel = Modal("ContentDownloadsPanel", new Vector2(1080f, 900f), out RectTransform panel);
+        BuildLedHeader(panel, "hdr.downloads.title", "hdr.downloads.subtitle", "hdr.downloads.badge");
 
         downloadableCities = CityManager.Instance != null && CityManager.Instance.allCities != null
             ? Array.FindAll(CityManager.Instance.allCities, city => city != null)
@@ -120,28 +585,35 @@ public class Phase7MenuController : MonoBehaviour
         contentCityIndex = selected != null ? Array.IndexOf(downloadableCities, selected) : 0;
         if (contentCityIndex < 0) contentCityIndex = 0;
 
-        CreateButton(contentDownloadsPanel.transform, "‹", new Vector2(-420f, 255f), new Vector2(70f, 62f), () => CycleContentCity(-1));
-        contentCityLabel = CreateText(contentDownloadsPanel.transform, "No cities available", 31f, new Vector2(0f, 255f), new Vector2(720f, 62f), TextAlignmentOptions.Center);
-        CreateButton(contentDownloadsPanel.transform, "›", new Vector2(420f, 255f), new Vector2(70f, 62f), () => CycleContentCity(1));
+        CreateButton(panel, "‹", new Vector2(-420f, 255f), new Vector2(70f, 62f), () => CycleContentCity(-1));
+        contentCityLabel = CreateText(panel, Localization.Get("status.noCities"), 29f, new Vector2(0f, 255f), new Vector2(720f, 62f), TextAlignmentOptions.Center);
+        contentCityLabel.color = UITheme.BusAmber;
+        CreateButton(panel, "›", new Vector2(420f, 255f), new Vector2(70f, 62f), () => CycleContentCity(1));
 
-        CreateButton(contentDownloadsPanel.transform, "OFFLINE MAP", new Vector2(-310f, 150f), new Vector2(270f, 68f), DownloadOfflineMap);
-        CreateButton(contentDownloadsPanel.transform, "WORLD DATA", new Vector2(0f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.World));
-        CreateButton(contentDownloadsPanel.transform, "ALL ROUTES", new Vector2(310f, 150f), new Vector2(270f, 68f), () => DownloadContent(CityContentDownloadKind.Routes));
-        CreateButton(contentDownloadsPanel.transform, "FAVOURITE", new Vector2(-180f, 80f), new Vector2(250f, 54f), ToggleFavouriteCity);
-        CreateButton(contentDownloadsPanel.transform, "COMPLETE CITY", new Vector2(180f, 80f), new Vector2(250f, 54f), () => DownloadContent(CityContentDownloadKind.CompleteCity));
-        CreateText(contentDownloadsPanel.transform, "Map: offline road imagery  •  World: buildings, places, fuel  •  Routes: roads, stops, services", 19f,
+        CreateStyledButton(panel, "OFFLINE MAP", new Vector2(-310f, 150f), new Vector2(270f, 64f), DownloadOfflineMap, UITheme.TransitCard, UITheme.BusAmber, null, null, "btn.offlineMap");
+        CreateStyledButton(panel, "WORLD DATA", new Vector2(0f, 150f), new Vector2(270f, 64f), () => DownloadContent(CityContentDownloadKind.World), UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.worldData");
+        CreateStyledButton(panel, "ALL ROUTES", new Vector2(310f, 150f), new Vector2(270f, 64f), () => DownloadContent(CityContentDownloadKind.Routes), UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.allRoutes");
+        CreateStyledButton(panel, "★ FAVOURITE", new Vector2(-180f, 80f), new Vector2(250f, 54f), ToggleFavouriteCity, UITheme.TransitCard, UITheme.Accent, null, null, "btn.favourite");
+        CreateStyledButton(panel, "COMPLETE CITY", new Vector2(180f, 80f), new Vector2(250f, 54f), () => DownloadContent(CityContentDownloadKind.CompleteCity), UITheme.TransitLedGreen, UITheme.Background, null, null, "btn.completeCity");
+
+        CreateText(panel, "Map: offline road tiles  •  World: buildings & places  •  Routes: transit graphs & stops", 19f,
             new Vector2(0f, 25f), new Vector2(930f, 42f), TextAlignmentOptions.Center);
 
-        CreateText(contentDownloadsPanel.transform, "ONE ROUTE BY OSM RELATION ID", 23f, new Vector2(-230f, -45f), new Vector2(470f, 52f), TextAlignmentOptions.Left);
-        routeRelationInput = CreateInput(contentDownloadsPanel.transform, "Example: 123456", new Vector2(160f, -45f), new Vector2(310f, 58f));
-        CreateButton(contentDownloadsPanel.transform, "VEHICLE PACKS", new Vector2(-310f, -115f), new Vector2(260f, 60f), OpenVehiclePacks);
-        CreateButton(contentDownloadsPanel.transform, "DOWNLOAD ROUTE", new Vector2(310f, -115f), new Vector2(260f, 60f), DownloadSingleRoute);
+        CreateText(panel, "ONE ROUTE BY OSM RELATION ID", 22f, new Vector2(-230f, -45f), new Vector2(470f, 52f), TextAlignmentOptions.Left);
+        routeRelationInput = CreateInput(panel, "Example: 123456", new Vector2(160f, -45f), new Vector2(310f, 54f));
+        CreateStyledButton(panel, "VEHICLE PACKS", new Vector2(-310f, -115f), new Vector2(260f, 58f), OpenVehiclePacks, UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.vehiclePacks");
+        CreateStyledButton(panel, "DOWNLOAD ROUTE", new Vector2(310f, -115f), new Vector2(260f, 58f), DownloadSingleRoute, UITheme.Accent, UITheme.Background, null, null, "btn.downloadRoute");
 
-        contentProgress = CreateSlider(contentDownloadsPanel.transform, new Vector2(0f, -185f), new Vector2(850f, 24f));
-        contentStatusLabel = CreateText(contentDownloadsPanel.transform, "Ready", 23f, new Vector2(0f, -240f), new Vector2(900f, 70f), TextAlignmentOptions.Center);
-        CreateButton(contentDownloadsPanel.transform, "CANCEL", new Vector2(-330f, -330f), new Vector2(210f, 58f), () => { RuntimeCityContentDownloader.EnsureExists().Cancel(); FindAnyObjectByType<CityPredownloader>()?.CancelDownload(); });
-        CreateButton(contentDownloadsPanel.transform, "REMOVE CITY", new Vector2(-70f, -330f), new Vector2(270f, 58f), RemoveSelectedCityContent);
-        CreateButton(contentDownloadsPanel.transform, "BACK", new Vector2(300f, -330f), new Vector2(240f, 58f), ToggleContentDownloads);
+        contentProgress = CreateSlider(panel, new Vector2(0f, -185f), new Vector2(850f, 24f));
+        contentStatusLabel = CreateText(panel, Localization.Get("status.ready"), 22f, new Vector2(0f, -240f), new Vector2(900f, 70f), TextAlignmentOptions.Center);
+        contentStatusLabel.color = UITheme.BusAmber;
+
+        CreateStyledButton(panel, "CANCEL", new Vector2(-330f, -330f), new Vector2(210f, 56f),
+            () => { RuntimeCityContentDownloader.EnsureExists().Cancel(); FindAnyObjectByType<CityPredownloader>()?.CancelDownload(); }, UITheme.TransitCard, UITheme.TextSecondary, null, null, "btn.cancel");
+        CreateStyledButton(panel, "REMOVE CITY", new Vector2(-70f, -330f), new Vector2(270f, 56f),
+            RemoveSelectedCityContent, UITheme.TransitCard, UITheme.Error, null, null, "btn.removeCity");
+        CreateStyledButton(panel, "⯀ STOP / BACK", new Vector2(300f, -330f), new Vector2(240f, 56f),
+            ToggleContentDownloads, UITheme.BusStopRed, UITheme.TextPrimary, null, null, "btn.stopBack");
 
         RuntimeCityContentDownloader downloader = RuntimeCityContentDownloader.EnsureExists();
         downloader.Changed += HandleContentDownloadChanged;
@@ -150,115 +622,108 @@ public class Phase7MenuController : MonoBehaviour
         contentDownloadsPanel.SetActive(false);
     }
 
+    // ── VEHICLE PACKS MODAL ─────────────────────────────────────────
+
     void BuildVehiclePacks()
     {
-        vehiclePacksPanel = Modal("VehiclePacksPanel", new Vector2(1080f, 700f));
-        CreateText(vehiclePacksPanel.transform, "DOWNLOADABLE VEHICLE PACKS", 40f, new Vector2(0f, 270f), new Vector2(930f, 60f), TextAlignmentOptions.Center);
-        CreateText(vehiclePacksPanel.transform,
-            "Install optional buses without increasing the base game size. Packs must be official\nAssetBundles built for this device platform and Unity version.",
-            23f, new Vector2(0f, 190f), new Vector2(920f, 90f), TextAlignmentOptions.Center);
-        CreateText(vehiclePacksPanel.transform, "VEHICLE PACK HTTPS URL", 23f, new Vector2(-260f, 90f), new Vector2(420f, 52f), TextAlignmentOptions.Left);
-        vehiclePackUrlInput = CreateInput(vehiclePacksPanel.transform, "https://cdn.example.com/kenya-buses.bundle",
-            new Vector2(120f, 90f), new Vector2(570f, 60f), TMP_InputField.ContentType.Standard);
-        CreateButton(vehiclePacksPanel.transform, "DOWNLOAD & INSTALL", new Vector2(0f, 5f), new Vector2(350f, 62f), DownloadVehiclePack);
-        vehiclePackProgress = CreateSlider(vehiclePacksPanel.transform, new Vector2(0f, -70f), new Vector2(850f, 24f));
+        vehiclePacksPanel = Modal("VehiclePacksPanel", new Vector2(1080f, 700f), out RectTransform panel);
+        BuildLedHeader(panel, "hdr.fleet.title", "hdr.fleet.subtitle", "hdr.fleet.badge");
+
+        CreateText(panel, "VEHICLE PACK HTTPS URL", 22f, new Vector2(-260f, 90f), new Vector2(420f, 52f), TextAlignmentOptions.Left);
+        vehiclePackUrlInput = CreateInput(panel, "https://cdn.example.com/kenya-buses.bundle",
+            new Vector2(120f, 90f), new Vector2(570f, 56f), TMP_InputField.ContentType.Standard);
+
+        CreateStyledButton(panel, "DOWNLOAD & INSTALL PACK", new Vector2(0f, 5f), new Vector2(360f, 60f), DownloadVehiclePack, UITheme.Accent, UITheme.Background, null, null, "btn.downloadInstall");
+        vehiclePackProgress = CreateSlider(panel, new Vector2(0f, -70f), new Vector2(850f, 24f));
+
         RuntimeVehiclePackDownloader downloader = RuntimeVehiclePackDownloader.EnsureExists();
-        vehiclePackStatusLabel = CreateText(vehiclePacksPanel.transform,
-            $"Installed storage: {RuntimeCityContentDownloader.FormatBytes(downloader.GetDownloadedBytes())}", 23f,
+        vehiclePackStatusLabel = CreateText(panel,
+            $"Installed storage: {RuntimeCityContentDownloader.FormatBytes(downloader.GetDownloadedBytes())}", 22f,
             new Vector2(0f, -130f), new Vector2(900f, 70f), TextAlignmentOptions.Center);
-        CreateButton(vehiclePacksPanel.transform, "CANCEL", new Vector2(-330f, -245f), new Vector2(210f, 58f), downloader.Cancel);
-        CreateButton(vehiclePacksPanel.transform, "REMOVE PACKS", new Vector2(-50f, -245f), new Vector2(260f, 58f), downloader.RemoveDownloadedPacks);
-        CreateButton(vehiclePacksPanel.transform, "BACK", new Vector2(300f, -245f), new Vector2(240f, 58f), CloseVehiclePacks);
+        vehiclePackStatusLabel.color = UITheme.BusAmber;
+
+        CreateStyledButton(panel, "CANCEL", new Vector2(-330f, -245f), new Vector2(210f, 56f), downloader.Cancel, UITheme.TransitCard, UITheme.TextSecondary, null, null, "btn.cancel");
+        CreateStyledButton(panel, "REMOVE PACKS", new Vector2(-50f, -245f), new Vector2(260f, 56f), downloader.RemoveDownloadedPacks, UITheme.TransitCard, UITheme.Error, null, null, "btn.removePacks");
+        CreateStyledButton(panel, "⯀ STOP / BACK", new Vector2(300f, -245f), new Vector2(240f, 56f), CloseVehiclePacks, UITheme.BusStopRed, UITheme.TextPrimary, null, null, "btn.stopBack");
+
         downloader.Changed += HandleVehiclePackChanged;
         vehiclePacksPanel.SetActive(false);
     }
 
-    void BuildMobileSettings()
-    {
-        mobileSettingsPanel = Modal("MobileSettingsPanel", new Vector2(820f, 820f));
-        CreateText(mobileSettingsPanel.transform, "MOBILE & PERFORMANCE", 40f, new Vector2(0f, 350f), new Vector2(720f, 60f), TextAlignmentOptions.Center);
-        SettingsManager settings = SettingsManager.EnsureExists(); float y = 270f;
-        AddSettingTo(mobileSettingsPanel, "Frame rate", () => settings.Current.targetFrameRate + " FPS", settings.CycleFrameRate, ref y);
-        AddSettingTo(mobileSettingsPanel, "Adaptive scaling", () => OnOff(settings.Current.adaptivePerformance), () => { settings.Current.adaptivePerformance = !settings.Current.adaptivePerformance; settings.SaveAndApply(); }, ref y);
-        AddSettingTo(mobileSettingsPanel, "Driving assists", () => OnOff(settings.Current.drivingAssists), () => { settings.Current.drivingAssists = !settings.Current.drivingAssists; settings.SaveAndApply(); }, ref y);
-        AddSettingTo(mobileSettingsPanel, "Left-handed layout", () => OnOff(settings.Current.leftHandedControls), () => { settings.Current.leftHandedControls = !settings.Current.leftHandedControls; settings.SaveAndApply(); }, ref y);
-        AddSettingTo(mobileSettingsPanel, "Control size", () => Mathf.RoundToInt(settings.Current.touchControlScale * 100f) + "%", () => { settings.Current.touchControlScale = CycleRange(settings.Current.touchControlScale, 0.75f, 1.25f, 0.125f); settings.SaveAndApply(); }, ref y);
-        AddSettingTo(mobileSettingsPanel, "Steering response", () => Mathf.RoundToInt(settings.Current.steeringSensitivity * 100f) + "%", () => { settings.Current.steeringSensitivity = CycleRange(settings.Current.steeringSensitivity, 0.5f, 1.5f, 0.25f); settings.SaveAndApply(); }, ref y);
-        AddSettingTo(mobileSettingsPanel, "Steering dead zone", () => Mathf.RoundToInt(settings.Current.steeringDeadZone * 100f) + "%", () => { settings.Current.steeringDeadZone = CycleRange(settings.Current.steeringDeadZone, 0f, 0.2f, 0.05f); settings.SaveAndApply(); }, ref y);
-        AddSettingTo(mobileSettingsPanel, "Reduced motion", () => OnOff(settings.Current.reducedMotion), () => { settings.Current.reducedMotion = !settings.Current.reducedMotion; settings.SaveAndApply(); }, ref y);
-        if (FindAnyObjectByType<MobileControlsUI>() != null)
-            CreateButton(mobileSettingsPanel.transform, "EDIT CONTROL LAYOUT", new Vector2(-170f, -320f), new Vector2(320f, 58f), BeginControlLayoutEdit);
-        CreateButton(mobileSettingsPanel.transform, "BACK", new Vector2(210f, -320f), new Vector2(260f, 58f), ToggleMobileSettings);
-        mobileSettingsPanel.SetActive(false);
-    }
-
-    void AddSetting(string label, Func<string> value, Action action, ref float y)
-    {
-        AddSettingTo(settingsPanel, label, value, action, ref y);
-    }
-
-    void AddSettingTo(GameObject targetPanel, string label, Func<string> value, Action action, ref float y)
-    {
-        CreateText(targetPanel.transform, label, 28f, new Vector2(-215f, y), new Vector2(320f, 48f), TextAlignmentOptions.Left);
-        TextMeshProUGUI valueText = null;
-        Button button = CreateButton(targetPanel.transform, value(), new Vector2(220f, y), new Vector2(300f, 52f), null);
-        valueText = button.GetComponentInChildren<TextMeshProUGUI>();
-        button.onClick.AddListener(() => { action(); valueText.text = value(); });
-        y -= 67f;
-    }
+    // ── CREDITS MODAL ───────────────────────────────────────────────
 
     void BuildCredits()
     {
-        creditsPanel = Modal("CreditsPanel", new Vector2(760f, 440f));
-        CreateText(creditsPanel.transform, "REALBUS", 48f, new Vector2(0f, 145f), new Vector2(650f, 70f), TextAlignmentOptions.Center);
-        CreateText(creditsPanel.transform, "Built with Unity\nMaps: Mapbox / OpenStreetMap contributors\nOptional buildings: Overture Maps and sources\nProcedural buildings are fictional", 24f, new Vector2(0f, 25f), new Vector2(650f, 180f), TextAlignmentOptions.Center);
-        CreateButton(creditsPanel.transform, "BUILDING DATA", new Vector2(-165f, -150f), new Vector2(290f, 58f), () => Application.OpenURL("https://docs.overturemaps.org/attribution/"));
-        CreateButton(creditsPanel.transform, "BACK TO SETTINGS", new Vector2(165f, -150f), new Vector2(290f, 58f), CloseCreditsToSettings);
+        creditsPanel = Modal("CreditsPanel", new Vector2(780f, 480f), out RectTransform panel);
+        BuildLedHeader(panel, "hdr.credits.title", "hdr.credits.subtitle", "hdr.credits.badge");
+
+        CreateText(panel, "RealBus Simulator\nMaps: Mapbox / OpenStreetMap contributors\n3D Buildings: Overture Maps Foundation\nProcedural city assets are fictional transit simulations.", 22f,
+            new Vector2(0f, 25f), new Vector2(680f, 180f), TextAlignmentOptions.Center);
+
+        CreateStyledButton(panel, "OVERTURE DATA DOCS", new Vector2(-165f, -150f), new Vector2(290f, 56f),
+            () => Application.OpenURL("https://docs.overturemaps.org/attribution/"), UITheme.TransitCard, UITheme.BusAmber, null, null, "btn.overtureDocs");
+        CreateStyledButton(panel, "⯀ STOP / BACK", new Vector2(165f, -150f), new Vector2(290f, 56f),
+            CloseCreditsToSettings, UITheme.BusStopRed, UITheme.TextPrimary, null, null, "btn.stopBack");
+
         creditsPanel.SetActive(false);
     }
 
-    void BuildPause()
-    {
-        pausePanel = Modal("PausePanel", new Vector2(760f, 640f));
-        CreateText(pausePanel.transform, "PAUSED", 48f, new Vector2(0f, 250f), new Vector2(650f, 70f), TextAlignmentOptions.Center);
-        pauseScore = CreateText(pausePanel.transform, "Score unavailable\n\nW/S DRIVE  •  A/D STEER  •  E/Q SHIFT\nX REVERSE  •  P PARKING BRAKE", 26f, new Vector2(0f, 115f), new Vector2(650f, 220f), TextAlignmentOptions.Center);
-        CreateButton(pausePanel.transform, "RESUME", new Vector2(0f, -30f), new Vector2(330f, 58f), TogglePause);
-        CreateButton(pausePanel.transform, "SETTINGS", new Vector2(0f, -105f), new Vector2(330f, 58f), ToggleSettings);
-        CreateButton(pausePanel.transform, "CONTROL LAYOUT", new Vector2(0f, -180f), new Vector2(330f, 58f), BeginControlLayoutEdit);
-        CreateButton(pausePanel.transform, "MAIN MENU", new Vector2(0f, -255f), new Vector2(330f, 58f), () => { Resume(); SceneLoader.Instance?.LoadMainMenu(); });
-        pausePanel.SetActive(false);
-    }
+    // ── DAILY CHALLENGE MODAL ───────────────────────────────────────
 
     void BuildDaily()
     {
-        dailyPanel = Modal("DailyChallengePanel", new Vector2(820f, 650f));
-        CreateText(dailyPanel.transform, "DAILY ROUTE CHALLENGE", 42f, new Vector2(0f, 250f), new Vector2(700f, 64f), TextAlignmentOptions.Center);
-        dailySummary = CreateText(dailyPanel.transform, "Loading today's route…", 29f, new Vector2(0f, 45f), new Vector2(680f, 300f), TextAlignmentOptions.Center);
-        CreateButton(dailyPanel.transform, "DRIVE CHALLENGE", new Vector2(-170f, -245f), new Vector2(320f, 60f), StartDailyChallenge);
-        CreateButton(dailyPanel.transform, "CLOSE", new Vector2(210f, -245f), new Vector2(260f, 60f), ToggleDaily);
+        dailyPanel = Modal("DailyChallengePanel", new Vector2(840f, 660f), out RectTransform panel);
+        BuildLedHeader(panel, "hdr.daily.title", "hdr.daily.subtitle", "hdr.daily.badge");
+
+        dailySummary = CreateText(panel, Localization.Get("status.loadingDaily"), 28f, new Vector2(0f, 45f), new Vector2(720f, 280f), TextAlignmentOptions.Center);
+        dailySummary.color = UITheme.BusAmber;
+
+        CreateStyledButton(panel, "⯈ DRIVE CHALLENGE", new Vector2(-170f, -245f), new Vector2(320f, 60f),
+            StartDailyChallenge, UITheme.TransitLedGreen, UITheme.Background, null, null, "btn.driveChallenge");
+        CreateStyledButton(panel, "⯀ STOP / CLOSE", new Vector2(210f, -245f), new Vector2(260f, 60f),
+            ToggleDaily, UITheme.BusStopRed, UITheme.TextPrimary, null, null, "btn.stopClose");
+
         dailyPanel.SetActive(false);
+    }
+
+    // ── PUBLIC ACTIONS & CONTROLS ───────────────────────────────────
+
+    public void ToggleSettings()
+    {
+        if (settingsPanel != null) settingsPanel.SetActive(!settingsPanel.activeSelf);
     }
 
     public void TogglePause()
     {
         if (pausePanel == null) return;
-        paused = !paused; pausePanel.SetActive(paused); Time.timeScale = paused ? 0f : 1f; AudioListener.pause = paused;
+        paused = !paused;
+        pausePanel.SetActive(paused);
+        Time.timeScale = paused ? 0f : 1f;
+        AudioListener.pause = paused;
+
         if (paused && pauseScore != null)
         {
             ScoreTracker score = ScoreTracker.Instance;
             string summary = score != null
-                ? $"TOTAL {score.totalScore:0}%\nPunctuality {score.punctualityScore:0}  •  Satisfaction {score.satisfactionScore:0}\nSafety {score.safetyScore:0}  •  Efficiency {score.efficiencyScore:0}"
+                ? $"TRIP TOTAL {score.totalScore:0}%\nPunctuality {score.punctualityScore:0}  •  Satisfaction {score.satisfactionScore:0}\nSafety {score.safetyScore:0}  •  Efficiency {score.efficiencyScore:0}"
                 : "Free drive session";
-            pauseScore.text = summary + "\n\nW/S DRIVE  •  A/D STEER  •  E/Q SHIFT\nX REVERSE  •  P PARKING BRAKE";
+            pauseScore.text = summary + "\n\nW/S DRIVE  •  A/D STEER  •  E/Q GEAR\nX REVERSE  •  P PARKING BRAKE";
         }
     }
 
-    public void Resume() { paused = false; Time.timeScale = 1f; AudioListener.pause = false; if (pausePanel != null) pausePanel.SetActive(false); }
-    void ToggleSettings() { if (settingsPanel != null) settingsPanel.SetActive(!settingsPanel.activeSelf); }
+    public void Resume()
+    {
+        paused = false;
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+        if (pausePanel != null) pausePanel.SetActive(false);
+    }
+
     void ToggleMobileSettings()
     {
         if (mobileSettingsPanel == null) return;
-        bool show = !mobileSettingsPanel.activeSelf; mobileSettingsPanel.SetActive(show);
+        bool show = !mobileSettingsPanel.activeSelf;
+        mobileSettingsPanel.SetActive(show);
         if (settingsPanel != null) settingsPanel.SetActive(!show);
     }
 
@@ -352,7 +817,20 @@ public class Phase7MenuController : MonoBehaviour
     }
 
     void HandleContentDownloadProgress(float progress) => HandleContentDownloadChanged("Downloading offline map…", progress);
-    void HandleMapDownloadComplete(bool cancelled) { HandleContentDownloadChanged(cancelled ? "Map download cancelled." : "Offline map ready.", 1f); RefreshContentCity(); }
+    void HandleMapDownloadComplete(bool cancelled)
+    {
+        // "Not cancelled" is not the same as "downloaded". The menu used to say "Offline map
+        // ready." for a run in which every tile had failed, which is how a broken cache looked
+        // like a finished download.
+        CityPredownloader maps = FindAnyObjectByType<CityPredownloader>();
+        string message = cancelled
+            ? "Map download cancelled."
+            : maps == null || maps.LastDownloadCoveredEveryTile
+                ? "Offline map ready."
+                : $"Offline map incomplete — {maps.failedTiles} of {maps.totalTiles} tiles unavailable.";
+        HandleContentDownloadChanged(message, 1f);
+        RefreshContentCity();
+    }
 
     void DownloadContent(CityContentDownloadKind kind)
     {
@@ -408,16 +886,23 @@ public class Phase7MenuController : MonoBehaviour
         downloader.Changed -= HandleContentDownloadChanged;
         downloader.Completed -= HandleContentDownloadCompleted;
     }
+
     void BeginControlLayoutEdit()
     {
         MobileControlsUI mobile = FindAnyObjectByType<MobileControlsUI>(); if (mobile == null) return;
         MobileControlLayoutEditor editor = mobile.GetComponent<MobileControlLayoutEditor>(); if (editor == null) editor = mobile.gameObject.AddComponent<MobileControlLayoutEditor>();
-        editor.Bind(mobile); if (settingsPanel != null) settingsPanel.SetActive(false); if (mobileSettingsPanel != null) mobileSettingsPanel.SetActive(false); if (pausePanel != null) pausePanel.SetActive(false); editor.SetEditing(true);
+        editor.Bind(mobile);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+        if (mobileSettingsPanel != null) mobileSettingsPanel.SetActive(false);
+        if (pausePanel != null) pausePanel.SetActive(false);
+        editor.SetEditing(true);
     }
+
     public void ReturnFromControlLayout()
     {
         if (paused && pausePanel != null) pausePanel.SetActive(true);
     }
+
     void OpenCreditsFromSettings()
     {
         if (settingsPanel != null) settingsPanel.SetActive(false);
@@ -446,50 +931,106 @@ public class Phase7MenuController : MonoBehaviour
         if (dailyPanel.activeSelf) dailyPanel.SetActive(false);
         else ShowDailyChallenge();
     }
+
     void StartDailyChallenge()
     {
         DailyChallengeManager daily = DailyChallengeManager.EnsureExists();
         if (!daily.ActivateChallenge())
         {
             if (dailySummary != null) dailySummary.text = daily.GetSummary();
-            SubtitleManager.EnsureExists().Show("Daily challenge", "Download or select a city route first.", 3f); return;
+            SubtitleManager.EnsureExists().Show("Daily challenge", "Download or select a city route first.", 3f);
+            return;
         }
         if (dailyPanel != null) dailyPanel.SetActive(false);
         SceneLoader.Instance?.LoadGameChecked();
     }
+
     static float CycleVolume(float value) { int step = (Mathf.RoundToInt(value * 4f) + 1) % 5; return step / 4f; }
     static float CycleRange(float value, float minimum, float maximum, float step) { float next = value + step; return next > maximum + 0.001f ? minimum : next; }
-    static string OnOff(bool value) { return value ? "On" : "Off"; }
+    static string OnOff(bool value) { return Localization.Get(value ? "value.on" : "value.off"); }
+
+    // ── UI BUILDER HELPERS ──────────────────────────────────────────
 
     Canvas CreateCanvas()
     {
-        GameObject o = new GameObject("Phase7MenuCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)); o.transform.SetParent(transform, false);
-        Canvas c = o.GetComponent<Canvas>(); c.renderMode = RenderMode.ScreenSpaceOverlay; c.sortingOrder = 120;
-        CanvasScaler s = o.GetComponent<CanvasScaler>(); s.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; s.referenceResolution = new Vector2(1920f, 1080f); s.matchWidthOrHeight = 0.5f;
+        GameObject o = new GameObject("Phase7MenuCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        o.transform.SetParent(transform, false);
+        Canvas c = o.GetComponent<Canvas>();
+        c.renderMode = RenderMode.ScreenSpaceOverlay;
+        c.sortingOrder = 120;
+        CanvasScaler s = o.GetComponent<CanvasScaler>();
+        s.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        s.referenceResolution = new Vector2(1920f, 1080f);
+        s.matchWidthOrHeight = 0.5f;
         return c;
     }
 
     GameObject Modal(string name, Vector2 size)
     {
-        GameObject shade = new GameObject(name, typeof(RectTransform), typeof(Image)); shade.transform.SetParent(canvas.transform, false);
-        RectTransform sr = shade.GetComponent<RectTransform>(); sr.anchorMin = Vector2.zero; sr.anchorMax = Vector2.one; sr.offsetMin = sr.offsetMax = Vector2.zero;
-        shade.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.76f);
-        GameObject panel = new GameObject("Panel", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(shade.transform, false);
-        RectTransform pr = panel.GetComponent<RectTransform>(); pr.anchorMin = pr.anchorMax = pr.pivot = new Vector2(0.5f, 0.5f); pr.sizeDelta = size;
-        Image panelImage = panel.GetComponent<Image>(); panelImage.color = UITheme.SurfaceContainer; RuntimeUiShapes.Rounded(panelImage); RuntimeUiShapes.SoftShadow(panelImage, .6f, 12f);
+        return Modal(name, size, out _);
+    }
+
+    GameObject Modal(string name, Vector2 size, out RectTransform panelRect)
+    {
+        GameObject shade = new GameObject(name, typeof(RectTransform), typeof(Image));
+        shade.transform.SetParent(canvas.transform, false);
+        RectTransform sr = shade.GetComponent<RectTransform>();
+        sr.anchorMin = Vector2.zero;
+        sr.anchorMax = Vector2.one;
+        sr.offsetMin = sr.offsetMax = Vector2.zero;
+        shade.GetComponent<Image>().color = new Color(0.04f, 0.06f, 0.08f, 0.85f);
+
+        GameObject panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
+        panel.transform.SetParent(shade.transform, false);
+        panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.sizeDelta = size;
+
+        Image panelImage = panel.GetComponent<Image>();
+        panelImage.color = UITheme.TransitNavy;
+        RuntimeUiShapes.Rounded(panelImage);
+        RuntimeUiShapes.SoftShadow(panelImage, 0.7f, 16f);
+
+        // The panel is authored for a 1920x1080 landscape canvas, so on a phone or
+        // a notched display it would run off the screen and take its own footer
+        // buttons with it. The fitter insets it inside the safe area and scales it
+        // down when the visible canvas is smaller than the authored size.
+        ResponsiveModalFitter fitter = panel.AddComponent<ResponsiveModalFitter>();
+        fitter.designSize = size;
+
         return shade;
     }
 
-    Button CreateButton(Transform parent, string label, Vector2 position, Vector2 size, Action action, Vector2? anchor = null, Vector2? pivot = null)
+    Button CreateButton(Transform parent, string label, Vector2 position, Vector2 size, Action action, Vector2? anchor = null, Vector2? pivot = null, string localizationKey = null)
     {
-        GameObject o = new GameObject("Button_" + label.Replace(" ", ""), typeof(RectTransform), typeof(Image), typeof(Button)); o.transform.SetParent(parent, false);
-        RectTransform r = o.GetComponent<RectTransform>(); Vector2 a = anchor ?? new Vector2(0.5f, 0.5f); r.anchorMin = r.anchorMax = a; r.pivot = pivot ?? new Vector2(0.5f, 0.5f); r.sizeDelta = size; r.anchoredPosition = position;
-        Image image = o.GetComponent<Image>(); image.color = UITheme.Accent;
+        return CreateStyledButton(parent, label, position, size, action, UITheme.Accent, UITheme.Background, anchor, pivot, localizationKey);
+    }
+
+    Button CreateStyledButton(Transform parent, string label, Vector2 position, Vector2 size, Action action,
+        Color bgColor, Color textColor, Vector2? anchor = null, Vector2? pivot = null, string localizationKey = null)
+    {
+        GameObject o = new GameObject("Button_" + label.Replace(" ", ""), typeof(RectTransform), typeof(Image), typeof(Button));
+        o.transform.SetParent(parent, false);
+        RectTransform r = o.GetComponent<RectTransform>();
+        Vector2 a = anchor ?? new Vector2(0.5f, 0.5f);
+        r.anchorMin = r.anchorMax = a;
+        r.pivot = pivot ?? new Vector2(0.5f, 0.5f);
+        r.sizeDelta = size;
+        r.anchoredPosition = position;
+
+        Image image = o.GetComponent<Image>();
+        image.color = bgColor;
         bool circular = Mathf.Abs(size.x - size.y) < 10f;
         if (circular) RuntimeUiShapes.Circle(image); else RuntimeUiShapes.Rounded(image);
-        RuntimeUiShapes.SoftShadow(image, .42f, 7f);
-        Button b = o.GetComponent<Button>(); if (action != null) b.onClick.AddListener(() => action());
-        TextMeshProUGUI t = CreateText(o.transform, label, 28f, Vector2.zero, size, TextAlignmentOptions.Center); t.color = UITheme.Background;
+        RuntimeUiShapes.SoftShadow(image, 0.42f, 7f);
+
+        Button b = o.GetComponent<Button>();
+        if (action != null) b.onClick.AddListener(() => action());
+
+        TextMeshProUGUI t = CreateText(o.transform, label, 24f, Vector2.zero, size, TextAlignmentOptions.Center);
+        t.color = textColor;
+        t.font = UITheme.GetFont(UITheme.FontWeight.Bold);
+        if (!string.IsNullOrEmpty(localizationKey)) LocalizedText.Bind(t.gameObject, localizationKey);
         return b;
     }
 
@@ -498,32 +1039,85 @@ public class Phase7MenuController : MonoBehaviour
     {
         GameObject root = new GameObject("RouteRelationInput", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
         root.transform.SetParent(parent, false);
-        RectTransform rect = root.GetComponent<RectTransform>(); rect.sizeDelta = size; rect.anchoredPosition = position;
-        Image image = root.GetComponent<Image>(); image.color = UITheme.SurfaceBright; RuntimeUiShapes.Rounded(image);
-        TextMeshProUGUI text = CreateText(root.transform, string.Empty, 25f, Vector2.zero, size - new Vector2(28f, 0f), TextAlignmentOptions.Left);
-        TextMeshProUGUI hint = CreateText(root.transform, placeholder, 22f, Vector2.zero, size - new Vector2(28f, 0f), TextAlignmentOptions.Left);
+        RectTransform rect = root.GetComponent<RectTransform>();
+        rect.sizeDelta = size;
+        rect.anchoredPosition = position;
+
+        Image image = root.GetComponent<Image>();
+        image.color = UITheme.TransitPanel;
+        RuntimeUiShapes.Rounded(image);
+
+        TextMeshProUGUI text = CreateText(root.transform, string.Empty, 23f, Vector2.zero, size - new Vector2(28f, 0f), TextAlignmentOptions.Left);
+        TextMeshProUGUI hint = CreateText(root.transform, placeholder, 20f, Vector2.zero, size - new Vector2(28f, 0f), TextAlignmentOptions.Left);
         hint.color = UITheme.TextMuted;
-        TMP_InputField input = root.GetComponent<TMP_InputField>(); input.textComponent = text; input.placeholder = hint; input.contentType = contentType;
+
+        TMP_InputField input = root.GetComponent<TMP_InputField>();
+        input.textComponent = text;
+        input.placeholder = hint;
+        input.contentType = contentType;
         return input;
     }
 
     Slider CreateSlider(Transform parent, Vector2 position, Vector2 size)
     {
-        GameObject root = new GameObject("DownloadProgress", typeof(RectTransform), typeof(Slider)); root.transform.SetParent(parent, false);
-        RectTransform rect = root.GetComponent<RectTransform>(); rect.sizeDelta = size; rect.anchoredPosition = position;
-        Image background = new GameObject("Background", typeof(RectTransform), typeof(Image)).GetComponent<Image>(); background.transform.SetParent(root.transform, false);
-        RectTransform br = background.rectTransform; br.anchorMin = Vector2.zero; br.anchorMax = Vector2.one; br.offsetMin = br.offsetMax = Vector2.zero; background.color = UITheme.SurfaceBright;
-        Image fill = new GameObject("Fill", typeof(RectTransform), typeof(Image)).GetComponent<Image>(); fill.transform.SetParent(root.transform, false);
-        RectTransform fr = fill.rectTransform; fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one; fr.offsetMin = fr.offsetMax = Vector2.zero; fill.color = UITheme.Accent;
-        Slider slider = root.GetComponent<Slider>(); slider.fillRect = fr; slider.minValue = 0f; slider.maxValue = 1f; slider.value = 0f; slider.interactable = false;
+        GameObject root = new GameObject("DownloadProgress", typeof(RectTransform), typeof(Slider));
+        root.transform.SetParent(parent, false);
+        RectTransform rect = root.GetComponent<RectTransform>();
+        rect.sizeDelta = size;
+        rect.anchoredPosition = position;
+
+        Image background = new GameObject("Background", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        background.transform.SetParent(root.transform, false);
+        RectTransform br = background.rectTransform;
+        br.anchorMin = Vector2.zero;
+        br.anchorMax = Vector2.one;
+        br.offsetMin = br.offsetMax = Vector2.zero;
+        background.color = UITheme.TransitPanel;
+        RuntimeUiShapes.Rounded(background);
+
+        Image fill = new GameObject("Fill", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        fill.transform.SetParent(root.transform, false);
+        RectTransform fr = fill.rectTransform;
+        fr.anchorMin = Vector2.zero;
+        fr.anchorMax = Vector2.one;
+        fr.offsetMin = fr.offsetMax = Vector2.zero;
+        fill.color = UITheme.BusAmber;
+        RuntimeUiShapes.Rounded(fill);
+
+        Slider slider = root.GetComponent<Slider>();
+        slider.fillRect = fr;
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.value = 0f;
+        slider.interactable = false;
         return slider;
+    }
+
+    /// <summary>
+    /// Creates a label bound to a localization key, so it re-renders when the player
+    /// changes language instead of freezing on whatever was authored at build time.
+    /// </summary>
+    TextMeshProUGUI CreateLocalizedText(Transform parent, string key, float fontSize, Vector2 position, Vector2 size, TextAlignmentOptions alignment)
+    {
+        TextMeshProUGUI label = CreateText(parent, Localization.Get(key), fontSize, position, size, alignment);
+        LocalizedText.Bind(label.gameObject, key);
+        return label;
     }
 
     TextMeshProUGUI CreateText(Transform parent, string value, float fontSize, Vector2 position, Vector2 size, TextAlignmentOptions alignment)
     {
-        GameObject o = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI)); o.transform.SetParent(parent, false);
-        RectTransform r = o.GetComponent<RectTransform>(); r.sizeDelta = size; r.anchoredPosition = position;
-        TextMeshProUGUI t = o.GetComponent<TextMeshProUGUI>(); t.text = value; t.fontSize = Mathf.Max(28f, fontSize); t.alignment = alignment; t.color = UITheme.TextPrimary; t.font = UITheme.GetFont(fontSize >= 40f ? UITheme.FontWeight.Bold : UITheme.FontWeight.Medium);
+        GameObject o = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        o.transform.SetParent(parent, false);
+        RectTransform r = o.GetComponent<RectTransform>();
+        r.sizeDelta = size;
+        r.anchoredPosition = position;
+
+        TextMeshProUGUI t = o.GetComponent<TextMeshProUGUI>();
+        t.text = value;
+        t.fontSize = fontSize;
+        t.alignment = alignment;
+        t.color = UITheme.TextPrimary;
+        t.font = UITheme.GetFont(fontSize >= 32f ? UITheme.FontWeight.Bold : UITheme.FontWeight.Medium);
         return t;
     }
 }

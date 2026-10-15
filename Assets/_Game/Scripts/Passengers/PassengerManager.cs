@@ -42,6 +42,13 @@ public class PassengerManager : MonoBehaviour
     public bool hadWheelchairBoarding = false;
     public bool doorsOpen = false;
     public float latestRequiredDwellSeconds = 2f;
+
+    [Tooltip("Seconds a lock request waits for the doorway to clear before the doors are forced shut.")]
+    public float doorLockWaitTimeoutSeconds = 8f;
+
+    /// <summary>True while the player has asked to lock and the doorway is still busy.</summary>
+    public bool DoorLockPending { get; private set; }
+    float doorLockRequestedAt = -1f;
     public bool stopRequestActive = false;
     public bool stopRequestAcknowledged = false;
     public int upcomingStopIndex = -1;
@@ -66,7 +73,7 @@ public class PassengerManager : MonoBehaviour
     public AudioClip bellClip;
     public float bellVolume = 1f;
 
-    private BusController busController;
+    public BusController busController;
     private readonly List<PassengerAgent> onboardPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> waitingPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> alightingPassengers = new List<PassengerAgent>();
@@ -104,6 +111,7 @@ public class PassengerManager : MonoBehaviour
         totalDistanceKm = Mathf.Max(0f, distanceKm);
         preparedStop = -1; waitingAtCurrentStop = lastAlightingCount = lastBoardingCount = 0;
         doorsOpen = stopRequestActive = stopRequestAcknowledged = false;
+        DoorLockPending = false;
     }
 
     void Awake()
@@ -122,6 +130,7 @@ public class PassengerManager : MonoBehaviour
         TrackDistance();
 
         UpdatePassengerAnimationState();
+        TickPendingDoorLock();
         UpdateAccessibilityReset();
         PrepareApproachingStop();
         UpdatePatience();
@@ -742,22 +751,173 @@ public class PassengerManager : MonoBehaviour
             AcknowledgeStopRequest();
     }
 
+    float lastDoorActionTime = -1f;
+    const float DoorActionDebounceSeconds = 0.25f;
+
+    public void CompletePendingBoardingAndAlighting()
+    {
+        for (int i = 0; i < onboardPassengers.Count; i++)
+        {
+            var passenger = onboardPassengers[i];
+            if (passenger != null && passenger.isBoarding)
+            {
+                passenger.MarkBoarded();
+                passenger.busLocalPosition = ResolveBusSlotLocalPosition(passenger, i);
+            }
+        }
+
+        for (int i = alightingPassengers.Count - 1; i >= 0; i--)
+        {
+            var passenger = alightingPassengers[i];
+            if (passenger != null)
+            {
+                completedSatisfaction += passenger.satisfaction;
+                completedPassengerCount++;
+                passenger.MarkExited();
+            }
+            alightingPassengers.RemoveAt(i);
+        }
+
+        latestRequiredDwellSeconds = 0f;
+    }
+
+    public bool TryCloseAndLockDoors()
+    {
+        if (Time.time - lastDoorActionTime < DoorActionDebounceSeconds)
+            return false;
+        lastDoorActionTime = Time.time;
+
+        CompletePendingBoardingAndAlighting();
+        doorsOpen = false;
+        DoorLockPending = false;
+
+        if (busController != null)
+        {
+            busController.RequestKneelingSuspension(false);
+            busController.ServiceBrakeInterlock = false;
+        }
+
+        RingBell();
+        RealBusAudioManager.Instance?.PlayDoorOperated(true);
+        AccessibilityManager.EnsureExists().Pulse(HapticCue.Docking);
+
+        if (MissionManager.Instance != null && MissionManager.Instance.isProcessingStop)
+        {
+            MissionManager.Instance.TryCloseAndLockDoors();
+        }
+
+        return true;
+    }
+
+    public bool TryOpenDoors()
+    {
+        if (Time.time - lastDoorActionTime < DoorActionDebounceSeconds)
+            return false;
+        lastDoorActionTime = Time.time;
+
+        RingBell();
+
+        if (MissionManager.Instance != null && MissionManager.Instance.routeActive)
+        {
+            bool opened = MissionManager.Instance.TryOpenDoorsAtCurrentStop();
+            if (opened)
+            {
+                RealBusAudioManager.Instance?.PlayDoorOperated(false);
+                AccessibilityManager.EnsureExists().Pulse(HapticCue.Docking);
+            }
+            return opened;
+        }
+
+        // Free drive fallback
+        if (busController != null && busController.currentSpeedKmh > 2f)
+            return false;
+
+        doorsOpen = true;
+        if (busController != null)
+        {
+            busController.ServiceBrakeInterlock = true;
+            busController.RequestKneelingSuspension(true);
+        }
+        RealBusAudioManager.Instance?.PlayDoorOperated(false);
+        AccessibilityManager.EnsureExists().Pulse(HapticCue.Docking);
+        return true;
+    }
+
+    public void RequestDoors()
+    {
+        if (doorsOpen || (MissionManager.Instance != null && MissionManager.Instance.isProcessingStop))
+        {
+            if (!RequestDoorLock())
+                TryCloseAndLockDoors();
+        }
+        else
+        {
+            TryOpenDoors();
+        }
+    }
+
+    /// <summary>True while anyone is still stepping through the doorway.</summary>
+    public bool DoorwayBusy => HasServiceAnimations;
+
+    /// <summary>
+    /// Interlock rule for locking the doors: wait while the doorway is busy so the
+    /// doors never snap shut through a passenger, but never wait longer than the
+    /// timeout, so a stuck animation can never leave the player unable to depart.
+    /// </summary>
+    public static bool ShouldWaitForDoorwayClear(bool doorwayBusy, float waitedSeconds, float timeoutSeconds)
+        => doorwayBusy && waitedSeconds < Mathf.Max(0f, timeoutSeconds);
+
+    /// <summary>
+    /// Player-facing lock: closes the doors immediately when the doorway is clear,
+    /// otherwise queues the lock and reports that it is waiting. Returns true when
+    /// the request was understood (either way), false when the doors were already
+    /// shut and there is nothing to lock.
+    /// </summary>
+    public bool RequestDoorLock()
+    {
+        if (!doorsOpen)
+            return false;
+
+        if (ShouldWaitForDoorwayClear(HasServiceAnimations, 0f, doorLockWaitTimeoutSeconds))
+        {
+            if (!DoorLockPending)
+            {
+                DoorLockPending = true;
+                SubtitleManager.EnsureExists().Show("Doors",
+                    "Locking as soon as everyone has stepped clear of the door.", 2.5f);
+            }
+            doorLockRequestedAt = Time.time;
+            return true;
+        }
+
+        return TryCloseAndLockDoors();
+    }
+
+    void TickPendingDoorLock()
+    {
+        if (!DoorLockPending)
+            return;
+
+        if (!doorsOpen)
+        {
+            DoorLockPending = false;
+            return;
+        }
+
+        float waited = Time.time - doorLockRequestedAt;
+        if (ShouldWaitForDoorwayClear(HasServiceAnimations, waited, doorLockWaitTimeoutSeconds))
+            return;
+
+        TryCloseAndLockDoors();
+    }
+
     void HandleDoorOpenInput()
     {
         var keyboard = Keyboard.current;
         if (keyboard == null || !keyboard.oKey.wasPressedThisFrame)
             return;
 
-        RingBell();
-
-        if (MissionManager.Instance != null && MissionManager.Instance.routeActive)
-            MissionManager.Instance.TryOpenDoorsAtCurrentStop();
-    }
-
-    public void RequestDoors()
-    {
-        RingBell();
-        MissionManager.Instance?.TryOpenDoorsAtCurrentStop();
+        RequestDoors();
     }
 
     void RingBell()

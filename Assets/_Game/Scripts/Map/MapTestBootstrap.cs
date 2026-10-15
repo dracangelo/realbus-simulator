@@ -24,7 +24,6 @@ public class MapTestBootstrap : MonoBehaviour
     CityDefinition city;
     OfflineCacheManager cache;
     CityPredownloader downloader;
-    TileStreamManager streaming;
     RoadNetworkSurface surface;
     OSMRouteImporter importer;
     PhysicsTestTrack vehicleFixture;
@@ -48,8 +47,10 @@ public class MapTestBootstrap : MonoBehaviour
         cache.maxCacheMB = 500f;
         runtimeToken = System.Environment.GetEnvironmentVariable("REALBUS_MAPBOX_TOKEN") ?? "";
         downloader = new GameObject("City predownloader").AddComponent<CityPredownloader>();
-        downloader.mapboxToken = runtimeToken;
-        downloader.mapStyle = "mapbox/streets-v12";
+        // Publish this harness's configuration once: the predownloader and the tile loader both
+        // read it instead of each carrying a copy of the token and style.
+        MapboxMapSettings.Publish(
+            MapboxMapSettings.Resolve(runtimeToken, "mapbox/streets-v12", preferLabelFree: true));
         downloader.zoomLevel = tutorialCity.defaultZoom;
         downloader.radiusMeters = 2000f;
         importer = new GameObject("OSM route importer").AddComponent<OSMRouteImporter>();
@@ -98,14 +99,9 @@ public class MapTestBootstrap : MonoBehaviour
         grip.baseForwardStiffness = 1.2f; grip.baseSidewaysStiffness = 1f;
         var gps = bus.gameObject.AddComponent<GpsTracker>();
         gps.busTransform = bus.transform; gps.converter = converter;
-        streaming = new GameObject("Tile streaming").AddComponent<TileStreamManager>();
-        streaming.converter = converter; streaming.cache = cache;
-        streaming.busTransform = bus.transform; streaming.busController = bus; streaming.gpsTracker = gps;
-        streaming.mapboxToken = runtimeToken; streaming.mapStyle = downloader.mapStyle;
-        streaming.zoomLevel = tutorialCity.defaultZoom;
-        streaming.createMeshCollider = false; // OSM road geometry owns collisions.
-        streaming.maxConcurrentDownloads = 2;
-        streaming.enabled = !string.IsNullOrWhiteSpace(runtimeToken) || cache.forceOffline;
+        // Raster tiles are no longer previewed here: the streaming manager this harness used to
+        // drive was removed as a duplicate of MapTileLoader (see bug.md, 2026-10-14). The road,
+        // stop, route and offline-download parts of the harness are unaffected.
         string stopsJson = null;
         yield return ReadCityFile("stops.json", json => stopsJson = json);
         int stopCount = ShowStops(stopsJson);
@@ -178,7 +174,7 @@ public class MapTestBootstrap : MonoBehaviour
         {
             if (stopMaterial == null)
             {
-                stopMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+                stopMaterial = new Material(BuiltInShaders.Overlay);
                 stopMaterial.color = Color.cyan;
             }
             return stopMaterial;
@@ -190,20 +186,18 @@ public class MapTestBootstrap : MonoBehaviour
         if (!showDebugUI) return;
         GUI.Box(new Rect(10, 160, 600, 245), "Phase 3 — Real map integration");
         GUI.Label(new Rect(20, 185, 580, 45), Status);
-        if (streaming == null) return;
         runtimeToken = GUI.PasswordField(new Rect(20, 235, 370, 25), runtimeToken, '*');
         if (GUI.Button(new Rect(400, 235, 190, 25), "Enable map tiles"))
         {
-            streaming.mapboxToken = downloader.mapboxToken = runtimeToken.Trim();
-            streaming.ResetStreaming();
-            streaming.enabled = true;
+            MapboxMapSettings.Publish(MapboxMapSettings.Resolve(
+                runtimeToken.Trim(), MapboxMapSettings.Current.Style, preferLabelFree: true));
         }
         cache.forceOffline = GUI.Toggle(new Rect(20, 270, 180, 25), cache.forceOffline, "Offline test mode");
         if (GUI.Button(new Rect(200, 270, 190, 25), "Download 2 km area")) downloader.StartDownloadForCity(city);
         if (GUI.Button(new Rect(400, 270, 190, 25), "Cancel download")) downloader.CancelDownload();
         if (GUI.Button(new Rect(20, 305, 220, 25), "Import real OSM routes")) importer.TriggerImport(city);
         GUI.Label(new Rect(250, 305, 340, 25), importer.statusMessage);
-        GUI.Label(new Rect(20, 340, 580, 25), $"Tiles: {streaming.ActiveTileCount} loaded / {streaming.PendingTileCount} pending. Offline download: {downloader.completedTiles}/{downloader.totalTiles}, failed {downloader.failedTiles}, ~{downloader.estimatedMB:F1} MB");
+        GUI.Label(new Rect(20, 340, 580, 25), $"Offline download: {downloader.completedTiles}/{downloader.totalTiles} tiles, failed {downloader.failedTiles}, ~{downloader.estimatedMB:F1} MB");
         if (GUI.Button(new Rect(20, 370, 100, 25), "© Mapbox")) Application.OpenURL("https://www.mapbox.com/about/maps/");
         if (GUI.Button(new Rect(130, 370, 260, 25), "© OpenStreetMap contributors")) Application.OpenURL("https://www.openstreetmap.org/copyright");
         if (GUI.Button(new Rect(400, 370, 190, 25), "Improve this map")) Application.OpenURL("https://apps.mapbox.com/feedback/");

@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class FogController : MonoBehaviour
 {
+    public static FogController Instance { get; private set; }
+
     [Header("Visibility Distances (metres)")]
     public float clearVisibility       = 2000f;
     public float overcastVisibility    = 1200f;
@@ -26,6 +28,12 @@ public class FogController : MonoBehaviour
     public Color snowFogColor     = new Color(0.85f, 0.87f, 0.92f);
     public Color blizzardFogColor = new Color(0.70f, 0.72f, 0.78f);
 
+    [Header("Time of Day")]
+    [Tooltip("Fog is lit by the sky, so it darkens at night. Resolved automatically when unset.")]
+    public TimeOfDaySystem timeOfDay;
+    public Color nightFogTint = new Color(0.03f, 0.04f, 0.09f, 1f);
+    [Range(0f, 1f)] public float nightFogStrength = 0.75f;
+
     [Header("Transition Speed")]
     public float lerpSpeed = 0.4f;
     public float maxFogDensity = 0.03f;
@@ -37,6 +45,23 @@ public class FogController : MonoBehaviour
     private bool fogActive;
     Coroutine fadeRoutine;
     bool blending;
+
+    /// <summary>
+    /// True while weather fog owns <see cref="RenderSettings.fog"/>. The clear-sky
+    /// haze asks this before it applies, so the two do not overwrite each other.
+    /// </summary>
+    public bool WeatherFogActive => fogActive;
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this) return;
+        Instance = this;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
 
     void Start()
     {
@@ -63,7 +88,27 @@ public class FogController : MonoBehaviour
             RenderSettings.fogDensity, targetFogDensity, Time.deltaTime * lerpSpeed);
 
         RenderSettings.fogColor = Color.Lerp(
-            RenderSettings.fogColor, targetFogColor, Time.deltaTime * lerpSpeed * 0.5f);
+            RenderSettings.fogColor, CurrentTint(), Time.deltaTime * lerpSpeed * 0.5f);
+    }
+
+    /// <summary>
+    /// The weather's fog colour as it looks at the current time of day. Fog is lit by
+    /// the sky: the same fog that reads as haze at noon has to go nearly black at
+    /// night, and it picks up the sunrise/sunset tint on the way through.
+    /// </summary>
+    public static Color TintForDaylight(Color fogColor, Color skyTint, float daylight01, Color nightTint, float nightStrength)
+    {
+        float daylight = Mathf.Clamp01(daylight01);
+        Color night = Color.Lerp(fogColor, nightTint, Mathf.Clamp01(nightStrength));
+        Color day = Color.Lerp(fogColor, skyTint, 0.35f);
+        return Color.Lerp(night, day, daylight);
+    }
+
+    Color CurrentTint()
+    {
+        if (timeOfDay == null) timeOfDay = TimeOfDaySystem.Instance;
+        if (timeOfDay == null) return targetFogColor;
+        return TintForDaylight(targetFogColor, timeOfDay.GetSkyTint(), timeOfDay.GetDaylightFactor(), nightFogTint, nightFogStrength);
     }
 
     public void SetFog(WeatherState state, float intensity)
@@ -156,20 +201,29 @@ public class FogController : MonoBehaviour
     {
         float elapsed = 0f;
         float startEnd = RenderSettings.fogEndDistance;
+        // Clear weather hands the fog over to the city's distance haze, so it fades
+        // toward the haze instead of to a plainer 2 km and snapping back at the end.
+        var haze = CinematicAtmosphereController.Instance;
+        float targetEnd = haze != null && haze.enableAtmosphericHaze ? haze.hazeEndDistance : clearVisibility;
 
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
-            RenderSettings.fogEndDistance = Mathf.Lerp(startEnd, clearVisibility, t);
+            RenderSettings.fogEndDistance = Mathf.Lerp(startEnd, targetEnd, t);
             yield return null;
         }
 
         fogActive = false;
         RenderSettings.fogStartDistance = clearFogStart;
         RenderSettings.fogEndDistance = clearFogEnd;
-        RenderSettings.fogColor = clearFogColor;
+        RenderSettings.fogColor = CurrentTint();
         RenderSettings.fogDensity = 0f;
         RenderSettings.fog = false;
+
+        // Hand the fog back now that the weather has cleared. Without this the first
+        // shower removed the city's distance haze for the rest of the session, and
+        // the scene kept running on whatever the weather left behind.
+        CinematicAtmosphereController.Instance?.ApplyAtmosphericHaze();
     }
 }

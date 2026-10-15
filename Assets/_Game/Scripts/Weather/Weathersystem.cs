@@ -21,7 +21,7 @@ public class WeatherSystem : MonoBehaviour
     public static WeatherSystem Instance { get; private set; }
 
     [Header("Current Weather")]
-    public WeatherState currentWeather = WeatherState.Clear;
+    [SerializeField] WeatherState currentWeatherState = WeatherState.Clear;
     public float temperature = 20f;
     public float weatherIntensity = 0f; // 0-1
 
@@ -35,6 +35,8 @@ public class WeatherSystem : MonoBehaviour
     public FogController fogController;
     public SnowController snowController;
     public SkyController skyController;
+    [Tooltip("Clouds, stars, moon and skybox. Without it the weather only changed light levels.")]
+    public SkyEnvironmentController skyEnvironmentController;
 
     [Header("Debug")]
     public bool forceWeather = false;
@@ -44,6 +46,21 @@ public class WeatherSystem : MonoBehaviour
     private bool weatherLoaded = false;
     private Coroutine weatherTransitionRoutine;
     float blendedGrip = 1f;
+
+    /// <summary>
+    /// Active weather state. Assigning it refreshes the road-grip multiplier so
+    /// callers (and tests) observe the new state's grip immediately instead of
+    /// waiting for the next transition tick.
+    /// </summary>
+    public WeatherState currentWeather
+    {
+        get => currentWeatherState;
+        set
+        {
+            currentWeatherState = value;
+            blendedGrip = GripFor(value, 1f);
+        }
+    }
 
     public WeatherState TargetWeather { get; private set; } = WeatherState.Clear;
     public float TransitionProgress01 { get; private set; } = 1f;
@@ -258,8 +275,10 @@ public class WeatherSystem : MonoBehaviour
     public void ApplyWeather(WeatherState state, float intensity, float temp)
     {
         if (weatherTransitionRoutine != null) { StopCoroutine(weatherTransitionRoutine); weatherTransitionRoutine = null; }
-        blendedGrip = GripFor(state, intensity);
+        // Assign the state first (its setter refreshes the base grip), then apply
+        // the intensity-scaled grip so the blended value stays authoritative.
         currentWeather = state;
+        blendedGrip = GripFor(state, intensity);
         TargetWeather = state;
         TransitionProgress01 = 1f;
         weatherIntensity = intensity;
@@ -271,6 +290,17 @@ public class WeatherSystem : MonoBehaviour
         fogController?.SetFog(state, intensity);
         snowController?.SetSnow(state, intensity);
         skyController?.SetSky(state, intensity, temp);
+        ResolveSkyEnvironment()?.ApplyEnvironment(state, intensity);
+    }
+
+    /// <summary>
+    /// The sky environment can be created after the weather system (a fixture may add
+    /// the weather first), so it is resolved on demand rather than only at wiring time.
+    /// </summary>
+    SkyEnvironmentController ResolveSkyEnvironment()
+    {
+        if (skyEnvironmentController == null) skyEnvironmentController = SkyEnvironmentController.Instance;
+        return skyEnvironmentController;
     }
 
     // ── Gradual weather change cycle ─────────────────────────────────
@@ -330,9 +360,11 @@ public class WeatherSystem : MonoBehaviour
             fogController?.BlendWeather(oldState, oldIntensity, newState, targetInt, t);
             snowController?.SetSnow(currentWeather, weatherIntensity);
             skyController?.SetSky(currentWeather, weatherIntensity, temperature);
+            ResolveSkyEnvironment()?.ApplyEnvironment(currentWeather, weatherIntensity);
             yield return null;
         }
         currentWeather = newState; weatherIntensity = targetInt;
+        blendedGrip = GripFor(newState, targetInt);
         TransitionProgress01 = 1f; weatherTransitionRoutine = null;
     }
 

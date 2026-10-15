@@ -83,4 +83,123 @@ public class RoadGraphTests
         Assert.That(PlayerCityLibrary.IsFavourite(city), Is.False);
         Object.DestroyImmediate(city);
     }
+
+    [Test]
+    public void OsmWay_GetLaneCount_ParsesSingleAndMultipleLanesCorrectly()
+    {
+        var way4 = new OSMWay { id = 101, tags = new System.Collections.Generic.Dictionary<string, string> { { "highway", "primary" }, { "lanes", "4" } } };
+        Assert.That(way4.GetLaneCount(), Is.EqualTo(4));
+        Assert.That(way4.GetForwardLaneCount(), Is.EqualTo(2));
+        Assert.That(way4.GetBackwardLaneCount(), Is.EqualTo(2));
+
+        var way2 = new OSMWay { id = 102, tags = new System.Collections.Generic.Dictionary<string, string> { { "highway", "secondary" }, { "lanes", "2" } } };
+        Assert.That(way2.GetLaneCount(), Is.EqualTo(2));
+
+        var way1 = new OSMWay { id = 103, tags = new System.Collections.Generic.Dictionary<string, string> { { "highway", "service" } } };
+        Assert.That(way1.GetLaneCount(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void OsmWay_GetLaneCount_SumsForwardAndBackwardLanes()
+    {
+        var wayAsymmetric = new OSMWay
+        {
+            id = 201,
+            tags = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { "highway", "primary" },
+                { "lanes:forward", "2" },
+                { "lanes:backward", "1" }
+            }
+        };
+        Assert.That(wayAsymmetric.GetLaneCount(), Is.EqualTo(3));
+        Assert.That(wayAsymmetric.GetForwardLaneCount(), Is.EqualTo(2));
+        Assert.That(wayAsymmetric.GetBackwardLaneCount(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void OSMRoadMeshBuilder_BuildRoadSegmentMesh_GeneratesCorrectColumnsForLanes()
+    {
+        var go = new GameObject("MeshBuilderHolder");
+        var builder = go.AddComponent<OSMRoadMeshBuilder>();
+
+        var points = new System.Collections.Generic.List<Vector3>
+        {
+            new Vector3(0, 0, 0),
+            new Vector3(0, 0, 20),
+            new Vector3(0, 0, 40)
+        };
+
+        // 4 lanes with camber -> 5 lateral columns per longitudinal point (3 * 5 = 15 vertices)
+        Mesh mesh4 = builder.BuildRoadSegmentMesh(points, 14f, 4, true);
+        Assert.That(mesh4, Is.Not.Null);
+        Assert.That(mesh4.vertexCount, Is.EqualTo(15));
+        Assert.That(mesh4.triangles.Length, Is.GreaterThan(0));
+
+        // 2 lanes with camber -> 3 lateral columns per longitudinal point (3 * 3 = 9 vertices)
+        Mesh mesh2 = builder.BuildRoadSegmentMesh(points, 7f, 2, true);
+        Assert.That(mesh2, Is.Not.Null);
+        Assert.That(mesh2.vertexCount, Is.EqualTo(9));
+
+        // 1 lane -> 2 lateral columns per longitudinal point (3 * 2 = 6 vertices)
+        Mesh mesh1 = builder.BuildRoadSegmentMesh(points, 4f, 1, false);
+        Assert.That(mesh1, Is.Not.Null);
+        Assert.That(mesh1.vertexCount, Is.EqualTo(6));
+
+        Object.DestroyImmediate(go);
+    }
+
+    [Test]
+    public void OSMRoadMeshBuilder_BuildLaneMarkings_CreatesRealisticMarkingsForFourAndTwoLaneRoads()
+    {
+        var go = new GameObject("MarkingHolder");
+        var builder = go.AddComponent<OSMRoadMeshBuilder>();
+        builder.generateRealisticLaneMarkings = true;
+        builder.drawOuterEdgeLines = true;
+
+        var points = new System.Collections.Generic.List<Vector3>
+        {
+            new Vector3(0, 0, 0),
+            new Vector3(0, 0, 30)
+        };
+
+        var way4 = new OSMWay
+        {
+            id = 401,
+            tags = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { "highway", "primary" },
+                { "lanes", "4" }
+            }
+        };
+
+        var roadObj4 = new GameObject("Road4");
+        var markings4 = builder.BuildLaneMarkings(roadObj4.transform, points, way4, 14f);
+        Assert.That(markings4, Is.Not.Null);
+        var mf4 = markings4.GetComponent<MeshFilter>();
+        Assert.That(mf4, Is.Not.Null);
+        Assert.That(mf4.sharedMesh.vertexCount, Is.GreaterThan(0));
+        var mr4 = markings4.GetComponent<MeshRenderer>();
+        // 4 lanes two-way should have both white and yellow marking materials (2 submeshes: dashed white + edge lines and double yellow center)
+        Assert.That(mr4.sharedMaterials.Length, Is.EqualTo(2));
+
+        var way2 = new OSMWay
+        {
+            id = 402,
+            tags = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { "highway", "secondary" },
+                { "lanes", "2" }
+            }
+        };
+        var roadObj2 = new GameObject("Road2");
+        var markings2 = builder.BuildLaneMarkings(roadObj2.transform, points, way2, 7f);
+        Assert.That(markings2, Is.Not.Null);
+        var mf2 = markings2.GetComponent<MeshFilter>();
+        Assert.That(mf2.sharedMesh.vertexCount, Is.GreaterThan(0));
+
+        Object.DestroyImmediate(roadObj4);
+        Object.DestroyImmediate(roadObj2);
+        Object.DestroyImmediate(go);
+    }
 }

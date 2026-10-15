@@ -6,7 +6,7 @@ using UnityEngine;
 ///
 /// Improvements vs original:
 ///   • Event-driven — <see cref="OnCityChanged"/> / <see cref="OnCountryChanged"/>
-///     so UI, CoordinateConverter, TileStreamManager etc. don't need to poll.
+///     so UI, CoordinateConverter, MapTileLoader etc. don't need to poll.
 ///   • Internal List&lt;T&gt; instead of arrays for O(1) Add without copy-expand.
 ///   • Array properties (<see cref="allCities"/> / <see cref="allCountries"/>) 
 ///     are kept for Inspector serialisation; they stay in sync automatically.
@@ -56,8 +56,24 @@ public class CityManager : MonoBehaviour
         _countries.AddRange(allCountries);
     }
 
+    /// <summary>
+    /// Seeds the internal lists from the Inspector arrays when they were empty
+    /// at Awake time (for example when a bootstrap or test assigns
+    /// <see cref="allCountries"/> / <see cref="allCities"/> after the component
+    /// is created). Idempotent — it only fills empty lists.
+    /// </summary>
+    void EnsureSeededFromInspectorArrays()
+    {
+        if (_cities.Count == 0 && allCities != null && allCities.Length > 0)
+            _cities.AddRange(allCities);
+        if (_countries.Count == 0 && allCountries != null && allCountries.Length > 0)
+            _countries.AddRange(allCountries);
+    }
+
     void Start()
     {
+        EnsureSeededFromInspectorArrays();
+
         // Default selections.
         if (activeCity == null && _cities.Count > 0)
             SetActiveCity(_cities[0]);
@@ -148,6 +164,7 @@ public class CityManager : MonoBehaviour
     public CityDefinition GetCityByCode(string code)
     {
         if (string.IsNullOrWhiteSpace(code)) return null;
+        EnsureSeededFromInspectorArrays();
         foreach (var c in _cities)
             if (c != null && string.Equals(c.cityCode, code, System.StringComparison.OrdinalIgnoreCase))
                 return c;
@@ -163,6 +180,7 @@ public class CityManager : MonoBehaviour
     public CountryDefinition[] GetCountriesByContinent(string continent)
     {
         if (string.IsNullOrWhiteSpace(continent)) return System.Array.Empty<CountryDefinition>();
+        EnsureSeededFromInspectorArrays();
         var result = new List<CountryDefinition>();
         foreach (var c in _countries)
             if (c != null && c.continent == continent)
@@ -171,10 +189,10 @@ public class CityManager : MonoBehaviour
     }
 
     /// <summary>All registered cities as a read-only list.</summary>
-    public IReadOnlyList<CityDefinition> Cities => _cities;
+    public IReadOnlyList<CityDefinition> Cities { get { EnsureSeededFromInspectorArrays(); return _cities; } }
 
     /// <summary>All registered countries as a read-only list.</summary>
-    public IReadOnlyList<CountryDefinition> Countries => _countries;
+    public IReadOnlyList<CountryDefinition> Countries { get { EnsureSeededFromInspectorArrays(); return _countries; } }
 
     // ── Helpers ────────────────────────────────────────────────────────
 

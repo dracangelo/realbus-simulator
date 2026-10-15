@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 976d675d35210d642ac630379fe15232, type: 3}
+  m_Name: TrafficCatalog
+  m_EditorClassIdentifier: GameScripts::TrafficCatalog
+  entries:
+  - prefab: {fileID: 7631496492060158392, guid: 49a265c0243e94f21ab5e0da2c1ce8e1, type: 3}
+    vehicleType: 0
+    displayName: Car2
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.7198578, z: 0}
+      m_Extent: {x: 1.0255015, y: 0.7198578, z: 2.25}
+    triangles: 5176
+    weight: 1
+  - prefab: {fileID: 3287785181858671953, guid: 08cafba770caedec1a5276541e95cf6b, type: 3}
+    vehicleType: 0
+    displayName: Jeep2
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.95557994, z: 0}
+      m_Extent: {x: 1.2044016, y: 0.9555799, z: 2.25}
+    triangles: 4532
+    weight: 1
+  - prefab: {fileID: 8635331187090996124, guid: 3390de46e4b948033868a8c4ded23c0e, type: 3}
+    vehicleType: 3
+    displayName: MicroBus4
+    lengthMeters: 8.5
+    bounds:
+      m_Center: {x: 0, y: 1.8147354, z: 0}
+      m_Extent: {x: 1.8853544, y: 1.8147354, z: 4.25}
+    triangles: 3737
+    weight: 0.3
+  - prefab: {fileID: 6209629544404527010, guid: 8275e7a5e8c5739af95ead1641c93b30, type: 3}
+    vehicleType: 0
+    displayName: Sedan1
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.6370791, z: 0}
+      m_Extent: {x: 1.037799, y: 0.6370791, z: 2.25}
+    triangles: 4089
+    weight: 1
+  - prefab: {fileID: 6014760344817114091, guid: 34648ef11001cde4cb7b68e465c9b8af, type: 3}
+    vehicleType: 0
+    displayName: SportCar2
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.66019857, z: 0}
+      m_Extent: {x: 1.1258627, y: 0.66019857, z: 2.25}
+    triangles: 3468
+    weight: 1
+  - prefab: {fileID: 243617298386096965, guid: 4eb22c271d68178d79817284c58956ca, type: 3}
+    vehicleType: 1
+    displayName: Van
+    lengthMeters: 6.3999996
+    bounds:
+      m_Center: {x: 0, y: 1.053461, z: 0}
+      m_Extent: {x: 1.1407528, y: 1.0534611, z: 3.1999998}
+    triangles: 689678
+    weight: 0.027500002

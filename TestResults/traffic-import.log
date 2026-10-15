@@ -1,0 +1,687 @@
+Unity Editor version:    6000.6.0f1 (f7f8ed4d1e24)
+Branch:                  6000.6/respin/6000.6.0f1-fa21a270ab12
+Build type:              Release
+Batch mode:              YES
+System name:             Linux
+Distro version:          #1 SMP PREEMPT_DYNAMIC Kali 7.1.5-1kali1 (2026-07-29)
+Kernel version:          7.1.5+kali-amd64
+Architecture:            x86_64
+Window Protocol:         Wayland (XWayland)
+Available memory:        15852 MB
+Date:                    2026-10-14T10:22:47Z
+VBCSCompilerPreWarmer: ERROR: Couldn't pre-warm as failed to write stub code temporary file (/tmpUnityVBCSPreWarm_258030.cs)
+VBCSCompiler prewarm took 0.51 ms
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Channel LicenseClient-drac doesn't exist
+[Licensing::Module] Successfully launched the LicensingClient (PId: 258047)
+Selected window backend: (null) 
+Desktop is 1280 x 1024 @ 60 Hz
+Initialize udev device monitor.
+
+COMMAND LINE ARGUMENTS:
+/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Unity
+-batchmode
+-quit
+-projectPath
+/home/drac/Documents/coding/realbus-simulator
+-executeMethod
+TrafficModelImporter.Build
+-logFile
+/home/drac/Documents/coding/realbus-simulator/TestResults/traffic-import.log
+Successfully changed project path to: /home/drac/Documents/coding/realbus-simulator
+/home/drac/Documents/coding/realbus-simulator
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-remapper-allocator-initial-capacity=32768"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-main-allocator-mimalloc-enabled=1"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+Logging is directed to a specific file, skipping project log.
+Player connection [139922189790208]  Target information:
+
+Player connection [139922189790208]  * "[IP] 192.168.100.8 [Port] 55504 [Flags] 2 [Guid] 1457639803 [EditorId] 1457639803 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.8) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+
+Player connection [139922189790208]  * "[IP] 172.17.0.1 [Port] 55504 [Flags] 2 [Guid] 1457639803 [EditorId] 1457639803 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.8) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+
+Player connection [139922189790208] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [139922189790208] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac" at "2026-10-14T10:22:48.010644Z"
+[SignatureVerifier] Application signature verification not supported on this platform.
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+  Session Id:              da8f6505e1ac444ba9446545f6fa91c5
+  Correlation Id:          e5a19df73b622da37a3d7604ef6cfad5
+  External correlation Id: 7316978388731031959
+  Machine Id:              o3y/Pwceucb8Ha7Dsv+8jcLZd2I=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-drac" (connect: 0.86s, validation: 0.25s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac-notifications" at "2026-10-14T10:22:48.262568Z"
+[Licensing::Module] Connected to LicensingClient (PId: 258047, launch time: 0.00, total connection time: 1.11s)
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 11270711791718-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.08
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 1.31s
+Initialising UDS system complete:
+  - System type: Client
+  - Resource namespace: 809e1407a05d52a82f37878b0cd6251b
+  - Shared memory size: 1073741824
+  - Command buffer id: 1052624
+  - Command buffer size: 8192
+  - Hashmap size: 4194304
+  - Service connected: false
+[Package Manager] Connected to IPC stream "Upm-258030" after 0.7 seconds.
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+Launching Unity Data Store - /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/Unity.DataStore 
+Unity Data Store artifact dir = Library/DataStore, working dir = /home/drac/Documents/coding/realbus-simulator[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Unity Data Store running and initialised
+Refreshing native plugins compatible for Editor in 10.70 ms, found 0 plugins.
+Initialize engine version: 6000.6.0f1 (f7f8ed4d1e24)
+[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
+[Subsystems] Discovering subsystems at path /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path /home/drac/Documents/coding/realbus-simulator/Assets
+kGfxThreadingModeNonThreaded is not supported on OpenGL Core. Reverting to kGfxThreadingModeDirect instead.
+GfxDevice: creating device client; kGfxThreadingModeDirect
+GLX Extensions: GLX_ARB_context_flush_control GLX_ARB_create_context GLX_ARB_create_context_no_error GLX_ARB_create_context_profile GLX_ARB_fbconfig_float GLX_ARB_framebuffer_sRGB GLX_ARB_get_proc_address GLX_ARB_multisample GLX_EXT_create_context_es2_profile GLX_EXT_create_context_es_profile GLX_EXT_fbconfig_packed_float GLX_EXT_framebuffer_sRGB GLX_EXT_no_config_context GLX_EXT_texture_from_pixmap GLX_EXT_visual_info GLX_EXT_visual_rating GLX_MESA_copy_sub_buffer GLX_MESA_gl_interop GLX_MESA_query_renderer GLX_SGIS_multisample GLX_SGIX_fbconfig GLX_SGIX_pbuffer GLX_SGIX_visual_select_group GLX_SGI_make_current_read 
+Renderer: llvmpipe (LLVM 21.1.8, 256 bits)
+Vendor:   Mesa
+Version:  4.6 (Core Profile) Mesa 26.1.6-1
+GLES:     0
+ GL_3DFX_texture_compression_FXT1 GL_AMD_conservative_depth GL_AMD_draw_buffers_blend GL_AMD_gpu_shader_int64 GL_AMD_multi_draw_indirect GL_AMD_pinned_memory GL_AMD_query_buffer_object GL_AMD_seamless_cubemap_per_texture GL_AMD_shader_stencil_export GL_AMD_shader_trinary_minmax GL_AMD_texture_texture4 GL_AMD_vertex_shader_layer GL_AMD_vertex_shader_viewport_index GL_ANGLE_texture_compression_dxt3 GL_ANGLE_texture_compression_dxt5 GL_ARB_ES2_compatibility GL_ARB_ES3_1_compatibility GL_ARB_ES3_2_compatibility GL_ARB_ES3_compatibility GL_ARB_arrays_of_arrays GL_ARB_base_instance GL_ARB_blend_func_extended GL_ARB_buffer_storage GL_ARB_clear_buffer_object GL_ARB_clear_texture GL_ARB_clip_control GL_ARB_compressed_texture_pixel_storage GL_ARB_compute_shader GL_ARB_conditional_render_inverted GL_ARB_conservative_depth GL_ARB_copy_buffer GL_ARB_copy_image GL_ARB_cull_distance GL_ARB_debug_output GL_ARB_depth_buffer_float GL_ARB_depth_clamp GL_ARB_derivative_control GL_ARB_direct_state_access GL_ARB_draw_buffers GL_A
+RB_draw_buffers_blend GL_ARB_draw_elements_base_vertex GL_ARB_draw_indirect GL_ARB_draw_instanced GL_ARB_enhanced_layouts GL_ARB_explicit_attrib_location GL_ARB_explicit_uniform_location GL_ARB_fragment_coord_conventions GL_ARB_fragment_layer_viewport GL_ARB_fragment_shader GL_ARB_framebuffer_no_attachments GL_ARB_framebuffer_object GL_ARB_framebuffer_sRGB GL_ARB_get_program_binary GL_ARB_get_texture_sub_image GL_ARB_gl_spirv GL_ARB_gpu_shader5 GL_ARB_gpu_shader_fp64 GL_ARB_gpu_shader_int64 GL_ARB_half_float_pixel GL_ARB_half_float_vertex GL_ARB_indirect_parameters GL_ARB_instanced_arrays GL_ARB_internalformat_query GL_ARB_internalformat_query2 GL_ARB_invalidate_subdata GL_ARB_map_buffer_alignment GL_ARB_map_buffer_range GL_ARB_multi_bind GL_ARB_multi_draw_indirect GL_ARB_occlusion_query2 GL_ARB_parallel_shader_compile GL_ARB_pipeline_statistics_query GL_ARB_pixel_buffer_object GL_ARB_point_sprite GL_ARB_polygon_offset_clamp GL_ARB_post_depth_coverage GL_ARB_program_interface_query GL_ARB_provoking_vertex GL
+_ARB_query_buffer_object GL_ARB_robust_buffer_access_behavior GL_ARB_robustness GL_ARB_sample_locations GL_ARB_sample_shading GL_ARB_sampler_objects GL_ARB_seamless_cube_map GL_ARB_seamless_cubemap_per_texture GL_ARB_separate_shader_objects GL_ARB_shader_atomic_counter_ops GL_ARB_shader_atomic_counters GL_ARB_shader_ballot GL_ARB_shader_bit_encoding GL_ARB_shader_clock GL_ARB_shader_draw_parameters GL_ARB_shader_group_vote GL_ARB_shader_image_load_store GL_ARB_shader_image_size GL_ARB_shader_objects GL_ARB_shader_precision GL_ARB_shader_stencil_export GL_ARB_shader_storage_buffer_object GL_ARB_shader_subroutine GL_ARB_shader_texture_image_samples GL_ARB_shader_texture_lod GL_ARB_shader_viewport_layer_array GL_ARB_shading_language_420pack GL_ARB_shading_language_include GL_ARB_shading_language_packing GL_ARB_spirv_extensions GL_ARB_stencil_texturing GL_ARB_sync GL_ARB_tessellation_shader GL_ARB_texture_barrier GL_ARB_texture_border_clamp GL_ARB_texture_buffer_object GL_ARB_texture_buffer_object_rgb32 GL_ARB_t
+exture_buffer_range GL_ARB_texture_compression_bptc GL_ARB_texture_compression_rgtc GL_ARB_texture_cube_map_array GL_ARB_texture_filter_anisotropic GL_ARB_texture_filter_minmax GL_ARB_texture_float GL_ARB_texture_gather GL_ARB_texture_mirror_clamp_to_edge GL_ARB_texture_multisample GL_ARB_texture_non_power_of_two GL_ARB_texture_query_levels GL_ARB_texture_query_lod GL_ARB_texture_rectangle GL_ARB_texture_rg GL_ARB_texture_rgb10_a2ui GL_ARB_texture_stencil8 GL_ARB_texture_storage GL_ARB_texture_storage_multisample GL_ARB_texture_swizzle GL_ARB_texture_view GL_ARB_timer_query GL_ARB_transform_feedback2 GL_ARB_transform_feedback3 GL_ARB_transform_feedback_instanced GL_ARB_transform_feedback_overflow_query GL_ARB_uniform_buffer_object GL_ARB_vertex_array_bgra GL_ARB_vertex_array_object GL_ARB_vertex_attrib_64bit GL_ARB_vertex_attrib_binding GL_ARB_vertex_buffer_object GL_ARB_vertex_shader GL_ARB_vertex_type_10f_11f_11f_rev GL_ARB_vertex_type_2_10_10_10_rev GL_ARB_viewport_array GL_ARM_shader_framebuffer_fetch_de
+pth_stencil GL_ATI_blend_equation_separate GL_ATI_meminfo GL_ATI_texture_float GL_ATI_texture_mirror_once GL_EXT_EGL_image_storage GL_EXT_EGL_image_storage_compression GL_EXT_EGL_sync GL_EXT_abgr GL_EXT_blend_equation_separate GL_EXT_debug_label GL_EXT_depth_bounds_test GL_EXT_draw_buffers2 GL_EXT_draw_instanced GL_EXT_framebuffer_blit GL_EXT_framebuffer_multisample GL_EXT_framebuffer_multisample_blit_scaled GL_EXT_framebuffer_object GL_EXT_framebuffer_sRGB GL_EXT_memory_object GL_EXT_memory_object_fd GL_EXT_mesh_shader GL_EXT_packed_depth_stencil GL_EXT_packed_float GL_EXT_pixel_buffer_object GL_EXT_polygon_offset_clamp GL_EXT_provoking_vertex GL_EXT_shader_clock GL_EXT_shader_framebuffer_fetch GL_EXT_shader_framebuffer_fetch_non_coherent GL_EXT_shader_image_load_formatted GL_EXT_shader_integer_mix GL_EXT_texture_array GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_compression_s3tc GL_EXT_texture_filter_anisotropic GL_EXT_texture_filter_minmax GL_EXT_texture_integer GL_EXT_te
+xture_mirror_clamp GL_EXT_texture_sRGB GL_EXT_texture_sRGB_R8 GL_EXT_texture_sRGB_RG8 GL_EXT_texture_sRGB_decode GL_EXT_texture_shadow_lod GL_EXT_texture_shared_exponent GL_EXT_texture_snorm GL_EXT_texture_storage GL_EXT_texture_swizzle GL_EXT_timer_query GL_EXT_transform_feedback GL_EXT_vertex_array_bgra GL_EXT_vertex_attrib_64bit GL_IBM_multimode_draw_arrays GL_INTEL_shader_atomic_float_minmax GL_KHR_blend_equation_advanced GL_KHR_blend_equation_advanced_coherent GL_KHR_context_flush_control GL_KHR_debug GL_KHR_no_error GL_KHR_parallel_shader_compile GL_KHR_robust_buffer_access_behavior GL_KHR_robustness GL_KHR_texture_compression_astc_ldr GL_KHR_texture_compression_astc_sliced_3d GL_MESA_framebuffer_flip_y GL_MESA_pack_invert GL_MESA_shader_integer_functions GL_MESA_texture_signed_rgba GL_NVX_gpu_memory_info GL_NV_alpha_to_coverage_dither_control GL_NV_conditional_render GL_NV_copy_image GL_NV_depth_clamp GL_NV_packed_depth_stencil GL_NV_sample_locations GL_NV_shader_atomic_float GL_NV_texture_barrier GL_
+OES_EGL_image GL_OVR_multiview GL_OVR_multiview2 GL_S3_s3tc
+OPENGL LOG: Creating OpenGL 4.6 graphics device ; Context level  <OpenGL 4.5> ; Context handle 916792224
+Initialize mono
+Mono path[0] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Managed'
+Mono path[1] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
+Mono path[2] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-linux'
+Mono config path = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56030
+CodeReloadManager initialized
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+[Licensing::Client] Successfully resolved entitlement details
+Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll
+[Licensing::Client] Successfully resolved entitlement details
+Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
+Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
+Registered in 0.008948 seconds.
+[usbmuxd] Start listen thread
+[usbmuxd] Listen thread started
+Native extension for LinuxStandalone target not found
+Native extension for iOS target not found
+Native extension for Android target not found
+Package Manager log level set to [2]
+[Licensing::Client] Successfully resolved entitlement details
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  8.158 seconds
+Domain Reload Profiling: 9635ms
+	BeginReloadAssembly (239ms)
+		CreateAndSetChildDomain (6ms)
+	RebuildCommonClasses (13ms)
+	RebuildNativeTypeToScriptingClass (30ms)
+	initialDomainReloadingComplete (180ms)
+	LoadAllAssembliesAndSetupDomain (1013ms)
+		LoadAssemblies (233ms)
+		TypeCache.Refresh (704ms)
+			TypeCache.ScanAssembly (665ms)
+		AnalyzeDomain (5ms)
+	FinalizeReload (8160ms)
+		SetupLoadedEditorAssemblies (0ms)
+			LogAssemblyErrors (5ms)
+			InitializePlatformSupportModulesInManaged (25ms)
+			BeforeProcessingInitializeOnLoad (316ms)
+			ProcessInitializeOnLoadAttributes (275ms)
+			ProcessInitializeOnLoadMethodAttributes (6864ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 61 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.collab-proxy@2.13.6 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.collab-proxy@4628d2ba6ea4)
+    com.unity.device-simulator.devices@1.0.1 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.device-simulator.devices@2af643ceec84)
+    com.unity.inputsystem@1.20.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.inputsystem@7a4e1a2a8194)
+    com.unity.purchasing@5.2.1 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.purchasing@6b6ab99158a4)
+    com.unity.visualscripting@1.9.12 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.visualscripting@4edfcc09512f)
+    com.unity.services.core@1.18.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.services.core@3464cb68d709)
+    com.unity.ide.visualstudio@2.0.26 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.ide.visualstudio@a99d56dec63f)
+    com.unity.ide.rider@3.0.39 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.ide.rider@4504839d03f7)
+    com.unity.performance.profile-analyzer@1.4.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.performance.profile-analyzer@2bb26871883c)
+    com.unity.testtools.codecoverage@1.3.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.testtools.codecoverage@19a841221620)
+    com.unity.splines@2.9.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.splines@e6e1d5900acc)
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.nuget.newtonsoft-json@4dfd81071c64)
+    com.unity.settings-manager@2.1.1 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.settings-manager@0b8638c5ce86)
+  Built-in packages:
+    com.unity.2d.sprite@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.2d.sprite@10bda984f14e)
+    com.unity.cinemachine@6.6.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.cinemachine@1b8d58983403)
+    com.unity.feature.development@1.0.2 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.feature.development@767aadbc6eb7)
+    com.unity.multiplayer.center@2.0.1 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.multiplayer.center@5d9b40807a7d)
+    com.unity.timeline@6.6.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.timeline@56b07ebd2230)
+    com.unity.ugui@2.6.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.ugui@9acc4bc81b33)
+    com.unity.modules.accessibility@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.accessibility)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.adaptiveperformance)
+    com.unity.modules.ai@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.ai)
+    com.unity.modules.androidjni@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.androidjni)
+    com.unity.modules.animation@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.audio)
+    com.unity.modules.cloth@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.cloth)
+    com.unity.modules.director@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.jsonserialize)
+    com.unity.modules.particlesystem@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.particlesystem)
+    com.unity.modules.physics@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.physics)
+    com.unity.modules.physics2d@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.physics2d)
+    com.unity.modules.physicscore2d@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.physicscore2d)
+    com.unity.modules.screencapture@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.screencapture)
+    com.unity.modules.terrain@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.terrain)
+    com.unity.modules.terrainphysics@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.terrainphysics)
+    com.unity.modules.tetgen@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.tetgen)
+    com.unity.modules.tilemap@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.tilemap)
+    com.unity.modules.timelinefoundation@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.timelinefoundation)
+    com.unity.modules.ui@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.uielements)
+    com.unity.modules.umbra@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.umbra)
+    com.unity.modules.unityanalytics@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.unityanalytics)
+    com.unity.modules.unitywebrequest@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.unitywebrequest)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.unitywebrequestassetbundle)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.unitywebrequestaudio)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.unitywebrequesttexture)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.unitywebrequestwww)
+    com.unity.modules.vectorgraphics@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.vectorgraphics)
+    com.unity.modules.vehicles@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.vehicles)
+    com.unity.modules.video@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.video)
+    com.unity.modules.wind@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.wind)
+    com.unity.modules.xr@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.subsystems)
+    com.unity.modules.hierarchycore@1.0.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.modules.hierarchycore)
+    com.unity.editorcoroutines@6.6.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.editorcoroutines@af8abaa9a9d2)
+    com.unity.test-framework@1.8.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.test-framework@f0b61198e8dc)
+    com.unity.ext.nunit@2.1.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.ext.nunit@508b95ff9afe)
+    com.unity.mathematics@1.4.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.mathematics@9c2fa23d2d82)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.01 seconds
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+[ScriptCompilation] Requested script compilation because: AssetDatabase observed changes in script compilation related files
+Starting: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/BuildPipeline/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: /home/drac/Documents/coding/realbus-simulator
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 14s
+[685/910    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[890/910    5s] Csc Library/Bee/artifacts/2400b0aE.dag/GameScripts.dll (+2 others)
+[891/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aE.dag/post-processed/GameScripts.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aE.dag/GameScripts.dll, with 139 defines and 318 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[892/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.pdb
+[893/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.dll
+[894/910    2s] Csc Library/Bee/artifacts/2400b0aE.dag/GameScripts.Editor.dll (+2 others)
+[895/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aE.dag/post-processed/GameScripts.Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aE.dag/GameScripts.Editor.dll, with 137 defines and 329 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[896/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.pdb
+[897/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.dll
+[898/910    2s] Csc Library/Bee/artifacts/2400b0aE.dag/GameScriptsTests.Editor.dll (+2 others)
+[899/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aE.dag/post-processed/GameScriptsTests.Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aE.dag/GameScriptsTests.Editor.dll, with 137 defines and 308 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[900/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.pdb
+[901/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.dll
+[902/910    4s] Csc Library/Bee/artifacts/2400b0aE.dag/Assembly-CSharp.dll (+2 others)
+[903/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aE.dag/post-processed/Assembly-CSharp.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aE.dag/Assembly-CSharp.dll, with 139 defines and 350 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[904/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
+[905/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
+[906/910    2s] Csc Library/Bee/artifacts/2400b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+[907/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aE.dag/Assembly-CSharp-Editor.dll, with 137 defines and 376 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[908/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+[909/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+*** Tundra build success (14.67 seconds), 21 items updated, 910 evaluated
+Total cache size 77367884
+Total cache size after purge 77367884, took 00:00:00.2562880
+AssetDatabase: script compilation time: 16.241747s
+Begin MonoManager ReloadAssembly
+Symbol file LoadedFromMemory is not a mono symbol file
+Symbol file LoadedFromMemory is not a mono symbol file
+Symbol file LoadedFromMemory is not a mono symbol file
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+Refreshing native plugins compatible for Editor in 18.90 ms, found 0 plugins.
+Native extension for LinuxStandalone target not found
+Native extension for iOS target not found
+Native extension for Android target not found
+Refreshing native plugins compatible for Editor in 25.53 ms, found 0 plugins.
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  4.084 seconds
+Domain Reload Profiling: 9338ms
+	BeginReloadAssembly (998ms)
+		DisableScriptedObjects (92ms)
+		CreateAndSetChildDomain (209ms)
+	RebuildCommonClasses (44ms)
+	RebuildNativeTypeToScriptingClass (58ms)
+	initialDomainReloadingComplete (220ms)
+	LoadAllAssembliesAndSetupDomain (3930ms)
+		LoadAssemblies (2056ms)
+		TypeCache.Refresh (1147ms)
+			TypeCache.ScanAssembly (1063ms)
+		AnalyzeDomain (385ms)
+			BuildScriptInfoCaches (345ms)
+			ResolveRequiredComponents (31ms)
+	FinalizeReload (4088ms)
+		SetupLoadedEditorAssemblies (0ms)
+			LogAssemblyErrors (9ms)
+			InitializePlatformSupportModulesInManaged (36ms)
+			BeforeProcessingInitializeOnLoad (710ms)
+			ProcessInitializeOnLoadAttributes (1748ms)
+			ProcessInitializeOnLoadMethodAttributes (239ms)
+			AfterProcessingInitializeOnLoad (32ms)
+			EditorAssembliesLoaded (7ms)
+		AwakeInstancesAfterBackupRestoration (120ms)
+Starting new worker id: 0 with log in /home/drac/Documents/coding/realbus-simulator/Logs/AssetImportWorkerHW0.log
+Refreshing native plugins compatible for Editor in 20.29 ms, found 0 plugins.
+
+Asset Pipeline Refresh (id=7b073efe2655b4c13928bd12ee5e5f08): Total: 30.553 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=7136 ms
+		Asset DB Callback time: managed=1544 ms, native=85 ms
+		Scripting: domain reloads=1, domain reload time=5399 ms, compile time=16248 ms, other=138 ms
+		Project Asset Count: scripts=1642, non-scripts=2664
+		Asset File Changes: new=0, changed=1, moved=0, deleted=0
+		Scan Filter Count: 1
+	InvokePackagesCallback: 15.029ms
+	ApplyChangesToAssetFolders: 1.164ms
+	Scan: 1839.104ms
+	Collect global state as custom dependencies: 16.153ms
+	OnSourceAssetsModified: 1.320ms
+	CategorizeScriptCompilationAssets: 133.533ms
+	ProcessAssetsWithTransientArtifactChanges: 452.874ms
+	CategorizeAssets: 178.683ms
+	CompileScripts: 16247.846ms
+	ImportOutOfDateAssets: 4274.232ms (4182.655ms without children)
+		UnloadImportedAssets: 0.742ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 4.517ms
+		ImportSchedulerStart: 86.304ms
+	PostProcessAllAssets: 1589.999ms
+		XRBuildSystem.XRAssetImported 38.100ms
+		VCAutoAddAssetPostprocess 5.780ms
+		PostProcessCallbackCreateDeferredMaterials 0.184ms
+		ShaderAssetModifiedCallback 0.072ms
+		MonoPostProcessAllAssets: 1543.829ms
+			AssetPostprocessor.OnPostprocessAllAssets 1112.738ms
+			StyleCatalogPostProcessor.OnPostprocessAllAssets 156.110ms
+			SyncVS.PostprocessSyncProject 53.992ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 53.824ms
+			BuilderAssetPostprocessor.OnPostprocessAllAssets 35.669ms
+			SpriteSlicePostprocessor.OnPostprocessAllAssets 12.478ms
+			AssetChangedListener.OnPostprocessAllAssets 9.209ms
+			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 7.050ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 5.267ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 4.085ms
+			TextAssetPostProcessor.OnPostprocessAllAssets 3.065ms
+			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 2.922ms
+			SpriteEditorTexturePostprocessor.OnPostprocessAllAssets 2.816ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 2.180ms
+			AudioMixerPostprocessor.OnPostprocessAllAssets 1.815ms
+			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 1.646ms
+			UVCSAssetPostprocessor.OnPostprocessAllAssets 1.639ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 1.580ms
+			TMPro_TexturePostProcessor.OnPostprocessAllAssets 1.488ms
+			CinemachineSettings.OnPostprocessAllAssets 1.416ms
+			AssetEvents.OnPostprocessAllAssets 1.200ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 1.140ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 1.047ms
+			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 0.882ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.821ms
+			ConfigAssetsTracker.OnPostprocessAllAssets 0.798ms
+			SpeedTreePostProcessor.OnPostprocessAllAssets 0.791ms
+			DomainReloadProcessor.OnPostprocessAllAssets 0.782ms
+			SamplePostprocessor.OnPostprocessAllAssets 0.774ms
+			ThemePostprocessor.OnPostprocessAllAssets 0.655ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.591ms
+			AssetReloadNotifier.OnPostprocessAllAssets 0.461ms
+			AudioContainerPostProcessor.OnPostprocessAllAssets 0.440ms
+	PostAssetChangesProfiler: 25.632ms
+	UnloadStreamsBegin: 4.738ms
+	PersistCurrentRevisions: 0.693ms
+	GenerateScriptTypeHashes: 16.244ms
+	GenerateScriptTypeSerializationHashes: 33.764ms
+	Untracked: 5765.111ms
+
+Application.AssetDatabase Initial Refresh End
+AutoLocale: current locale expects 'C' but got 'en_US.UTF-8'Launched and connected shader compiler UnityShaderCompiler after 0.08 seconds
+Scanning for USB devices : 20.807ms
+Initializing Unity extensions:
+UpdateMenuTitleForLanguage: 10
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-My-project
+Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 6610 unused Assets / (5.5 MB). Loaded Objects now: 7318.
+Memory consumption went from 200.3 MB to 194.8 MB.
+Total: 63.762058 ms (FindLiveObjects: 2.641736 ms CreateObjectMapping: 2.157653 ms MarkObjects: 42.291214 ms  DeleteObjects: 15.560911 ms)
+
+
+Asset Pipeline Refresh (id=c48e6433cb603c085bf318c1e25fc659): Total: 1.054 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1053 ms
+		Asset DB Callback time: managed=0 ms, native=0 ms
+		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
+		Project Asset Count: scripts=1642, non-scripts=2664
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 1
+	ApplyChangesToAssetFolders: 0.767ms
+	Scan: 1014.562ms
+	Collect global state as custom dependencies: 1.609ms
+	ProcessAssetsWithTransientArtifactChanges: 1.209ms
+	CategorizeAssets: 10.600ms
+	ImportOutOfDateAssets: 5.930ms (0.807ms without children)
+		UnloadImportedAssets: 0.338ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 3.010ms
+		ImportSchedulerStart: 1.765ms
+	GatherAllCurrentPrimaryImportResultRevisions: 1.253ms
+	UnloadStreamsBegin: 1.273ms
+	PersistCurrentRevisions: 0.696ms
+	Untracked: 11.766ms
+
+[Traffic] Stripped 1 interior parts from 'Car2(Clone)'.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:Strip (UnityEngine.GameObject) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:210)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:115)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 210)
+
+Render queue value outside of the allowed range (2501 - 3999) for selected Blend mode, resetting render queue to default
+Importing 'GUID: 49a265c0243e94f21ab5e0da2c1ce8e1 - Path: Assets/_Game/Resources/TrafficGenerated/Car2_53ec6115.prefab' with importer (PrefabImporter)
+Imported 'GUID: 49a265c0243e94f21ab5e0da2c1ce8e1' -> (Import Result ID: 'd8b3de320c1b069473413524c6c3ec9f') in 0.038 seconds [static dependencies only]. Details - ImportResultOutputID=2f9268fc7b830276d3125eb1233b3939 DependenciesID=35e475b6187effa657bdfe0bdeb8b760 StaticDependenciesID=93af8f2ac97840e7d48cae98cd134ed4 
+Refreshing native plugins compatible for Editor in 25.72 ms, found 0 plugins.
+Asset Pipeline Refresh (id=93990a2af1fa26a1f92e0ae51b1d8e73): Total: 0.267 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Traffic] Car2 -> Car, length 4.5 m, 5176 triangles, facing unknown, left as authored (no named end, centre -0.2), weight 1.00
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:171)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 171)
+
+[Traffic] Stripped 1 interior parts from 'Jeep2(Clone)'.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:Strip (UnityEngine.GameObject) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:210)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:115)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 210)
+
+Render queue value outside of the allowed range (2501 - 3999) for selected Blend mode, resetting render queue to default
+Importing 'GUID: 08cafba770caedec1a5276541e95cf6b - Path: Assets/_Game/Resources/TrafficGenerated/Jeep2_348fa29d.prefab' with importer (PrefabImporter)
+Imported 'GUID: 08cafba770caedec1a5276541e95cf6b' -> (Import Result ID: '192cbd6b131296f16ee9ac24182472c0') in 0.010 seconds [static dependencies only]. Details - ImportResultOutputID=bfa032b4716da45f18d18a3dcce469e1 DependenciesID=2fa513f50750a0136cc170406b2ae13c StaticDependenciesID=f025a6607c81a949629e5976c394ae03 
+Refreshing native plugins compatible for Editor in 24.09 ms, found 0 plugins.
+Asset Pipeline Refresh (id=eab76b804b89a183c889b4b39ad347f3): Total: 0.130 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Traffic] Jeep2 -> Car, length 4.5 m, 4532 triangles, facing unknown, left as authored (no named end, centre 0.0), weight 1.00
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:171)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 171)
+
+[Traffic] Stripped 1 interior parts from 'MicroBus4(Clone)'.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:Strip (UnityEngine.GameObject) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:210)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:115)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 210)
+
+Render queue value outside of the allowed range (2501 - 3999) for selected Blend mode, resetting render queue to default
+Importing 'GUID: 3390de46e4b948033868a8c4ded23c0e - Path: Assets/_Game/Resources/TrafficGenerated/MicroBus4_4779d8f9.prefab' with importer (PrefabImporter)
+Imported 'GUID: 3390de46e4b948033868a8c4ded23c0e' -> (Import Result ID: 'a16509eff564a9e610993003064a1213') in 0.008 seconds [static dependencies only]. Details - ImportResultOutputID=c7d8b320525281009580e3a08840f36e DependenciesID=702c2b68844583fda9457e6c76793377 StaticDependenciesID=cc6e2dfb74314b6ce487d29218c08066 
+Refreshing native plugins compatible for Editor in 27.18 ms, found 0 plugins.
+Asset Pipeline Refresh (id=90ed53a2e764a6d1a9a37aac42a0f84d): Total: 0.148 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Traffic] MicroBus4 -> Bus, length 8.5 m, 3737 triangles, facing unknown, left as authored (no named end, centre 0.2), weight 0.30
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:171)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 171)
+
+[Traffic] Stripped 1 interior parts from 'Sedan1(Clone)'.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:Strip (UnityEngine.GameObject) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:210)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:115)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 210)
+
+Render queue value outside of the allowed range (2501 - 3999) for selected Blend mode, resetting render queue to default
+Importing 'GUID: 8275e7a5e8c5739af95ead1641c93b30 - Path: Assets/_Game/Resources/TrafficGenerated/Sedan1_7d652cef.prefab' with importer (PrefabImporter)
+Imported 'GUID: 8275e7a5e8c5739af95ead1641c93b30' -> (Import Result ID: '33143507906f4d8fb3b74f7840188ec8') in 0.011 seconds [static dependencies only]. Details - ImportResultOutputID=a475eedfbc942c15d48f0a63a81df253 DependenciesID=dd1e3b4a7f5e4086c8a4ddba0861c952 StaticDependenciesID=4df3ac5680ec765e464ae95261194f32 
+Refreshing native plugins compatible for Editor in 32.82 ms, found 0 plugins.
+Asset Pipeline Refresh (id=95a9a763b792d6572b2bd390c9a2b58e): Total: 0.161 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Traffic] Sedan1 -> Car, length 4.5 m, 4089 triangles, facing unknown, left as authored (no named end, centre -0.4), weight 1.00
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:171)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 171)
+
+[Traffic] Stripped 1 interior parts from 'SportCar2(Clone)'.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:Strip (UnityEngine.GameObject) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:210)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:115)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 210)
+
+Render queue value outside of the allowed range (2501 - 3999) for selected Blend mode, resetting render queue to default
+Importing 'GUID: 34648ef11001cde4cb7b68e465c9b8af - Path: Assets/_Game/Resources/TrafficGenerated/SportCar2_c750512b.prefab' with importer (PrefabImporter)
+Imported 'GUID: 34648ef11001cde4cb7b68e465c9b8af' -> (Import Result ID: '810c827db552126dbd82528daeba64d9') in 0.010 seconds [static dependencies only]. Details - ImportResultOutputID=69919cdfd1608b0dab073c09eff65d2c DependenciesID=108bccc9b808f1f819827107ef319e6f StaticDependenciesID=a487febd8cd126202daf1bcc75d6e073 
+Refreshing native plugins compatible for Editor in 26.03 ms, found 0 plugins.
+Asset Pipeline Refresh (id=f2f47de692ec3c455b1ce47fa5d99592): Total: 0.153 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Traffic] SportCar2 -> Car, length 4.5 m, 3468 triangles, facing unknown, left as authored (no named end, centre 0.5), weight 1.00
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:171)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 171)
+
+[Traffic] Stripped 5 interior parts from 'Van(Clone)'.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:Strip (UnityEngine.GameObject) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:210)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:115)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 210)
+
+[Traffic] 'Van' has 689678 triangles, above the 60000 traffic budget: it is included with a reduced pool weight.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:LogWarning (object)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:157)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 157)
+
+Importing 'GUID: 4eb22c271d68178d79817284c58956ca - Path: Assets/_Game/Resources/TrafficGenerated/Van_de6cac8f.prefab' with importer (PrefabImporter)
+Imported 'GUID: 4eb22c271d68178d79817284c58956ca' -> (Import Result ID: 'a6cabcfa37fbea9421119c4e443d8517') in 0.013 seconds [static dependencies only]. Details - ImportResultOutputID=6c8587aadb0587a5827cff002232a89b DependenciesID=337de76bec3b869691613baf59022ca9 StaticDependenciesID=8ba62bde390b23e2a753af110b39c87e 
+Refreshing native plugins compatible for Editor in 26.29 ms, found 0 plugins.
+Asset Pipeline Refresh (id=dbc44465bb87a71609d872dcfe0cae2b): Total: 0.143 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Traffic] Van -> Truck, length 6.4 m, 689678 triangles, facing already +Z (front 'Front '@2.3, rear 'Rear'@-2.6), weight 0.03
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:BuildEntry (string) (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:171)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:65)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 171)
+
+Importing 'GUID: deee66e6fe914ba06a633f9efaf296c2 - Path: Assets/_Game/Resources/TrafficCatalog.asset' with importer (NativeFormatImporter)
+Imported 'GUID: deee66e6fe914ba06a633f9efaf296c2' -> (Import Result ID: 'c4b553c696f246a4bd6913b16a589cf8') in 0.004 seconds [static dependencies only]. Details - ImportResultOutputID=4e582d9dfdda4e663427d742031f0e10 DependenciesID=e3c71c703934b95854e15f921ba8591c StaticDependenciesID=86ed8baf40fb5a37bf039593c9d8816e 
+Refreshing native plugins compatible for Editor in 26.10 ms, found 0 plugins.
+Asset Pipeline Refresh (id=593a16f0c9c1de224bff5fea56d7f8c0): Total: 0.118 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Traffic] Prepared 6 traffic models from 6 sources (710680 triangles total). Sources were not modified.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TrafficModelImporter:Build () (at Assets/_Game/Scripts/Editor/TrafficModelImporter.cs:81)
+
+(Filename: Assets/_Game/Scripts/Editor/TrafficModelImporter.cs Line: 81)
+
+Batchmode quit successfully invoked - shutting down!
+Worker ready: AssetImportWorkerHW0 0
+Killing ADB server in 0.121533 seconds.
+Shutting down MSBuild server...
+Shutting down VB/C# compiler server...
+MSBuild server shut down successfully.
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-drac-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-drac channel disconnected successfully.
+VB/C# compiler server shut down successfully.
+Lingering sessions upon destruction of worker manager
+Shut down UDS service system complete
+Unity Data Store service was successfully shut down
+UDS shutting down local client system
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+CodeReloadManager destroyed
+debugger-agent: Unable to listen on 61
+[usbmuxd] Stop listen thread
+[usbmuxd] Listen thread exiting
+Exiting batchmode successfully now!
+[ExitDontLaunchBugReporter] Exiting without the bug reporter. Application will exit with return code 0
+
+SDL leaked 2 allocations
+Turn on UNITY_SDL_ALLOCATION_TRACKING for detailed information.

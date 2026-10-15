@@ -25,6 +25,7 @@ public class MaintenanceSystem : MonoBehaviour
 
     float[] initialForwardStiffness;
     float[] initialSidewaysStiffness;
+    GameState loadedFromState;
 
     public float BrakeWearNormalized => brakeWearNormalized;
     public float EngineHours => engineHours;
@@ -40,9 +41,24 @@ public class MaintenanceSystem : MonoBehaviour
             passengerManager = FindAnyObjectByType<PassengerManager>();
 
         EnsureAxleArray();
-        LoadFromGameState();
+        EnsureStateLoaded();
         CacheWheelBaseFriction();
         ApplyTyreGripPenalty();
+    }
+
+    /// <summary>
+    /// Loads persisted wear from the active <see cref="GameState"/> at most once
+    /// per GameState instance. Unlike a one-shot load in Awake, this also works
+    /// when the state is queried before Awake runs (for example in EditMode
+    /// tests) or after the GameState singleton is replaced.
+    /// </summary>
+    void EnsureStateLoaded()
+    {
+        GameState state = GameState.Instance;
+        if (state == null || state.vehicleState == null || loadedFromState == state)
+            return;
+        LoadFromGameState();
+        loadedFromState = state;
     }
 
     void FixedUpdate()
@@ -60,6 +76,7 @@ public class MaintenanceSystem : MonoBehaviour
     public float GetAxleWearNormalized(int axleIndex)
     {
         EnsureAxleArray();
+        EnsureStateLoaded();
         if (axleIndex < 0 || axleIndex >= axleTyreWearNormalized.Length)
             return 0f;
         return axleTyreWearNormalized[axleIndex];

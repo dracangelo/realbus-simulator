@@ -113,6 +113,14 @@ public class RealBusAudioManager : MonoBehaviour
 
     public void PlayUIClick() { PlayOneShotOn(uiSource, uiClick, 0.45f); ForwardEvent("ui.click"); }
     public void PlayDocking() { PlayOneShot(dockingChime, 0.7f); ForwardEvent("bus.docked"); }
+    public void PlayDoorOperated(bool locking)
+    {
+        if (airHiss != null)
+            PlayOneShot(airHiss, locking ? 0.65f : 0.5f);
+        else if (dockingChime != null)
+            PlayOneShot(dockingChime, 0.5f);
+        ForwardEvent(locking ? "bus.doors_locked" : "bus.doors_opened");
+    }
     public void PlayCollision(float severity = 1f) { PlayOneShot(collisionHit, Mathf.Clamp01(0.35f + severity * 0.2f)); ForwardEvent("bus.collision"); }
     public void PlayMissionComplete() { PlayOneShot(missionFanfare, 0.9f); ForwardEvent("mission.complete"); }
     public void PlayRankUp() { PlayOneShot(rankJingle, 0.9f); ForwardEvent("rank.up"); }
@@ -149,9 +157,24 @@ public class RealBusAudioManager : MonoBehaviour
         rankJingle = productionProfile.rankJingle != null ? productionProfile.rankJingle : rankJingle;
     }
 
+    /// <summary>
+    /// Hands an audio event to the optional bridge. The bridge is preferred through
+    /// <see cref="IRealBusAudioEventSink"/> because the old name-based
+    /// <c>SendMessage</c> silently did nothing when the method was missing or renamed,
+    /// which made a broken bridge indistinguishable from an absent one.
+    /// </summary>
     void ForwardEvent(string eventName)
     {
-        if (fmodEventBridge != null) fmodEventBridge.SendMessage("PlayRealBusEvent", eventName, SendMessageOptions.DontRequireReceiver);
+        if (fmodEventBridge == null) return;
+
+        if (fmodEventBridge is IRealBusAudioEventSink sink)
+        {
+            sink.PlayRealBusEvent(eventName);
+            return;
+        }
+
+        // Legacy hook for a bridge that has not adopted the interface yet.
+        fmodEventBridge.SendMessage("PlayRealBusEvent", eventName, SendMessageOptions.DontRequireReceiver);
     }
 
     AudioSource EnsureLoop(GameObject owner, AudioClip clip, string label, float volume, bool spatial = true)
@@ -173,38 +196,35 @@ public class RealBusAudioManager : MonoBehaviour
         if (source.clip != null && !source.isPlaying) source.Play();
     }
 
+    /// <summary>
+    /// Builds every clip the game needs when no production audio is installed. The
+    /// buffers come from <see cref="ProceduralAudio" /> so that the looping engine and
+    /// tyre samples are genuinely periodic - the earlier generators faded every clip
+    /// in and out, which made a one-second loop pulse once per second.
+    /// </summary>
     void CreateFallbackClips()
     {
-        if (engineIdle == null) engineIdle = CreateTone("Fallback Diesel Idle", 72f, 1f, 0.28f);
-        if (engineLoad == null) engineLoad = CreateTone("Fallback Diesel Load", 126f, 1f, 0.22f);
-        if (tyreRoll == null) tyreRoll = CreateNoise("Fallback Tyre Roll", 1f, 0.13f);
-        if (tyreSqueal == null) tyreSqueal = CreateTone("Fallback Tyre Squeal", 920f, 0.28f, 0.1f);
-        if (brakeSqueal == null) brakeSqueal = CreateTone("Fallback Brake Squeal", 1120f, 0.35f, 0.13f);
-        if (airHiss == null) airHiss = CreateNoise("Fallback Air Hiss", 0.28f, 0.2f);
-        if (uiClick == null) uiClick = CreateTone("Fallback UI Click", 520f, 0.08f, 0.18f);
-        if (dockingChime == null) dockingChime = CreateTone("Fallback Docking Chime", 660f, 0.22f, 0.18f);
-        if (missionFanfare == null) missionFanfare = CreateTone("Fallback Mission Fanfare", 880f, 0.65f, 0.2f);
-        if (rankJingle == null) rankJingle = CreateTone("Fallback Rank Jingle", 1040f, 0.45f, 0.2f);
-        if (collisionHit == null) collisionHit = CreateNoise("Fallback Collision", 0.18f, 0.28f);
-        if (cityAmbience == null) cityAmbience = CreateNoise("Fallback City Ambience", 1f, 0.035f);
-        if (passengerChatter == null && airConditioning == null) airConditioning = CreateNoise("Fallback Cabin Air", 1f, 0.025f);
-    }
-
-    static AudioClip CreateTone(string name, float frequency, float seconds, float amplitude)
-    {
-        const int sampleRate = 22050; int length = Mathf.Max(1, Mathf.RoundToInt(sampleRate * seconds)); float[] data = new float[length];
-        for (int i = 0; i < length; i++)
+        ProceduralAudio.ClipSpec[] library = ProceduralAudio.BuildFallbackLibrary();
+        for (int i = 0; i < library.Length; i++)
         {
-            float envelope = Mathf.Min(1f, i / (sampleRate * 0.015f)) * Mathf.Min(1f, (length - i) / (sampleRate * 0.03f));
-            data[i] = (Mathf.Sin(2f * Mathf.PI * frequency * i / sampleRate) + Mathf.Sin(2f * Mathf.PI * frequency * 2f * i / sampleRate) * 0.25f) * amplitude * envelope;
+            ProceduralAudio.ClipSpec spec = library[i];
+            AudioClip clip = ProceduralAudio.ToClip(spec.name, spec.samples, spec.loop);
+            switch (spec.key)
+            {
+                case "engineIdle":     if (engineIdle == null) engineIdle = clip; break;
+                case "engineLoad":     if (engineLoad == null) engineLoad = clip; break;
+                case "tyreRoll":       if (tyreRoll == null) tyreRoll = clip; break;
+                case "tyreSqueal":     if (tyreSqueal == null) tyreSqueal = clip; break;
+                case "brakeSqueal":    if (brakeSqueal == null) brakeSqueal = clip; break;
+                case "airHiss":        if (airHiss == null) airHiss = clip; break;
+                case "uiClick":        if (uiClick == null) uiClick = clip; break;
+                case "dockingChime":   if (dockingChime == null) dockingChime = clip; break;
+                case "missionFanfare": if (missionFanfare == null) missionFanfare = clip; break;
+                case "rankJingle":     if (rankJingle == null) rankJingle = clip; break;
+                case "collisionHit":   if (collisionHit == null) collisionHit = clip; break;
+                case "cityAmbience":   if (cityAmbience == null) cityAmbience = clip; break;
+                case "airConditioning": if (passengerChatter == null && airConditioning == null) airConditioning = clip; break;
+            }
         }
-        AudioClip clip = AudioClip.Create(name, length, 1, sampleRate, false); clip.SetData(data, 0); return clip;
-    }
-
-    static AudioClip CreateNoise(string name, float seconds, float amplitude)
-    {
-        const int sampleRate = 22050; int length = Mathf.Max(1, Mathf.RoundToInt(sampleRate * seconds)); float[] data = new float[length]; uint state = 2463534242u; float filtered = 0f;
-        for (int i = 0; i < length; i++) { state ^= state << 13; state ^= state >> 17; state ^= state << 5; float sample = ((state & 65535u) / 32767.5f - 1f); filtered = Mathf.Lerp(filtered, sample, 0.18f); data[i] = filtered * amplitude; }
-        AudioClip clip = AudioClip.Create(name, length, 1, sampleRate, false); clip.SetData(data, 0); return clip;
     }
 }

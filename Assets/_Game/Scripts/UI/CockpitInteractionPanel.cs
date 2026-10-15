@@ -47,7 +47,13 @@ public class CockpitInteractionPanel : MonoBehaviour
         if (canvas != null && canvas.gameObject.activeSelf != visible) canvas.gameObject.SetActive(visible);
         if (!visible) return;
         PassengerManager passengers = PassengerManager.Instance;
-        Set(doorsLabel, "DOORS", passengers != null && passengers.doorsOpen);
+        bool doorsOpen = passengers != null && passengers.doorsOpen;
+        bool doorsLocking = passengers != null && passengers.DoorLockPending;
+        if (doorsLabel != null)
+        {
+            doorsLabel.text = doorsLocking ? "LOCKING" : doorsOpen ? "LOCK" : "DOORS";
+            doorsLabel.color = doorsLocking ? UITheme.TertiaryDim : doorsOpen ? UITheme.Accent : UITheme.TextPrimary;
+        }
         Set(kneelLabel, "KNEEL", bus.kneelingSuspensionActive);
         Set(parkLabel, "PARK", bus.ParkingBrakeActive);
         Set(retarderLabel, "RETARDER", bus.RetarderActive);
@@ -61,6 +67,13 @@ public class CockpitInteractionPanel : MonoBehaviour
         canvas = root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 82;
         CanvasScaler scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f);
         GameObject panel = new GameObject("Controls", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(root.transform, false); RectTransform p = panel.GetComponent<RectTransform>(); p.anchorMin = p.anchorMax = p.pivot = new Vector2(0.5f, 0f); p.sizeDelta = new Vector2(1060f, 86f); p.anchoredPosition = new Vector2(0f, 24f); panel.GetComponent<Image>().color = new Color(0.03f, 0.05f, 0.06f, 0.9f);
+        // Keep the cockpit bar between the steering and pedal clusters instead of
+        // running underneath them on narrower displays.
+        HudSafeZoneFitter fitter = panel.AddComponent<HudSafeZoneFitter>();
+        fitter.designSize = new Vector2(1060f, 86f);
+        fitter.minWidth = 780f;
+        fitter.bottomOffset = 24f;
+        fitter.liftedBottomOffset = 360f;
         doorsLabel = Button(panel.transform, "DOORS", -405f, () => PassengerManager.Instance?.RequestDoors());
         kneelLabel = Button(panel.transform, "KNEEL", -205f, () => { if (bus.currentSpeedKmh < 1f) bus.RequestKneelingSuspension(!bus.kneelingSuspensionActive); });
         parkLabel = Button(panel.transform, "PARK", -5f, () => bus.SetParkingBrake(!bus.ParkingBrakeActive));

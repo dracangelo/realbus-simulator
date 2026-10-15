@@ -100,10 +100,10 @@ public class HUDManager : MonoBehaviour
             GameState.Instance?.selectedRoute != null;
         if (mission == null || (!mission.routeActive && !selectedMissionStarting) || mission.currentRoute == null || mission.currentRoute.stops == null)
         {
-            nextStopText.text = "FREE DRIVE";
-            etaText.text = "Explore safely";
+            nextStopText.text = Localization.Get("hud.freeDrive");
+            etaText.text = Localization.Get("hud.explore");
             guidanceText.text = "";
-            scheduleText.text = "◇ NO SCHEDULE";
+            scheduleText.text = Localization.Get("hud.noSchedule");
             schedulePill.color = UITheme.WithAlpha(UITheme.Secondary, 0.85f);
             progressFill.fillAmount = 0f;
             return;
@@ -115,7 +115,7 @@ public class HUDManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(navigation)) navigation = "↑  CONTINUE STRAIGHT";
         nextStopText.text = $"{navigation}  •  {mission.distanceToNextStop:0} m";
         float etaSeconds = mission.distanceToNextStop / Mathf.Max(4.2f, speed / 3.6f);
-        etaText.text = $"ROUTE NAVIGATION  •  ETA {FormatEta(etaSeconds)}";
+        etaText.text = $"{Localization.Get("hud.routeNav")}  •  ETA {FormatEta(etaSeconds)}";
         guidanceText.text = $"{navigation}\n<size=14>{mission.currentRoute.stops[index].stopName}</size>";
         progressFill.fillAmount = count > 1 ? Mathf.Clamp01(index / (float)(count - 1)) : 1f;
 
@@ -144,38 +144,50 @@ public class HUDManager : MonoBehaviour
         CanvasScaler scaler = c.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f); scaler.matchWidthOrHeight = 0.5f;
         safeRoot = new GameObject("SafeArea", typeof(RectTransform), typeof(SafeAreaFitter)); safeRoot.transform.SetParent(c.transform, false);
 
-        RectTransform mapPanel = Panel("NavigationCard", safeRoot.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(440f, 220f), new Vector2(26f, -26f));
+        RectTransform mapPanel = Panel("NavigationCard", safeRoot.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(460f, 230f), new Vector2(20f, -20f));
+        // Amber accent top-border strip on the navigation card
+        Image navBorder = Box("NavBorder", mapPanel, Vector2.zero, new Vector2(0f, 4f), UITheme.BusAmber);
+        navBorder.rectTransform.anchorMin = new Vector2(0f, 1f); navBorder.rectTransform.anchorMax = new Vector2(1f, 1f); navBorder.rectTransform.pivot = new Vector2(0.5f, 1f); navBorder.rectTransform.sizeDelta = new Vector2(0f, 4f);
         GameObject mini = new GameObject("Minimap", typeof(RectTransform), typeof(RuntimeMinimapGraphic)); mini.transform.SetParent(mapPanel, false);
-        RectTransform miniRt = mini.GetComponent<RectTransform>(); Stretch(miniRt); miniRt.offsetMin = new Vector2(10f, 10f); miniRt.offsetMax = new Vector2(-10f, -10f);
-        minimap = mini.GetComponent<RuntimeMinimapGraphic>(); minimap.color = new Color(0.035f, 0.055f, 0.06f, 0.94f); minimap.raycastTarget = false;
-        Image instructionPill = Box("InstructionPill", mapPanel, new Vector2(-12f, -144f), new Vector2(225f, 64f), new Color(.02f, .025f, .026f, .86f));
+        RectTransform miniRt = mini.GetComponent<RectTransform>(); Stretch(miniRt); miniRt.offsetMin = new Vector2(8f, 8f); miniRt.offsetMax = new Vector2(-8f, -8f);
+        minimap = mini.GetComponent<RuntimeMinimapGraphic>(); minimap.color = new Color(0.03f, 0.048f, 0.055f, 0.95f); minimap.raycastTarget = false;
+        Image instructionPill = Box("InstructionPill", mapPanel, new Vector2(-10f, -150f), new Vector2(240f, 60f), new Color(.015f, .02f, .022f, .9f));
         instructionPill.rectTransform.anchorMin = instructionPill.rectTransform.anchorMax = new Vector2(1f, 1f); instructionPill.rectTransform.pivot = new Vector2(1f, 1f);
-        guidanceText = Text("Guidance", instructionPill.transform, "↑  CONTINUE", 19, TextAlignmentOptions.Center, Vector2.zero, new Vector2(210f, 54f));
+        RuntimeUiShapes.Rounded(instructionPill);
+        guidanceText = Text("Guidance", instructionPill.transform, "↑  CONTINUE", 18, TextAlignmentOptions.Center, Vector2.zero, new Vector2(224f, 50f));
 
-        RectTransform routePanel = Panel("NextStopBanner", safeRoot.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(560f, 112f), new Vector2(0f, -32f));
-        nextStopText = Text("Navigation", routePanel, "↑  ROUTE NAVIGATION", 25, TextAlignmentOptions.Center, new Vector2(0f, 17f), new Vector2(520f, 38f));
-        etaText = Text("ETA", routePanel, "Follow the highlighted road", 16, TextAlignmentOptions.Center, new Vector2(0f, -14f), new Vector2(510f, 27f));
-        schedulePill = Box("SchedulePill", routePanel, new Vector2(0f, -43f), new Vector2(162f, 25f), UITheme.Secondary);
+        RectTransform routePanel = Panel("NextStopBanner", safeRoot.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(620f, 118f), new Vector2(0f, -20f));
+        nextStopText = Text("Navigation", routePanel, "↑  ROUTE NAVIGATION", 24, TextAlignmentOptions.Center, new Vector2(0f, 20f), new Vector2(580f, 36f));
+        etaText = Text("ETA", routePanel, "Follow the highlighted road", 15, TextAlignmentOptions.Center, new Vector2(0f, -8f), new Vector2(560f, 26f));
+        etaText.color = UITheme.TextSecondary;
+        schedulePill = Box("SchedulePill", routePanel, new Vector2(0f, -44f), new Vector2(172f, 26f), UITheme.Secondary);
+        RuntimeUiShapes.Rounded(schedulePill);
         scheduleText = Text("Status", schedulePill.rectTransform, "NO SCHEDULE", 12, TextAlignmentOptions.Center, Vector2.zero, schedulePill.rectTransform.sizeDelta);
-        Image track = Box("ProgressTrack", routePanel, new Vector2(0f, -53f), new Vector2(500f, 6f), UITheme.SurfaceBright);
+        Image track = Box("ProgressTrack", routePanel, new Vector2(0f, -57f), new Vector2(540f, 7f), UITheme.SurfaceBright);
+        RuntimeUiShapes.Rounded(track);
         progressFill = Box("ProgressFill", track.rectTransform, Vector2.zero, Vector2.zero, UITheme.Accent);
         progressFill.type = Image.Type.Filled; progressFill.fillMethod = Image.FillMethod.Horizontal; progressFill.fillOrigin = 0;
+        RuntimeUiShapes.Rounded(progressFill);
         Stretch(progressFill.rectTransform);
 
-        RectTransform speedPanel = CirclePanel("SpeedDial", safeRoot.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), 176f, new Vector2(-286f, -24f), UITheme.TertiaryDim);
-        Image speedFace = Box("SpeedFace", speedPanel, Vector2.zero, new Vector2(154f, 154f), new Color(.035f, .04f, .042f, .98f)); RuntimeUiShapes.Circle(speedFace);
-        speedText = Text("Speed", speedPanel, "0\n<size=18>km/h</size>", 53, TextAlignmentOptions.Center, new Vector2(0f, 10f), new Vector2(148f, 104f));
-        speedNeedle = Needle("SpeedNeedle", speedPanel, 67f, UITheme.TertiaryDim);
-        gearText = Text("Gear", speedPanel, "D", 25, TextAlignmentOptions.Center, new Vector2(0f, -57f), new Vector2(64f, 32f));
+        // Speed dial — shifted left so it doesn't overlap the ACCEL button (anchor 1,0 at -28px)
+        RectTransform speedPanel = CirclePanel("SpeedDial", safeRoot.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), 184f, new Vector2(-316f, -24f), UITheme.TertiaryDim);
+        Image speedFace = Box("SpeedFace", speedPanel, Vector2.zero, new Vector2(160f, 160f), new Color(.03f, .038f, .04f, .98f));
+        RuntimeUiShapes.Circle(speedFace);
+        speedText = Text("Speed", speedPanel, "0\n<size=18>km/h</size>", 54, TextAlignmentOptions.Center, new Vector2(0f, 10f), new Vector2(152f, 108f));
+        speedNeedle = Needle("SpeedNeedle", speedPanel, 70f, UITheme.TertiaryDim);
+        gearText = Text("Gear", speedPanel, "D", 26, TextAlignmentOptions.Center, new Vector2(0f, -60f), new Vector2(68f, 34f));
+        gearText.color = UITheme.Accent;
 
-        RectTransform energyPanel = Panel("VehicleVitals", safeRoot.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(235f, 126f), new Vector2(-28f, -49f));
+        // Vehicle Vitals — positioned below speed dial, also shifted left to stay clear of buttons
+        RectTransform energyPanel = Panel("VehicleVitals", safeRoot.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(248f, 132f), new Vector2(-316f, -220f));
         fuelNeedle = Needle("FuelNeedle", energyPanel, 34f, UITheme.TertiaryDim); fuelNeedle.gameObject.SetActive(false);
         temperatureNeedle = Needle("TemperatureNeedle", energyPanel, 34f, UITheme.Success); temperatureNeedle.gameObject.SetActive(false);
-        fuelText = Text("Fuel", energyPanel, "▰  FUEL 100%", 18, TextAlignmentOptions.Left, new Vector2(14f, 35f), new Vector2(202f, 32f));
+        fuelText = Text("Fuel", energyPanel, "▰  FUEL 100%", 17, TextAlignmentOptions.Left, new Vector2(14f, 38f), new Vector2(216f, 30f));
         fuelText.rectTransform.anchorMin = fuelText.rectTransform.anchorMax = new Vector2(0f, .5f); fuelText.rectTransform.pivot = new Vector2(0f, .5f);
-        passengerText = Text("Passengers", energyPanel, "●  PAX 0/0", 18, TextAlignmentOptions.Left, new Vector2(14f, 0f), new Vector2(202f, 32f));
+        passengerText = Text("Passengers", energyPanel, "●  PAX 0/0", 17, TextAlignmentOptions.Left, new Vector2(14f, 2f), new Vector2(216f, 30f));
         passengerText.rectTransform.anchorMin = passengerText.rectTransform.anchorMax = new Vector2(0f, .5f); passengerText.rectTransform.pivot = new Vector2(0f, .5f);
-        temperatureText = Text("Temperature", energyPanel, "TEMP 80°C", 14, TextAlignmentOptions.Left, new Vector2(14f, -35f), new Vector2(202f, 28f));
+        temperatureText = Text("Temperature", energyPanel, "TEMP 80°C", 13, TextAlignmentOptions.Left, new Vector2(14f, -34f), new Vector2(216f, 26f));
         temperatureText.rectTransform.anchorMin = temperatureText.rectTransform.anchorMax = new Vector2(0f, .5f); temperatureText.rectTransform.pivot = new Vector2(0f, .5f);
     }
 

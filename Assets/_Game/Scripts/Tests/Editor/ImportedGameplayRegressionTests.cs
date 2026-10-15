@@ -266,6 +266,93 @@ public class ImportedGameplayRegressionTests
         Assert.That(offset.z, Is.EqualTo(-4).Within(.01f));
     }
 
+    // ── First-run tutorial ───────────────────────────────────────────────────
+
+    [TestCase(0, 0, true)]
+    [TestCase(1, 0, false)]
+    [TestCase(0, 1, false)]
+    [TestCase(1, 1, false)]
+    public void FirstDriveTutorial_OpensOnlyOncePerInstall(int completionFlag, int presentedFlag, bool expected)
+    {
+        Assert.That(FirstDriveTutorial.ShouldOpenForFirstRun(completionFlag, presentedFlag), Is.EqualTo(expected));
+    }
+
+    // ── Dashed lane markings ─────────────────────────────────────────────────
+    // The dash walk advances a distance along each clear run. When the run's
+    // residual was smaller than a float at that distance can represent,
+    // `t + step` rounded straight back to `t`, so the walk repeated the same
+    // iteration forever and froze the gameplay scene while the streamer was
+    // still drawing roads (Limuru Road stalled at t = 10.64229 m with a
+    // 4.768372e-07 m step, which is half an ulp there).
+
+    /// <summary>Spacing between <paramref name="value"/> and the next float above it.</summary>
+    static float Ulp(float value)
+    {
+        int bits = System.BitConverter.ToInt32(System.BitConverter.GetBytes(value), 0);
+        return System.BitConverter.ToSingle(System.BitConverter.GetBytes(bits + 1), 0) - value;
+    }
+
+    [TestCase(10.642290f)]
+    [TestCase(6f)]
+    [TestCase(1f)]
+    [TestCase(47.217f)]
+    [TestCase(1000f)]
+    public void DashedMarkingAdvance_RejectsStepsTooSmallToMoveTheWalk(float t)
+    {
+        // A quarter of an ulp can never round up, whatever the tie-breaking.
+        Assert.That(OSMRoadMeshBuilder.MarkingMeshBuilder.TryAdvance(t, Ulp(t) * .25f, out float next), Is.False);
+        Assert.That(next, Is.EqualTo(t), "a rejected step must not move the walk");
+
+        Assert.That(OSMRoadMeshBuilder.MarkingMeshBuilder.TryAdvance(t, Ulp(t), out float advanced), Is.True,
+            "a whole ulp always moves the walk");
+        Assert.That(advanced, Is.GreaterThan(t));
+    }
+
+    [Test]
+    public void DashedMarkingAdvance_RejectsNonPositiveAndNonFiniteSteps()
+    {
+        Assert.That(OSMRoadMeshBuilder.MarkingMeshBuilder.TryAdvance(12f, 0f, out _), Is.False);
+        Assert.That(OSMRoadMeshBuilder.MarkingMeshBuilder.TryAdvance(12f, -1f, out _), Is.False);
+        Assert.That(OSMRoadMeshBuilder.MarkingMeshBuilder.TryAdvance(12f, float.NaN, out _), Is.False);
+        Assert.That(OSMRoadMeshBuilder.MarkingMeshBuilder.TryAdvance(12f, 3f, out float next), Is.True);
+        Assert.That(next, Is.EqualTo(15f));
+    }
+
+    [Test]
+    public void DashedMarkingWalk_ProducesDashesForEveryRunLengthAndStaysFinite()
+    {
+        var builder = new OSMRoadMeshBuilder.MarkingMeshBuilder();
+        OSMRoadMeshBuilder.MarkingMeshBuilder.ResetStallDiagnostics();
+
+        for (float length = 3f; length < 48f; length += .007f)
+        {
+            int before = builder.vertices.Count;
+            var line = new System.Collections.Generic.List<Vector3> { Vector3.zero, new Vector3(length, 0f, 0f) };
+            builder.AddDashedStrip(line, .15f, 3f, 3f, null, 1, .35f, .02f);
+            Assert.That(builder.vertices.Count, Is.GreaterThan(before), $"a {length:F3} m run drew no dash");
+        }
+
+        foreach (var vertex in builder.vertices)
+            Assert.That(float.IsNaN(vertex.x) || float.IsInfinity(vertex.x) ||
+                        float.IsNaN(vertex.z) || float.IsInfinity(vertex.z), Is.False,
+                "marking geometry must stay finite");
+    }
+
+    [Test]
+    public void DashedMarkingWalk_KeepsGoingWhenTheSurfaceIndexClearsTheRun()
+    {
+        var roads = new RoadSurfaceIndex();
+        roads.Add(new Vector3(0, 0, -40), new Vector3(0, 0, 40), 8, 10);
+        var builder = new OSMRoadMeshBuilder.MarkingMeshBuilder();
+        OSMRoadMeshBuilder.MarkingMeshBuilder.ResetStallDiagnostics();
+
+        builder.AddDashedStrip(new System.Collections.Generic.List<Vector3> { new Vector3(0, 0, -20), new Vector3(0, 0, 20) }, .15f, 3f, 3f, roads, 10, .35f, .02f);
+
+        Assert.That(builder.vertices.Count, Is.GreaterThan(0));
+        Assert.That(OSMRoadMeshBuilder.MarkingMeshBuilder.UnadvanceableRunCount, Is.Zero,
+            "a run that can advance must never be reported as stalled");
+    }
+
     [TestCase(true, -2f)]
     [TestCase(false, 2f)]
     public void LaneOffset_UsesTrafficSideAndClearsRoadEdge(bool left, float expected)

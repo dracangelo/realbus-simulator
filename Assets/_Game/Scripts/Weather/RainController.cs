@@ -28,6 +28,19 @@ public class RainController : MonoBehaviour
     public float minWiperSpeed = 0.75f;
     public float maxWiperSpeed = 2.25f;
 
+    [Header("Generated Effects")]
+    [Tooltip("Build the rain systems at run time when the scene provides none. No scene ships rain particles, so without this the weather system could only offer fog and a wet road.")]
+    public bool buildEffectsWhenMissing = true;
+    [Tooltip("The shower follows this transform so the bus is always inside it. The bus or the main camera is resolved when unset.")]
+    public Transform followTarget;
+    [Tooltip("Height of the emitting box above the followed transform.")]
+    public float followHeight = 18f;
+    [Tooltip("Side of the square the rain falls through, in metres, centred on the emitter.")]
+    public float effectFieldSize = 60f;
+
+    Texture2D streakTexture;
+    Material rainMaterial;
+
     private float currentWetness = 0f;
     float lastAppliedWetness = -1f;
     private WeatherState currentRainState = WeatherState.Clear;
@@ -39,7 +52,138 @@ public class RainController : MonoBehaviour
     {
         if (wetRoadPropertyBlock == null)
             wetRoadPropertyBlock = new MaterialPropertyBlock();
+        if (buildEffectsWhenMissing) EnsureEffects();
         StopAll();
+    }
+
+    void Update()
+    {
+        FollowTarget();
+    }
+
+    /// <summary>
+    /// Creates the drizzle, rain and thunderstorm systems when they were not
+    /// authored. Every scene in this project builds its weather from an empty
+    /// RainController, so this is the difference between rain being a state in the
+    /// HUD and rain being visible out of the windscreen.
+    /// </summary>
+    public void EnsureEffects()
+    {
+        if (!buildEffectsWhenMissing) return;
+        if (drizzleParticles == null) drizzleParticles = BuildRainSystem("RainController_Drizzle", 0.5f, 14f);
+        if (rainParticles == null) rainParticles = BuildRainSystem("RainController_Rain", 0.8f, 22f);
+        if (thunderstormParticles == null) thunderstormParticles = BuildRainSystem("RainController_Thunderstorm", 1f, 32f);
+    }
+
+    ParticleSystem BuildRainSystem(string name, float densityScale, float fallSpeed)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(transform, false);
+        var ps = go.AddComponent<ParticleSystem>();
+
+        var main = ps.main;
+        main.loop = true;
+        main.playOnAwake = false;
+        main.startLifetime = Mathf.Lerp(0.8f, 1.5f, densityScale);
+        main.startSpeed = fallSpeed;
+        main.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.03f);
+        main.gravityModifier = 0f;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        // Rain has to look like streaks, so consecutive particles are stretched along
+        // their own velocity instead of being round dots.
+        main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+        main.maxParticles = LowQuality ? 1500 : 6000;
+
+        var emission = ps.emission;
+        emission.enabled = true;
+        emission.rateOverTime = 0f;
+
+        var shape = ps.shape;
+        shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Box;
+        shape.scale = new Vector3(Mathf.Max(10f, effectFieldSize), 1f, Mathf.Max(10f, effectFieldSize));
+        shape.position = new Vector3(0f, followHeight, 0f);
+
+        var renderer = ps.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Stretch;
+        renderer.lengthScale = Mathf.Lerp(2f, 3.5f, densityScale);
+        renderer.velocityScale = 0.08f;
+        renderer.sharedMaterial = RainMaterial();
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        renderer.sortingOrder = 1;
+
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        return ps;
+    }
+
+    static bool LowQuality => QualitySettings.GetQualityLevel() == 0;
+
+    Material RainMaterial()
+    {
+        if (rainMaterial != null) return rainMaterial;
+        Shader shader = BuiltInShaders.Overlay;
+        if (shader == null) return null;
+        if (streakTexture == null) streakTexture = BuildStreakTexture();
+        rainMaterial = new Material(shader) { name = "RainController_Streak_Mat" };
+        if (rainMaterial.HasProperty("_MainTex")) rainMaterial.SetTexture("_MainTex", streakTexture);
+        if (rainMaterial.HasProperty("_Color")) rainMaterial.SetColor("_Color", new Color(0.72f, 0.78f, 0.86f, 0.55f));
+        return rainMaterial;
+    }
+
+    /// <summary>A soft vertical streak: bright in the middle, faded at both ends and the sides.</summary>
+    Texture2D BuildStreakTexture()
+    {
+        const int width = 8;
+        const int height = 32;
+        var texture = new Texture2D(width, height, TextureFormat.RGBA32, true)
+        {
+            name = "RainController_Streak_Tex",
+            wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Bilinear
+        };
+        var pixels = new Color32[width * height];
+        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+        {
+            float across = 1f - Mathf.Abs((x + 0.5f) / width * 2f - 1f);
+            float along = Mathf.Sin((y + 0.5f) / height * Mathf.PI);
+            byte alpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(across * across * along) * 255f);
+            pixels[y * width + x] = new Color32(255, 255, 255, alpha);
+        }
+        texture.SetPixels32(pixels);
+        texture.Apply(true, false);
+        return texture;
+    }
+
+    /// <summary>
+    /// Keeps the shower over whoever is being watched. Rain authored in one place
+    /// falls on one patch of city; the emitters follow so the bus is always inside it.
+    /// </summary>
+    void FollowTarget()
+    {
+        if (followTarget == null) followTarget = ResolveFollowTarget();
+        if (followTarget == null) return;
+        Vector3 anchor = followTarget.position;
+        MoveEmitter(drizzleParticles, anchor);
+        MoveEmitter(rainParticles, anchor);
+        MoveEmitter(thunderstormParticles, anchor);
+    }
+
+    static void MoveEmitter(ParticleSystem ps, Vector3 anchor)
+    {
+        if (ps == null) return;
+        var t = ps.transform;
+        t.position = new Vector3(anchor.x, anchor.y, anchor.z);
+    }
+
+    Transform ResolveFollowTarget()
+    {
+        var bus = FindAnyObjectByType<BusController>();
+        if (bus != null) return bus.transform;
+        if (Camera.main != null) return Camera.main.transform;
+        var camera = FindAnyObjectByType<Camera>();
+        return camera != null ? camera.transform : null;
     }
 
     public void SetRain(WeatherState state, float intensity)
@@ -154,8 +298,15 @@ public class RainController : MonoBehaviour
 
                 rendererRef.GetPropertyBlock(wetRoadPropertyBlock);
                 wetRoadPropertyBlock.SetFloat(wetBlendProperty, wetness);
+                // Built-in road materials read _Glossiness for smoothness and _Color
+                // for albedo. The dry colour below is the one the road surfaces are
+                // built with, so the ramp darkens them as it was always meant to.
+                // wetBlendProperty, _WetColor and _WetGlossiness belong to the
+                // optional custom wet shader, which supplies the blend the built-in
+                // road materials do not have.
+                wetRoadPropertyBlock.SetFloat("_Glossiness", Mathf.Lerp(0.15f, 0.85f, wetness));
                 wetRoadPropertyBlock.SetFloat("_Smoothness", Mathf.Lerp(0.15f, 0.85f, wetness));
-                wetRoadPropertyBlock.SetColor("_BaseColor", Color.Lerp(new Color(0.18f, 0.19f, 0.21f), new Color(0.09f, 0.10f, 0.12f), wetness));
+                wetRoadPropertyBlock.SetColor("_Color", Color.Lerp(new Color(0.18f, 0.19f, 0.21f), new Color(0.09f, 0.10f, 0.12f), wetness));
                 if (wetSpecularMaterial != null)
                 {
                     if (wetSpecularMaterial.HasProperty("_Color"))

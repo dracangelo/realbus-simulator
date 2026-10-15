@@ -393,8 +393,23 @@ public class RoadGraph
 
     static int ParseLaneCount(Dictionary<string, string> tags, RoadType type, bool oneWay)
     {
-        if (tags != null && tags.TryGetValue("lanes", out string raw) && int.TryParse(raw, out int lanes))
-            return Mathf.Clamp(lanes, 1, 8);
+        if (tags != null)
+        {
+            if (tags.TryGetValue("lanes", out string raw) && int.TryParse(raw, out int lanes))
+                return Mathf.Clamp(lanes, 1, 8);
+
+            int forward = 0;
+            int backward = 0;
+            bool hasForward = tags.TryGetValue("lanes:forward", out var fwdRaw) && int.TryParse(fwdRaw, out forward);
+            bool hasBackward = tags.TryGetValue("lanes:backward", out var bwdRaw) && int.TryParse(bwdRaw, out backward);
+            if (hasForward || hasBackward)
+            {
+                int total = Mathf.Max(0, forward) + Mathf.Max(0, backward);
+                if (total > 0)
+                    return Mathf.Clamp(total, 1, 8);
+            }
+        }
+
         return type switch
         {
             RoadType.Motorway or RoadType.Trunk => oneWay ? 2 : 4,

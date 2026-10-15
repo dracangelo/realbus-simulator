@@ -17,8 +17,12 @@ public class TimeOfDaySystem : MonoBehaviour
     [Header("Sun")]
     public float sunriseMinutes = 360f;
     public float sunsetMinutes = 1080f;
-    public Vector3 midnightSunEuler = new Vector3(340f, -30f, 0f);
-    public Vector3 noonSunEuler = new Vector3(68f, 30f, 0f);
+    [Tooltip("Sun elevation at solar noon, in degrees above the horizon.")]
+    public float noonSunElevation = 68f;
+    [Tooltip("How far below the horizon the sun travels at solar midnight. A real arc keeps sunrise and the star fade continuous.")]
+    public float midnightSunElevation = -34f;
+    public float sunriseAzimuth = 85f;
+    public float sunsetAzimuth = 275f;
 
     [Header("Lighting")]
     public Gradient skyTintByDayPhase;
@@ -39,6 +43,10 @@ public class TimeOfDaySystem : MonoBehaviour
 
     public bool IsNight { get; private set; }
     public float DayPhase01 { get; private set; }
+    /// <summary>Sun height above the horizon in degrees; negative when it has set.</summary>
+    public float SunElevationDegrees { get; private set; }
+    /// <summary>Compass bearing of the sun in degrees, sweeping east to west across the day.</summary>
+    public float SunAzimuthDegrees { get; private set; }
 
     void Awake()
     {
@@ -89,20 +97,72 @@ public class TimeOfDaySystem : MonoBehaviour
         return skyTintByDayPhase != null ? skyTintByDayPhase.Evaluate(DayPhase01) : Color.white;
     }
 
+    /// <summary>
+    /// Daylight strength (0 at night, 1 at noon). Shares <see cref="RealismRules.Daylight"/>
+    /// with the sky and fog so a time of day cannot mean two different brightnesses.
+    /// </summary>
+    public float GetDaylightFactor()
+        => RealismRules.Daylight(currentTimeMinutes, sunriseMinutes, sunsetMinutes);
+
+    /// <summary>
+    /// Unit vector from the world toward the sun, derived from the arc rather than
+    /// from the light's transform, so the sky, the moon and anything else asking can
+    /// agree on where the sun is even when no directional light exists.
+    /// </summary>
+    public Vector3 GetSunDirection()
+    {
+        float elevation = SunElevationDegrees * Mathf.Deg2Rad;
+        float azimuth = SunAzimuthDegrees * Mathf.Deg2Rad;
+        return new Vector3(
+            Mathf.Cos(elevation) * Mathf.Sin(azimuth),
+            Mathf.Sin(elevation),
+            Mathf.Cos(elevation) * Mathf.Cos(azimuth));
+    }
+
+    /// <summary>
+    /// Sun elevation for a clock reading, as a continuous arc: half a sine above the
+    /// horizon between sunrise and sunset, and half a trough below it through the
+    /// night. The old step between a noon pose and a midnight pose made dawn and
+    /// dusk jump, which the clouds and stars then followed.
+    /// </summary>
+    public static float SunElevationAt(float minutes, float sunrise, float sunset, float noonElevation, float midnightElevation)
+    {
+        float wrapped = Mathf.Repeat(minutes, 1440f);
+        float daySpan = Mathf.Max(1f, sunset - sunrise);
+        float nightSpan = Mathf.Max(1f, 1440f - daySpan);
+
+        if (wrapped >= sunrise && wrapped < sunset)
+            return noonElevation * Mathf.Sin((wrapped - sunrise) / daySpan * Mathf.PI);
+
+        float intoNight = wrapped >= sunset ? wrapped - sunset : wrapped + 1440f - sunset;
+        return midnightElevation * Mathf.Sin(intoNight / nightSpan * Mathf.PI);
+    }
+
     void ApplyTimeOfDayImmediate()
     {
         float wrappedMinutes = Mathf.Repeat(currentTimeMinutes, 1440f);
         float daylightSpan = Mathf.Max(1f, sunsetMinutes - sunriseMinutes);
         DayPhase01 = Mathf.Clamp01((wrappedMinutes - sunriseMinutes) / daylightSpan);
         IsNight = wrappedMinutes < sunriseMinutes || wrappedMinutes >= sunsetMinutes;
+        SunElevationDegrees = SunElevationAt(wrappedMinutes, sunriseMinutes, sunsetMinutes, noonSunElevation, midnightSunElevation);
+
+        // Azimuth keeps travelling after sunset instead of snapping back east, so the
+        // moon (which sits opposite the sun) crosses the sky in one sweep too.
+        float nightSpan = Mathf.Max(1f, 1440f - daylightSpan);
+        float nightProgress = wrappedMinutes >= sunsetMinutes
+            ? (wrappedMinutes - sunsetMinutes) / nightSpan
+            : (wrappedMinutes + 1440f - sunsetMinutes) / nightSpan;
+        SunAzimuthDegrees = IsNight
+            ? Mathf.Lerp(sunsetAzimuth, sunriseAzimuth + 360f, Mathf.Clamp01(nightProgress))
+            : Mathf.Lerp(sunriseAzimuth, sunsetAzimuth, Mathf.Clamp01((wrappedMinutes - sunriseMinutes) / daylightSpan));
 
         if (directionalSun != null)
         {
-            Vector3 euler = IsNight
-                ? midnightSunEuler
-                : Vector3.Lerp(noonSunEuler, new Vector3(8f, noonSunEuler.y, noonSunEuler.z), Mathf.Abs(DayPhase01 - 0.5f) * 2f);
-
-            directionalSun.transform.rotation = Quaternion.Euler(euler.x, Mathf.Lerp(-25f, 35f, DayPhase01), euler.z);
+            // A directional light shines along its forward axis, so x = 90 is level
+            // with the horizon and x = 0 points straight down: this is the elevation.
+            directionalSun.transform.rotation = Quaternion.Euler(90f - SunElevationDegrees, SunAzimuthDegrees, 0f);
+            if (directionalSun.shadows == LightShadows.None) directionalSun.shadows = LightShadows.Soft;
+            directionalSun.shadowResolution = UnityEngine.Rendering.LightShadowResolution.VeryHigh;
             directionalSun.shadowStrength = GetShadowStrength();
         }
 

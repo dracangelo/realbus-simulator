@@ -54,6 +54,13 @@ public class VehiclePool : MonoBehaviour
     public float tierUpdateIntervalSeconds = 0.2f;
 
     [Header("Density")]
+    /// <summary>
+    /// Vehicles kept on the road whatever the hour. The daily curve scales the pool
+    /// between the two fractions, and a floor under it stops a quiet road at 03:00 from
+    /// being empty - which is what a fixed count of ten vehicles bought before, at every
+    /// hour of the day.
+    /// </summary>
+    public int minActiveVehicles = 0;
     public float minActiveFraction = 0.25f;
     public float maxActiveFraction = 0.9f;
     public float updateDensityEverySeconds = 4f;
@@ -284,6 +291,10 @@ public class VehiclePool : MonoBehaviour
             var g = graphs[i];
             if (g == null || g.NodeCount <= 0)
                 continue;
+            // A depot's lane circuit is a private loop, not a city graph, and it is
+            // nearest the player exactly when the player is at that depot.
+            if (g.privateLaneCircuit)
+                continue;
 
             int nearest = g.GetNearestNodeIndex(origin);
             if (!g.IsValidNode(nearest))
@@ -334,7 +345,7 @@ public class VehiclePool : MonoBehaviour
             float mult = GetTrafficDensityMultiplier();
             float normalized = Mathf.InverseLerp(1f, rushMultiplier, mult);
             float targetFraction = Mathf.Lerp(minActiveFraction, maxActiveFraction, normalized);
-            targetActive = Mathf.Clamp(Mathf.RoundToInt(targetFraction * pooled.Count), 0, pooled.Count);
+            targetActive = Mathf.Clamp(Mathf.Max(minActiveVehicles, Mathf.RoundToInt(targetFraction * pooled.Count)), 0, pooled.Count);
         }
 
         for (int i = 0; i < pooled.Count; i++)

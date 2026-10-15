@@ -4,9 +4,9 @@ using System.Collections;
 public class DockingZone : MonoBehaviour
 {
     [Header("Settings")]
-    public float dockingRadius = 3f;
-    public float kerbToleranceMeters = 0.5f;
-    public float stopSignToleranceMeters = 3f;
+    public float dockingRadius = 4f;
+    public float kerbToleranceMeters = 0.8f;
+    public float stopSignToleranceMeters = 4f;
     public float maxDockingSpeedKmh = 1.5f;
     public float headingToleranceDegrees = 25f;
     public string stopName;
@@ -36,6 +36,7 @@ public class DockingZone : MonoBehaviour
     void OnValidate()
     {
         SyncLegacyDockingRadius();
+        UpdateBayOutlinePositions();
     }
 
     IEnumerator InitNextFrame()
@@ -168,6 +169,15 @@ public class DockingZone : MonoBehaviour
         bayOutline = GetComponent<LineRenderer>();
         if (bayOutline == null) bayOutline = gameObject.AddComponent<LineRenderer>();
         bayOutline.useWorldSpace = false; bayOutline.loop = false; bayOutline.positionCount = 5; bayOutline.widthMultiplier = 0.09f;
+        UpdateBayOutlinePositions();
+        Shader shader = BuiltInShaders.Overlay;
+        if (shader != null) { bayMaterial = new Material(shader); bayOutline.material = bayMaterial; }
+        bayOutline.enabled = false;
+    }
+
+    public void UpdateBayOutlinePositions()
+    {
+        if (bayOutline == null) return;
         bayOutline.SetPositions(new[]
         {
             new Vector3(-kerbToleranceMeters, 0.04f, -stopSignToleranceMeters),
@@ -176,9 +186,6 @@ public class DockingZone : MonoBehaviour
             new Vector3(-kerbToleranceMeters, 0.04f, stopSignToleranceMeters),
             new Vector3(-kerbToleranceMeters, 0.04f, -stopSignToleranceMeters)
         });
-        Shader shader = Shader.Find("Sprites/Default");
-        if (shader != null) { bayMaterial = new Material(shader); bayOutline.material = bayMaterial; }
-        bayOutline.enabled = false;
     }
 
     public static float CalculateDockingScore(float kerb, float sign, float heading, float speed,

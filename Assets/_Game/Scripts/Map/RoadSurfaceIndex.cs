@@ -14,6 +14,9 @@ public sealed class RoadSurfaceIndex
     }
     const float CellSize = 64f;
     readonly Dictionary<Vector2Int, List<Segment>> cells = new Dictionary<Vector2Int, List<Segment>>();
+    // Cells touched by each way id, so a runtime surface (a depot apron, for
+    // example) can be withdrawn again without rescanning the whole city.
+    readonly Dictionary<long, HashSet<Vector2Int>> wayCells = new Dictionary<long, HashSet<Vector2Int>>();
 
     public void Add(Vector3 a, Vector3 b, float width, long wayId, int oneWay = 0)
     {
@@ -22,13 +25,34 @@ public sealed class RoadSurfaceIndex
         var segment = new Segment { a = a, b = b, halfWidth = width * .5f, wayId = wayId, oneWay = oneWay };
         Vector3 margin = Vector3.one * (segment.halfWidth + 1f);
         var min = Cell(Vector3.Min(a, b) - margin); var max = Cell(Vector3.Max(a, b) + margin);
+        if (!wayCells.TryGetValue(wayId, out var tracked)) wayCells[wayId] = tracked = new HashSet<Vector2Int>();
         for (int x = min.x; x <= max.x; x++)
         for (int z = min.y; z <= max.y; z++)
         {
             var key = new Vector2Int(x, z);
             if (!cells.TryGetValue(key, out var list)) cells[key] = list = new List<Segment>();
             list.Add(segment);
+            tracked.Add(key);
         }
+    }
+
+    /// <summary>
+    /// Withdraws every segment belonging to <paramref name="wayId"/>. Used when a
+    /// runtime-built surface (a depot driveway) is torn down, so the index cannot
+    /// keep advertising road that no longer exists.
+    /// </summary>
+    public int Remove(long wayId)
+    {
+        if (!wayCells.TryGetValue(wayId, out var tracked)) return 0;
+        int removed = 0;
+        foreach (var key in tracked)
+        {
+            if (!cells.TryGetValue(key, out var list)) continue;
+            removed += list.RemoveAll(segment => segment.wayId == wayId);
+            if (list.Count == 0) cells.Remove(key);
+        }
+        wayCells.Remove(wayId);
+        return removed;
     }
 
     public static RoadSurfaceIndex Build(OSMData data, Func<double, double, Vector3> toWorld)

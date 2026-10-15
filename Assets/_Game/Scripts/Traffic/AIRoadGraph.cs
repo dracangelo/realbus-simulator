@@ -20,6 +20,8 @@ public class AIRoadGraph : MonoBehaviour
 
     [Header("Road Graph")]
     public RoadNode[] nodes;
+    [Tooltip("True for a graph that serves one private circuit (a depot yard). Its own vehicles drive it, so the city traffic pool and the scene bootstrap must never bind it as the city graph - it is nearest the player exactly when the player is at that depot.")]
+    public bool privateLaneCircuit;
 
     public int NodeCount => nodes != null ? nodes.Length : 0;
 

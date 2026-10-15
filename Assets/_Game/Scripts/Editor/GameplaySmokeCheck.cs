@@ -19,6 +19,8 @@ public static class GameplaySmokeCheck
     static float peakSpeed;
     static float maxCameraRoll;
     static int highestGear;
+    static readonly System.Collections.Generic.List<Transform> depotTrafficVehicles = new System.Collections.Generic.List<Transform>();
+    static readonly System.Collections.Generic.List<Vector3> depotTrafficStarts = new System.Collections.Generic.List<Vector3>();
     static GameplaySmokeCheck() { EditorApplication.update += Tick; }
 
     public static void Run()
@@ -54,6 +56,38 @@ public static class GameplaySmokeCheck
         if (!Application.isBatchMode) return;
         SessionState.SetBool("RealBus.SmokeLiveCity", true);
         Run();
+    }
+
+    /// <summary>
+    /// Pins the time of day and the weather for a run so the environment can be
+    /// checked at a known hour (REALBUS_SMOKE_TIME, in minutes past midnight) and
+    /// in a known state (REALBUS_SMOKE_WEATHER, a WeatherState name). Both come
+    /// from the environment, so this stays a batch-only tool with no effect on a
+    /// normal session.
+    /// </summary>
+    static void ApplyEnvironmentOverrides()
+    {
+        var clock = TimeOfDaySystem.Instance;
+        string timeValue = System.Environment.GetEnvironmentVariable("REALBUS_SMOKE_TIME");
+        if (clock != null && !string.IsNullOrEmpty(timeValue) && float.TryParse(timeValue, out float minutes))
+        {
+            // The schedule would otherwise drag the clock back to the run's own
+            // start time on the next frame.
+            clock.followScheduleManager = false;
+            clock.currentTimeMinutes = minutes;
+            Debug.Log($"SMOKE override timeOfDay={minutes:F0} minutes");
+        }
+
+        var weather = WeatherSystem.Instance;
+        string weatherValue = System.Environment.GetEnvironmentVariable("REALBUS_SMOKE_WEATHER");
+        if (weather != null && !string.IsNullOrEmpty(weatherValue) &&
+            System.Enum.TryParse(weatherValue, true, out WeatherState state))
+        {
+            weather.forceWeather = true;
+            weather.forcedWeatherState = state;
+            weather.ApplyWeather(state, 1f, weather.temperature);
+            Debug.Log($"SMOKE override weather={state}");
+        }
     }
 
     static void TickLiveCity(double elapsed)
@@ -138,6 +172,7 @@ public static class GameplaySmokeCheck
         }
         if (!sampled)
         {
+            ApplyEnvironmentOverrides();
             peakSpeed = 0f; maxCameraRoll = 0f; highestGear = 0; lastTelemetrySecond = -1;
             sampled = true;
             sampledAt = Time.time;
@@ -146,6 +181,17 @@ public static class GameplaySmokeCheck
                 Debug.Log($"SMOKE bus={b.name} active={b.gameObject.activeInHierarchy} engine={b.engineData != null} transmission={b.transmissionData != null} pos={b.transform.position} scale={b.transform.lossyScale} renderers={b.GetComponentsInChildren<Renderer>().Length} interlock={b.ServiceBrakeInterlock} fuelEmpty={b.FuelDepleted} park={b.ParkingBrakeActive}");
             foreach (var cam in Object.FindObjectsByType<Camera>())
                 Debug.Log($"SMOKE camera={cam.name} parent={cam.transform.parent?.name} enabled={cam.enabled} local={cam.transform.localPosition} targetTexture={cam.targetTexture != null}");
+            // Remember where the yard's traffic started, so the report can tell
+            // "depot traffic exists" from "depot traffic drives".
+            depotTrafficVehicles.Clear(); depotTrafficStarts.Clear();
+            var depotForTraffic = BusDepotManager.Instance != null ? BusDepotManager.Instance.currentTraffic : null;
+            if (depotForTraffic != null)
+                foreach (Transform child in depotForTraffic.transform)
+                    if (child.GetComponent<SplineVehicle>() != null)
+                    {
+                        depotTrafficVehicles.Add(child);
+                        depotTrafficStarts.Add(child.position);
+                    }
             if (bus != null)
             {
                 if (SessionState.GetBool("RealBus.SmokeHandling", false)) PrepareHandlingCourse(bus);
@@ -216,7 +262,14 @@ public static class GameplaySmokeCheck
                         stopModels++;
                         var footprint = new[] { new Vector3(bounds.min.x, 0, bounds.min.z), new Vector3(bounds.max.x, 0, bounds.min.z),
                             new Vector3(bounds.max.x, 0, bounds.max.z), new Vector3(bounds.min.x, 0, bounds.max.z) };
-                        if (roadIndex.OverlapsFootprint(footprint, .5f)) blockedStops++;
+                        if (roadIndex.OverlapsFootprint(footprint, .5f))
+                        {
+                            blockedStops++;
+                            // Naming the offender makes the count actionable: a shelter
+                            // or totem standing in a lane is a placement bug with a
+                            // location, not just a number.
+                            Debug.Log($"SMOKE blockedStop model={model.name} anchor={anchor.name} position={new Vector3(bounds.center.x, 0f, bounds.center.z)}");
+                        }
                     }
             foreach (var collider in Object.FindObjectsByType<BoxCollider>())
             {
@@ -228,6 +281,75 @@ public static class GameplaySmokeCheck
         }
         passed &= stopModels > 0 && blockedStops == 0 && crossingKerbs == 0;
         Debug.Log($"SMOKE roadClearance stopModels={stopModels} blockedStops={blockedStops} crossingKerbs={crossingKerbs} passed={passed}");
+
+        // The environment has to be built, not merely configured: a weather state
+        // the HUD reports is worthless if nothing draws clouds, rain and a sun to
+        // light them, which is exactly how the sky used to be missing entirely.
+        var sky = SkyEnvironmentController.Instance;
+        var rain = Object.FindAnyObjectByType<RainController>();
+        var snow = Object.FindAnyObjectByType<SnowController>();
+        var fog = Object.FindAnyObjectByType<FogController>();
+        var weatherFog = FogController.Instance;
+        var haze = CinematicAtmosphereController.Instance;
+        var weather = WeatherSystem.Instance;
+        var clock = TimeOfDaySystem.Instance;
+        bool cloudsBuilt = sky != null && sky.transform.Find("SkyEnvironment_Domes/SkyEnvironment_Clouds") != null;
+        bool starsBuilt = sky != null && sky.transform.Find("SkyEnvironment_Domes/SkyEnvironment_Stars") != null;
+        bool rainBuilt = rain != null && rain.rainParticles != null;
+        bool snowBuilt = snow != null && snow.snowParticles != null;
+        // Built is not the same as falling: the precipitation a state claims has to
+        // actually be emitting, and clear weather has to actually stop.
+        float rainRate = Mathf.Max(EmissionRate(rain != null ? rain.drizzleParticles : null),
+            Mathf.Max(EmissionRate(rain != null ? rain.rainParticles : null),
+                EmissionRate(rain != null ? rain.thunderstormParticles : null)));
+        float snowRate = Mathf.Max(EmissionRate(snow != null ? snow.snowParticles : null),
+            EmissionRate(snow != null ? snow.blizzardParticles : null));
+        WeatherState state = weather != null ? weather.currentWeather : WeatherState.Clear;
+        bool wetWeather = state == WeatherState.Drizzle || state == WeatherState.LightRain ||
+            state == WeatherState.HeavyRain || state == WeatherState.Thunderstorm;
+        bool frozenWeather = state == WeatherState.Snow || state == WeatherState.Blizzard;
+        Debug.Log($"SMOKE environment weather={(weather != null ? weather.currentWeather.ToString() : "none")} " +
+            $"intensity={(weather != null ? weather.weatherIntensity : 0f):F2} skybox={(RenderSettings.skybox != null ? RenderSettings.skybox.name : "none")} " +
+            $"cloudsBuilt={cloudsBuilt} starsBuilt={starsBuilt} coverage={(sky != null ? sky.cloudCoverage : 0f):F2} " +
+            $"stars={(sky != null ? sky.starVisibility : 0f):F2} moonIntensity={(sky != null ? sky.currentMoonIntensity : 0f):F3} " +
+            $"sunElevation={(clock != null ? clock.SunElevationDegrees : 0f):F1} night={(clock != null && clock.IsNight)} " +
+            $"fog={RenderSettings.fog} fogStart={RenderSettings.fogStartDistance:F0} fogEnd={RenderSettings.fogEndDistance:F0} fogColor={RenderSettings.fogColor} " +
+            $"hazeColor={(haze != null ? haze.TintedHazeColor().ToString() : "none")} hazeOwnsFog={(haze != null && haze.HazeMayOwnFogNow())} " +
+            $"weatherFogActive={(weatherFog != null && weatherFog.WeatherFogActive)} daylight={(clock != null ? clock.GetDaylightFactor() : 0f):F2} " +
+            $"skyTint={(clock != null ? clock.GetSkyTint().ToString() : "none")} " +
+            $"rainBuilt={rainBuilt} snowBuilt={snowBuilt} rainRate={rainRate:F0} snowRate={snowRate:F0} fogController={(fog != null)}");
+        passed &= sky != null && RenderSettings.skybox != null && cloudsBuilt && starsBuilt;
+        passed &= rainBuilt && snowBuilt && fog != null && clock != null && weather != null;
+        passed &= wetWeather ? rainRate > 0f : rainRate <= 0f;
+        passed &= frozenWeather ? snowRate > 0f : snowRate <= 0f;
+
+
+        // The depot is the other half of "the bus can leave": it has to own its
+        // lanes (no prop standing in them, traffic on them) and the bus has to end
+        // up outside the yard it was spawned in.
+        var depot = BusDepotManager.Instance;
+        if (depot != null && depot.currentDepot != null)
+        {
+            var depotTraffic = depot.currentTraffic;
+            var offenders = depot.PropsStandingInYardLanes();
+            bool leftYard = !BusDepotManager.IsInsideDepot(bus.transform.position);
+            float trafficMoved = 0f;
+            for (int i = 0; i < depotTrafficVehicles.Count; i++)
+            {
+                if (depotTrafficVehicles[i] == null) continue;
+                trafficMoved = Mathf.Max(trafficMoved, Vector3.Distance(depotTrafficVehicles[i].position, depotTrafficStarts[i]));
+            }
+            Debug.Log($"SMOKE depot traffic={(depotTraffic != null ? depotTraffic.VehicleCount : 0)} " +
+                $"holding={(depotTraffic != null && depotTraffic.HoldingStreetTraffic)} propsInLanes={offenders.Count} " +
+                $"trafficMoved={trafficMoved:F2} departed={depot.hasDepartedDepot} leftYard={leftYard} moved={moved:F2}");
+            foreach (var offender in offenders) Debug.Log($"SMOKE depotPropInLane={offender}");
+            passed &= offenders.Count == 0;
+            passed &= depotTraffic != null && depotTraffic.VehicleCount > 0;
+            passed &= trafficMoved > 5f;   // spawned traffic that never drives is not traffic
+            // Six seconds is not always enough to cross a 28 m yard; the extended
+            // run is where leaving the depot can be asserted rather than logged.
+            if (extended) passed &= leftYard;
+        }
         CaptureCamera("/tmp/realbus-exterior.png");
         captureStage = 1;
         return;
@@ -256,6 +378,9 @@ public static class GameplaySmokeCheck
         SessionState.SetBool("RealBus.SmokeHandling", false);
         EditorApplication.Exit(passed ? 0 : 2);
     }
+
+    static float EmissionRate(ParticleSystem system)
+        => system != null && system.isPlaying ? system.emission.rateOverTime.constant : 0f;
 
     static void CaptureCamera(string path)
     {

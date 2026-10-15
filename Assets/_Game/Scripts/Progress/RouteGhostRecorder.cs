@@ -140,7 +140,7 @@ public class RouteGhostRecorder : MonoBehaviour
         if (ghost == null)
         {
             ghost = GameObject.CreatePrimitive(PrimitiveType.Cube); ghost.name = "Best Route Ghost"; ghost.transform.localScale = new Vector3(2.45f, 3.1f, 10.5f); Destroy(ghost.GetComponent<Collider>());
-            Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color");
+            Shader shader = BuiltInShaders.Overlay;
             if (shader != null) { ghostMaterial = new Material(shader); ghostMaterial.color = new Color(0.1f, 0.9f, 1f, 0.28f); ghostMaterial.renderQueue = 3000; ghost.GetComponent<Renderer>().material = ghostMaterial; }
         }
         ghost.SetActive(true);

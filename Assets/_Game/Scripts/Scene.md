@@ -32,9 +32,9 @@ Assets/
 │   │   ├── SpaceGrotesk-Regular.ttf + SDF asset
 │   │   └── SpaceGrotesk-Light.ttf + SDF asset
 │   ├── Materials/
-│   │   ├── RoadMaterial          (URP/Lit, dark grey #282828)
-│   │   ├── PavementMaterial      (URP/Lit, light grey #B4B4B4)
-│   │   └── BuildingMaterial      (URP/Lit, warm concrete #C8BEB0)
+│   │   ├── RoadMaterial          (Standard shader, dark grey #282828)
+│   │   ├── PavementMaterial      (Standard shader, light grey #B4B4B4)
+│   │   └── BuildingMaterial      (Standard shader, warm concrete #C8BEB0)
 │   ├── ScriptableObjects/
 │   │   ├── Cities/
 │   │   │   └── City_Nairobi, City_London, City_Tokyo ... (16 total)
@@ -60,9 +60,12 @@ Assets/
 │   │   │   └── CountryImporter.cs     (Editor tool only)
 │   │   ├── Environment/
 │   │   │   ├── WeatherSystem.cs       (Phase 5.3 — added after 6.5)
+│   │   │   ├── TimeOfDaySystem.cs     (Phase 5.3 — sun arc, sky tint, night lights)
+│   │   │   ├── SkyEnvironmentController.cs (clouds, stars, moon, skybox)
 │   │   │   ├── RainController.cs
 │   │   │   ├── FogController.cs
 │   │   │   ├── SnowController.cs
+│   │   │   ├── WeatherPhysics.cs
 │   │   │   └── SkyController.cs
 │   │   ├── Map/
 │   │   │   ├── MapTileLoader.cs
@@ -116,11 +119,13 @@ Assets/
 │       └── NBO/
 │           ├── roads.xml
 │           └── buildings.xml
-└── Settings/
-    ├── URP_Low.asset
-    ├── URP_Medium.asset
-    └── URP_High.asset
 ```
+
+The project renders with the **Built-in Render Pipeline**, and there is no `Settings/` folder of pipeline
+assets: `ProjectSettings/GraphicsSettings.asset` assigns no pipeline asset, `Packages/manifest.json` lists no
+URP package, and `road-material.mat` references the built-in `Standard` shader. Quality comes from the six
+levels in `ProjectSettings/QualitySettings.asset` (Very Low … Ultra), not from per-pipeline assets, and every
+runtime material resolves its shader through `Assets/_Game/Scripts/Util/BuiltInShaders.cs`.
 
 ---
 
@@ -520,7 +525,7 @@ GameScene
 
 | Component | Key Inspector Settings |
 |-----------|----------------------|
-| `MapTileLoader` | mapboxToken (your token), mapStyle "mapbox/satellite-streets-v12", zoomLevel 15, tilesX/Y 13, tileWorldSize 300. **Reads centreLat/Lon from CityManager** |
+| `MapTileLoader` | mapboxToken (your token), mapStyle "mapbox/satellite-streets-v12", zoomLevel 15, tilesX/Y 13, tileWorldSize 300. **Reads centreLat/Lon from CityManager.** These two fields are the authored input only: at Awake the loader resolves them into the one shared `MapboxMapSettings` that the streamer, the offline cache and the city predownloader all read, so nothing else carries the token or the style |
 | `GPSManager` | Singleton. Wraps MapTileLoader. Use `GPSManager.Instance.GpsToWorld(lat,lon)` |
 | `PassengerManager` | passengerData→PassengerData ScriptableObject |
 | `MissionManager` | currentRoute→Route_01_CBD_Westlands, busController→Bus_Root, countdownSeconds 5, missionData→Mission_01_CBD_Westlands |

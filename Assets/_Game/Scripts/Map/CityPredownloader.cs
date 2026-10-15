@@ -14,11 +14,11 @@ using System.Collections.Generic;
 /// </summary>
 public class CityPredownloader : MonoBehaviour
 {
-    [System.Serializable] class TokenConfiguration { public string AccessToken; }
     [System.Serializable]
     public class CityDownloadStatus
     {
         public string cityCode;
+        /// <summary>The resolved style these tiles were written for (see <see cref="MapboxMapSettings"/>).</summary>
         public string mapStyle;
         public int zoom;
         public int total;
@@ -31,9 +31,14 @@ public class CityPredownloader : MonoBehaviour
     // ── Inspector ──────────────────────────────────────────────────────
 
     [Header("Mapbox")]
-    public string mapboxToken = "";
-    public string mapStyle    = "mapbox/satellite-streets-v12";
     public int    zoomLevel   = 15;
+
+    /// <summary>
+    /// The credential and the style are not authored here: they come from the one resolved
+    /// configuration the scene's loader publishes, so a pre-download writes the same tiles the
+    /// game will later read, and a saved status cannot name a style nothing else is using.
+    /// </summary>
+    static MapboxMapSettings Settings => MapboxMapSettings.Current;
 
     [Header("Download Area")]
     [Tooltip("Radius around the city centre to pre-download (metres).")]
@@ -73,41 +78,59 @@ public class CityPredownloader : MonoBehaviour
 
     void Start()
     {
-        _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
-        SyncMapConfiguration();
+        _cache = OfflineCacheManager.EnsureInstance();
+        SyncTileGeometryFromLoader();
     }
+
+    /// <summary>
+    /// True only when every tile that was asked for is on disk afterwards. Nothing asked for
+    /// is not a success either, and neither is a run in which one tile came back missing: the
+    /// menu printed "Offline map ready." for a download where every single tile had failed,
+    /// because the only thing it knew was that the user had not cancelled.
+    /// </summary>
+    public static bool DownloadCoveredEveryTile(int completed, int failed, int total)
+        => total > 0 && failed <= 0 && completed >= total;
+
+    /// <summary>Whether the last download left the whole requested area cached. Read by the menu.</summary>
+    public bool LastDownloadCoveredEveryTile { get; private set; }
 
     // ── Public API ─────────────────────────────────────────────────────
 
     public void StartDownloadForCity(CityDefinition city)
     {
         if (isDownloading || city == null) return;
-        SyncMapConfiguration();
-        if (string.IsNullOrWhiteSpace(mapboxToken))
+        SyncTileGeometryFromLoader();
+        if (!Settings.HasToken)
         {
-            Debug.LogWarning("[CityPredownloader] Map download needs the same Mapbox token used by MapTileLoader.");
+            Debug.LogWarning($"[CityPredownloader] Map download needs the token the rest of the map stack uses, " +
+                             $"and none was resolved ({Settings.TokenSource}).");
             return;
         }
+
+        // A download without a cache cannot store a single tile, so it would run to the end
+        // and report failure for reasons that have nothing to do with the network.
+        _cache = OfflineCacheManager.EnsureInstance();
+        if (_cache == null)
+        {
+            Debug.LogWarning("[CityPredownloader] No tile cache could be created, so nothing can be stored offline.");
+            return;
+        }
+
         StartCoroutine(DownloadRoutine(city));
     }
 
-    void SyncMapConfiguration()
+    /// <summary>
+    /// Copies the tile geometry from the scene's loader so a pre-download covers the zoom and
+    /// footprint the game will actually read back. The token and style are not copied: they are
+    /// read from the shared resolved configuration wherever they are needed.
+    /// </summary>
+    void SyncTileGeometryFromLoader()
     {
         var loader = FindAnyObjectByType<MapTileLoader>();
-        if (loader != null)
-        {
-            if (!string.IsNullOrWhiteSpace(loader.mapboxToken)) mapboxToken = loader.mapboxToken.Trim();
-            if (!string.IsNullOrWhiteSpace(loader.mapStyle)) mapStyle = loader.mapStyle;
-            zoomLevel = loader.zoomLevel;
-            tileWorldSize = loader.tileWorldSize;
-        }
-        if (!string.IsNullOrWhiteSpace(mapboxToken)) return;
-        var config = Resources.Load<TextAsset>("Mapbox/MapboxConfiguration");
-        if (config == null) return;
-        try { mapboxToken = JsonUtility.FromJson<TokenConfiguration>(config.text)?.AccessToken?.Trim() ?? string.Empty; }
-        catch (System.ArgumentException) { Debug.LogWarning("[CityPredownloader] Mapbox configuration is not valid JSON."); }
-        // Match MapTileLoader's normal satellite choice when no active loader is present.
-        if (mapStyle == "mapbox/satellite-streets-v12") mapStyle = "mapbox/satellite-v9";
+        if (loader == null) return;
+
+        zoomLevel = loader.zoomLevel;
+        tileWorldSize = loader.tileWorldSize;
     }
 
     public void CancelDownload()
@@ -121,11 +144,11 @@ public class CityPredownloader : MonoBehaviour
     public void DeleteDownloadedMap(CityDefinition city)
     {
         if (city == null || isDownloading) return;
-        _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
+        _cache = OfflineCacheManager.EnsureInstance();
         if (_cache != null)
             foreach (var tile in GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize))
             {
-                string path = _cache.GetTileCachePath(mapStyle, zoomLevel, tile.x, tile.y);
+                string path = _cache.GetTileCachePath(Settings.Style, zoomLevel, tile.x, tile.y);
                 try { if (System.IO.File.Exists(path)) System.IO.File.Delete(path); } catch (System.IO.IOException) { }
             }
         PlayerPrefs.DeleteKey(StatusKey(city)); PlayerPrefs.Save();
@@ -147,7 +170,7 @@ public class CityPredownloader : MonoBehaviour
 
     IEnumerator DownloadRoutine(CityDefinition city)
     {
-        _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
+        _cache = OfflineCacheManager.EnsureInstance();
         _activeCity = city;
         isDownloading   = true;
         isCancelled     = false;
@@ -178,7 +201,7 @@ public class CityPredownloader : MonoBehaviour
                 inFlight++;
 
                 // Skip already-cached tiles immediately.
-                if (_cache != null && _cache.IsTileCached(mapStyle, zoomLevel, tile.x, tile.y))
+                if (_cache != null && _cache.IsTileCached(Settings.Style, zoomLevel, tile.x, tile.y))
                 {
                     inFlight--;
                     completedTiles++;
@@ -211,14 +234,15 @@ public class CityPredownloader : MonoBehaviour
             // A successful response is not proof of offline availability after LRU eviction.
             completedTiles = 0;
             foreach (var tile in tiles)
-                if (_cache.IsTileCached(mapStyle, zoomLevel, tile.x, tile.y)) completedTiles++;
+                if (_cache.IsTileCached(Settings.Style, zoomLevel, tile.x, tile.y)) completedTiles++;
             failedTiles = totalTiles - completedTiles;
             FireProgress();
         }
         isDownloading = false;
-        SaveStatus(city, !isCancelled && failedTiles == 0 && completedTiles == totalTiles);
+        LastDownloadCoveredEveryTile = !isCancelled && DownloadCoveredEveryTile(completedTiles, failedTiles, totalTiles);
+        SaveStatus(city, LastDownloadCoveredEveryTile);
         Debug.Log($"[CityPredownloader] Done — {completedTiles} OK, {failedTiles} failed, " +
-                  $"cancelled={isCancelled}.  Total ≈ {estimatedMB:F1} MB.");
+                  $"cancelled={isCancelled}, offlineReady={LastDownloadCoveredEveryTile}.  Total ≈ {estimatedMB:F1} MB.");
         OnComplete?.Invoke(isCancelled);
     }
 
@@ -235,15 +259,14 @@ public class CityPredownloader : MonoBehaviour
                 yield return new WaitForSeconds(0.5f * attempt); // back-off
 
             Texture2D tex = null;
-            yield return _cache.GetTileTexture(
-                mapboxToken, mapStyle, zoomLevel, x, y, t => tex = t);
+            yield return _cache.GetTileTexture(zoomLevel, x, y, t => tex = t);
 
             if (tex != null)
             {
                 // Rough byte estimate from texture dimensions (@2x PNG).
                 byteCount = (long)(tex.width * tex.height * 4 * 0.6f); // ~60 % PNG compression
-                success = _cache.IsTileCached(mapStyle, zoomLevel, x, y);
-                if (success) byteCount = new System.IO.FileInfo(_cache.GetTileCachePath(mapStyle, zoomLevel, x, y)).Length;
+                success = _cache.IsTileCached(Settings.Style, zoomLevel, x, y);
+                if (success) byteCount = new System.IO.FileInfo(_cache.GetTileCachePath(Settings.Style, zoomLevel, x, y)).Length;
                 Destroy(tex);
             }
         }
@@ -275,26 +298,26 @@ public class CityPredownloader : MonoBehaviour
     {
         if (city == null) return null;
         string key = StatusKey(city);
-        CityDownloadStatus status = new CityDownloadStatus { cityCode = CityKey(city), mapStyle = mapStyle, zoom = zoomLevel };
+        CityDownloadStatus status = new CityDownloadStatus { cityCode = CityKey(city), mapStyle = Settings.Style, zoom = zoomLevel };
         string json = PlayerPrefs.GetString(key, string.Empty);
         if (!string.IsNullOrWhiteSpace(json))
         {
             try { JsonUtility.FromJsonOverwrite(json, status); } catch (System.Exception) { }
         }
-        if (status.total <= 0 || status.zoom != zoomLevel || status.mapStyle != mapStyle)
+        if (status.total <= 0 || status.zoom != zoomLevel || status.mapStyle != Settings.Style)
         {
-            status.mapStyle = mapStyle; status.zoom = zoomLevel;
+            status.mapStyle = Settings.Style; status.zoom = zoomLevel;
             status.total = GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize).Count;
             status.estimatedMb = status.total * 0.22f;
         }
         if (verifyCache)
         {
-            _cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
+            _cache = OfflineCacheManager.EnsureInstance();
             if (_cache != null)
             {
                 int cached = 0;
                 var tiles = GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize);
-                for (int i = 0; i < tiles.Count; i++) if (_cache.IsTileCached(mapStyle, zoomLevel, tiles[i].x, tiles[i].y)) cached++;
+                for (int i = 0; i < tiles.Count; i++) if (_cache.IsTileCached(Settings.Style, zoomLevel, tiles[i].x, tiles[i].y)) cached++;
                 status.cached = cached; status.total = tiles.Count; status.complete = cached == tiles.Count && tiles.Count > 0;
             }
         }
@@ -316,7 +339,7 @@ public class CityPredownloader : MonoBehaviour
         if (city == null) return;
         CityDownloadStatus status = new CityDownloadStatus
         {
-            cityCode = CityKey(city), mapStyle = mapStyle, zoom = zoomLevel, total = totalTiles,
+            cityCode = CityKey(city), mapStyle = Settings.Style, zoom = zoomLevel, total = totalTiles,
             cached = completedTiles, failed = failedTiles, estimatedMb = estimatedMB, complete = complete,
             updatedAt = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };

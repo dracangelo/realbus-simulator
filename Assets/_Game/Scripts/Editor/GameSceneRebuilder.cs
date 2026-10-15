@@ -513,9 +513,7 @@ public static class GameSceneRebuilder
 
     static Material CreateRuntimeMaterial(string name, Color color)
     {
-        var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-        var material = new Material(shader) { name = name, color = color };
-        return material;
+        return new Material(BuiltInShaders.Lit) { name = name, color = color };
     }
 
     static void Stretch(RectTransform rect)

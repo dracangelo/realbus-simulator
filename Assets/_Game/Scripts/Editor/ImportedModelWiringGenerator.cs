@@ -13,11 +13,13 @@ public static class ImportedModelWiringGenerator
     const string StopSources = "Assets/unity models/busstop";
     const string GasStationSources = "Assets/unity models/gasstation";
     const string RoadSources = "Assets/unity models/roads";
+    const string DepotSources = "Assets/unity models/parking lot";
     const string BusVisuals = "Assets/_Game/Generated/Models/Buses";
     const string BusPrefabs = "Assets/_Game/Generated/Prefabs/Buses";
     const string StopPrefabs = "Assets/_Game/Resources/BusStopsGenerated";
     const string GasStationPrefabs = "Assets/_Game/Resources/GasStationsGenerated";
     const string RoadPrefabs = "Assets/_Game/Resources/RoadsGenerated";
+    const string DepotPrefabs = "Assets/_Game/Resources/BusDepotsGenerated";
     const string BusSpecs = "Assets/_Game/Resources/BusSpecs/Imported";
     const string ReportPath = "Assets/_Game/Generated/IMPORTED_MODEL_WIRING.md";
 
@@ -82,6 +84,7 @@ public static class ImportedModelWiringGenerator
             string[] stopPaths = FindFbxFiles(StopSources);
             string[] gasStationPaths = FindFbxFiles(GasStationSources);
             string[] roadPaths = FindFbxFiles(RoadSources);
+            string[] depotPaths = FindFbxFiles(DepotSources);
             var report = new StringBuilder("# Imported model wiring\n\n");
             report.AppendLine("Generated from `Assets/unity models`. Re-run `Tools > RealBus > Setup > Wire All Imported Bus and Stop Models` after replacing a source FBX.\n");
             report.AppendLine("## Drivable buses\n");
@@ -121,13 +124,22 @@ public static class ImportedModelWiringGenerator
                     : $"- **{Path.GetFileName(roadPaths[i])}** — skipped: {message}");
             }
 
+            report.AppendLine("\n## Bus depots & parking lot props\n");
+            for (int i = 0; i < depotPaths.Length; i++)
+            {
+                string output = GenerateDepotProp(depotPaths[i], out string message);
+                report.AppendLine(!string.IsNullOrEmpty(output)
+                    ? $"- **{ObjectNames.NicifyVariableName(Path.GetFileNameWithoutExtension(depotPaths[i]))}** — `{output}`"
+                    : $"- **{Path.GetFileName(depotPaths[i])}** — skipped: {message}");
+            }
+
             File.WriteAllText(ReportPath, report.ToString());
             AssetDatabase.ImportAsset(ReportPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[RealBus] Wired {busPaths.Length} buses, {stopPaths.Length} bus stops, {gasStationPaths.Length} gas stations, and {roadPaths.Length} road packs. See {ReportPath}.");
+            Debug.Log($"[RealBus] Wired {busPaths.Length} buses, {stopPaths.Length} bus stops, {gasStationPaths.Length} gas stations, {roadPaths.Length} road packs, and {depotPaths.Length} depot props. See {ReportPath}.");
             if (showDialog)
-                EditorUtility.DisplayDialog("RealBus model wiring", $"Processed {busPaths.Length} buses, {stopPaths.Length} stop props, {gasStationPaths.Length} gas stations, and {roadPaths.Length} road packs.\n\nSee {ReportPath} for the generated asset paths.", "OK");
+                EditorUtility.DisplayDialog("RealBus model wiring", $"Processed {busPaths.Length} buses, {stopPaths.Length} stop props, {gasStationPaths.Length} gas stations, {roadPaths.Length} road packs, and {depotPaths.Length} depot props.\n\nSee {ReportPath} for the generated asset paths.", "OK");
         }
         catch (Exception exception)
         {
@@ -147,11 +159,13 @@ public static class ImportedModelWiringGenerator
         int stopCount = FindFbxFiles(StopSources).Length;
         int gasStationCount = FindFbxFiles(GasStationSources).Length;
         int roadCount = FindFbxFiles(RoadSources).Length;
+        int depotCount = FindFbxFiles(DepotSources).Length;
         int wiredBuses = Directory.Exists(BusPrefabs) ? Directory.GetFiles(BusPrefabs, "*.prefab").Length : 0;
         int wiredStops = Directory.Exists(StopPrefabs) ? Directory.GetFiles(StopPrefabs, "*.prefab").Length : 0;
         int wiredGasStations = Directory.Exists(GasStationPrefabs) ? Directory.GetFiles(GasStationPrefabs, "*.prefab").Length : 0;
         int wiredRoads = Directory.Exists(RoadPrefabs) ? Directory.GetFiles(RoadPrefabs, "*.prefab").Length : 0;
-        if (busCount > wiredBuses || stopCount > wiredStops || gasStationCount > wiredGasStations || roadCount > wiredRoads || !File.Exists(ReportPath)) return true;
+        int wiredDepots = Directory.Exists(DepotPrefabs) ? Directory.GetFiles(DepotPrefabs, "*.prefab").Length : 0;
+        if (busCount > wiredBuses || stopCount > wiredStops || gasStationCount > wiredGasStations || roadCount > wiredRoads || depotCount > wiredDepots || !File.Exists(ReportPath)) return true;
         foreach (string sourcePath in FindFbxFiles(BusSources))
         {
             string specPath = $"{BusSpecs}/{UniqueStem(sourcePath)}.asset";
@@ -384,6 +398,59 @@ public static class ImportedModelWiringGenerator
         return output;
     }
 
+    static string GenerateDepotProp(string sourcePath, out string message)
+    {
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+        if (source == null) { message = "Unity did not import this FBX as a GameObject."; return string.Empty; }
+        string displayName = ObjectNames.NicifyVariableName(Path.GetFileNameWithoutExtension(sourcePath));
+        string output = $"{DepotPrefabs}/{UniqueStem(sourcePath)}.prefab";
+        GameObject root = new GameObject(displayName);
+        GameObject model = PrefabUtility.InstantiatePrefab(source) as GameObject;
+        if (model == null) { UnityEngine.Object.DestroyImmediate(root); message = "The model could not be instantiated."; return string.Empty; }
+        model.name = "Model";
+        model.transform.SetParent(root.transform, false);
+        StripImportedPhysics(model);
+        if (!NormalizeDepotVisual(root, model.transform, displayName, out Bounds bounds))
+        {
+            UnityEngine.Object.DestroyImmediate(root); message = "No renderable mesh was found."; return string.Empty;
+        }
+        BoxCollider collider = root.AddComponent<BoxCollider>();
+        collider.center = bounds.center;
+        collider.size = new Vector3(Mathf.Max(0.2f, bounds.size.x), Mathf.Max(0.1f, bounds.size.y), Mathf.Max(0.2f, bounds.size.z));
+        PrefabUtility.SaveAsPrefabAsset(root, output);
+        UnityEngine.Object.DestroyImmediate(root);
+        message = string.Empty;
+        return output;
+    }
+
+    static bool NormalizeDepotVisual(GameObject root, Transform model, string displayName, out Bounds bounds)
+    {
+        bounds = GetBounds(root);
+        if (!HasUsableBounds(bounds)) return false;
+        if (displayName.IndexOf("stop", StringComparison.OrdinalIgnoreCase) >= 0 || displayName.IndexOf("cocnrete", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            float target = 2.4f;
+            float cur = Mathf.Max(bounds.size.x, bounds.size.z);
+            if (cur < 0.2f || cur > 15f) model.localScale *= target / Mathf.Max(0.001f, cur);
+        }
+        else if (displayName.IndexOf("garage", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            float target = 24f;
+            float cur = Mathf.Max(bounds.size.x, bounds.size.z);
+            if (cur < 5f || cur > 200f) model.localScale *= target / Mathf.Max(0.001f, cur);
+        }
+        else
+        {
+            float target = 32f;
+            float cur = Mathf.Max(bounds.size.x, bounds.size.z);
+            if (cur < 5f || cur > 200f) model.localScale *= target / Mathf.Max(0.001f, cur);
+        }
+        bounds = GetBounds(root);
+        model.localPosition += new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z);
+        bounds = GetBounds(root);
+        return HasUsableBounds(bounds);
+    }
+
     static bool NormalizeBusVisual(GameObject root, Transform model, float targetLength, out Bounds bounds)
     {
         bounds = GetBounds(root);
@@ -510,6 +577,7 @@ public static class ImportedModelWiringGenerator
         Directory.CreateDirectory(StopPrefabs);
         Directory.CreateDirectory(GasStationPrefabs);
         Directory.CreateDirectory(RoadPrefabs);
+        Directory.CreateDirectory(DepotPrefabs);
         Directory.CreateDirectory(BusSpecs);
     }
 

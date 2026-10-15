@@ -46,8 +46,16 @@ public class SubtitleManager : MonoBehaviour
         Canvas canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 110;
         CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f);
         GameObject panel = new GameObject("SubtitlePanel", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(canvasObject.transform, false);
-        RectTransform p = panel.GetComponent<RectTransform>(); p.anchorMin = p.anchorMax = new Vector2(0.5f, 0f); p.pivot = new Vector2(0.5f, 0f); p.sizeDelta = new Vector2(1050f, 90f); p.anchoredPosition = new Vector2(0f, 72f);
+        RectTransform p = panel.GetComponent<RectTransform>(); p.anchorMin = p.anchorMax = new Vector2(0.5f, 0f); p.pivot = new Vector2(0.5f, 0f); p.sizeDelta = new Vector2(1050f, 90f); p.anchoredPosition = new Vector2(0f, 120f);
         panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.82f);
+        // Subtitles used to sit at y=72 and overlapped the cockpit controls bar
+        // (y=24..110). They now stack above it and follow it when it lifts clear
+        // of the driving controls on narrow displays.
+        HudSafeZoneFitter fitter = panel.AddComponent<HudSafeZoneFitter>();
+        fitter.designSize = new Vector2(1050f, 90f);
+        fitter.minWidth = 760f;
+        fitter.bottomOffset = 120f;
+        fitter.liftedBottomOffset = 458f;
         GameObject text = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI)); text.transform.SetParent(panel.transform, false);
         RectTransform r = text.GetComponent<RectTransform>(); r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = new Vector2(24f, 10f); r.offsetMax = new Vector2(-24f, -10f);
         label = text.GetComponent<TextMeshProUGUI>(); label.fontSize = 30f; label.alignment = TextAlignmentOptions.Center; label.color = Color.white; label.font = UITheme.GetFont(UITheme.FontWeight.Medium);

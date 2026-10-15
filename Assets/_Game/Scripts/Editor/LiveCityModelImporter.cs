@@ -132,12 +132,10 @@ public static class LiveCityModelImporter
 
     static Material MakeMaterial(Material source, LiveCityCatalog.Kind kind)
     {
-        bool urp = GraphicsSettings.currentRenderPipeline != null;
-        var result = new Material(Shader.Find(urp ? "Universal Render Pipeline/Lit" : "Standard"));
+        var result = new Material(BuiltInShaders.Lit);
         result.name = source != null ? source.name : kind.ToString();
-        Texture texture = source != null && source.HasProperty("_BaseMap") ? source.GetTexture("_BaseMap") : null;
-        if (texture == null && source != null && source.HasProperty("_MainTex")) texture = source.GetTexture("_MainTex");
-        Color color = source != null && source.HasProperty("_BaseColor") ? source.GetColor("_BaseColor") : source != null && source.HasProperty("_Color") ? source.color : Color.white;
+        Texture texture = source != null && source.HasProperty("_MainTex") ? source.GetTexture("_MainTex") : null;
+        Color color = source != null && source.HasProperty("_Color") ? source.color : Color.white;
         bool neutral = Mathf.Abs(color.r - color.g) < .03f && Mathf.Abs(color.g - color.b) < .03f;
         if (texture == null && neutral && kind != LiveCityCatalog.Kind.Pedestrian)
         {
@@ -146,13 +144,12 @@ public static class LiveCityModelImporter
                 ? (name.Contains("trunk") || name.Contains("bark") ? new Color(.3f, .21f, .12f) : new Color(.2f, .42f, .12f))
                 : kind == LiveCityCatalog.Kind.Rock ? new Color(.4f, .38f, .32f) : new Color(.26f, .3f, .31f);
         }
-        result.SetColor(urp ? "_BaseColor" : "_Color", color);
-        result.SetTexture(urp ? "_BaseMap" : "_MainTex", texture);
-        if (source != null && texture != null)
+        result.SetColor("_Color", color);
+        result.SetTexture("_MainTex", texture);
+        if (source != null && texture != null && source.HasProperty("_MainTex"))
         {
-            string from = source.HasProperty("_BaseMap") && source.GetTexture("_BaseMap") != null ? "_BaseMap" : "_MainTex";
-            result.SetTextureScale(urp ? "_BaseMap" : "_MainTex", source.GetTextureScale(from));
-            result.SetTextureOffset(urp ? "_BaseMap" : "_MainTex", source.GetTextureOffset(from));
+            result.SetTextureScale("_MainTex", source.GetTextureScale("_MainTex"));
+            result.SetTextureOffset("_MainTex", source.GetTextureOffset("_MainTex"));
         }
         if (source != null && source.HasProperty("_BumpMap"))
         { result.SetTexture("_BumpMap", source.GetTexture("_BumpMap")); if (source.GetTexture("_BumpMap") != null) result.EnableKeyword("_NORMALMAP"); }
@@ -162,8 +159,7 @@ public static class LiveCityModelImporter
             result.EnableKeyword("_ALPHATEST_ON");
             result.SetOverrideTag("RenderType", "TransparentCutout");
             result.renderQueue = (int)RenderQueue.AlphaTest;
-            if (urp) { result.SetFloat("_AlphaClip", 1); result.SetFloat("_Cull", 0); }
-            else result.SetFloat("_Mode", 1);
+            result.SetFloat("_Mode", 1);
         }
         result.enableInstancing = true;
         return result;

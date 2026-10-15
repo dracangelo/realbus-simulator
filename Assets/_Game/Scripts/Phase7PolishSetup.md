@@ -7,7 +7,7 @@ Phase 7 UI systems bootstrap at runtime. Gameplay scenes now receive a safe-area
 - Assign production clips to `RealBusAudioManager`; an optional bridge receives named FMOD events through `PlayRealBusEvent`. The Unity audio layer remains the fallback when FMOD is unavailable.
 - Name glass renderers with `glass` so transparent surface and reflection setup is applied automatically.
 - Replace generated exhaust, dust, and rain-spray particles with authored prefabs when final effects are available.
-- URP colour grading, bloom, headlight flare assets, detailed exterior/interior meshes, UVs, and scuff shaders remain art-pipeline inputs.
+- Post-processing (colour grading, bloom), headlight flare assets, detailed exterior/interior meshes, UVs, and scuff shaders remain art-pipeline inputs. The project renders with the Built-in Render Pipeline, so any post-processing stack has to be the Built-in one.
 
 ## Accessibility
 

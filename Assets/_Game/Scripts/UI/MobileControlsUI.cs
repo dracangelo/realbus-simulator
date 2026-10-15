@@ -39,16 +39,16 @@ public class MobileControlsUI : MonoBehaviour
 
     void ApplyCinematicLayout()
     {
-        StyleControl(accelerateButton, "ACCEL", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-28f, 28f), new Vector2(105f, 230f), 18f);
-        StyleControl(brakeButton, "BRAKE", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-150f, 28f), new Vector2(112f, 190f), 17f);
-        StyleControl(steerLeftButton, "‹", Vector2.zero, Vector2.zero, new Vector2(34f, 34f), new Vector2(170f, 170f), 72f);
-        StyleControl(steerRightButton, "›", Vector2.zero, Vector2.zero, new Vector2(220f, 34f), new Vector2(170f, 170f), 72f);
-        StyleControl(shiftDownButton, "▼", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-36f, 286f), new Vector2(88f, 72f), 34f);
-        StyleControl(shiftUpButton, "▲", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-36f, 370f), new Vector2(88f, 72f), 34f);
-        StyleControl(retarderButton, "R", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-36f, 458f), new Vector2(88f, 78f), 28f, UITheme.Accent);
-        StyleControl(hornButton, "HORN", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-36f, 550f), new Vector2(88f, 78f), 15f);
+        StyleControl(accelerateButton,  "ACCEL", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-138f, 28f),  new Vector2(110f, 230f), 18f);
+        StyleControl(brakeButton,       "BRAKE", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-264f, 28f),  new Vector2(116f, 190f), 17f);
+        StyleControl(steerLeftButton,   "‹",     Vector2.zero,         Vector2.zero,         new Vector2( 34f,  34f),  new Vector2(170f, 170f), 72f);
+        StyleControl(steerRightButton,  "›",     Vector2.zero,         Vector2.zero,         new Vector2(220f,  34f),  new Vector2(170f, 170f), 72f);
+        StyleControl(shiftDownButton,   "▼",     new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 286f),  new Vector2(92f,  72f),  34f);
+        StyleControl(shiftUpButton,     "▲",     new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 370f),  new Vector2(92f,  72f),  34f);
+        StyleControl(retarderButton,    "R",     new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 458f),  new Vector2(92f,  78f),  28f, UITheme.Accent);
+        StyleControl(hornButton,        "HORN",  new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 550f),  new Vector2(92f,  78f),  15f);
         doorButton = EnsureActionButton(doorButton, "DoorButton", "DOOR");
-        StyleControl(doorButton, "DOOR", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-36f, 642f), new Vector2(88f, 78f), 14f);
+        StyleControl(doorButton,        "DOOR",  new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 642f),  new Vector2(92f,  78f),  14f);
         AddPedalGrooves(accelerateButton, 5);
         AddPedalGrooves(brakeButton, 4);
         EnsureSteeringWheel();
@@ -166,6 +166,28 @@ public class MobileControlsUI : MonoBehaviour
         }
         steering = ApplySteeringCurve(steering, steeringDeadZone, steeringSensitivity);
         busController.SetMobileInput(accelerating ? 1f : 0f, braking ? 1f : 0f, steering);
+        UpdateDoorButtonVisual();
+    }
+
+    void UpdateDoorButtonVisual()
+    {
+        if (doorButton == null) return;
+        var passengers = PassengerManager.Instance;
+        bool open = passengers != null && passengers.doorsOpen;
+        // The lock request is queued while someone is still in the doorway, so the
+        // button names that state instead of silently doing nothing.
+        bool pending = passengers != null && passengers.DoorLockPending;
+        var text = doorButton.GetComponentInChildren<TextMeshProUGUI>();
+        var outline = doorButton.GetComponent<Outline>();
+        if (text != null)
+        {
+            text.text = pending ? "LOCKING" : open ? "LOCK" : "DOORS";
+            text.color = pending ? UITheme.TertiaryDim : open ? UITheme.Accent : UITheme.TextPrimary;
+        }
+        if (outline != null)
+        {
+            outline.effectColor = open || pending ? UITheme.Accent : new Color(1f, 1f, 1f, 0.48f);
+        }
     }
 
     void RebindBusController()

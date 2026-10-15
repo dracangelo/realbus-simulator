@@ -43,14 +43,64 @@ public class OfflineCacheManager : MonoBehaviour
     bool _evicting;
     public bool forceOffline;
 
+    /// <summary>Where cached tiles are written, for diagnostics and tests.</summary>
+    public string CacheRoot => _cacheRoot;
+
+    /// <summary>
+    /// The one tile cache, created on demand.
+    ///
+    /// Nothing in the shipped game used to create a cache: no scene contained one and no code
+    /// added one, so every consumer's reference was null. The offline-maps download therefore
+    /// wrote nothing (every tile "failed") while the menu still called the result "Offline map
+    /// ready.", and the loader's own cache branch could never run, so a fully downloaded city
+    /// was still fetched from Mapbox tile by tile. The loader and the predownloader now both
+    /// ask for the cache here, which is what makes it exist wherever the map runs.
+    /// </summary>
+    public static OfflineCacheManager EnsureInstance()
+    {
+        if (Instance != null) return Instance;
+
+        Instance = FindAnyObjectByType<OfflineCacheManager>();
+        if (Instance != null) return Instance;
+
+        var host = new GameObject("OfflineCacheManager");
+        Instance = host.AddComponent<OfflineCacheManager>();
+        // Awake does not run for a component added by an edit-mode caller or a test, so the
+        // instance publishes itself here rather than waiting to be found later.
+        Instance.Publish();
+        return Instance;
+    }
+
     // ── Lifecycle ──────────────────────────────────────────────────────
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying) { DestroyImmediate(gameObject); return; }
+#endif
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
-        DontDestroyOnLoad(gameObject);
-        _cacheRoot = Path.Combine(Application.persistentDataPath, cacheFolderName);
+        Publish();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    /// <summary>Publishes this manager and gives it a cache root. Idempotent.</summary>
+    void Publish()
+    {
+        if (string.IsNullOrEmpty(_cacheRoot))
+            _cacheRoot = Path.Combine(Application.persistentDataPath, cacheFolderName);
+        // Outlives the scene the map is loaded from, so a tile cached while driving is still
+        // there after a return to the menu.
+        if (Application.isPlaying) DontDestroyOnLoad(gameObject);
     }
 
     void Start()
@@ -75,15 +125,16 @@ public class OfflineCacheManager : MonoBehaviour
 
     /// <summary>
     /// Resolves a tile — from cache if available, otherwise downloaded and cached.
-    /// Returns null texture on failure.
+    ///
+    /// The credential and the style are not parameters: they are read from the one resolved
+    /// configuration (<see cref="MapboxMapSettings"/>), so no caller can ask for a different
+    /// style, or send a different token, than the rest of the map stack is using. Returns a
+    /// null texture on failure.
     /// </summary>
-    public IEnumerator GetTileTexture(
-        string mapboxToken,
-        string style,
-        int zoom, int x, int y,
-        System.Action<Texture2D> onDone)
+    public IEnumerator GetTileTexture(int zoom, int x, int y, System.Action<Texture2D> onDone)
     {
-        string cachePath = GetTileCachePath(style, zoom, x, y);
+        MapboxMapSettings settings = MapboxMapSettings.Current;
+        string cachePath = GetTileCachePath(settings.Style, zoom, x, y);
 
         // ── Cache hit ──────────────────────────────────────────────────
         if (File.Exists(cachePath))
@@ -108,15 +159,16 @@ public class OfflineCacheManager : MonoBehaviour
             yield break;
         }
 
-        if (string.IsNullOrWhiteSpace(mapboxToken))
+        if (!settings.HasToken)
         {
-            Debug.LogWarning($"[OfflineCacheManager] No Mapbox token — skipping tile {zoom}/{x}/{y}.");
+            Debug.LogWarning($"[OfflineCacheManager] No Mapbox token — skipping tile {zoom}/{x}/{y} " +
+                             $"({settings.TokenSource}).");
             onDone?.Invoke(null);
             yield break;
         }
 
         // ── Download ───────────────────────────────────────────────────
-        string url = BuildTileUrl(mapboxToken, style, zoom, x, y);
+        string url = MapboxTileRequest.BuildTileUrl(settings.Style, zoom, x, y, settings.Token);
         using (var req = UnityWebRequest.Get(url))
         {
             req.timeout = Mathf.Max(1, httpTimeoutSeconds);
@@ -180,9 +232,6 @@ public class OfflineCacheManager : MonoBehaviour
     }
 
     // ── Private helpers ────────────────────────────────────────────────
-
-    static string BuildTileUrl(string token, string style, int zoom, int x, int y) =>
-        $"https://api.mapbox.com/styles/v1/{style}/tiles/512/{zoom}/{x}/{y}@2x?access_token={token}";
 
     static Texture2D LoadTextureFromDisk(string path)
     {

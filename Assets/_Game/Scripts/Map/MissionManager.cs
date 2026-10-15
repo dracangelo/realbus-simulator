@@ -30,6 +30,7 @@ public class MissionManager : MonoBehaviour
 
     [Header("Countdown")]
     public bool repositionBusOnStart = true;
+    public bool startAtDepot = true;
     public bool autoInitialize = true;
     public float ElapsedSeconds { get; private set; }
     public float DistanceDrivenKm { get; private set; }
@@ -40,7 +41,8 @@ public class MissionManager : MonoBehaviour
 
     private Vector3 nextStopWorldPos;
     bool missionStarting;
-    private bool isProcessingStop = false;
+    public bool isProcessingStop { get; private set; } = false;
+    public bool earlyDepartureRequested { get; private set; } = false;
     private bool pendingDoorOpenRequest = false;
     private Vector3[] activeGuidancePathPoints;
     private int guidancePathVersion = 0;
@@ -120,6 +122,10 @@ public class MissionManager : MonoBehaviour
         currentStopIndex = 0;
         isProcessingStop = pendingDoorOpenRequest = false;
         currentRoute = route;
+        if (route.stops != null && route.stops.Length > 0 && MapTileLoader.Instance != null)
+        {
+            MapTileLoader.Instance.LoadMap(route.stops[0].latitude, route.stops[0].longitude, MapTileLoader.Instance.zoomLevel);
+        }
         ResetGuidancePath();
         missionStarting = true;
         StartCoroutine(MissionStartSequence());
@@ -170,6 +176,17 @@ public class MissionManager : MonoBehaviour
         {
             if (pendingCheckpoint != null)
                 busController.Teleport(pendingCheckpoint.busPosition, pendingCheckpoint.busRotation);
+            else if (startAtDepot && BusDepotManager.EnsureExists().TrySpawnDepotAndResolveBay(currentRoute, startPos, busController, out var depotBayPos, out var depotBayRot, out var depotExitPos))
+            {
+                busController.Teleport(depotBayPos, depotBayRot);
+                busController.SetParkingBrake(true);
+                // Throttle releases the park brake (BusController), and the yard's own
+                // traffic is held off the aisles until the bus is clear of the yard, so
+                // the instruction can be about where to drive rather than which key to find.
+                SubtitleManager.EnsureExists().Show("Depot Dispatch",
+                    $"Route '{currentRoute.routeName}' assigned. Pull out of Bay 1 and follow the exit lane; yard traffic holds until you are clear.", 5f);
+                Debug.Log($"MissionManager: Player spawned at Depot Bay 1: {depotBayPos}, heading {depotBayRot.eulerAngles.y:F1} deg.");
+            }
             else
             {
                 Vector3 heading = busController.transform.forward;
@@ -187,17 +204,29 @@ public class MissionManager : MonoBehaviour
             var body = busController.GetComponent<Rigidbody>();
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
+            MobileCameraController.EnsureExists().SetPreset(MobileCameraController.Instance.CurrentPreset);
             Debug.Log($"MissionManager: Player spawned at {body.position}, heading {body.rotation.eulerAngles.y:F1} degrees.");
         }
 
         Debug.Log("Mission starting...");
 
-        for (int i = countdownSeconds; i > 0; i--)
+        // Responsive fast-start: driver can press throttle to depart immediately
+        int totalCountdown = Mathf.Min(countdownSeconds, 2);
+        for (int i = totalCountdown; i > 0; i--)
         {
             currentCountdownValue = i;
             OnCountdownTick?.Invoke(i);
             Debug.Log($"Departing in {i}...");
-            yield return new WaitForSeconds(1f);
+            float t = 0f;
+            while (t < 1f)
+            {
+                t += Time.deltaTime;
+                var keyboard = UnityEngine.InputSystem.Keyboard.current;
+                bool accel = (busController != null && busController.throttleInput > 0.05f) ||
+                             (keyboard != null && (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed));
+                if (accel) { i = 0; break; }
+                yield return null;
+            }
         }
 
         currentCountdownValue = 0;
@@ -396,6 +425,7 @@ public class MissionManager : MonoBehaviour
     IEnumerator ProcessStopArrival()
     {
         isProcessingStop = true;
+        earlyDepartureRequested = false;
         busController.ServiceBrakeInterlock = true;
         busController.RequestKneelingSuspension(true);
 
@@ -409,24 +439,12 @@ public class MissionManager : MonoBehaviour
         if (ScheduleManager.Instance != null)
         {
             status = ScheduleManager.Instance.RecordArrival(currentStopIndex);
-
-            if (status == PunctualityStatus.Early)
-            {
-                float waitSeconds = ScheduleManager.Instance.GetEarlyWaitSecondsRequired(currentStopIndex);
-                while (waitSeconds > 0.05f)
-                {
-                    busController.brakeInput = 1f;
-                    if (StopApproachUI.Instance != null)
-                        StopApproachUI.Instance.ShowWaiting(stop.stopName, waitSeconds);
-
-                    yield return null;
-                    waitSeconds = ScheduleManager.Instance.GetEarlyWaitSecondsRequired(currentStopIndex);
-                }
-
-                if (StopApproachUI.Instance != null)
-                    StopApproachUI.Instance.ShowDocked(stop.stopName);
-            }
         }
+
+        // Handle passenger boarding and alighting immediately on door open
+        if (PassengerManager.Instance != null)
+            PassengerManager.Instance.HandleStopArrival(
+                stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length);
 
         // Update score
         if (ScoreTracker.Instance != null)
@@ -434,21 +452,50 @@ public class MissionManager : MonoBehaviour
                 ? ScheduleManager.Instance.GetArrivalDeltaSeconds(currentStopIndex)
                 : 0f);
 
-        // Handle passengers
-        if (PassengerManager.Instance != null)
-            PassengerManager.Instance.HandleStopArrival(
-                stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length);
-
         float dwell = PassengerManager.Instance != null
             ? PassengerManager.Instance.GetRequiredDwellTimeSeconds() : 2f;
-        yield return new WaitForSeconds(Mathf.Max(2f, dwell));
-        while (PassengerManager.Instance != null && PassengerManager.Instance.HasServiceAnimations) yield return null;
-        if (PassengerManager.Instance != null) PassengerManager.Instance.doorsOpen = false;
+
+        if (status == PunctualityStatus.Early && ScheduleManager.Instance != null)
+        {
+            float waitSeconds = ScheduleManager.Instance.GetEarlyWaitSecondsRequired(currentStopIndex);
+            if (waitSeconds > dwell)
+                dwell = waitSeconds;
+        }
+
+        float dwellTimer = 0f;
+        float maxDwell = Mathf.Max(1.5f, dwell);
+        while (dwellTimer < maxDwell && !earlyDepartureRequested)
+        {
+            dwellTimer += Time.deltaTime;
+            if (status == PunctualityStatus.Early && ScheduleManager.Instance != null && StopApproachUI.Instance != null)
+            {
+                float remainingEarlyWait = ScheduleManager.Instance.GetEarlyWaitSecondsRequired(currentStopIndex);
+                if (remainingEarlyWait > 0.5f)
+                    StopApproachUI.Instance.ShowWaiting(stop.stopName, remainingEarlyWait);
+                else
+                    StopApproachUI.Instance.ShowDocked(stop.stopName);
+            }
+            yield return null;
+        }
+
+        while (!earlyDepartureRequested && PassengerManager.Instance != null && PassengerManager.Instance.HasServiceAnimations)
+        {
+            yield return null;
+        }
+
+        if (PassengerManager.Instance != null)
+        {
+            PassengerManager.Instance.CompletePendingBoardingAndAlighting();
+            PassengerManager.Instance.doorsOpen = false;
+        }
+
         busController.RequestKneelingSuspension(false);
         busController.ServiceBrakeInterlock = false;
+        busController.brakeInput = 0f;
         currentStopIndex++;
         pendingDoorOpenRequest = false;
         isProcessingStop = false;
+        earlyDepartureRequested = false;
         if (diversionActive) ClearTemporaryDiversion();
         SetNextStop();
     }
@@ -496,10 +543,12 @@ public class MissionManager : MonoBehaviour
         {
             busController.ServiceBrakeInterlock = false;
             busController.RequestKneelingSuspension(false);
+            busController.brakeInput = 0f;
         }
         if (PassengerManager.Instance != null) PassengerManager.Instance.doorsOpen = false;
         routeActive = false;
         isProcessingStop = false;
+        earlyDepartureRequested = false;
         pendingDoorOpenRequest = false;
         ResetGuidancePath();
         SetMissionState(MissionState.NotStarted);
@@ -516,6 +565,34 @@ public class MissionManager : MonoBehaviour
         PassengerManager.Instance?.AcknowledgeStopRequest();
 
         ArrivedAtStop();
+        return true;
+    }
+
+    public bool TryCloseAndLockDoors()
+    {
+        if (!isProcessingStop && (PassengerManager.Instance == null || !PassengerManager.Instance.doorsOpen))
+            return false;
+
+        earlyDepartureRequested = true;
+
+        if (PassengerManager.Instance != null)
+        {
+            PassengerManager.Instance.CompletePendingBoardingAndAlighting();
+            PassengerManager.Instance.doorsOpen = false;
+        }
+
+        if (busController != null)
+        {
+            busController.RequestKneelingSuspension(false);
+            busController.ServiceBrakeInterlock = false;
+            busController.brakeInput = 0f;
+        }
+
+        if (StopApproachUI.Instance != null && currentRoute != null && currentStopIndex < currentRoute.stops.Length)
+        {
+            StopApproachUI.Instance.ShowDoorsLocked(currentRoute.stops[currentStopIndex].stopName);
+        }
+
         return true;
     }
 
@@ -569,6 +646,12 @@ public class MissionManager : MonoBehaviour
 
     bool MissionEndedAtDepot()
     {
+        if (BusDepotManager.Instance != null && BusDepotManager.Instance.currentDepot != null && busController != null)
+        {
+            float dist = Vector3.Distance(busController.transform.position, BusDepotManager.Instance.currentBay1Position);
+            if (dist < 30f) return true;
+        }
+
         if (currentRoute == null || currentRoute.stops == null || currentRoute.stops.Length == 0)
             return false;
 

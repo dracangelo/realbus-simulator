@@ -17,7 +17,7 @@ public class RoadNetworkSurface : MonoBehaviour
     public IEnumerator Build(OverpassResponse response, CoordinateConverter converter)
     {
         Clear();
-        material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+        material = new Material(BuiltInShaders.Lit);
         material.color = new Color(0.18f, 0.19f, 0.21f);
         friction = new PhysicsMaterial("Road 0.7 / 0.6") { staticFriction = 0.7f, dynamicFriction = 0.6f };
         response.Resolve();

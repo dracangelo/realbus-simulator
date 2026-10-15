@@ -759,7 +759,9 @@ public class GameScriptsTests
 
         int picked = graph.GetRandomNodeIndex(requireOutgoingConnection: true, maxAttempts: 32);
 
-        Assert.That(picked, Is.EqualTo(0).Or.EqualTo(1));
+        // Node 2 is the only dead end; nodes 0, 1 and 3 all have a valid outgoing
+        // edge (3 points back to 2), so any of them is a valid pick.
+        Assert.That(picked, Is.Not.EqualTo(2));
         Assert.That(graph.HasOutgoingConnection(picked), Is.True);
     }
 
@@ -926,6 +928,10 @@ public class GameScriptsTests
         pedestrianSpawner.generatedCrossingCount = 2;
         pedestrianSpawner.crossingHalfWidth = 3f;
         pedestrianSpawner.useRandomGeneratedCrossings = true;
+        // Pin the walk's start. It is a random start otherwise, and starts at
+        // nodes 2 or 3 never reach the signalised node 1, which made this test
+        // flaky: from node 0 the chain is deterministically 0 -> 1 -> 2.
+        pedestrianSpawner.generatedCrossingStartNodeIndex = 0;
 
         var generated = (PedestrianSpawner.ZebraCrossing[])InvokePrivateMethodWithResult(
             pedestrianSpawner, "BuildRandomCrossingsFromRoadGraph");
@@ -937,8 +943,26 @@ public class GameScriptsTests
             Assert.That(generated[i].spawnA, Is.Not.Null);
             Assert.That(generated[i].spawnB, Is.Not.Null);
             Assert.That(Vector3.Distance(generated[i].spawnA.position, generated[i].spawnB.position), Is.GreaterThan(0.1f));
+
+            // A crossing is gated by whichever endpoint carries a signal, and
+            // must not invent one where neither endpoint has a signal.
+            string[] ends = generated[i].crossingId.Substring("RGX_".Length).Split('_');
+            int fromIndex = System.Int32.Parse(ends[0]);
+            int toIndex = System.Int32.Parse(ends[1]);
+            AITrafficLightReference(graph, out var fromLight, out var toLight, fromIndex, toIndex);
+            TrafficLight expected = toLight != null ? toLight : fromLight;
+            Assert.That(generated[i].controllingTrafficLight, Is.SameAs(expected));
         }
+
+        // Both pairs of 0 -> 1 -> 2 include the signalised node, so the first
+        // crossing is gated by it.
         Assert.That(generated[0].controllingTrafficLight, Is.SameAs(trafficLight));
+    }
+
+    static void AITrafficLightReference(AIRoadGraph graph, out TrafficLight fromLight, out TrafficLight toLight, int fromIndex, int toIndex)
+    {
+        fromLight = graph.nodes[fromIndex].trafficLight;
+        toLight = graph.nodes[toIndex].trafficLight;
     }
 
     [Test]
@@ -1472,7 +1496,7 @@ public class GameScriptsTests
         controller.rainParticles = CreateParticleSystem("RainParticles");
         controller.rainAudio = controller.gameObject.AddComponent<AudioSource>();
         controller.lightRainClip = AudioClip.Create("light", 4410, 1, 44100, false);
-        controller.roadMaterial = new Material(Shader.Find("Standard"));
+        controller.roadMaterial = new Material(BuiltInShaders.Lit);
         controller.windscreenWipers = new GameObject("Wipers");
 
         controller.SetRain(WeatherState.LightRain, 0.5f);
@@ -1491,7 +1515,7 @@ public class GameScriptsTests
         controller.rainParticles = CreateParticleSystem("FallbackRainParticles");
         controller.rainAudio = controller.gameObject.AddComponent<AudioSource>();
         controller.heavyRainClip = AudioClip.Create("heavy", 4410, 1, 44100, false);
-        controller.roadMaterial = new Material(Shader.Find("Standard"));
+        controller.roadMaterial = new Material(BuiltInShaders.Lit);
         controller.windscreenWipers = new GameObject("Wipers");
 
         controller.SetRain(WeatherState.Thunderstorm, 0.2f);
@@ -1511,7 +1535,7 @@ public class GameScriptsTests
         var controller = CreateComponent<RainController>("RainController");
         controller.rainAudio = controller.gameObject.AddComponent<AudioSource>();
         controller.lightRainClip = AudioClip.Create("light", 4410, 1, 44100, false);
-        controller.roadMaterial = new Material(Shader.Find("Standard"));
+        controller.roadMaterial = new Material(BuiltInShaders.Lit);
         controller.windscreenWipers = new GameObject("Wipers");
 
         controller.SetRain(WeatherState.LightRain, 0.5f);
@@ -1528,7 +1552,7 @@ public class GameScriptsTests
         controller.snowParticles = CreateParticleSystem("SnowParticles");
         controller.snowAudio = controller.gameObject.AddComponent<AudioSource>();
         controller.snowWindClip = AudioClip.Create("snow", 4410, 1, 44100, false);
-        controller.groundMaterial = new Material(Shader.Find("Standard"));
+        controller.groundMaterial = new Material(BuiltInShaders.Lit);
 
         controller.SetSnow(WeatherState.Blizzard, 0.4f);
 
@@ -1546,7 +1570,7 @@ public class GameScriptsTests
         var controller = CreateComponent<SnowController>("SnowController");
         controller.snowAudio = controller.gameObject.AddComponent<AudioSource>();
         controller.snowWindClip = AudioClip.Create("snow", 4410, 1, 44100, false);
-        controller.groundMaterial = new Material(Shader.Find("Standard"));
+        controller.groundMaterial = new Material(BuiltInShaders.Lit);
 
         controller.SetSnow(WeatherState.Snow, 0.5f);
         controller.SetSnow(WeatherState.Clear, 0f);

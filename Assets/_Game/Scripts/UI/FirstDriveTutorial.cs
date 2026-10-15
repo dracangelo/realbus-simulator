@@ -7,6 +7,13 @@ using UnityEngine.UI;
 public class FirstDriveTutorial : MonoBehaviour
 {
     const string CompletionKey = "RealBus.FirstDriveTutorialComplete";
+    /// <summary>
+    /// Written the first time the tutorial is put on screen. Completion alone was
+    /// not enough to make this a first-run experience: a player who never pressed
+    /// SKIP/CONTINUE (or who quit mid-drive) came back to it on every launch, so
+    /// the card has to remember that it was already presented.
+    /// </summary>
+    const string PresentedKey = "RealBus.FirstDriveTutorialPresented";
     public static FirstDriveTutorial Instance { get; private set; }
     Canvas canvas;
     TextMeshProUGUI title, instruction, progress;
@@ -51,9 +58,14 @@ public class FirstDriveTutorial : MonoBehaviour
         bus = FindAnyObjectByType<BusController>();
         if (bus == null) { Hide(); return; }
         if (bus.GetComponent<DrivingAssistSystem>() == null) bus.gameObject.AddComponent<DrivingAssistSystem>();
-        if (PlayerPrefs.GetInt(CompletionKey, 0) != 0) { Hide(); return; }
+        // "Complete" means finished; "presented" means already shown once. Either
+        // one ends the automatic first-run tutorial, so it launches exactly once
+        // per install; ResetTutorial() clears both to run it again on purpose.
+        if (!ShouldOpenForFirstRun(PlayerPrefs.GetInt(CompletionKey, 0), PlayerPrefs.GetInt(PresentedKey, 0))) { Hide(); return; }
         if (canvas == null) Build();
         step = 0; reachedDrivingSpeed = false; canvas.gameObject.SetActive(true); Refresh();
+        PlayerPrefs.SetInt(PresentedKey, 1);
+        PlayerPrefs.Save();
     }
 
     void Update()
@@ -74,7 +86,15 @@ public class FirstDriveTutorial : MonoBehaviour
 
     void Advance() { step++; Refresh(); }
     public void Skip() { Complete(); }
-    public static void ResetTutorial() { PlayerPrefs.DeleteKey(CompletionKey); }
+    public static void ResetTutorial() { PlayerPrefs.DeleteKey(CompletionKey); PlayerPrefs.DeleteKey(PresentedKey); }
+
+    /// <summary>
+    /// The tutorial is a first-run experience: it opens only while it has never
+    /// been finished and never been on screen. Kept as a pure function so the rule
+    /// is testable without a live scene (see ImportedGameplayRegressionTests).
+    /// </summary>
+    public static bool ShouldOpenForFirstRun(int completionFlag, int presentedFlag)
+        => completionFlag == 0 && presentedFlag == 0;
 
     void Complete()
     {

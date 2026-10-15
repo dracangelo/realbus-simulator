@@ -3,9 +3,11 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// Makes embedded FBX materials usable after moving the project from the
-/// Built-in Render Pipeline to URP. It is deliberately runtime-safe so newly
-/// generated bus prefabs work without manual material extraction.
+/// Repairs the materials inside imported bus and vehicle prefabs on the
+/// Built-in Render Pipeline: missing source textures leave FBX panels flat
+/// white, glass imports opaque, and a material can arrive with a broken shader.
+/// It is deliberately runtime-safe so newly generated bus prefabs work without
+/// manual material extraction.
 /// </summary>
 public class ImportedVehicleVisualRepair : MonoBehaviour
 {
@@ -18,7 +20,7 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
     void Start()
     {
         // This component used to be added to generated buses without ever
-        // invoking RepairNow, leaving Built-in pipeline materials grey in URP.
+        // invoking RepairNow, leaving imported material problems unrepaired.
         RepairNow();
     }
 
@@ -37,8 +39,7 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
             return 0;
         }
 
-        bool urpActive = GraphicsSettings.currentRenderPipeline != null;
-        Shader targetShader = Shader.Find(urpActive ? "Universal Render Pipeline/Lit" : "Standard");
+        Shader targetShader = BuiltInShaders.Lit;
         var replacements = new Dictionary<Material, Material>();
         int repaired = 0;
 
@@ -55,15 +56,21 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
                 Material source = materials[i];
                 bool invalid = source == null || source.shader == null || !source.shader.isSupported ||
                     source.shader.name.Contains("InternalErrorShader");
-                bool legacyInUrp = urpActive && source != null && source.shader != null &&
-                    !source.shader.name.StartsWith("Universal Render Pipeline/");
                 string materialName = source != null ? source.name.ToLowerInvariant() : "";
                 bool glass = materialName.Contains("glass") || materialName.Contains("kaca");
                 Color sourceColor = ReadColor(source);
                 bool bodyPanel = materialName == "bodi" || materialName == "body" || materialName == "karoseri";
-                bool fallbackPaint = useFallbackBodyColor && bodyPanel && ReadTexture(source) == null &&
-                    Mathf.Abs(sourceColor.r - sourceColor.g) < .03f && Mathf.Abs(sourceColor.g - sourceColor.b) < .03f && sourceColor.r > .2f;
-                if ((!invalid && !legacyInUrp && !glass && !fallbackPaint) || targetShader == null) continue;
+                // Missing source textures leave many imported panels untextured and
+                // near-white. Paint those (plus named body panels) with the fallback
+                // colour so the bus is not a flat white shell. Glass is excluded by
+                // the guard below and keeps its transparency.
+                bool untextured = ReadTexture(source) == null;
+                // The shared helper also catches the FBX importer's
+                // (1,1,1,0) white for missing textures, which an opaque shader
+                // renders as flat white.
+                bool whiteShell = ImportedMaterialPalette.IsUntexturedWhite(source);
+                bool fallbackPaint = useFallbackBodyColor && untextured && (bodyPanel || whiteShell);
+                if ((!invalid && !glass && !fallbackPaint) || targetShader == null) continue;
 
                 if (source != null && replacements.TryGetValue(source, out Material cached))
                 {
@@ -72,20 +79,24 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
                     continue;
                 }
 
-                Material replacement = !invalid && !legacyInUrp ? new Material(source) : new Material(targetShader);
+                Material replacement = !invalid ? new Material(source) : new Material(targetShader);
                 replacement.name = (source != null ? source.name : renderer.name) + " (Runtime)";
                 Color color = fallbackPaint ? fallbackBodyColor : sourceColor;
                 color.a = glass ? Mathf.Clamp(color.a, 0.22f, 0.55f) : Mathf.Max(color.a, 0.9f);
-                replacement.SetColor(replacement.HasProperty("_BaseColor") ? "_BaseColor" : "_Color", color);
+                // Write the Built-in albedo slot, and set .color as well so a shader
+                // that only exposes the property still gets the intended colour.
+                replacement.color = color;
+                if (replacement.HasProperty("_Color")) replacement.SetColor("_Color", color);
+                // A non-glass panel keeps whatever opaque mode it was imported with;
+                // glass is switched properly in ConfigureGlass.
                 Texture texture = ReadTexture(source);
-                if (texture != null)
+                if (texture != null && replacement.HasProperty("_MainTex"))
                 {
-                    string destination = replacement.HasProperty("_BaseMap") ? "_BaseMap" : "_MainTex";
-                    string original = source.HasProperty("_BaseMap") && source.GetTexture("_BaseMap") != null ? "_BaseMap" : "_MainTex";
-                    replacement.SetTexture(destination, texture);
-                    replacement.SetTextureScale(destination, source.GetTextureScale(original));
-                    replacement.SetTextureOffset(destination, source.GetTextureOffset(original));
+                    replacement.SetTexture("_MainTex", texture);
+                    replacement.SetTextureScale("_MainTex", source.GetTextureScale("_MainTex"));
+                    replacement.SetTextureOffset("_MainTex", source.GetTextureOffset("_MainTex"));
                 }
+                if (replacement.HasProperty("_Glossiness")) replacement.SetFloat("_Glossiness", glass ? 0.82f : 0.34f);
                 if (replacement.HasProperty("_Smoothness")) replacement.SetFloat("_Smoothness", glass ? 0.82f : 0.34f);
                 if (glass) ConfigureGlass(replacement);
 
@@ -100,21 +111,28 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
 
         if (visualRoot == null)
             repairApplied = true;
-        Debug.Log($"ImportedVehicleVisualRepair: '{root.name}' has {renderers.Length} renderers; repaired {repaired} material slots for the active render pipeline.");
+        // Keep the hierarchy on the palette's late-repair list so the world can
+        // be swept again once every model has finished spawning.
+        if (repaired > 0)
+            ImportedMaterialPalette.RegisterImportedRoot(root, fallbackBodyColor);
+        Debug.Log($"ImportedVehicleVisualRepair: '{root.name}' has {renderers.Length} renderers; repaired {repaired} material slots for the Built-in Render Pipeline.");
         return renderers.Length;
     }
 
     static Color ReadColor(Material source)
     {
         if (source == null) return new Color(0.82f, 0.84f, 0.86f, 1f);
-        if (source.HasProperty("_BaseColor")) return source.GetColor("_BaseColor");
         if (source.HasProperty("_Color")) return source.GetColor("_Color");
         return Color.white;
     }
 
+    /// <summary>
+    /// Switches a Built-in material to alpha-blended glass: Fade mode (2), the
+    /// SrcAlpha/OneMinusSrcAlpha pair, ZWrite off, the transparent queue and the
+    /// keyword the Standard shader keys its blend variants on.
+    /// </summary>
     public static void ConfigureGlass(Material material)
     {
-        if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
         if (material.HasProperty("_Mode")) material.SetFloat("_Mode", 2f);
         if (material.HasProperty("_SrcBlend")) material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
         if (material.HasProperty("_DstBlend")) material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
@@ -122,16 +140,14 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
         material.SetOverrideTag("RenderType", "Transparent");
         material.DisableKeyword("_ALPHATEST_ON");
         material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-        material.EnableKeyword(material.HasProperty("_Surface") ? "_SURFACE_TYPE_TRANSPARENT" : "_ALPHABLEND_ON");
+        material.EnableKeyword("_ALPHABLEND_ON");
         material.renderQueue = (int)RenderQueue.Transparent;
     }
 
     static Texture ReadTexture(Material source)
     {
-        if (source == null) return null;
-        if (source.HasProperty("_BaseMap") && source.GetTexture("_BaseMap") != null) return source.GetTexture("_BaseMap");
-        if (source.HasProperty("_MainTex")) return source.GetTexture("_MainTex");
-        return null;
+        if (source == null || !source.HasProperty("_MainTex")) return null;
+        return source.GetTexture("_MainTex");
     }
 
     // Only pass an imported visual subtree, never the player root: gameplay

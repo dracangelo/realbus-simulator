@@ -1,3 +1,4 @@
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -167,5 +168,80 @@ public class Phase7PolishTests
     public void PassengerStories_AdvanceFromTrustAndRepeatRides(int rides, float affinity, int expected)
     {
         Assert.That(PassengerStoryManager.CalculateStoryStage(rides, affinity), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void UITheme_BusTokens_HaveHighContrastAndTransitAesthetics()
+    {
+        Assert.That(UITheme.BusAmber.r, Is.GreaterThan(0.8f));
+        Assert.That(UITheme.BusStopRed.r, Is.GreaterThan(0.8f));
+        Assert.That(UITheme.TransitNavy.r, Is.LessThan(0.15f));
+        Assert.That(UITheme.TransitCard.r, Is.LessThan(0.2f));
+        Assert.That(UITheme.TransitLedGreen.g, Is.GreaterThan(0.6f));
+    }
+
+    [Test]
+    public void CinematicAtmosphereController_ConfiguresSoftShadowsAndAtmosphericHaze()
+    {
+        GameObject lightObj = new GameObject("TestSun", typeof(Light));
+        Light light = lightObj.GetComponent<Light>();
+        light.type = LightType.Directional;
+        light.shadows = LightShadows.None;
+
+        GameObject ctrlObj = new GameObject("TestCinematicAtmosphere", typeof(CinematicAtmosphereController));
+        CinematicAtmosphereController controller = ctrlObj.GetComponent<CinematicAtmosphereController>();
+
+        try
+        {
+            controller.ApplyCinematicAtmosphere();
+            Assert.That(light.shadows, Is.EqualTo(LightShadows.Soft));
+            Assert.That(light.color.r, Is.GreaterThan(0.9f));
+            Assert.That(RenderSettings.fog, Is.True);
+            Assert.That(RenderSettings.fogMode, Is.EqualTo(FogMode.Linear));
+            Assert.That(RenderSettings.ambientMode, Is.EqualTo(UnityEngine.Rendering.AmbientMode.Trilight));
+        }
+        finally
+        {
+            Object.DestroyImmediate(lightObj);
+            Object.DestroyImmediate(ctrlObj);
+        }
+    }
+
+    [Test]
+    public void MobileCameraController_PresetsAndHorizonRotation_AreConsistent()
+    {
+        Quaternion horizontal = MobileCameraController.HorizonRotation(Quaternion.Euler(15f, 90f, -10f));
+        Vector3 forward = horizontal * Vector3.forward;
+        Assert.That(forward.y, Is.EqualTo(0f).Within(0.001f));
+        Assert.That(forward.x, Is.EqualTo(1f).Within(0.01f));
+
+        Assert.That((int)BusCameraPreset.Exterior, Is.EqualTo(0));
+        Assert.That((int)BusCameraPreset.Cockpit, Is.EqualTo(1));
+        Assert.That((int)BusCameraPreset.WideChase, Is.EqualTo(2));
+        Assert.That((int)BusCameraPreset.DoorView, Is.EqualTo(3));
+    }
+
+    [Test]
+    public void MapTileLoader_InstanceStartsEmptyAndStaysReadOnly()
+    {
+        // The loader publishes this static from Awake, and Awake is exactly what an EditMode
+        // test cannot exercise: Unity does not run it for a component a test creates, and
+        // invoking it by hand stops the run with Unity's own
+        // "[Assert] Assertion failed on expression: 'ShouldRunBehaviour()'" instead of
+        // executing it. What can be pinned here is the half the consumers depend on — that
+        // the accessor is reachable, starts empty, and cannot be reassigned.
+        //
+        // An eagerly created instance would be worse than a missing one: it would leak a
+        // hidden GameObject and, because WorldReadiness reads it, mark the map as initialised
+        // before any tile could ever load.
+        Assert.IsTrue(MapTileLoader.Instance == null,
+            "MapTileLoader.Instance must be empty until a loader in the scene has awoken.");
+
+        var property = typeof(MapTileLoader).GetProperty(
+            "Instance", BindingFlags.Public | BindingFlags.Static);
+        Assert.IsNotNull(property, "Consumers read MapTileLoader.Instance, so it must stay public.");
+        Assert.IsNull(property.GetSetMethod(),
+            "Instance must stay read-only; a public setter would let any caller swap the loader " +
+            "the map and the readiness gate read from.");
     }
 }

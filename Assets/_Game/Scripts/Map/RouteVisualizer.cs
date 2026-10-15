@@ -26,7 +26,7 @@ public class RouteVisualizer : MonoBehaviour
         if (lineRenderer == null)
             lineRenderer = gameObject.AddComponent<LineRenderer>();
 
-        lineRenderer.material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        lineRenderer.material = new Material(BuiltInShaders.Overlay);
         lineRenderer.material.color = routeColor;
         lineRenderer.startColor = routeColor;
         lineRenderer.endColor = routeColor;

@@ -40,6 +40,8 @@ public class BusController : MonoBehaviour
     public float retarderStrength = 3000f;
     private bool retarderActive = false;
     private bool parkingBrakeActive = false;
+    [Tooltip("Releases the parking brake when the driver applies throttle from a standstill. Route starts drop the bus in a depot bay with the brake on, so without this the bus cannot be driven out until the park-brake key is found.")]
+    public bool releaseParkingBrakeOnThrottle = true;
 
     [Header("Brake Fade")]
     public float brakeHeat = 0f;
@@ -178,6 +180,7 @@ public class BusController : MonoBehaviour
             ServiceBrakeInterlock = false;
 
         currentSpeedKmh = rb.linearVelocity.magnitude * 3.6f;
+        UpdateParkingBrakeRelease();
         UpdateRPM();
         shiftCooldown -= Time.fixedDeltaTime;
         if (shiftCooldown <= 0f && transmissionData.UpdateAutomatic(currentRPM, engineData.maxRPM))
@@ -296,6 +299,30 @@ public class BusController : MonoBehaviour
         foreach (var wheel in rearWheels)
             if (wheel != null) wheel.brakeTorque = Mathf.Max(wheel.brakeTorque, maxBrakeTorque);
     }
+
+    /// <summary>
+    /// Modern bus behaviour: asking for drive releases the park brake. A route
+    /// starts with the bus parked in a depot bay ("release park brake and proceed"),
+    /// and the brake also gates throttle completely, so a player who never finds
+    /// the park-brake control was simply stuck in the bay. The manual P toggle still
+    /// works, and the brake is never released while the service brake is applied or
+    /// the bus is already rolling.
+    /// </summary>
+    void UpdateParkingBrakeRelease()
+    {
+        if (ShouldReleaseParkingBrake(throttleInput, brakeInput, currentSpeedKmh)) SetParkingBrake(false);
+    }
+
+    /// <summary>
+    /// The release rule on its own, so it can be stated and tested without a
+    /// physics step: the driver is asking for drive, is not braking, is not already
+    /// rolling, and nothing else (fuel, service interlock, the option itself) holds
+    /// the bus.
+    /// </summary>
+    public bool ShouldReleaseParkingBrake(float throttle, float brake, float speedKmh)
+        => releaseParkingBrakeOnThrottle && parkingBrakeActive
+           && throttle > 0.05f && brake <= 0.05f && speedKmh <= 1f
+           && !FuelDepleted && !ServiceBrakeInterlock;
 
     void UpdateBrakeFade()
     {

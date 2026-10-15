@@ -68,16 +68,34 @@ public class OSMWay
 
     public int GetLaneCount()
     {
-        if (tags != null && tags.TryGetValue("lanes", out var lanesRaw) && int.TryParse(lanesRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int lanes))
-            return Mathf.Clamp(lanes, 1, 8);
+        if (tags != null)
+        {
+            if (tags.TryGetValue("lanes", out var lanesRaw) && int.TryParse(lanesRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int lanes))
+                return Mathf.Clamp(lanes, 1, 8);
+
+            int forward = 0;
+            int backward = 0;
+            bool hasForward = tags.TryGetValue("lanes:forward", out var fwdRaw) && int.TryParse(fwdRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out forward);
+            bool hasBackward = tags.TryGetValue("lanes:backward", out var bwdRaw) && int.TryParse(bwdRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out backward);
+            if (hasForward || hasBackward)
+            {
+                int total = Mathf.Max(0, forward) + Mathf.Max(0, backward);
+                if (tags.TryGetValue("lanes:both_ways", out var bwRaw) && int.TryParse(bwRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int bothWays))
+                    total += Mathf.Max(0, bothWays);
+                if (total > 0)
+                    return Mathf.Clamp(total, 1, 8);
+            }
+        }
 
         string highway = GetRoadType();
         switch (highway)
         {
             case "motorway":
+                return IsOneWay() ? 3 : 6;
             case "trunk":
                 return IsOneWay() ? 2 : 4;
             case "primary":
+                return IsOneWay() ? 2 : 4;
             case "secondary":
                 return 2;
             case "service":
@@ -85,6 +103,26 @@ public class OSMWay
             default:
                 return 2;
         }
+    }
+
+    public int GetForwardLaneCount()
+    {
+        if (tags != null && tags.TryGetValue("lanes:forward", out var fwdRaw) && int.TryParse(fwdRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int fwd))
+            return Mathf.Clamp(fwd, 1, 8);
+
+        int total = GetLaneCount();
+        if (IsOneWay()) return total;
+        return Mathf.Max(1, total / 2);
+    }
+
+    public int GetBackwardLaneCount()
+    {
+        if (IsOneWay()) return 0;
+        if (tags != null && tags.TryGetValue("lanes:backward", out var bwdRaw) && int.TryParse(bwdRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int bwd))
+            return Mathf.Clamp(bwd, 1, 8);
+
+        int total = GetLaneCount();
+        return Mathf.Max(1, total - GetForwardLaneCount());
     }
 
     public float GetLaneWidthMeters()
@@ -177,7 +215,7 @@ public class OSMWay
         if (ShouldGenerateMedianBarrier())
             width += 0.75f;
 
-        return Mathf.Clamp(width, 4.5f, 24f);
+        return Mathf.Clamp(width, 4.0f, 32f);
     }
 
     public bool IsBuilding()

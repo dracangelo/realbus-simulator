@@ -35,3 +35,11 @@ Generated from `Assets/unity models`. Re-run `Tools > RealBus > Setup > Wire All
 ## Road surfaces
 
 - **Radtypesremastered** — `Assets/_Game/Resources/RoadsGenerated/radtypesremastered_297a0871.prefab`
+
+## Bus depots & parking lot props
+
+- **Cocnrete+Parking+Stop** — `Assets/_Game/Resources/BusDepotsGenerated/Cocnrete_Parking_Stop_b72376eb.prefab`
+- **Parking+Garage** — `Assets/_Game/Resources/BusDepotsGenerated/Parking_Garage_cd19e649.prefab`
+- **Parking** — `Assets/_Game/Resources/BusDepotsGenerated/parking_9982fa88.prefab`
+
+A depot yard only keeps an imported building that fits a 20 m per-axis budget, so **Parking+Garage** (200 m footprint, 525 m as placed) and **Parking** (52 m lot) are refused at spawn and the yard builds its own workshop instead; **Cocnrete+Parking+Stop** is used as shipped.

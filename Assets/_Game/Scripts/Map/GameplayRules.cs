@@ -14,7 +14,7 @@ public static class GameplayRules
         (int)Math.Round(Math.Max(0, baseXp) * Clamp(score) / 100f * Math.Max(0f, multiplier), MidpointRounding.AwayFromZero);
 
     public static bool IsDocked(float kerbOffset, float signOffset, float headingError, float speed,
-        float kerbTolerance = 0.5f, float signTolerance = 3f, float headingTolerance = 25f, float maxSpeed = 1.5f) =>
+        float kerbTolerance = 0.8f, float signTolerance = 4f, float headingTolerance = 25f, float maxSpeed = 1.5f) =>
         Math.Abs(kerbOffset) <= kerbTolerance && Math.Abs(signOffset) <= signTolerance &&
         Math.Abs(headingError) <= headingTolerance && Math.Abs(speed) <= maxSpeed;
 

@@ -88,7 +88,7 @@ public class RealismTestBootstrap : MonoBehaviour
         var shape = rainParticles.shape; shape.shapeType = ParticleSystemShapeType.Box; shape.scale = new Vector3(35f, 35f, 1f);
         particles.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         rain.rainParticles = rain.drizzleParticles = rain.thunderstormParticles = rainParticles;
-        var particleMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default"));
+        var particleMaterial = new Material(BuiltInShaders.Overlay);
         particleMaterial.color = new Color(0.65f, 0.8f, 0.9f, 0.55f);
         rainParticles.GetComponent<ParticleSystemRenderer>().sharedMaterial = particleMaterial;
         var roads = FindAnyObjectByType<RoadNetworkSurface>();
@@ -116,7 +116,7 @@ public class RealismTestBootstrap : MonoBehaviour
 
     void BuildTraffic(AIRoadGraph graph)
     {
-        trafficMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")); trafficMaterial.color = new Color(0.8f, 0.35f, 0.1f);
+        trafficMaterial = new Material(BuiltInShaders.Lit); trafficMaterial.color = new Color(0.8f, 0.35f, 0.1f);
         var car = VehicleTemplate("Car", new Vector3(1.8f, 1.4f, 4.2f));
         var truck = VehicleTemplate("Truck", new Vector3(2.2f, 2.3f, 7f));
         var motorcycle = VehicleTemplate("Motorcycle", new Vector3(0.6f, 1.2f, 2f));

@@ -81,7 +81,8 @@ public class TrafficLight : MonoBehaviour
         if (target == null) return;
         if (block == null) block = new MaterialPropertyBlock();
         target.GetPropertyBlock(block);
-        block.SetColor("_BaseColor", color);
+        // _Color is the albedo slot of every Built-in lit shader, so one write
+        // covers the lamp heads whatever they were modelled with.
         block.SetColor("_Color", color);
         target.SetPropertyBlock(block);
     }

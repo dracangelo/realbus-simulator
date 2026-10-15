@@ -20,6 +20,7 @@ public class SceneBootstrap : MonoBehaviour
     [SerializeField] bool attachMainCameraToBusForDirectPlay = true;
     [SerializeField] bool disableCinemachineVirtualCamerasForDirectPlay = true;
     [SerializeField] bool disableCinemachineBrainForDirectPlay = true;
+    [Tooltip("Open the scene on clear weather with a clear view. The weather stays dynamic after that: this only clears the start, it does not disable the weather or fog systems.")]
     [SerializeField] bool forceClearVisibilityForDirectPlay = true;
     [SerializeField] bool suppressBuildingsForCurrentPhase = false;
     [SerializeField] bool autoStartSelectedRoute = true;
@@ -190,7 +191,6 @@ public class SceneBootstrap : MonoBehaviour
         EnsureWeatherSystems();
         EnsureRuntimeRoadSystems();
         EnsureRoadSurfaceRuntime(missionManager.busController);
-        ConfigureOptionalTileStreaming(missionManager.busController);
         EnsureBuildingSystems();
         EnsureOsmCityPopulation();
         EnsurePoiVisualizer();
@@ -206,6 +206,7 @@ public class SceneBootstrap : MonoBehaviour
         if (autoPopulateCityFromOsm)
             EnsureGasStationSpawner();
 
+        EnsureBusDepotManager();
         EnsureClearVisibility();
         ApplyBusScaleFromMap();
         ConfigureSelectedRouteStart(missionManager, selectedRoute != null ? routeToUse : null);
@@ -446,24 +447,6 @@ public class SceneBootstrap : MonoBehaviour
         friction.surfaceDetector = detector;
     }
 
-    void ConfigureOptionalTileStreaming(BusController busController)
-    {
-        var streaming = FindAnyObjectByType<TileStreamManager>();
-        if (streaming == null)
-            return;
-
-        streaming.busController = busController;
-        streaming.busTransform = busController != null ? busController.transform : null;
-        if (streaming.converter == null)
-            streaming.converter = CoordinateConverter.Instance ?? FindAnyObjectByType<CoordinateConverter>();
-        if (streaming.cache == null)
-            streaming.cache = OfflineCacheManager.Instance ?? FindAnyObjectByType<OfflineCacheManager>();
-        if (streaming.gpsTracker == null)
-            streaming.gpsTracker = GpsTracker.Instance ?? FindAnyObjectByType<GpsTracker>();
-        if (streaming.mapTileLoader == null)
-            streaming.mapTileLoader = FindAnyObjectByType<MapTileLoader>();
-    }
-
     void EnsureTrafficViolationSystem()
     {
         if (FindAnyObjectByType<ExtendedTrafficViolationSystem>() != null)
@@ -580,6 +563,25 @@ public class SceneBootstrap : MonoBehaviour
         if (fogController == null)
             fogController = new GameObject("FogController").AddComponent<FogController>();
 
+        // Snow and the sky visuals were both missing here: WeatherSystem.snowController
+        // was never assigned, so a snow state could only change the light, and nothing
+        // ever built clouds or a skybox.
+        var snowController = FindAnyObjectByType<SnowController>();
+        if (snowController == null)
+            snowController = new GameObject("SnowController").AddComponent<SnowController>();
+
+        var timeSystem = FindAnyObjectByType<TimeOfDaySystem>();
+        if (timeSystem == null)
+        {
+            var go = new GameObject("TimeOfDaySystem");
+            timeSystem = go.AddComponent<TimeOfDaySystem>();
+            timeSystem.skyController = skyController;
+            timeSystem.directionalSun = RenderSettings.sun != null ? RenderSettings.sun : FindDirectionalSun();
+        }
+        fogController.timeOfDay = timeSystem;
+
+        var skyEnvironment = SkyEnvironmentController.EnsureExists();
+
         var weatherSystem = FindAnyObjectByType<WeatherSystem>();
         if (weatherSystem == null)
         {
@@ -589,14 +591,26 @@ public class SceneBootstrap : MonoBehaviour
         weatherSystem.skyController = skyController;
         weatherSystem.rainController = rainController;
         weatherSystem.fogController = fogController;
+        weatherSystem.snowController = snowController;
+        weatherSystem.skyEnvironmentController = skyEnvironment;
 
-        if (FindAnyObjectByType<TimeOfDaySystem>() == null)
-        {
-            var go = new GameObject("TimeOfDaySystem");
-            var timeSystem = go.AddComponent<TimeOfDaySystem>();
-            timeSystem.skyController = skyController;
-            timeSystem.directionalSun = RenderSettings.sun;
-        }
+        // Precipitation has to exist before a state can show it, and it has to follow
+        // the bus rather than sit over one patch of city. The shower resolves the bus
+        // itself when it is created later, so this is only the first chance.
+        var bus = FindAnyObjectByType<BusController>();
+        Transform follow = bus != null ? bus.transform : (Camera.main != null ? Camera.main.transform : null);
+        rainController.followTarget = follow;
+        rainController.EnsureEffects();
+        snowController.followTarget = follow;
+        snowController.EnsureEffects();
+    }
+
+    static Light FindDirectionalSun()
+    {
+        var lights = FindObjectsByType<Light>(FindObjectsInactive.Include);
+        for (int i = 0; i < lights.Length; i++)
+            if (lights[i] != null && lights[i].type == LightType.Directional) return lights[i];
+        return null;
     }
 
 #if UNITY_EDITOR
@@ -725,9 +739,10 @@ public class SceneBootstrap : MonoBehaviour
         {
             if (existing.pedestrianPrefab == null)
                 existing.pedestrianPrefab = LoadFirstResourcePrefab(
+                    "LiveCityGenerated/ab834887507b6c0fba84796be9f2c3ea",
+                    "BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx",
                     "BussimAssets/passenger/Realistic man",
                     "BussimAssets/passenger/uploads_files_2460380_Marina_1276",
-                    "BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx",
                     "BussimAssets/passenger/Man_in_black_dress_0227");
             if (existing.roadGraph == null)
                 existing.useRandomGeneratedCrossings = false;
@@ -739,9 +754,10 @@ public class SceneBootstrap : MonoBehaviour
         spawner.roadGraph = FindUsableRoadGraph();
         spawner.useRandomGeneratedCrossings = spawner.roadGraph != null;
         spawner.pedestrianPrefab = LoadFirstResourcePrefab(
+            "LiveCityGenerated/ab834887507b6c0fba84796be9f2c3ea",
+            "BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx",
             "BussimAssets/passenger/Realistic man",
             "BussimAssets/passenger/uploads_files_2460380_Marina_1276",
-            "BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx",
             "BussimAssets/passenger/Man_in_black_dress_0227");
     }
 
@@ -775,6 +791,11 @@ public class SceneBootstrap : MonoBehaviour
 
         var go = new GameObject("RuntimeGasStationSpawner");
         go.AddComponent<RuntimeGasStationSpawner>();
+    }
+
+    void EnsureBusDepotManager()
+    {
+        BusDepotManager.EnsureExists();
     }
 
     void EnsureTarmacApplier()
@@ -893,6 +914,7 @@ public class SceneBootstrap : MonoBehaviour
             return;
 
         var entries = new List<VehiclePool.VehiclePrefabEntry>();
+        int importedModels = AddCatalogTraffic(entries);
         AddVehiclePrefab(entries, AIVehicleController.VehicleType.Car, 0.16f, "BussimAssets/aitraffic/Van");
         AddVehiclePrefab(entries, AIVehicleController.VehicleType.Car, 0.12f, "BussimAssets/aitraffic/uploads_files_1862674_Beetle+-+FBX");
         AddVehiclePrefab(entries, AIVehicleController.VehicleType.Car, 0.12f, "BussimAssets/aitraffic/uploads_files_5836120_Fortuner");
@@ -907,20 +929,60 @@ public class SceneBootstrap : MonoBehaviour
         if (entries.Count == 0)
         {
             // Optional traffic packs should improve variety, not be a requirement
-            // for a populated city. Keep this low-poly fallback local to runtime.
-            entries.Add(new VehiclePool.VehiclePrefabEntry
-            {
-                type = AIVehicleController.VehicleType.Car,
-                prefab = CreateFallbackTrafficVehicle(),
-                weight = 1f
-            });
-            Debug.Log("SceneBootstrap: Optional AI traffic models are absent; using the built-in low-poly traffic fallback.");
+            // for a populated city. Nothing under Assets/_Game/Resources/BussimAssets/aitraffic
+            // is a loadable prefab (the packs ship as .zip files), and no traffic
+            // catalog was built, so these local low-poly variants are what traffic
+            // runs on: several shapes and colours beat one repeated box.
+            entries.Add(FallbackTrafficEntry(AIVehicleController.VehicleType.Car, 1.0f, FallbackVehicleKind.Sedan));
+            entries.Add(FallbackTrafficEntry(AIVehicleController.VehicleType.Car, 0.8f, FallbackVehicleKind.Hatchback));
+            entries.Add(FallbackTrafficEntry(AIVehicleController.VehicleType.Car, 0.6f, FallbackVehicleKind.Van));
+            entries.Add(FallbackTrafficEntry(AIVehicleController.VehicleType.Truck, 0.4f, FallbackVehicleKind.Pickup));
+            Debug.Log("SceneBootstrap: No imported traffic catalog. Run Tools > RealBus > Setup > Build Traffic Models to use the downloaded vehicle FBXs; using 4 built-in low-poly variants for now.");
         }
 
         pool.prefabs = entries.ToArray();
-        pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, 64);
-        pool.debugForceActiveCount = Mathf.Max(pool.debugForceActiveCount, 10);
+        // The downloaded models are cheap (a few thousand triangles each) and there are
+        // several of them, so the pool can be a pool rather than a handful. Traffic used
+        // to be pinned at ten vehicles with the density curve switched off, which is why
+        // the imported cars were barely on the road; the curve now drives the count with
+        // a floor under it, and the pin is left to the scenes that ask for it.
+        pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, importedModels > 0 ? 96 : 64);
+        pool.minActiveVehicles = importedModels > 0 ? 24 : 10;
+        if (importedModels > 0)
+            pool.maxActiveFraction = Mathf.Clamp(pool.maxActiveFraction, 0.3f, 0.55f);
+        else
+            pool.debugForceActiveCount = Mathf.Max(pool.debugForceActiveCount, 10);
         pool.logSpawnEvents = false;
+    }
+
+    /// <summary>
+    /// The downloaded vehicle models, as normalised by the traffic importer. They
+    /// are the point of the download: without a built catalog the pool can only
+    /// spawn procedural boxes, because the packs ship as .zip files rather than as
+    /// prefabs. Weights come from the catalog, where denser models ask for less.
+    /// </summary>
+    int AddCatalogTraffic(List<VehiclePool.VehiclePrefabEntry> entries)
+    {
+        var catalog = Resources.Load<TrafficCatalog>("TrafficCatalog");
+        if (catalog == null || catalog.UsableCount == 0)
+            return 0;
+
+        var names = new List<string>();
+        foreach (var entry in catalog.entries)
+        {
+            if (entry == null || entry.prefab == null)
+                continue;
+            entries.Add(new VehiclePool.VehiclePrefabEntry
+            {
+                type = entry.vehicleType,
+                prefab = entry.prefab,
+                weight = Mathf.Clamp(entry.weight > 0f ? entry.weight : 0.2f, 0.02f, 1f)
+            });
+            names.Add($"{entry.displayName} ({entry.vehicleType}, {entry.triangles} tris)");
+        }
+
+        Debug.Log($"SceneBootstrap: Traffic catalog supplies {names.Count} imported models: {string.Join(", ", names)}.");
+        return names.Count;
     }
 
     void AddVehiclePrefab(List<VehiclePool.VehiclePrefabEntry> entries, AIVehicleController.VehicleType type, float weight, string resourcePath)
@@ -955,23 +1017,68 @@ public class SceneBootstrap : MonoBehaviour
         return null;
     }
 
-    GameObject CreateFallbackTrafficVehicle()
+    enum FallbackVehicleKind
     {
-        var root = new GameObject("Runtime Traffic Car (Fallback)");
+        Sedan,
+        Hatchback,
+        Van,
+        Pickup
+    }
+
+    VehiclePool.VehiclePrefabEntry FallbackTrafficEntry(AIVehicleController.VehicleType type, float weight, FallbackVehicleKind kind)
+        => new VehiclePool.VehiclePrefabEntry { type = type, prefab = CreateFallbackTrafficVehicle(kind), weight = weight };
+
+    GameObject CreateFallbackTrafficVehicle(FallbackVehicleKind kind = FallbackVehicleKind.Sedan)
+    {
+        var root = new GameObject($"Runtime Traffic {kind} (Fallback)");
         root.hideFlags = HideFlags.DontSave;
+
+        // Body, cabin, paint and wheel size per kind, so vehicles are tellable
+        // apart at a glance even though they are all primitives.
+        Vector3 bodySize, bodyOffset, cabinSize, cabinOffset, wheelOffset;
+        Color paint;
+        float wheelRadius;
+
+        switch (kind)
+        {
+            case FallbackVehicleKind.Hatchback:
+                bodySize = new Vector3(1.75f, .8f, 3.6f); bodyOffset = new Vector3(0f, .6f, 0f);
+                cabinSize = new Vector3(1.5f, .62f, 1.9f); cabinOffset = new Vector3(0f, 1.25f, -.35f);
+                wheelOffset = new Vector3(1f, .35f, 1.15f); wheelRadius = .46f;
+                paint = new Color(.62f, .2f, .2f);
+                break;
+            case FallbackVehicleKind.Van:
+                bodySize = new Vector3(2f, 1.5f, 4.8f); bodyOffset = new Vector3(0f, .95f, 0f);
+                cabinSize = new Vector3(1.85f, .5f, 1.4f); cabinOffset = new Vector3(0f, 1.85f, 1.35f);
+                wheelOffset = new Vector3(1.05f, .4f, 1.6f); wheelRadius = .52f;
+                paint = new Color(.85f, .85f, .86f);
+                break;
+            case FallbackVehicleKind.Pickup:
+                bodySize = new Vector3(1.9f, .7f, 4.6f); bodyOffset = new Vector3(0f, .58f, 0f);
+                cabinSize = new Vector3(1.7f, .7f, 1.6f); cabinOffset = new Vector3(0f, 1.15f, .5f);
+                wheelOffset = new Vector3(1.05f, .38f, 1.5f); wheelRadius = .5f;
+                paint = new Color(.16f, .4f, .3f);
+                break;
+            default:
+                bodySize = new Vector3(1.8f, .75f, 4.2f); bodyOffset = new Vector3(0f, .55f, 0f);
+                cabinSize = new Vector3(1.55f, .55f, 2.15f); cabinOffset = new Vector3(0f, 1.15f, -.25f);
+                wheelOffset = new Vector3(1f, .35f, 1.35f); wheelRadius = .48f;
+                paint = new Color(.12f, .35f, .68f);
+                break;
+        }
+
         var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
         body.name = "Body";
         body.transform.SetParent(root.transform, false);
-        body.transform.localPosition = new Vector3(0f, .55f, 0f);
-        body.transform.localScale = new Vector3(1.8f, .75f, 4.2f);
-        var bodyRenderer = body.GetComponent<Renderer>();
-        bodyRenderer.sharedMaterial = CreateFallbackTrafficMaterial("TrafficBody", new Color(.12f, .35f, .68f));
+        body.transform.localPosition = bodyOffset;
+        body.transform.localScale = bodySize;
+        body.GetComponent<Renderer>().sharedMaterial = CreateFallbackTrafficMaterial("TrafficBody", paint);
 
         var cabin = GameObject.CreatePrimitive(PrimitiveType.Cube);
         cabin.name = "Cabin";
         cabin.transform.SetParent(root.transform, false);
-        cabin.transform.localPosition = new Vector3(0f, 1.15f, -.25f);
-        cabin.transform.localScale = new Vector3(1.55f, .55f, 2.15f);
+        cabin.transform.localPosition = cabinOffset;
+        cabin.transform.localScale = cabinSize;
         var cabinCollider = cabin.GetComponent<Collider>();
         if (cabinCollider != null) Destroy(cabinCollider);
         cabin.GetComponent<Renderer>().sharedMaterial = CreateFallbackTrafficMaterial("TrafficGlass", new Color(.06f, .12f, .18f));
@@ -982,9 +1089,9 @@ public class SceneBootstrap : MonoBehaviour
             var wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             wheel.name = "Wheel";
             wheel.transform.SetParent(root.transform, false);
-            wheel.transform.localPosition = new Vector3(side * 1f, .35f, axle * 1.35f);
+            wheel.transform.localPosition = new Vector3(side * wheelOffset.x, wheelOffset.y, axle * wheelOffset.z);
             wheel.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-            wheel.transform.localScale = Vector3.one * .48f;
+            wheel.transform.localScale = Vector3.one * wheelRadius;
             var wheelCollider = wheel.GetComponent<Collider>();
             if (wheelCollider != null) Destroy(wheelCollider);
             wheel.GetComponent<Renderer>().sharedMaterial = CreateFallbackTrafficMaterial("TrafficTyre", new Color(.035f, .035f, .04f));
@@ -996,38 +1103,35 @@ public class SceneBootstrap : MonoBehaviour
 
     Material CreateFallbackTrafficMaterial(string name, Color color)
     {
-        bool urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline != null;
-        var shader = Shader.Find(urp ? "Universal Render Pipeline/Lit" : "Standard");
-        var material = new Material(shader) { name = name + " (Runtime)", color = color };
-        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
-        return material;
+        return new Material(BuiltInShaders.Lit) { name = name + " (Runtime)", color = color };
     }
 
+    /// <summary>
+    /// Opens the scene on clear weather with an unobstructed view. The flag asks for
+    /// a clear <em>start</em>, not for the environment to be switched off: pinning the
+    /// weather and disabling the weather and fog controllers here meant clouds, rain
+    /// and weather fog could never appear during a real drive.
+    /// </summary>
     void EnsureClearVisibility()
     {
         if (!forceClearVisibilityForDirectPlay)
             return;
 
-        RenderSettings.fog = false;
-        RenderSettings.fogStartDistance = 5000f;
-        RenderSettings.fogEndDistance = 10000f;
-
-        var fogController = FindAnyObjectByType<FogController>();
-        if (fogController != null)
-            fogController.enabled = false;
-
         var weatherSystem = FindAnyObjectByType<WeatherSystem>();
         if (weatherSystem != null)
         {
-            weatherSystem.forceWeather = true;
+            weatherSystem.forceWeather = false;
             weatherSystem.forcedWeatherState = WeatherState.Clear;
-            weatherSystem.ApplyWeather(WeatherState.Clear, 0f, weatherSystem.temperature);
-            weatherSystem.enabled = false;
+            weatherSystem.currentWeather = WeatherState.Clear;
         }
 
         var skyController = FindAnyObjectByType<SkyController>();
         if (skyController != null)
             skyController.SetSky(WeatherState.Clear, 0f, 24f);
+
+        // Clear weather means no weather fog: the city's distance haze owns the fog
+        // until real weather arrives, and it hands the fog straight back when it does.
+        CinematicAtmosphereController.EnsureExists().ApplyAtmosphericHaze();
     }
 
     void ApplyBusScaleFromMap()
@@ -1278,7 +1382,9 @@ public class SceneBootstrap : MonoBehaviour
         {
             for (int i = 0; i < graphs.Length; i++)
             {
-                if (graphs[i] != null && graphs[i].NodeCount > 0)
+                // A depot yard's own lane circuit is private to that depot: binding
+                // it as the city graph would put all city traffic on a yard loop.
+                if (graphs[i] != null && graphs[i].NodeCount > 0 && !graphs[i].privateLaneCircuit)
                     return graphs[i];
             }
             return null;
@@ -1298,7 +1404,7 @@ public class SceneBootstrap : MonoBehaviour
         for (int i = 0; i < graphs.Length; i++)
         {
             var graph = graphs[i];
-            if (graph == null || graph.NodeCount == 0)
+            if (graph == null || graph.NodeCount == 0 || graph.privateLaneCircuit)
                 continue;
 
             int nearest = graph.GetNearestNodeIndex(referenceWorld);

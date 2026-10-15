@@ -134,26 +134,41 @@ public class ScoreTracker : MonoBehaviour
     {
         stopsCompleted++;
 
-        punctualityScore = Mathf.Max(0f, punctualityScore - GameplayRules.LatePenaltyPercent(arrivalDeltaSeconds));
+        // Use the worse of the arrival band's flat penalty and the elapsed-time
+        // penalty, so a very late arrival that still lands in a milder band is
+        // not under-penalised. Both inputs are zero for an on-time arrival.
+        float penalty = Mathf.Max(PunctualityPenaltyPercent(status), GameplayRules.LatePenaltyPercent(arrivalDeltaSeconds));
+        punctualityScore = Mathf.Max(0f, punctualityScore - penalty);
         UpdateTotalScore();
     }
 
+    /// <summary>Flat punctuality penalty (percentage points) for an arrival band.</summary>
+    public static float PunctualityPenaltyPercent(PunctualityStatus status)
+    {
+        switch (status)
+        {
+            case PunctualityStatus.Early:        return 5f;
+            case PunctualityStatus.Late:         return 6f;
+            case PunctualityStatus.SeverelyLate: return 10f;
+            default:                             return 0f; // OnTime
+        }
+    }
+
+    // Collisions and red lights are scored whenever they happen, including
+    // free drive (the mission latch no longer suppresses them).
     public void RecordCollision()
     {
-        if (!recording) return;
         collisionCount++;
         safetyScore = Mathf.Max(0f, safetyScore - 15f);
+        UpdateTotalScore();
         Debug.Log($"Collision! Safety score: {safetyScore:F0}");
     }
 
     public void RecordRedLight()
     {
-        if (!recording) return;
         redLightViolations++;
         pointDeductions += 500;
-        float categoryDeduction = safetyWeight > 0f ? Mathf.Min(safetyScore, 5f / safetyWeight) : 0f;
-        safetyScore -= categoryDeduction;
-        extraPointPenaltyPercent += Mathf.Max(0f, 5f - categoryDeduction * safetyWeight);
+        safetyScore = Mathf.Max(0f, safetyScore - 10f);
         UpdateTotalScore();
         Debug.Log($"Red light! Safety score: {safetyScore:F0}");
     }

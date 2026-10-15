@@ -24,9 +24,10 @@ public class GameplayRulesTests
     [Test]
     public void DockingRequiresAllTolerances()
     {
+        Assert.IsTrue(GameplayRules.IsDocked(0.8f, 4f, 25f, 1.5f));
         Assert.IsTrue(GameplayRules.IsDocked(0.5f, 3f, 25f, 1.5f));
-        Assert.IsFalse(GameplayRules.IsDocked(0.501f, 0, 0, 0));
-        Assert.IsFalse(GameplayRules.IsDocked(0, 3.01f, 0, 0));
+        Assert.IsFalse(GameplayRules.IsDocked(0.801f, 0, 0, 0));
+        Assert.IsFalse(GameplayRules.IsDocked(0, 4.01f, 0, 0));
         Assert.IsFalse(GameplayRules.IsDocked(0, 0, 26, 0));
         Assert.IsFalse(GameplayRules.IsDocked(0, 0, 0, 2));
     }
@@ -61,24 +62,42 @@ public class GameplayRulesTests
     }
 
     [Test]
-    public void ScoresResetAndIgnoreCollisionsOutsideMissions()
+    public void ScoresApplyPenaltiesOutsideMissionsAndResetOnBeginMission()
     {
         var go = new GameObject("Score test");
         try
         {
             var score = go.AddComponent<ScoreTracker>();
-            score.RecordCollision(); Assert.AreEqual(0, score.CollisionCount);
-            score.BeginMission(null); score.RecordRedLight();
+
+            // Penalties apply outside a mission (e.g. free drive).
+            score.RecordCollision();
+            Assert.AreEqual(1, score.CollisionCount);
+            Assert.AreEqual(85f, score.safetyScore, 0.001f);
+            Assert.AreEqual(96.25f, score.totalScore, 0.001f);
+
+            // BeginMission resets the running totals.
+            score.BeginMission(null);
+            Assert.AreEqual(0, score.CollisionCount);
+            Assert.AreEqual(100f, score.totalScore, 0.001f);
+
+            score.RecordRedLight();
             Assert.AreEqual(500, score.pointDeductions);
-            Assert.AreEqual(95f, score.totalScore, 0.001f);
+            Assert.AreEqual(90f, score.safetyScore, 0.001f);
+            Assert.AreEqual(97.5f, score.totalScore, 0.001f);
+
             for (int i = 0; i < 5; i++) score.RecordRedLight();
-            Assert.AreEqual(70f, score.totalScore, 0.001f);
+            Assert.AreEqual(40f, score.safetyScore, 0.001f);
             Assert.AreEqual(3000, score.pointDeductions);
+            Assert.AreEqual(85f, score.totalScore, 0.001f);
+
             score.BeginMission(null);
             Assert.AreEqual(0, score.pointDeductions);
-            Assert.AreEqual(100f, score.totalScore);
-            score.EndMission(); score.RecordCollision();
-            Assert.AreEqual(0, score.CollisionCount);
+            Assert.AreEqual(100f, score.totalScore, 0.001f);
+
+            // Still applies after EndMission.
+            score.EndMission();
+            score.RecordCollision();
+            Assert.AreEqual(1, score.CollisionCount);
         }
         finally { Object.DestroyImmediate(go); }
     }

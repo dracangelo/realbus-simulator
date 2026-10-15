@@ -20,11 +20,20 @@ public class StopPropSpawner : MonoBehaviour
     public float stopModelVerticalOffset = 0f;
     public bool alignToRouteDirection = true;
     public Vector2 randomYawRange = new Vector2(-10f, 10f);
-    public Vector2 randomScaleRange = new Vector2(0.8f, 1.2f);
+    // Stops are deliberately oversized: the imported shelters/benches read as
+    // small props at street distance, and clear, large stop markers matter more
+    // to the player than exact real-world scale. A shelter that no longer clears
+    // the pavement falls back to the standalone poster totem (see SpawnStopProps).
+    public Vector2 randomScaleRange = new Vector2(1.5f, 2.1f);
     public float triggerApproachDistance = 50f;
-    public float triggerDockingRadius = 3f;
+    public float triggerDockingRadius = 4f;
+    public float triggerKerbTolerance = 0.8f;
     public bool spawnOnlyFirstStopAtMissionStart = false;
     public bool logSpawns = true;
+
+    [Header("Imported model fallback")]
+    [Tooltip("Applied only to untextured near-white materials on imported stop props.")]
+    public Color importedPropFallbackColor = ImportedMaterialPalette.DefaultPropColor;
 
     void Start()
     {
@@ -76,6 +85,7 @@ public class StopPropSpawner : MonoBehaviour
             return;
         }
         ClearSpawnedProps();
+        ImportedMaterialPalette.RegisterImportedRoot(transform, importedPropFallbackColor);
         bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
 
         int stopCount = spawnOnlyFirstStopAtMissionStart ? Mathf.Min(1, route.stops.Length) : route.stops.Length;
@@ -133,10 +143,16 @@ public class StopPropSpawner : MonoBehaviour
             docking.stopName = stop.stopName;
             docking.stopIndex = i;
             docking.dockingRadius = triggerDockingRadius;
+            docking.kerbToleranceMeters = triggerKerbTolerance;
             docking.roadsideDockingSide = leftTraffic ? -1 : 1;
 
             var model = Instantiate(prefab, stopRoot.transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(model.transform);
+            // Shelters, benches and signs are imported FBX models whose source
+            // textures are missing, so they import flat white. Recolour the
+            // untextured slots immediately; the spawner root is registered once
+            // (see Start) so a late sweep re-checks every stop prop.
+            ImportedMaterialPalette.ApplyFallback(model, importedPropFallbackColor);
             model.transform.localPosition = Vector3.up * stopModelVerticalOffset;
             model.transform.localRotation = Quaternion.Euler(0f, Random.Range(randomYawRange.x, randomYawRange.y), 0f);
             float scale = Random.Range(randomScaleRange.x, randomScaleRange.y);
@@ -159,14 +175,19 @@ public class StopPropSpawner : MonoBehaviour
                 if (!roads.OverlapsFootprint(footprint, .8f)) { clear = true; break; }
                 model.transform.position += outward;
             }
-            if (!clear)
+            if (clear)
+            {
+                BusStopPosterBuilder.DecorateBusStop(stopRoot, model, i, leftTraffic);
+            }
+            else
             {
                 Destroy(model);
-                Debug.LogWarning($"[StopPropSpawner] Shelter cannot fit safely at '{stop.stopName}'; retaining only its kerb docking anchor.");
+                BusStopPosterBuilder.SpawnStandalonePosterTotem(stopRoot, i, leftTraffic);
+                Debug.LogWarning($"[StopPropSpawner] Shelter cannot fit safely at '{stop.stopName}'; retaining kerb docking anchor with advertising totem.");
             }
 
             if (logSpawns)
-                Debug.Log($"[StopPropSpawner] Spawned {propPath} at stop '{stop.stopName}'.");
+                Debug.Log($"[StopPropSpawner] Spawned {propPath} with posters at stop '{stop.stopName}'.");
         }
     }
 

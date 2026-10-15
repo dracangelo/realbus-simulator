@@ -29,6 +29,7 @@ public class VisualQualityController : MonoBehaviour
 
     public void ApplyScenePolish()
     {
+        CinematicAtmosphereController.EnsureExists().ApplyCinematicAtmosphere();
         BusController bus = FindAnyObjectByType<BusController>();
         if (bus == null) return;
         if (bus.GetComponent<CosmeticDamageSystem>() == null) bus.gameObject.AddComponent<CosmeticDamageSystem>();
@@ -50,10 +51,13 @@ public class VisualQualityController : MonoBehaviour
             for (int m = 0; m < materials.Length; m++)
             {
                 Material material = materials[m]; if (material == null) continue;
-                if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
+                // The same glass setup the importers use: Fade mode, alpha blending,
+                // ZWrite off and the transparent queue, then a capped alpha so the
+                // cabin reads as glass rather than as a hole.
+                ImportedVehicleVisualRepair.ConfigureGlass(material);
+                if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", 0.86f);
                 if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.86f);
-                if (material.HasProperty("_BaseColor")) { Color c = material.GetColor("_BaseColor"); c.a = Mathf.Min(c.a, 0.38f); material.SetColor("_BaseColor", c); }
-                material.renderQueue = 3000;
+                if (material.HasProperty("_Color")) { Color c = material.GetColor("_Color"); c.a = Mathf.Min(c.a, 0.38f); material.SetColor("_Color", c); }
             }
         }
     }

@@ -77,4 +77,439 @@ public class RealismSystemsTests
         }
         finally { Object.DestroyImmediate(go); Object.DestroyImmediate(spawn); }
     }
+
+    [Test]
+    public void DoorLockingAfterBoardingDisengagesInterlockAndClosesDoors()
+    {
+        var busGo = new GameObject("Bus");
+        var managerGo = new GameObject("Manager");
+        var spawnGo = new GameObject("Spawner");
+        try
+        {
+            var bus = busGo.AddComponent<BusController>();
+            var manager = managerGo.AddComponent<PassengerManager>();
+            manager.busController = bus;
+            manager.useCapacityOverride = true;
+            manager.maxBusCapacity = 10;
+            manager.doorOpenCapacityLimit = 10;
+            manager.passengerSpawner = spawnGo.AddComponent<PassengerSpawner>();
+            manager.passengerSpawner.baselineSpawnMin = manager.passengerSpawner.baselineSpawnMax = 4;
+
+            manager.HandleStopArrival(new BusStopData { stopName = "Station" }, 25f, 0, 2);
+            Assert.IsTrue(manager.doorsOpen, "Doors should be open after stop arrival");
+
+            bus.ServiceBrakeInterlock = true;
+            bus.RequestKneelingSuspension(true);
+            Assert.IsTrue(bus.ServiceBrakeInterlock);
+            Assert.IsTrue(bus.kneelingSuspensionActive);
+
+            bool locked = manager.TryCloseAndLockDoors();
+            Assert.IsTrue(locked, "TryCloseAndLockDoors should succeed");
+            Assert.IsFalse(manager.doorsOpen, "Doors must be closed and locked");
+            Assert.IsFalse(manager.HasServiceAnimations, "All pending animations must be finalized upon lock");
+            Assert.IsFalse(bus.ServiceBrakeInterlock, "Service brake interlock must be disengaged");
+            Assert.IsFalse(bus.kneelingSuspensionActive, "Kneeling suspension must be retracted");
+        }
+        finally
+        {
+            Object.DestroyImmediate(busGo);
+            Object.DestroyImmediate(managerGo);
+            Object.DestroyImmediate(spawnGo);
+        }
+    }
+
+    [Test]
+    public void BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints()
+    {
+        var depotGo = new GameObject("DepotZoneTest");
+        var busGo = new GameObject("DepotZoneBus");
+        BusDepotManager.ResetZones();
+        try
+        {
+            var depotManager = depotGo.AddComponent<BusDepotManager>();
+            var bus = busGo.AddComponent<BusController>();
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(DepotTestRoute(), new Vector3(100f, 0f, 100f), bus,
+                out _, out _, out _));
+
+            Vector3 yardCentre = depotManager.currentDepot.transform.position;
+            Transform yard = depotManager.currentDepot.transform;
+            Assert.That(BusDepotManager.PlacedZoneCount, Is.EqualTo(1), "placing a depot must claim exactly one yard");
+            Assert.IsTrue(BusDepotManager.IsInsideDepot(yardCentre), "the yard centre is inside the yard");
+            Assert.IsTrue(BusDepotManager.IsInsideDepot(yardCentre + yard.forward * 8f + yard.right * 10f),
+                "a point by the bay row is still inside the yard");
+
+            // A city block sized footprint straddling the yard is rejected, and one
+            // the same size a block away is not.
+            Assert.IsTrue(BusDepotManager.OverlapsDepotFootprint(DepotFootprint(yardCentre, Vector3.right, 14f, 10f)),
+                "a building footprint inside the yard must be rejected");
+            Assert.IsFalse(BusDepotManager.OverlapsDepotFootprint(DepotFootprint(yardCentre + yard.right * 80f, Vector3.right, 14f, 10f)),
+                "a building footprint outside the yard must be allowed");
+
+            // Releasing the yard frees its ground again.
+            depotManager.ReleaseCurrentDepot();
+            Assert.That(BusDepotManager.PlacedZoneCount, Is.Zero, "releasing a depot must withdraw its yard");
+            Assert.IsFalse(BusDepotManager.IsInsideDepot(yardCentre), "a withdrawn yard excludes nothing");
+        }
+        finally
+        {
+            Object.DestroyImmediate(depotGo);
+            Object.DestroyImmediate(busGo);
+            BusDepotManager.ResetZones();
+        }
+    }
+
+    [Test]
+    public void BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad()
+    {
+        var depotGo = new GameObject("DepotRoadTest");
+        var busGo = new GameObject("DepotRoadBus");
+        var roadGo = new GameObject("DepotRoadBuilder");
+        BusDepotManager.ResetZones();
+        try
+        {
+            var roadBuilder = roadGo.AddComponent<OSMRoadMeshBuilder>();
+            var depotManager = depotGo.AddComponent<BusDepotManager>();
+            var bus = busGo.AddComponent<BusController>();
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(DepotTestRoute(), new Vector3(100f, 0f, 100f), bus,
+                out var bayPos, out _, out var exitPos));
+
+            Transform yard = depotManager.currentDepot.transform;
+            Transform entry = yard.Find("Depot_Entry_Road");
+            Transform turn = yard.Find("Depot_Turn_Road");
+            Transform exit = yard.Find("Depot_Exit_Road");
+            string state = $"roads={depotManager.CurrentDepotRoads.Count}, builder={(OSMRoadMeshBuilder.Resolve() == null ? "missing" : "present")}, children={yard.childCount}";
+            Assert.IsNotNull(entry, $"the yard must have an entry road ({state})");
+            Assert.IsNotNull(exit, $"the yard must have an exit road ({state})");
+            Assert.IsNotNull(turn, $"the entry and exit aisles must be joined ({state})");
+
+            foreach (var road in new[] { entry, turn, exit })
+            {
+                Assert.IsNotNull(road.GetComponent<MeshCollider>(), $"{road.name} must be drivable");
+                var filter = road.GetComponent<MeshFilter>();
+                Assert.IsNotNull(filter, $"{road.name} must render");
+                Assert.That(filter.sharedMesh.vertexCount, Is.GreaterThan(0));
+            }
+
+            var lines = depotManager.CurrentDepotRoads;
+            Assert.That(lines.Count, Is.EqualTo(3), "entry, U-turn and exit are laid as three lanes");
+
+            // The rest of the world has to see them as road: a yard aisle sits in
+            // the clearance index the building infill and street furniture use.
+            var index = roadBuilder.SurfaceIndex;
+            Assert.IsNotNull(index, "the yard roads must be registered in a road index");
+            foreach (var line in lines)
+                foreach (var point in line)
+                    Assert.IsTrue(index.Contains(point, 0.1f), $"yard road point {point} is not registered as road");
+
+            // Entry and exit are separate aisles, not one wide slab, and both reach
+            // the street past the yard edge so the bus can leave without reversing.
+            Vector3 entryOuter = yard.InverseTransformPoint(lines[0][0]);
+            Vector3 exitOuter = yard.InverseTransformPoint(lines[2][lines[2].Length - 1]);
+            Assert.That(Mathf.Abs(entryOuter.z - exitOuter.z), Is.GreaterThanOrEqualTo(depotManager.depotRoadWidth + 1f - 0.01f),
+                "the entry and exit aisles must not overlap");
+            Assert.That(Mathf.Abs(entryOuter.x), Is.GreaterThan(depotManager.yardWidth * 0.5f),
+                "the entry driveway must reach past the yard edge to the street");
+            Assert.That(Mathf.Abs(exitOuter.x), Is.GreaterThan(depotManager.yardWidth * 0.5f),
+                "the exit driveway must reach past the yard edge to the street");
+
+            // The bays stay behind the driving band, the player is dropped in Bay 1,
+            // and the departure gate sits on the road at the end of the exit aisle.
+            Vector3 bayLocal = yard.InverseTransformPoint(bayPos);
+            Assert.That(bayLocal.z, Is.LessThan(entryOuter.z - depotManager.depotRoadWidth * 0.5f),
+                "parking bays must sit behind the yard roads");
+            Assert.That(Vector3.Distance(exitPos, lines[2][lines[2].Length - 1]), Is.LessThan(0.01f),
+                "departure is measured at the exit driveway meeting the road");
+
+            // Nothing the depot builds may stand in its own lanes.
+            foreach (Transform child in yard)
+                if (child.name.StartsWith("Depot_Floodlight_Pole_"))
+                    Assert.IsFalse(index.Contains(child.position, 0.1f), $"{child.name} stands in a yard lane");
+        }
+        finally
+        {
+            Object.DestroyImmediate(depotGo);
+            Object.DestroyImmediate(busGo);
+            Object.DestroyImmediate(roadGo);
+            BusDepotManager.ResetZones();
+        }
+    }
+
+    [Test]
+    public void BusDepotManager_EvictsCityBuildingsStandingInTheNewYard()
+    {
+        var depotGo = new GameObject("DepotEvictionTest");
+        var busGo = new GameObject("DepotEvictionBus");
+        var buildingsGo = new GameObject("DepotEvictionBuildings");
+        var route = DepotTestRoute();
+        BusDepotManager.ResetZones();
+        try
+        {
+            var buildings = buildingsGo.AddComponent<OSMBuildingMeshBuilder>();
+            var depotManager = depotGo.AddComponent<BusDepotManager>();
+            var bus = busGo.AddComponent<BusController>();
+            var startPos = new Vector3(100f, 0f, 100f);
+
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(route, startPos, bus, out _, out _, out _));
+            Vector3 yardCentre = depotManager.currentDepot.transform.position;
+
+            // Withdraw that yard, then let the city build on its ground - which is
+            // what really happens, because buildings stream in long before a route
+            // picks its start.
+            depotManager.ReleaseCurrentDepot();
+            GameObject inYard = buildings.CreateSyntheticBuilding(DepotFootprint(yardCentre, Vector3.right, 12f, 9f), 12f, -4242L);
+            GameObject elsewhere = buildings.CreateSyntheticBuilding(
+                DepotFootprint(yardCentre + new Vector3(320f, 0f, 0f), Vector3.right, 12f, 9f), 12f, -4243L);
+            Assert.IsNotNull(inYard, "the stand-in building must exist before the depot is placed");
+            Assert.IsNotNull(elsewhere);
+
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(route, startPos, bus, out _, out _, out _));
+
+            Assert.That(depotManager.lastEvictedBuildingCount, Is.EqualTo(1), "exactly the building in the yard is cleared");
+            Assert.IsTrue(inYard == null, "a building inside the new yard must be destroyed");
+            Assert.IsTrue(elsewhere != null, "buildings outside the yard must survive");
+            Assert.That(depotManager.EvictCityBuildingsFromDepot(), Is.Zero, "the yard stays clear once cleared");
+        }
+        finally
+        {
+            Object.DestroyImmediate(depotGo);
+            Object.DestroyImmediate(busGo);
+            Object.DestroyImmediate(buildingsGo);
+            Object.DestroyImmediate(route);
+            BusDepotManager.ResetZones();
+        }
+    }
+
+    [Test]
+    public void BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit()
+    {
+        var depotGo = new GameObject("DepotManagerTest");
+        var busGo = new GameObject("BusTest");
+        try
+        {
+            var depotManager = depotGo.AddComponent<BusDepotManager>();
+            var bus = busGo.AddComponent<BusController>();
+            var route = ScriptableObject.CreateInstance<BusRoute>();
+            route.routeName = "Route 101";
+            route.stops = new BusStopData[]
+            {
+                new BusStopData { stopName = "Station Central", latitude = -1.286389, longitude = 36.817223 },
+                new BusStopData { stopName = "Terminal", latitude = -1.290000, longitude = 36.820000 }
+            };
+
+            Vector3 startPos = new Vector3(100f, 0f, 100f);
+            bool spawned = depotManager.TrySpawnDepotAndResolveBay(route, startPos, bus, out var bayPos, out var bayRot, out var exitPos);
+
+            Assert.IsTrue(spawned);
+            Assert.IsNotNull(depotManager.currentDepot);
+            Assert.AreNotEqual(Vector3.zero, bayPos);
+            Assert.AreNotEqual(bayPos, exitPos);
+            Assert.IsTrue(depotManager.currentDepot.transform.childCount > 0);
+        }
+        finally
+        {
+            Object.DestroyImmediate(depotGo);
+            Object.DestroyImmediate(busGo);
+            BusDepotManager.ResetZones();
+        }
+    }
+
+    [Test]
+    public void BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes()
+    {
+        var depotGo = new GameObject("DepotLaneGateTest");
+        var busGo = new GameObject("DepotLaneGateBus");
+        var roadGo = new GameObject("DepotLaneGateRoads");
+        var propGo = new GameObject("DepotLaneGateProp");
+        BusDepotManager.ResetZones();
+        try
+        {
+            var roadBuilder = roadGo.AddComponent<OSMRoadMeshBuilder>();
+            var depotManager = depotGo.AddComponent<BusDepotManager>();
+            var bus = busGo.AddComponent<BusController>();
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(DepotTestRoute(), new Vector3(100f, 0f, 100f), bus,
+                out _, out _, out _));
+
+            Transform yard = depotManager.currentDepot.transform;
+            var lanes = depotManager.CurrentDepotRoads;
+            float halfWidth = depotManager.depotRoadWidth * 0.5f;
+            Assert.That(lanes.Count, Is.EqualTo(3), "the yard has to have lanes to judge props against");
+
+            // The prop the yard must refuse: a shed-sized box centred on the exit aisle.
+            Vector3[] exitLane = lanes[2];
+            propGo.transform.position = Vector3.Lerp(exitLane[0], exitLane[1], 0.5f);
+            var shed = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            shed.name = "Lane blocking shed";
+            shed.transform.SetParent(propGo.transform, false);
+            shed.transform.localPosition = Vector3.up * 2f;
+            shed.transform.localScale = new Vector3(4f, 4f, 5f);
+            Assert.IsTrue(depotManager.PropStandsInYardLane(propGo), "a 4x5 m prop in the exit aisle must be refused");
+
+            // The same prop by the bay row is kept: the rule is about the lane, not
+            // about standing on the yard.
+            propGo.transform.position = yard.TransformPoint(new Vector3(0f, 0f, depotManager.bayRowZ));
+            Assert.IsFalse(depotManager.PropStandsInYardLane(propGo),
+                "a prop between the bay row and the departure lane is clear of it");
+
+            // And the same question asked of raw footprints: the corridor is the lane
+            // plus half its width plus the clearance padding.
+            Vector3 lanePoint = Vector3.Lerp(exitLane[0], exitLane[1], 0.5f);
+            var straddling = DepotFootprint(lanePoint + yard.forward * 2.9f, yard.right, 4f, 2f);
+            var besideLane = DepotFootprint(lanePoint - yard.forward * 8f, yard.right, 4f, 2f);
+            Assert.IsTrue(BusDepotManager.FootprintOverlapsLanes(straddling, lanes, halfWidth, 0.3f),
+                "a footprint overlapping the lane corridor must be refused");
+            Assert.IsFalse(BusDepotManager.FootprintOverlapsLanes(besideLane, lanes, halfWidth, 0.3f),
+                "a footprint clear of every corridor must be kept");
+            Assert.IsFalse(BusDepotManager.FootprintOverlapsLanes(straddling, null, halfWidth),
+                "with no lanes there is nothing to overlap");
+
+            // The yard as built holds the invariant the placement rules exist for:
+            // nothing it raised stands in the lanes the player is told to use.
+            Assert.That(depotManager.PropsStandingInYardLanes(), Is.Empty,
+                $"the depot built a prop in its own lanes: {string.Join(", ", depotManager.PropsStandingInYardLanes())}");
+        }
+        finally
+        {
+            Object.DestroyImmediate(depotGo);
+            Object.DestroyImmediate(busGo);
+            Object.DestroyImmediate(roadGo);
+            Object.DestroyImmediate(propGo);
+            BusDepotManager.ResetZones();
+        }
+    }
+
+    [Test]
+    public void BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer()
+    {
+        var depotGo = new GameObject("DepotTrafficTest");
+        var busGo = new GameObject("DepotTrafficBus");
+        var roadGo = new GameObject("DepotTrafficRoads");
+        BusDepotManager.ResetZones();
+        try
+        {
+            var roadBuilder = roadGo.AddComponent<OSMRoadMeshBuilder>();
+            var depotManager = depotGo.AddComponent<BusDepotManager>();
+            var bus = busGo.AddComponent<BusController>();
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(DepotTestRoute(), new Vector3(100f, 0f, 100f), bus,
+                out _, out _, out _));
+
+            var traffic = depotManager.currentTraffic;
+            Assert.IsNotNull(traffic, "a placed depot runs yard traffic on its lanes");
+            Assert.That(traffic.NodeTotal, Is.EqualTo(DepotTrafficSpawner.NodeCount), "the circuit is a closed loop");
+            Assert.That(traffic.VehicleCount, Is.GreaterThan(0), "the yard must actually have traffic");
+            Assert.That(traffic.VehicleCount, Is.EqualTo(traffic.vehiclesToSpawn));
+            Assert.IsTrue(traffic.Graph.privateLaneCircuit,
+                "a yard circuit must never be bindable as the city traffic graph");
+
+            for (int i = 0; i < traffic.NodeTotal; i++)
+                Assert.That(traffic.Graph.nodes[i].nextNodeIndices[0], Is.EqualTo((i + 1) % DepotTrafficSpawner.NodeCount),
+                    $"node {i} must lead to the next node of the circuit");
+
+            // The circuit is the depot's own geometry: the road mouths at the kerb...
+            var lanes = depotManager.CurrentDepotRoads;
+            Assert.That(FlatDistance(traffic.Graph.GetNodePosition(DepotTrafficSpawner.EntryMouthNode), lanes[0][0]),
+                Is.LessThan(0.05f), "the circuit enters through the entry driveway");
+            Assert.That(FlatDistance(traffic.Graph.GetNodePosition(DepotTrafficSpawner.ExitMouthNode),
+                lanes[2][lanes[2].Length - 1]), Is.LessThan(0.05f), "and leaves through the exit driveway");
+            // ...and the street either side of it, so vehicles arrive and depart.
+            Vector3 kerb = depotManager.currentKerbPosition;
+            Assert.That(FlatDistance(traffic.Graph.GetNodePosition(DepotTrafficSpawner.StreetApproachNode), kerb),
+                Is.GreaterThan(traffic.approachDistanceMeters * 0.5f), "traffic must come from the street");
+            Assert.That(FlatDistance(traffic.Graph.GetNodePosition(DepotTrafficSpawner.StreetDepartureNode), kerb),
+                Is.GreaterThan(traffic.approachDistanceMeters * 0.5f), "and leave onto it");
+
+            // The gate: traffic is held off the aisles while the player's bus is in
+            // the yard, and a vehicle already inside is allowed to finish leaving.
+            Assert.IsTrue(DepotTrafficSpawner.ShouldHoldTraffic(true, false), "street traffic must hold for a bus in the yard");
+            Assert.IsFalse(DepotTrafficSpawner.ShouldHoldTraffic(true, true), "a vehicle in the yard must be allowed to leave");
+            Assert.IsFalse(DepotTrafficSpawner.ShouldHoldTraffic(false, false), "traffic flows once the bus is out");
+            Assert.IsTrue(traffic.IsInsideYard(depotManager.currentDepot.transform.position),
+                "the yard centre is inside the yard its traffic serves");
+
+            int vehicles = 0;
+            foreach (Transform child in traffic.transform)
+            {
+                var spline = child.GetComponent<SplineVehicle>();
+                if (spline == null) continue;   // circuit node markers are children too
+                vehicles++;
+                Assert.AreSame(traffic.Graph, spline.roadGraph, $"{child.name} must drive the yard circuit");
+                Assert.IsNull(child.GetComponent<AIVehicleController>(), $"{child.name} must not drive itself");
+                Assert.IsNull(child.GetComponent<BusController>(), $"{child.name} must not be a second player bus");
+                var body = child.GetComponent<Rigidbody>();
+                if (body != null)
+                    Assert.IsTrue(body.isKinematic, $"{child.name} must not fall or fight the spline");
+            }
+            Assert.That(vehicles, Is.EqualTo(traffic.VehicleCount), "every yard vehicle is a spline vehicle");
+        }
+        finally
+        {
+            Object.DestroyImmediate(depotGo);
+            Object.DestroyImmediate(busGo);
+            Object.DestroyImmediate(roadGo);
+            BusDepotManager.ResetZones();
+        }
+    }
+
+    [Test]
+    public void BusController_ThrottleReleasesTheParkingBrakeSoADepotBusCanDriveOut()
+    {
+        var busGo = new GameObject("DepotDepartureBus");
+        try
+        {
+            var bus = busGo.AddComponent<BusController>();
+            bus.SetParkingBrake(true);
+            Assert.IsTrue(bus.ParkingBrakeActive, "a bus starts its route parked in its bay");
+
+            Assert.IsTrue(bus.ShouldReleaseParkingBrake(1f, 0f, 0f),
+                "throttle from a standstill must release the park brake, or the bus cannot leave the bay");
+            Assert.IsFalse(bus.ShouldReleaseParkingBrake(0f, 0f, 0f), "an untouched bus stays parked");
+            Assert.IsFalse(bus.ShouldReleaseParkingBrake(1f, 1f, 0f), "the foot brake must not release it");
+            Assert.IsFalse(bus.ShouldReleaseParkingBrake(1f, 0f, 12f), "a rolling bus keeps its brake setting");
+
+            bus.ServiceBrakeInterlock = true;
+            Assert.IsFalse(bus.ShouldReleaseParkingBrake(1f, 0f, 0f), "the service interlock owns a stopped bus");
+            bus.ServiceBrakeInterlock = false;
+            bus.FuelDepleted = true;
+            Assert.IsFalse(bus.ShouldReleaseParkingBrake(1f, 0f, 0f), "an empty bus is not going anywhere");
+            bus.FuelDepleted = false;
+
+            bus.releaseParkingBrakeOnThrottle = false;
+            Assert.IsFalse(bus.ShouldReleaseParkingBrake(1f, 0f, 0f), "the release rule can be turned off");
+            bus.releaseParkingBrakeOnThrottle = true;
+            bus.SetParkingBrake(false);
+            Assert.IsFalse(bus.ShouldReleaseParkingBrake(1f, 0f, 0f), "a released brake has nothing to release");
+        }
+        finally { Object.DestroyImmediate(busGo); }
+    }
+
+    static float FlatDistance(Vector3 a, Vector3 b)
+    {
+        a.y = 0f;
+        b.y = 0f;
+        return Vector3.Distance(a, b);
+    }
+
+    static BusRoute DepotTestRoute()
+    {
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.routeName = "Route 101";
+        route.stops = new BusStopData[]
+        {
+            new BusStopData { stopName = "Station Central", latitude = -1.286389, longitude = 36.817223 },
+            new BusStopData { stopName = "Terminal", latitude = -1.290000, longitude = 36.820000 }
+        };
+        return route;
+    }
+
+    /// <summary>Axis-aligned building rectangle centred on <paramref name="centre"/>.</summary>
+    static System.Collections.Generic.List<Vector3> DepotFootprint(Vector3 centre, Vector3 right, float width, float depth)
+    {
+        Vector3 forward = Vector3.Cross(Vector3.up, right).normalized;
+        return new System.Collections.Generic.List<Vector3>
+        {
+            centre - right * (width * .5f) - forward * (depth * .5f),
+            centre + right * (width * .5f) - forward * (depth * .5f),
+            centre + right * (width * .5f) + forward * (depth * .5f),
+            centre - right * (width * .5f) + forward * (depth * .5f)
+        };
+    }
 }

@@ -80,4 +80,4 @@ Add one or more BoxColliders around the bus body. Avoid a non-convex MeshCollide
 4. Test acceleration, braking, steering, reverse, doors, and docking at low speed.
 5. Check the Console for red errors before changing graphics or adding more content.
 
-Make a Git commit after the project opens cleanly in Unity 6000.6 and before converting materials to URP.
+Make a Git commit after the project opens cleanly in Unity 6000.6 and before changing graphics or quality settings. The project renders with the Built-in Render Pipeline, so no material conversion to URP is part of the setup.

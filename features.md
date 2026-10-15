@@ -49,7 +49,8 @@
 
 - Rush-hour passenger demand and destination-based journeys.
 - Capacity limits, wheelchair passengers, and reusable passenger visuals.
-- Pooled cars, trucks, motorcycles, emergency vehicles, and scheduled buses.
+- Pooled cars, trucks, buses, and vans built from the downloaded vehicle models, normalised, faced, and weighted by cost at import.
+- Traffic volume that follows the daily demand curve, with a floor so the road is never empty and a tier split by distance.
 - Full-physics, spline, billboard, and distance-culling traffic tiers.
 - Traffic lights, pedestrian crossings, passing, and emergency sirens.
 
@@ -57,18 +58,21 @@
 
 - Clear, rain, fog, snow, overcast, and night conditions.
 - Gradual weather transitions, wet-road grip, wipers, and lighting changes.
-- Time-of-day simulation with street, cabin, and headlight control.
+- A generated sky: weather-driven cloud layer, star field and moon, with a procedural skybox that follows the clock.
+- Rain and snow that follow the bus, built at run time when the scene authors none.
+- Fog that is lit by the sky: daylight haze, sunrise and sunset warmth, and near-black fog at night.
+- Time-of-day simulation with street, cabin, and headlight control, and a sun that follows a continuous arc through dawn and dusk.
 - Vehicle, road, map-tile, and traffic level-of-detail systems.
 - Runtime stress testing with CSV performance reports.
 - Real gas-station models spawn at OpenStreetMap fuel locations.
 - Varied-height OSM buildings with façade and roof materials.
 - Optional city-scoped Overture building import (Tools > RealBus > OSM).
-- Capped, streamed fictional buildings in unmapped urban roadside gaps.
+- Streamed fictional infill that hugs the kerb and fills each block row by row until the next street, depot, or mapped footprint, with per-frame budgets and half-built cells finished on the next pass.
 - Road-clearance filtering for mapped and procedural building footprints.
 - Vehicle-proximity building streaming and physical road-edge boundaries with junction openings.
 - Imported road-surface models with automatic procedural-road fallback.
-- Nearby imported trees, plants, rocks, billboards, benches, and ambient pedestrians.
-- Road/building-safe scenery streaming with prop and triangle budgets.
+- Nearby imported trees, plants, rocks, billboards, benches, and ambient pedestrians, planted both along the kerb and across open ground between blocks.
+- Road/building-safe scenery streaming with prop and triangle budgets, and planting that favours the cheap models so the packs' few dense trees do not spend the whole budget.
 - Adaptive 30/45/60 FPS targets, resolution scaling, and thermal response.
 
 ## Progression and customization
@@ -113,6 +117,7 @@
 - Unity EditMode regression tests and coverage reporting.
 - Unity 6.6-compatible object searches and explicit Mapbox serialization.
 - Route, city, traffic, and OSM import editor tools.
+- A vehicle-facing checker that reads the downloaded FBXs straight from the shell, so traffic orientation can be checked without opening the editor.
 - Platform-specific downloadable vehicle-pack builder.
 - Runtime validation, logging, profiling, and diagnostic overlays.
 

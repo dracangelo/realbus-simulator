@@ -53,16 +53,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/RoadGraphTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/LocalizationTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/CityContentTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/LiveCityTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/CoordinateConverterTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/EnvironmentSystemsTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/GameplayRulesTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/Phase7PolishTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusPhysicsTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/AudioSynthesisTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/WorldSystemsTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/MapboxTokenRequestTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/Phase3MapTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/Phase6ProgressionTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusRouteDataTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/OfflineMapTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs" />
   </ItemGroup>
   <ItemGroup>

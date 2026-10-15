@@ -20,19 +20,23 @@ public class PedestrianSpawner : MonoBehaviour
     [Header("Optional Random Crossing Generation")]
     public bool useRandomGeneratedCrossings = false;
     public AIRoadGraph roadGraph;
-    public int generatedCrossingCount = 6;
+    public int generatedCrossingCount = 18;
     public float crossingHalfWidth = 4.5f;
     public float crossingPointHeight = 0.05f;
 
+    [Tooltip("Node the generated crossings start from. -1 picks a random start; set a node index to author a repeatable layout.")]
+    public int generatedCrossingStartNodeIndex = -1;
+
     [Header("Pedestrians")]
     public GameObject pedestrianPrefab;
-    public int maxActivePedestrians = 40;
-    public float spawnCheckInterval = 1.25f;
+    // Raised from 50 so crossings are busy enough to read as a living city.
+    public int maxActivePedestrians = 120;
+    public float spawnCheckInterval = 0.5f;
     public float walkSpeed = 1.4f;
-    public bool logSpawnEvents = true;
+    public bool logSpawnEvents = false;
 
     [Header("Density")]
-    public float baselineSpawnChance = 0.2f;
+    public float baselineSpawnChance = 0.85f;
     public float rushMultiplier = 2.0f;
 
     readonly Stack<SimplePedestrian> spare = new Stack<SimplePedestrian>();
@@ -170,6 +174,23 @@ public class PedestrianSpawner : MonoBehaviour
     {
         if (pedestrianPrefab != null) return;
 
+        var catalog = Resources.Load<LiveCityCatalog>("LiveCityCatalog");
+        if (catalog != null)
+        {
+            foreach (var e in catalog.entries)
+            {
+                if (e != null && e.kind == LiveCityCatalog.Kind.Pedestrian && e.prefab != null)
+                {
+                    pedestrianPrefab = e.prefab;
+                    break;
+                }
+            }
+        }
+        if (pedestrianPrefab == null)
+            pedestrianPrefab = Resources.Load<GameObject>("LiveCityGenerated/ab834887507b6c0fba84796be9f2c3ea");
+
+        if (pedestrianPrefab != null) return;
+
         var fallback = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         fallback.name = "Pedestrian_Fallback";
         fallback.transform.localScale = new Vector3(0.4f, 0.9f, 0.4f);
@@ -191,7 +212,9 @@ public class PedestrianSpawner : MonoBehaviour
             return crossings;
         }
 
-        int[] sequence = graph.BuildRandomNodeSequence(Mathf.Max(2, generatedCrossingCount + 1));
+        // The walk is random by default; pinning the start node keeps authored
+        // layouts (and tests) repeatable without removing the variety.
+        int[] sequence = graph.BuildRandomNodeSequence(Mathf.Max(2, generatedCrossingCount + 1), generatedCrossingStartNodeIndex);
         if (sequence == null || sequence.Length < 2)
         {
             Debug.LogWarning("[PedestrianSpawner] Failed to generate random crossings from AIRoadGraph.");
@@ -321,7 +344,8 @@ public class SimplePedestrian : MonoBehaviour
         if (dist < 0.25f) { Finish(); return; }
         Vector3 dir = to / Mathf.Max(0.001f, dist);
         transform.position += dir * speed * dt;
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir, Vector3.up), dt * 8f);
+        float sway = Mathf.Sin(Time.time * 7f) * 1.5f;
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(0, 0, sway), dt * 8f);
     }
 
     void Finish()

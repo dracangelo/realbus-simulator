@@ -15,6 +15,10 @@ public class RuntimeGasStationSpawner : MonoBehaviour
     public float yOffset = 0f;
     public bool logSpawns = true;
 
+    [Header("Imported model fallback")]
+    [Tooltip("Applied only to untextured near-white materials on imported station models.")]
+    public Color importedFallbackColor = new Color(0.72f, 0.73f, 0.70f, 1f);
+
     void Start()
     {
         StartCoroutine(SpawnWhenReady());
@@ -70,6 +74,8 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             world.y += yOffset;
             var station = Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
+            ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
+            ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
             placed.Add(world);
             spawned++;
 
@@ -120,6 +126,8 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             world.y += yOffset;
             var station = Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
+            ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
+            ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
             placed.Add(world);
             spawned++;
         }

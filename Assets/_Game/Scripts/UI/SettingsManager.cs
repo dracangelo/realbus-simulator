@@ -83,6 +83,12 @@ public class SettingsManager : MonoBehaviour
 
     public void Apply()
     {
+        // Drives the interface language. Setting it here means every path that
+        // changes settings - load, an explicit save, a language cycle - refreshes
+        // the labels, which is what made the language selector a real setting
+        // instead of a value that was stored and never read.
+        Localization.SetLanguage(Current.language);
+
         AudioListener.volume = Current.masterVolume;
         if (QualitySettings.names.Length > 0 && QualitySettings.GetQualityLevel() != Current.qualityLevel)
             QualitySettings.SetQualityLevel(Current.qualityLevel, true);

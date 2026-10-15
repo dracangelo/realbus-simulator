@@ -41,6 +41,8 @@
 # Crash / debug
 sysinfo.txt
 *.stacktrace
+# Mono/Unity crash dumps: large, and may contain process memory.
+mono_crash.*
 
 # Package manager lock and cache exceptions
 # Keep manifest and lock files versioned

@@ -9,8 +9,6 @@ using System.Collections.Generic;
 /// </summary>
 public class MapTileLoader : MonoBehaviour
 {
-    [System.Serializable]
-    class TokenConfiguration { public string AccessToken; }
     [Header("Mapbox Settings")]
     public string mapboxToken = "";
     public string mapStyle = "mapbox/satellite-streets-v12";
@@ -56,22 +54,72 @@ public class MapTileLoader : MonoBehaviour
     private bool initStarted;
     private bool loggedFirstTile;
     private bool centerTileLoaded;
+    /// <summary>True once the map tile directly beneath the route start / city
+    /// centre has been downloaded and displayed.</summary>
+    public bool CenterTileLoaded => centerTileLoaded;
     private int tileFailureLogCount;
     private bool loggedAuthFailureHint;
     private bool authFailureDetected;
+    private bool tokenResolved;
+    private bool loggedMissingToken;
+
+    /// <summary>
+    /// The configuration this loader resolved and published. It is the authority for every
+    /// request this component makes, so a value can no longer change between a request being
+    /// sent and its failure being reported.
+    /// </summary>
+    MapboxMapSettings mapSettings;
+
+    MapboxMapSettings Settings
+    {
+        get
+        {
+            if (mapSettings == null) ResolveTokenOnce();
+            return mapSettings;
+        }
+    }
+
+    public static MapTileLoader Instance { get; private set; }
+
+    /// <summary>
+    /// The tile cache, resolved on demand. It used to be resolved once in Awake, so a cache
+    /// that appeared later - the offline-maps menu builds one for its download - stayed
+    /// invisible for the rest of the session and every tile was fetched from Mapbox even with
+    /// the whole city sitting on disk. Same lazy re-resolve the credential got.
+    /// </summary>
+    OfflineCacheManager Cache
+    {
+        get
+        {
+            if (cacheManager == null) cacheManager = OfflineCacheManager.EnsureInstance();
+            return cacheManager;
+        }
+    }
 
     void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+
+        // Resolve the credential before any Start can reach LoadMap. Reading the
+        // configuration only once an active city existed meant a route started before that
+        // asked Mapbox for tiles with an empty access_token and collected 401s.
+        ResolveTokenOnce();
+
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
         transform.localScale = Vector3.one;
 
-        cacheManager = OfflineCacheManager.Instance != null
-            ? OfflineCacheManager.Instance
-            : FindAnyObjectByType<OfflineCacheManager>();
+        cacheManager = OfflineCacheManager.EnsureInstance();
 
         if (loadOnAwake)
             BeginInitialLoad();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        ClearTiles();
     }
 
     void Start()
@@ -115,26 +163,20 @@ public class MapTileLoader : MonoBehaviour
         var city = CityManager.Instance.activeCity;
         centreLat = city.centreLat;
         centreLon = city.centreLon;
-        Debug.Log($"MapTileLoader: Loading map for {city.cityName}");
 
-        if (preferLabelFreeSatellite && mapStyle == "mapbox/satellite-streets-v12")
-            mapStyle = "mapbox/satellite-v9";
-        
-        mapboxToken = string.IsNullOrWhiteSpace(mapboxToken) ? "" : mapboxToken.Trim();
-        if (string.IsNullOrEmpty(mapboxToken))
+        // Prioritize center tile directly under the route start / bus location
+        if (MissionManager.Instance != null && MissionManager.Instance.currentRoute != null &&
+            MissionManager.Instance.currentRoute.stops != null && MissionManager.Instance.currentRoute.stops.Length > 0)
         {
-            var config = Resources.Load<TextAsset>("Mapbox/MapboxConfiguration");
-            if (config != null)
-            {
-                try { mapboxToken = JsonUtility.FromJson<TokenConfiguration>(config.text)?.AccessToken?.Trim() ?? ""; }
-                catch (System.ArgumentException) { Debug.LogWarning("MapTileLoader: Mapbox configuration is not valid JSON."); }
-            }
+            centreLat = MissionManager.Instance.currentRoute.stops[0].latitude;
+            centreLon = MissionManager.Instance.currentRoute.stops[0].longitude;
         }
-        if (string.IsNullOrEmpty(mapboxToken))
-        {
-            Debug.LogError("MapTileLoader: No Mapbox token set!");
+
+        Debug.Log($"MapTileLoader: Loading map for {city.cityName} (focus: {centreLat:F5}, {centreLon:F5})");
+
+        ResolveTokenOnce();
+        if (!Settings.HasToken)
             yield break;
-        }
 
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
@@ -144,8 +186,52 @@ public class MapTileLoader : MonoBehaviour
         StartCoroutine(WarnIfNoTilesLoaded(loadVersion));
     }
 
+    /// <summary>
+    /// Resolves this loader's credential once, synchronously, from the inspector value or
+    /// the shipped configuration resource. Every entry point funnels through here so the
+    /// request can never be built before the token exists, whichever order the scene, the
+    /// city selection and the route boot in.
+    /// </summary>
+    void ResolveTokenOnce()
+    {
+        if (tokenResolved)
+            return;
+        tokenResolved = true;
+
+        // Resolve once, then publish: the loader owns the authored fields, every other tile
+        // consumer reads the result, and the fields themselves are left as authored — the
+        // label-free preference is part of the resolved style rather than a silent edit of the
+        // value the scene was saved with.
+        mapSettings = MapboxMapSettings.Resolve(mapboxToken, mapStyle, preferLabelFreeSatellite);
+        MapboxMapSettings.Publish(mapSettings);
+
+        if (!mapSettings.HasToken)
+        {
+            Debug.LogError("MapTileLoader: No Mapbox token set! Assign one in the inspector or add " +
+                           "Assets/Resources/Mapbox/MapboxConfiguration.txt ({\"AccessToken\":\"pk.…\"}).");
+            return;
+        }
+
+        // Record which configuration this run resolved and what its token claims, without
+        // printing the credential. A platform build is otherwise impossible to reason about
+        // from its log.
+        Debug.Log($"MapTileLoader: token from {mapSettings.TokenSource}: " +
+                  $"{MapboxTileRequest.DescribeToken(mapSettings.Token)}; every tile consumer now uses " +
+                  $"style '{mapSettings.Style}'.");
+        if (mapSettings.Token.StartsWith("sk.", System.StringComparison.Ordinal))
+            Debug.LogError("MapTileLoader: a Mapbox SECRET (sk.) token is configured. Secret tokens must not " +
+                           "ship in a client build; use a public (pk.) token.");
+        if (!MapboxTileRequest.IsPublicToken(mapSettings.Token))
+            Debug.LogWarning("MapTileLoader: the configured token is not a recognised public Mapbox token; " +
+                             "tile requests will very likely be refused with HTTP 401.");
+    }
+
     public void LoadMap(double lat, double lon, int zoom)
     {
+        // A route or a city selection can ask for a map before this loader's own startup
+        // sequence has seen a city, so the credential is resolved here too.
+        ResolveTokenOnce();
+
         ClearTiles();
         loadVersion++;
         centerTileLoaded = false;
@@ -213,14 +299,21 @@ public class MapTileLoader : MonoBehaviour
             yield break;
 
         Texture2D tex = null;
-        if (preferOfflineCache && cacheManager != null)
+        if (preferOfflineCache && Cache != null)
         {
-            yield return cacheManager.GetTileTexture(mapboxToken, mapStyle, zoom, tileX, tileY, t => tex = t);
+            yield return Cache.GetTileTexture(zoom, tileX, tileY, t => tex = t);
+        }
+        else if (!Settings.HasToken)
+        {
+            // Nothing can be authorised without a credential, and sending the empty string is
+            // worse than sending nothing: Mapbox answers 401 "Direct access not allowed",
+            // which used to halt every later download as if the token were bad.
+            WarnMissingTokenOnce();
+            yield break;
         }
         else
         {
-            string url = $"https://api.mapbox.com/styles/v1/{mapStyle}/tiles/512/" +
-                         $"{zoom}/{tileX}/{tileY}@2x?access_token={mapboxToken}";
+            string url = MapboxTileRequest.BuildTileUrl(Settings.Style, zoom, tileX, tileY, Settings.Token);
 
             // Buffer the response first, then decode it ourselves. UnityWebRequestTexture
             // can report a DataProcessingError with HTTP 200 for otherwise valid Mapbox
@@ -293,8 +386,6 @@ public class MapTileLoader : MonoBehaviour
 
         if (renderer.material.HasProperty("_Cull"))
             renderer.material.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
-        if (renderer.material.HasProperty("_Surface"))
-            renderer.material.SetFloat("_Surface", 0f);
         if (renderer.material.HasProperty("_ZWrite"))
             renderer.material.SetFloat("_ZWrite", 1f);
 
@@ -328,13 +419,7 @@ public class MapTileLoader : MonoBehaviour
         tex.mipMapBias = tileMipMapBias;
     }
 
-    Shader ResolveTileShader()
-    {
-        Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-        if (shader == null) shader = Shader.Find("Unlit/Texture");
-        if (shader == null) shader = Shader.Find("Standard");
-        return shader;
-    }
+    Shader ResolveTileShader() => BuiltInShaders.UnlitTexture;
 
     void ClearTiles()
     {
@@ -356,7 +441,26 @@ public class MapTileLoader : MonoBehaviour
         loggedAuthFailureHint = false;
     }
 
-    void OnDestroy() { ClearTiles(); }
+
+    void WarnMissingTokenOnce()
+    {
+        if (loggedMissingToken)
+            return;
+
+        loggedMissingToken = true;
+        Debug.LogWarning(
+            $"MapTileLoader: no Mapbox token was resolved ({Settings.TokenSource}), so no tile was requested. " +
+            $"Add one to Assets/Resources/{MapboxTileRequest.ConfigResourcePath}.txt or to the loader's " +
+            "mapboxToken field.");
+    }
+
+    /// <summary>
+    /// True when a refusal is a genuine credential problem: Mapbox refused the request and a
+    /// token travelled in it. A tokenless 401 means the request was built before the token
+    /// was resolved — the loader's own bug, which must not stop the downloads that follow.
+    /// </summary>
+    public static bool CountsAsAuthFailure(long status, string tokenThatTravelled) =>
+        (status == 401 || status == 403) && !string.IsNullOrEmpty(tokenThatTravelled);
 
     IEnumerator WarnIfNoTilesLoaded(int version)
     {
@@ -409,6 +513,17 @@ public class MapTileLoader : MonoBehaviour
         if (body != null && body.Length > 160)
             body = body.Substring(0, 160);
 
+        // Report what this request carried, not what the fields hold now: the token is
+        // resolved while requests are already in flight, so reading the fields here produced
+        // one line that blamed an empty URL and described a live token at the same time.
+        string sentStyle = Settings.Style;
+        string sentToken = Settings.Token;
+        if (MapboxTileRequest.TryReadRequest(request.url, out string requestStyle, out string requestToken))
+        {
+            sentStyle = requestStyle;
+            sentToken = requestToken;
+        }
+
         // Never classify a successful HTTP 200 image/decode problem as an auth
         // failure. Auth responses from the Styles API use 401/403.
         bool accessDenied = status == 401 || status == 403;
@@ -417,11 +532,13 @@ public class MapTileLoader : MonoBehaviour
         {
             loggedAuthFailureHint = true;
             Debug.LogError(
-                $"MapTileLoader: Mapbox authorization failed (HTTP {status}). " +
-                "Verify token is valid, has styles:read scope, style access, and no restrictive URL/domain rules for Unity requests.");
+                $"MapTileLoader: Mapbox refused the tile request (HTTP {status}) for style '{sentStyle}': " +
+                $"{MapboxTileRequest.ClassifyAuthFailure(status, body)}. " +
+                $"The request carried {MapboxTileRequest.DescribeToken(sentToken)}. " +
+                "Run RealBus/Diagnostics/Verify Mapbox Token to test the resolved token outside the game.");
         }
 
-        if (accessDenied && haltDownloadsAfterAuthFailure)
+        if (CountsAsAuthFailure(status, sentToken) && haltDownloadsAfterAuthFailure)
             authFailureDetected = true;
 
         if (accessDenied && loggedAuthFailureHint)

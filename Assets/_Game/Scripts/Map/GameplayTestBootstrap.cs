@@ -155,7 +155,7 @@ public class GameplayTestBootstrap : MonoBehaviour
         }
         routeLine = new GameObject("Training route guidance").AddComponent<LineRenderer>();
         routeLine.transform.SetParent(transform, false);
-        routeMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+        routeMaterial = new Material(BuiltInShaders.Overlay);
         routeMaterial.color = Color.cyan; routeLine.sharedMaterial = routeMaterial;
         routeLine.startWidth = routeLine.endWidth = 0.35f;
         var guidance = (Vector3[])route.pathPoints.Clone();

@@ -125,9 +125,6 @@ public class CitySelector : MonoBehaviour
             Debug.LogWarning("City is locked: " + runtimeCity.cityName);
             yield break;
         }
-        var streamer = FindAnyObjectByType<TileStreamManager>();
-        if (streamer != null) streamer.ResetStreaming();
-
         // ── Step 2: Register & activate ───────────────────────────────
         var cityMgr = CityManager.Instance;
         cityMgr?.RegisterCity(runtimeCity);
@@ -144,8 +141,6 @@ public class CitySelector : MonoBehaviour
         // ── Step 4: Coordinate origin ──────────────────────────────────
         if (coordinateConverter != null)
             coordinateConverter.SetCityOrigin(runtimeCity);
-
-        if (streamer != null) streamer.zoomLevel = config.defaultZoom;
 
         yield return null; // allow systems to react to origin change
 

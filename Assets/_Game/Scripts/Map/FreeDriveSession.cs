@@ -155,7 +155,12 @@ public class FreeDriveSession : MonoBehaviour
         if (selectedRoute != null && selectedRoute.stops != null && selectedRoute.stops.Length > 1)
             heading = GPSManager.Instance.GpsToWorld(selectedRoute.stops[1].latitude, selectedRoute.stops[1].longitude) - startPos;
         heading = RoadSpawnResolver.RouteHeading(selectedRoute, startPos, heading);
-        if (RoadSpawnResolver.TryResolve(busController, startPos, heading, SpawnRoadSearchRadiusMeters, out var roadPosition, out var roadRotation))
+        if (selectedRoute != null && BusDepotManager.EnsureExists().TrySpawnDepotAndResolveBay(selectedRoute, startPos, busController, out var depotBayPos, out var depotBayRot, out var depotExitPos))
+        {
+            busController.Teleport(depotBayPos, depotBayRot);
+            busController.SetParkingBrake(true);
+        }
+        else if (RoadSpawnResolver.TryResolve(busController, startPos, heading, SpawnRoadSearchRadiusMeters, out var roadPosition, out var roadRotation))
             busController.Teleport(roadPosition, roadRotation);
         else
         {

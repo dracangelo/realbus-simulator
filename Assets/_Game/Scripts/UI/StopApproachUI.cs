@@ -99,6 +99,22 @@ public class StopApproachUI : MonoBehaviour
             panelBackground.color = new Color(0.15f, 0.45f, 1f, 0.88f);
     }
 
+    public void ShowDoorsLocked(string stopName)
+    {
+        if (approachPanel != null)
+            approachPanel.SetActive(true);
+        if (stopNameText != null)
+            stopNameText.text = stopName;
+        if (distanceText != null)
+            distanceText.text = "LOCKED";
+        if (statusText != null)
+            statusText.text = "DOORS SECURED";
+        if (guidanceText != null)
+            guidanceText.text = "DEPART WHEN READY";
+        if (panelBackground != null)
+            panelBackground.color = UITheme.Accent;
+    }
+
     public void HideApproach()
     {
         if (approachPanel != null)

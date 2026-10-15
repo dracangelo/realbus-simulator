@@ -211,14 +211,16 @@ public class RuntimeOsmPoiVisualizer : MonoBehaviour
 
     Material CreateMarkerMaterial(PoiCategory category)
     {
-        var shader = Shader.Find("Universal Render Pipeline/Lit")
-            ?? Shader.Find("Standard")
-            ?? Shader.Find("Unlit/Color");
-        var material = new Material(shader);
-        material.color = ResolveColor(category);
-        if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", 0.05f);
-        if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
-        if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.08f);
+        var material = new Material(BuiltInShaders.Lit);
+        Color c = ResolveColor(category);
+        // material.color writes _Color, the albedo slot every Built-in lit shader reads.
+        material.color = c;
+        if (material.HasProperty("_Color"))       material.SetColor("_Color",     c);
+        if (material.HasProperty("_Glossiness"))  material.SetFloat("_Glossiness",  0.05f);
+        if (material.HasProperty("_Metallic"))    material.SetFloat("_Metallic",    0f);
+        if (material.HasProperty("_Smoothness"))  material.SetFloat("_Smoothness",  0.08f);
+        // Force opaque so the colour is never invisible
+        if (material.HasProperty("_Mode"))        material.SetFloat("_Mode",        0f);
         return material;
     }
 
