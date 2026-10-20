@@ -342,6 +342,7 @@ MonoBehaviour:
   - {fileID: 5999428004125795861}
   maxBrakeTorque: 12000
   retarderStrength: 3000
+  releaseParkingBrakeOnThrottle: 1
   brakeHeat: 0
   maxBrakeHeat: 100
   dragCoefficient: 0.65

@@ -51,18 +51,31 @@ public class MobilePerformanceManager : MonoBehaviour
         Application.targetFrameRate = 30; SetResolutionScale(0.65f);
     }
 
+    /// <summary>
+    /// Dynamic resolution is a phone thermal tool. In the editor and on desktop it
+    /// used to keep shrinking the render buffer whenever the frame rate dipped,
+    /// which made the game view soft for no thermal reason at all.
+    /// </summary>
+    public static bool AdaptiveScalingSupported => Application.isMobilePlatform;
+
     public void ApplySettings()
     {
         RealBusSettings settings = SettingsManager.EnsureExists().Current;
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = settings.targetFrameRate;
-        if (!settings.adaptivePerformance) SetResolutionScale(1f);
+        if (!settings.adaptivePerformance || !AdaptiveScalingSupported) SetResolutionScale(1f);
     }
 
     void EvaluateAdaptiveScale()
     {
         RealBusSettings settings = SettingsManager.EnsureExists().Current;
         if (!settings.adaptivePerformance) return;
+        if (!AdaptiveScalingSupported)
+        {
+            // Never trade sharpness for frame time on a desktop GPU.
+            if (CurrentResolutionScale < 1f) SetResolutionScale(1f);
+            return;
+        }
         if (Time.unscaledTime < lowMemoryModeUntil) { Application.targetFrameRate = 30; SetResolutionScale(0.65f); return; }
         float budget = 1000f / Mathf.Max(30, settings.targetFrameRate);
         float next = RecommendScale(CurrentResolutionScale, AverageFrameMilliseconds, budget, ThermalState);

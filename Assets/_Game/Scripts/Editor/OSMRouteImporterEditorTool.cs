@@ -534,6 +534,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
         asset.routeName   = GenerateRouteName(d, isReturn);
         asset.routeNumber = GenerateRouteNumber(d, isReturn);
         asset.sourceCityCode = ResolveRouteCityCode();
+        RouteNaming.Apply(asset);
         asset.generatedRouteId = $"{asset.sourceCityCode}:{asset.routeNumber}:{d.stops.Count}:{isReturn}";
         asset.isRoadPathValidated = d.pathWorld.Count >= 2;
         asset.busStops    = d.stops.Select(s => s.stop).ToArray();
@@ -566,7 +567,6 @@ public class OSMRouteImporterEditorTool : EditorWindow
 
     string GenerateRouteName(RouteDraft d, bool isReturn)
     {
-        string cityCode = ResolveRouteCityCode();
         string routeRef = string.IsNullOrWhiteSpace(d.routeRef) ? "" : d.routeRef.Trim();
         string startName = GetMeaningfulStopName(d, fromStart: true);
         string endName = GetMeaningfulStopName(d, fromStart: false);
@@ -576,9 +576,14 @@ public class OSMRouteImporterEditorTool : EditorWindow
         string baseName;
         if (!string.IsNullOrWhiteSpace(routeRef))
         {
+            // Keep the human name readable: the prefix belongs at the front of
+            // the finished name, not in front of every route code in it.
+            string label = RouteNaming.NormalizeCode(routeRef);
+            if (label.StartsWith(RouteNaming.CityPrefix + "-", System.StringComparison.Ordinal))
+                label = label.Substring(RouteNaming.CityPrefix.Length + 1);
             baseName = isLoop
-                ? $"Route {routeRef} {startName} Loop"
-                : $"Route {routeRef} {startName} - {endName}";
+                ? $"{label} {startName} Loop"
+                : $"{label} {startName} - {endName}";
         }
         else if (!string.IsNullOrWhiteSpace(startName) && !string.IsNullOrWhiteSpace(endName))
         {
@@ -594,8 +599,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
         if (!string.IsNullOrWhiteSpace(viaName))
             baseName += $" via {viaName}";
 
-        if (!string.IsNullOrWhiteSpace(cityCode))
-            baseName = $"{cityCode} {baseName}";
+        baseName = RouteNaming.NormalizeName(baseName);
 
         return isReturn && !baseName.EndsWith("(Return)")
             ? $"{baseName} (Return)"
@@ -604,11 +608,12 @@ public class OSMRouteImporterEditorTool : EditorWindow
 
     string GenerateRouteNumber(RouteDraft d, bool isReturn)
     {
-        string cityCode = ResolveRouteCityCode();
         string number = string.IsNullOrWhiteSpace(d.routeRef)
-            ? $"{(string.IsNullOrWhiteSpace(cityCode) ? "R" : cityCode)}-{d.name.Replace("Draft_", "").Replace("_part", "P")}"
+            ? "R-" + d.name.Replace("Draft_", "").Replace("_part", "P")
             : d.routeRef;
-        return isReturn ? $"{number}R" : number;
+        if (isReturn)
+            number += "-R";
+        return RouteNaming.NormalizeCode(number);
     }
 
     string ResolveRouteCityCode()

@@ -41,6 +41,33 @@ public class WorldSystemsTests
     }
 
     [Test]
+    public void WorldReadiness_WaitsForNearbyAndFovAssets()
+    {
+        var milestones = new WorldReadiness.Milestones
+        {
+            busSpawned = true,
+            mapInitialised = true,
+            gpsReady = true,
+            roadsBuilt = true,
+            buildingsRingReady = true,
+            tilesLoaded = true,
+            preloadRequired = true,
+            preloadReady = false,
+            preloadStatus = "PLACING BUILDINGS IN VIEW..."
+        };
+
+        var waiting = WorldReadiness.Evaluate(milestones);
+        Assert.IsFalse(waiting.ready);
+        Assert.AreEqual("PLACING BUILDINGS IN VIEW...", waiting.status);
+        StringAssert.Contains("nearby assets", WorldReadiness.DescribePending(milestones));
+
+        milestones.preloadReady = true;
+        var ready = WorldReadiness.Evaluate(milestones);
+        Assert.IsTrue(ready.ready);
+        Assert.AreEqual("WORLD READY", ready.status);
+    }
+
+    [Test]
     public void WorldReadiness_ProgressAdvancesThroughTheLadderAndNeverRegresses()
     {
         var milestones = new WorldReadiness.Milestones();

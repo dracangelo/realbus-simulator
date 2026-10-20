@@ -120,10 +120,12 @@ public class LiveryEditor : MonoBehaviour
     RenderTexture liveryTexture;
     Texture2D compositionTexture;
     string activeBusId;
+    BusLiveryPaint paint;
 
     public RenderTexture LiveryTexture => liveryTexture;
     public LiveryData CurrentLivery => currentLivery;
     public static IReadOnlyList<LiveryPreset> Presets => BuildPresets();
+    public BusLiveryPaint Paint => paint;
 
     void OnDestroy()
     {
@@ -131,20 +133,52 @@ public class LiveryEditor : MonoBehaviour
         if (compositionTexture != null) Destroy(compositionTexture);
     }
 
-    public void Initialize(string busId, Renderer[] renderers = null, Texture2D mask = null)
+    public void Initialize(string busId, Renderer[] renderers = null, Texture2D mask = null, Transform visualRoot = null)
     {
         activeBusId = string.IsNullOrWhiteSpace(busId) ? "fleet.standard_single_decker" : busId;
         if (renderers != null) targetRenderers = renderers;
         if (mask != null) zoneMap = mask;
 
+        // This component is authored on the bus in gameplay, but the garage
+        // studio creates its own copy on the UI panel. Both must find the real
+        // player bus, otherwise a preset chosen in the garage only updates the
+        // preview texture and the bus itself keeps its previous paint until the
+        // next scene load.
+        BusController bus = GetComponent<BusController>();
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
+
+        if (visualRoot == null)
+            visualRoot = bus != null && bus.modelRoot != null ? bus.modelRoot : transform;
+        if (targetRenderers == null || targetRenderers.Length == 0)
+            targetRenderers = visualRoot.GetComponentsInChildren<Renderer>(true);
+
         if (SaveManager.Instance != null && SaveManager.Instance.TryGetLiveryCode(activeBusId, out string savedCode))
-            LiveryCodeCodec.TryDecode(savedCode, out currentLivery);
+        {
+            if (!LiveryCodeCodec.TryDecode(savedCode, out LiveryData saved))
+                saved = DefaultLiveryFor(activeBusId);
+            currentLivery = saved;
+        }
+        else
+        {
+            // No saved paint yet: give every bus a stable, distinct livery
+            // instead of the flat green shell the imported repair pass used to
+            // leave. The same bus always starts with the same scheme, so a
+            // returning player recognises their vehicle.
+            currentLivery = DefaultLiveryFor(activeBusId);
+        }
 
         currentLivery = currentLivery ?? new LiveryData();
-        // Imported meshes have their own UV layouts and material textures.
-        // Painting an unmasked white atlas over them erases the source artwork.
-        // Only models explicitly authored with a livery mask support repainting.
-        if (zoneMap != null) Repaint();
+
+        if (paint == null) paint = GetComponent<BusLiveryPaint>();
+        if (bus != null)
+        {
+            BusLiveryPaint busPaint = bus.GetComponent<BusLiveryPaint>();
+            if (busPaint == null) busPaint = bus.gameObject.AddComponent<BusLiveryPaint>();
+            paint = busPaint;
+        }
+        if (paint == null) paint = gameObject.AddComponent<BusLiveryPaint>();
+        paint.Bind(visualRoot, currentLivery, activeBusId);
+        Repaint();
     }
 
     public void SetHSV(LiveryZone zone, float hue, float saturation, float value, float opacity)
@@ -211,6 +245,12 @@ public class LiveryEditor : MonoBehaviour
         compositionTexture.Apply(false, false);
         Graphics.Blit(compositionTexture, liveryTexture);
         ApplyTextureToRenderers();
+
+        // The zone texture is the garage preview. The bus itself is painted by
+        // the UV-independent BusPaint shader, which works on imported meshes
+        // that have no livery mask.
+        if (paint == null) paint = GetComponent<BusLiveryPaint>();
+        if (paint != null) paint.Apply(currentLivery);
     }
 
     void EnsureData()
@@ -260,7 +300,13 @@ public class LiveryEditor : MonoBehaviour
     {
         return new List<LiveryPreset>
         {
+            // Rank-1 schemes are also the pool the default livery is chosen
+            // from, so a new player immediately has a painted bus.
             Preset("preset.city_red", "City Red", 1, "C62828", "FFFFFF", "B71C1C"),
+            Preset("preset.transit_black", "Transit Black", 1, "0B1220", "F59E0B", "FBBF24"),
+            Preset("preset.ocean_teal", "Ocean Teal", 1, "0F766E", "ECFEFF", "F59E0B"),
+            Preset("preset.matatu_red", "Matatu Red", 1, "B91C1C", "111827", "FBBF24"),
+            Preset("preset.ivory_copper", "Ivory Copper", 1, "E8E2D6", "1E293B", "B45309"),
             Preset("preset.savanna", "Savanna Gold", 2, "F9A825", "263238", "FFF8E1"),
             Preset("preset.coast", "Coast Blue", 3, "0277BD", "E1F5FE", "01579B"),
             Preset("preset.forest", "Forest Line", 4, "2E7D32", "F1F8E9", "1B5E20"),
@@ -271,6 +317,33 @@ public class LiveryEditor : MonoBehaviour
         };
     }
 
+    /// <summary>
+    /// A stable, rank-1 livery for a bus with no saved paint. Hashing the bus id
+    /// makes each model look different while keeping the choice repeatable.
+    /// </summary>
+    public static LiveryData DefaultLiveryFor(string busId)
+    {
+        var presets = BuildPresets();
+        var available = new List<LiveryPreset>();
+        for (int i = 0; i < presets.Count; i++)
+            if (presets[i].requiredRank <= 1) available.Add(presets[i]);
+        if (available.Count == 0) return new LiveryData();
+
+        int index = (int)(Hash(busId) % (uint)available.Count);
+        return available[index].data.Clone();
+    }
+
+    static uint Hash(string value)
+    {
+        unchecked
+        {
+            uint hash = 2166136261u;
+            if (!string.IsNullOrEmpty(value))
+                for (int i = 0; i < value.Length; i++) hash = (hash ^ value[i]) * 16777619u;
+            return hash & 0x7fffffffu;
+        }
+    }
+
     static LiveryPreset Preset(string id, string title, int rank, string primary, string secondary, string accent)
     {
         ColorUtility.TryParseHtmlString("#" + primary, out Color a);
@@ -278,7 +351,10 @@ public class LiveryEditor : MonoBehaviour
         ColorUtility.TryParseHtmlString("#" + accent, out Color c);
         var data = new LiveryData
         {
-            zoneColors = new[] { b, a, a, b, c, c }
+            // Both sides use the primary colour: the shader maps zones 2/3 to
+            // the left and right flanks, and a preset should not hand the bus
+            // one red side and one white side. The garage can still split them.
+            zoneColors = new[] { b, a, a, a, c, c }
         };
         return new LiveryPreset { presetId = id, displayName = title, requiredRank = rank, data = data };
     }

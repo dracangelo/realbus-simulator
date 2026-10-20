@@ -35,8 +35,39 @@ public class VisualQualityController : MonoBehaviour
         if (bus.GetComponent<CosmeticDamageSystem>() == null) bus.gameObject.AddComponent<CosmeticDamageSystem>();
         if (bus.GetComponent<VehiclePolishEffects>() == null) bus.gameObject.AddComponent<VehiclePolishEffects>();
         ConfigureGlass(bus);
+        ConfigureInteriorLight(bus);
         ConfigureReflection(bus);
+        ConfigureSharpness();
         DisableMotionBlurOnLow();
+    }
+
+    /// <summary>
+    /// Keeps the high tiers sharp. A texture importing at the default aniso level 1,
+    /// or a quality tier that quietly halves texture resolution, makes asphalt and
+    /// facades crawl at a grazing angle no matter what the render settings promise.
+    /// Only the tiers that already ship 4x MSAA and real shadows are touched, so a
+    /// player who chose Low still gets the cheap path.
+    /// </summary>
+    void ConfigureSharpness()
+    {
+        int tier = QualitySettings.GetQualityLevel();
+        int sharpTier = Application.isMobilePlatform ? 3 : 2;
+        if (tier < sharpTier) return;
+
+        // 0 = full resolution. The old master-texture limit path could still be left
+        // at a fraction from a previous session, which halves every facade and road.
+        if (QualitySettings.globalTextureMipmapLimit != 0)
+            QualitySettings.globalTextureMipmapLimit = 0;
+
+        bool forceAniso = !Application.isMobilePlatform || tier >= 4;
+        if (forceAniso && QualitySettings.anisotropicFiltering != AnisotropicFiltering.ForceEnable)
+            QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
+
+        // Medium and up already pay for real shadows; a desktop GPU can also afford
+        // the 4x MSAA those tiers ask for. Without this, choosing Medium left every
+        // kerb and window edge stair-stepped while the rest of the tier looked fine.
+        if (!Application.isMobilePlatform && QualitySettings.antiAliasing < 4)
+            QualitySettings.antiAliasing = 4;
     }
 
     void ConfigureGlass(BusController bus)
@@ -60,6 +91,30 @@ public class VisualQualityController : MonoBehaviour
                 if (material.HasProperty("_Color")) { Color c = material.GetColor("_Color"); c.a = Mathf.Min(c.a, 0.38f); material.SetColor("_Color", c); }
             }
         }
+    }
+
+    /// <summary>
+    /// The cabin is a closed box under a workshop's worth of dark trim, so with only
+    /// the sun and sky ambient it reads as a black hole from the driver's seat. A
+    /// shadowless warm fill inside the cabin makes the dashboard, wheel and seats
+    /// legible without lighting the street through the windows.
+    /// </summary>
+    void ConfigureInteriorLight(BusController bus)
+    {
+        Transform existing = bus.transform.Find("Cabin Fill Light");
+        GameObject lightObject = existing != null ? existing.gameObject : new GameObject("Cabin Fill Light");
+        lightObject.transform.SetParent(bus.transform, false);
+        lightObject.transform.localPosition = new Vector3(0f, 2.15f, 2.2f);
+
+        Light fill = lightObject.GetComponent<Light>();
+        if (fill == null) fill = lightObject.AddComponent<Light>();
+        fill.type = LightType.Point;
+        fill.range = 9f;
+        fill.intensity = 0.7f;
+        fill.color = new Color(1f, 0.93f, 0.82f);
+        fill.shadows = LightShadows.None;
+        fill.renderMode = LightRenderMode.Auto;
+        fill.enabled = true;
     }
 
     void ConfigureReflection(BusController bus)

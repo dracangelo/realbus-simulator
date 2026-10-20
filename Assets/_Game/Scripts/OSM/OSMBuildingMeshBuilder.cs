@@ -130,11 +130,32 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     // line per case: a busy block can straddle a yard edge many times.
     int skippedDepotOverlap;
     bool loggedDepotOverlap;
+
+    [Header("Imported building models")]
+    [Tooltip("Chance that a mapped OSM/Mapbox building footprint uses a downloaded model instead of an extruded mesh.")]
+    [Range(0f, 1f)] public float importedMappedBuildingChance = .55f;
+    [Tooltip("Most downloaded models allowed on mapped footprints at once. Zero keeps mapped buildings procedural.")]
+    [Min(0)] public int maxImportedMappedBuildings = 120;
+    [Tooltip("Triangle budget for downloaded models on mapped footprints. The rest of the mapped city falls back to extruded meshes.")]
+    [Min(0)] public int importedMappedTriangleBudget = 4000000;
+
+    BuildingCatalog importedCatalog;
+    readonly Dictionary<GameObject, int> mappedImportedCosts = new Dictionary<GameObject, int>();
+    int importedMappedCount;
+    int importedMappedTriangles;
+
+    public int ActiveBuildingCount => activeBuildings.Count;
+    public int ImportedMappedCount => importedMappedCount;
+    public int ImportedMappedTriangles => importedMappedTriangles;
+
     [Header("Unmapped Areas")]
     public bool enableProceduralFill = true;
     readonly HashSet<Vector2Int> mappedOccupancy = new HashSet<Vector2Int>();
     readonly Dictionary<Vector2Int, List<List<Vector3>>> mappedPolygons = new Dictionary<Vector2Int, List<List<Vector3>>>();
     readonly Dictionary<GameObject, List<Vector3>> syntheticPolygons = new Dictionary<GameObject, List<Vector3>>();
+    // Imported prefabs reference meshes owned by the source FBX. They must never
+    // go down the synthetic-building release path, which destroys the mesh.
+    readonly HashSet<GameObject> importedBuildings = new HashSet<GameObject>();
     const float OccupancyCellSize = 20f;
 
     /// <summary>
@@ -201,6 +222,10 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         mappedOccupancy.Clear();
         mappedPolygons.Clear();
         syntheticPolygons.Clear();
+        importedBuildings.Clear();
+        mappedImportedCosts.Clear();
+        importedMappedCount = 0;
+        importedMappedTriangles = 0;
         buildingsBuilt = false;
 
         int buildingCount = 0;
@@ -223,7 +248,8 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
                 MissionManager.Instance.currentRoute.stops[0].longitude);
         }
 
-        float immediateDistSq = 350f * 350f;
+        float immediateDistSq = 430f * 430f;
+        Vector3 viewForward = streamingTarget != null ? ViewPriority.ResolveForward(streamingTarget) : Vector3.forward;
         var immediateWays = new List<OSMWay>();
         var deferredWays = new List<OSMWay>();
 
@@ -235,7 +261,12 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
                 Vector3 pos = GPSManager.Instance.GpsToWorld(node.lat, node.lon);
                 float dx = pos.x - focus.x;
                 float dz = pos.z - focus.z;
-                if (dx * dx + dz * dz <= immediateDistSq)
+                bool near = dx * dx + dz * dz <= immediateDistSq;
+                // The loading overlay waits for this pass, so anything the
+                // player can see through the windscreen belongs in it even
+                // when it is just beyond the circular near ring.
+                bool visibleAhead = ViewPriority.IsInsideView(focus, viewForward, 100f, 620f, pos);
+                if (near || visibleAhead)
                     immediateWays.Add(way);
                 else
                     deferredWays.Add(way);
@@ -259,13 +290,16 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
                 buildingBuckets[cell] = bucket = new List<BuildingRecord>();
             bucket.Add(record);
 
-            GameObject instance = CreateBuildingObject(record);
+            GameObject instance = CreateMappedBuildingObject(record);
             if (instance != null) activeBuildings[record.id] = instance;
             buildingCount++;
         }
 
         // Unblock live scenery, pedestrian streaming, and city lifecycle immediately!
+        // These are the near/forward footprints the loading screen is waiting for;
+        // the wider streaming ring can keep filling in behind the overlay.
         buildingsBuilt = true;
+        InitialRingReady = true;
         Debug.Log($"Buildings: Immediate spawn buildings ready ({activeBuildings.Count} loaded around bus). Bus active! Indexing {deferredWays.Count} city buildings in background...");
 
         activeData = data;
@@ -285,7 +319,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
                 if (record != null)
                 {
                     RegisterRecord(record);
-                    CreateBuildingObject(record);
+                    CreateMappedBuildingObject(record);
                     buildingCount++;
                 }
 
@@ -449,6 +483,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
 
         Vector3 target = streamingTarget.position;
         target.y = 0f;
+        Vector3 viewForward = ViewPriority.ResolveForward(streamingTarget);
         float unloadSq = Mathf.Max(buildingLoadDistance + 50f, buildingUnloadDistance);
         unloadSq *= unloadSq;
         var unloadIds = new List<long>();
@@ -488,7 +523,12 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             }
         }
 
-        candidates.Sort((a, b) => HorizontalSqrDistance(a.center, target).CompareTo(HorizontalSqrDistance(b.center, target)));
+        candidates.Sort((a, b) =>
+        {
+            float scoreA = ViewPriority.Score(target, viewForward, ViewPriority.DefaultFovDegrees, a.center);
+            float scoreB = ViewPriority.Score(target, viewForward, ViewPriority.DefaultFovDegrees, b.center);
+            return scoreA.CompareTo(scoreB);
+        });
 
         // Create the nearest missing buildings, but never more than a slice per
         // frame. Producing every candidate in one frame was the visible hitch
@@ -499,7 +539,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         for (int i = 0; i < candidates.Count; i++)
         {
             BuildingRecord record = candidates[i];
-            GameObject instance = CreateBuildingObject(record);
+            GameObject instance = CreateMappedBuildingObject(record);
             if (instance != null) activeBuildings[record.id] = instance;
 
             builtThisFrame++;
@@ -576,10 +616,178 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         Debug.Log($"Buildings: Omitted {skippedDepotOverlap} footprints inside a depot yard; the yard roads stay clear.");
     }
 
+    /// <summary>
+    /// Mapped buildings normally become an extruded mesh on their real footprint.
+    /// With a downloaded catalog available, a deterministic share of those
+    /// footprints instead gets a textured prefab, fitted to the same mapped lot.
+    /// This is the "properly placed" pass: placement comes from the map data, and
+    /// the model is only the visual shell.
+    /// </summary>
+    GameObject CreateMappedBuildingObject(BuildingRecord record)
+    {
+        if (TryCreateImportedMappedBuilding(record, out GameObject imported)) return imported;
+        return CreateBuildingObject(record);
+    }
+
+    bool TryCreateImportedMappedBuilding(BuildingRecord record, out GameObject instance)
+    {
+        instance = null;
+        if (!ShouldTryImportedMapped(record)) return false;
+        if (!TryFootprintFrame(record.footprint, out Vector3 center, out _, out Vector3 across, out float width, out float depth))
+            return false;
+
+        // Put the downloaded facade toward the nearest street, not an arbitrary
+        // side of the mapped footprint.
+        across = FaceNearestRoad(center, across);
+        var entries = importedCatalog.entries;
+        int start = (int)(MixId(record.id * 31L + 7L) % (uint)entries.Length);
+        for (int i = 0; i < entries.Length; i++)
+        {
+            var entry = entries[(start + i) % entries.Length];
+            if (entry == null || entry.prefab == null) continue;
+            int cost = Mathf.Max(0, entry.triangles);
+            if (importedMappedTriangles + cost > importedMappedTriangleBudget) continue;
+            if (!TryFitMappedBuilding(entry.bounds, width, depth, record.height, out float scale)) continue;
+
+            float modelDepth = entry.bounds.size.z * scale;
+            Vector3 placedCenter = center + across * ((depth - modelDepth) * .5f);
+            placedCenter.y = center.y;
+            Quaternion rotation = Quaternion.LookRotation(across, Vector3.up);
+            var model = CreateImportedBuilding(entry, placedCenter, rotation, scale, record.id, false);
+            if (model == null) continue;
+
+            model.name = $"Building_{record.label}_{record.id}";
+            mappedImportedCosts[model] = cost;
+            if (importedMappedCount == 0)
+                Debug.Log($"[Buildings] First mapped imported building '{entry.sourceName}' on {record.label} footprint {record.id} " +
+                    $"({record.footprint.Count} points, {width:F1}x{depth:F1} m, scale {scale:F2}).");
+            importedMappedCount++;
+            importedMappedTriangles += cost;
+            instance = model;
+            return true;
+        }
+        return false;
+    }
+
+    void EnsureImportedCatalog()
+    {
+        if (importedCatalog == null)
+            importedCatalog = Resources.Load<BuildingCatalog>("BuildingCatalog");
+    }
+
+    bool ShouldTryImportedMapped(BuildingRecord record)
+    {
+        EnsureImportedCatalog();
+        if (importedCatalog == null || importedCatalog.entries == null || importedCatalog.entries.Length == 0) return false;
+        if (importedMappedBuildingChance <= 0f || maxImportedMappedBuildings <= 0 || importedMappedTriangleBudget <= 0) return false;
+        if (importedMappedCount >= maxImportedMappedBuildings) return false;
+        uint roll = MixId(record.id) % 1000u;
+        return roll < (uint)Mathf.RoundToInt(Mathf.Clamp01(importedMappedBuildingChance) * 1000f);
+    }
+
+    /// <summary>
+    /// Extracts an oriented rectangle from a mapped polygon. The longest edge is
+    /// used as the building's frontage axis, which is how most street-facing OSM
+    /// footprints are drawn.
+    /// </summary>
+    public static bool TryFootprintFrame(IList<Vector3> footprint, out Vector3 center, out Vector3 along,
+        out Vector3 across, out float width, out float depth)
+    {
+        center = Vector3.zero;
+        along = Vector3.right;
+        across = Vector3.forward;
+        width = depth = 0f;
+        if (footprint == null || footprint.Count < 3) return false;
+
+        float longest = -1f;
+        for (int i = 0; i < footprint.Count; i++)
+        {
+            Vector3 edge = footprint[(i + 1) % footprint.Count] - footprint[i];
+            edge.y = 0f;
+            float lengthSq = edge.sqrMagnitude;
+            if (lengthSq > longest)
+            {
+                longest = lengthSq;
+                along = edge.normalized;
+            }
+        }
+        if (longest <= .0001f) return false;
+
+        across = Vector3.Cross(along, Vector3.up);
+        if (across.sqrMagnitude <= .0001f) return false;
+        across.Normalize();
+
+        float minAlong = float.PositiveInfinity, maxAlong = float.NegativeInfinity;
+        float minAcross = float.PositiveInfinity, maxAcross = float.NegativeInfinity;
+        float baseY = footprint[0].y;
+        for (int i = 0; i < footprint.Count; i++)
+        {
+            Vector3 point = footprint[i];
+            baseY = Mathf.Min(baseY, point.y);
+            float a = Vector3.Dot(point, along);
+            float c = Vector3.Dot(point, across);
+            minAlong = Mathf.Min(minAlong, a); maxAlong = Mathf.Max(maxAlong, a);
+            minAcross = Mathf.Min(minAcross, c); maxAcross = Mathf.Max(maxAcross, c);
+        }
+
+        width = maxAlong - minAlong;
+        depth = maxAcross - minAcross;
+        if (width < .5f || depth < .5f) return false;
+        center = along * ((minAlong + maxAlong) * .5f) + across * ((minAcross + maxAcross) * .5f);
+        center.y = baseY;
+        return true;
+    }
+
+    public static bool TryFitMappedBuilding(Bounds bounds, float footprintWidth, float footprintDepth,
+        float targetHeight, out float scale)
+    {
+        scale = 0f;
+        Vector3 size = bounds.size;
+        if (size.x <= .01f || size.y <= .01f || size.z <= .01f) return false;
+        if (footprintWidth <= .5f || footprintDepth <= .5f) return false;
+
+        scale = Mathf.Min(footprintWidth / size.x, footprintDepth / size.z);
+        if (scale < .02f || float.IsNaN(scale) || float.IsInfinity(scale)) return false;
+
+        float heightRatio = size.y * scale / Mathf.Max(1f, targetHeight);
+        return heightRatio >= .55f && heightRatio <= 2.2f;
+    }
+
+    static Vector3 FaceNearestRoad(Vector3 center, Vector3 across)
+    {
+        var index = OSMRoadMeshBuilder.Instance?.SurfaceIndex;
+        if (index == null) return across;
+
+        float best = float.PositiveInfinity;
+        Vector3 toward = Vector3.zero;
+        foreach (var segment in index.Around(center, 60f))
+        {
+            Vector3 nearest = RoadSpawnResolver.ProjectOnSegment(center, segment.a, segment.b);
+            float distance = (nearest - center).sqrMagnitude;
+            if (distance < best)
+            {
+                best = distance;
+                toward = nearest - center;
+            }
+        }
+        if (best > 3600f || best < .01f) return across;
+        toward.y = 0f;
+        return Vector3.Dot(toward, across) < 0f ? -across : across;
+    }
+
+    static uint MixId(long id)
+    {
+        uint value = (uint)id ^ (uint)(id >> 32);
+        value ^= value >> 16; value *= 0x7feb352du;
+        value ^= value >> 15; value *= 0x846ca68bu;
+        value ^= value >> 16;
+        return value;
+    }
+
     GameObject CreateBuildingObject(BuildingRecord record)
     {
         Mesh mesh = BuildExtrudedMesh(record.footprint, record.height, FacadeTilesFor(record.height, floorHeight),
-            RoofShapeFor(record.kind, record.id));
+            RoofShapeFor(record.kind, record.id), record.id);
         if (mesh == null) return null;
         // Synthetic buildings (fictional infill, and the depot's own clearing test
         // path) can be requested before the mapped build pass has made its parent.
@@ -593,15 +801,48 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         var mf = buildingObj.AddComponent<MeshFilter>();
         var mr = buildingObj.AddComponent<MeshRenderer>();
         mf.sharedMesh = mesh;
-        mr.sharedMaterials = new[] { ResolveBuildingMaterial(record.kind), ResolveRoofMaterial(record.kind) };
-        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        // A wall the bus can drive through is the fastest way to break the illusion.
+        // The extruded mesh is tiny (two submeshes, a handful of quads), so a static
+        // non-convex mesh collider is cheap next to the cost of a missing wall.
+        var collider = buildingObj.AddComponent<MeshCollider>();
+        collider.sharedMesh = mesh;
+        collider.convex = false;
+        Material wallMaterial = ResolveBuildingMaterial(record.kind);
+        Material roofMaterial = ResolveRoofMaterial(record.kind);
+        // Flat-roofed buildings carry a third submesh of roof clutter (AHUs, vents,
+        // water tanks); hip roofs have no flat deck to stand on.
+        mr.sharedMaterials = mesh.subMeshCount >= 3
+            ? new[] { wallMaterial, roofMaterial, UrbanMaterials.RoofProp }
+            : new[] { wallMaterial, roofMaterial };
+        if (!loggedBuildingMaterial)
+        {
+            loggedBuildingMaterial = true;
+            Debug.Log($"Building surface: wall={mr.sharedMaterials[0].shader.name} roof={mr.sharedMaterials[1].shader.name}");
+        }
+        // Buildings cast the long afternoon shadows that make the street read as a
+        // place. Without them every wall and roof is lit by flat ambient light.
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
         mr.receiveShadows = true;
-        // A per-building tint in a property block: a street of identical facades is the
-        // other half of "every building looks the same". Shared materials keep the
-        // renderer batched, and the tint is stable for a given building id.
+        // A per-building tint, facade variant and shopfront flag in a property block:
+        // a street of identical facades is the other half of "every building looks
+        // the same". Shared materials keep the renderer batched, and every value is
+        // stable for a given building id so a streamed-in building looks the same.
         var block = new MaterialPropertyBlock();
         Color tint = TintFor(PaletteFor(record.kind, record.id), record.id);
-        block.SetColor("_Color", tint);
+        float baseY = record.footprint.Count > 0 ? record.footprint[0].y : 0f;
+        foreach (Vector3 point in record.footprint) baseY = Mathf.Min(baseY, point.y);
+        int floors = FacadeTilesFor(record.height, floorHeight);
+        // Prefer the facade's own tint name (see UrbanMaterials.Facade); fall back to
+        // _Color only when the material really is the Standard fallback. Setting both
+        // would also recolour the Standard-shader roof props on the same renderer.
+        if (wallMaterial.HasProperty("_FacadeTint")) block.SetColor("_FacadeTint", tint);
+        else block.SetColor("_Color", tint);
+        block.SetFloat("_Variant", UrbanMaterials.VariantFor(record.id));
+        block.SetFloat("_Shopfront", UrbanMaterials.ShopfrontFor(record.id, floors) ? 1f : 0f);
+        block.SetFloat("_BaseY", baseY);
+        // Roofs face the sun almost square on, so they need a genuinely dark tone:
+        // a mid-grey albedo under direct light clamps to white and reads as paper.
+        block.SetColor("_RoofTint", Color.Lerp(new Color(.095f, .095f, .10f), tint, .10f));
         mr.SetPropertyBlock(block);
         if (drawFootprints)
             BuildFootprintOutline(record.footprint, buildingObj.transform, PaletteFor(record.kind, record.id));
@@ -656,6 +897,56 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         return instance;
     }
 
+    /// <summary>
+    /// Drops a downloaded building prefab onto an infill lot. The prefab already
+    /// has a bottom-centre pivot and a box collider; this only positions, scales
+    /// and records it so street props and depot clearing treat it like any other
+    /// building.
+    /// </summary>
+    public GameObject CreateImportedBuilding(BuildingCatalog.Entry entry, Vector3 center, Quaternion rotation, float scale, long id, bool registerSyntheticFootprint = true)
+    {
+        if (entry == null || entry.prefab == null || scale <= 0f) return null;
+        if (buildingsParent == null)
+        {
+            buildingsParent = new GameObject("OSM_Buildings");
+            buildingsParent.transform.position = Vector3.zero;
+        }
+
+        GameObject instance = Instantiate(entry.prefab, buildingsParent.transform, false);
+        instance.name = $"Building_Imported_{id}";
+        instance.transform.SetPositionAndRotation(center, rotation);
+        instance.transform.localScale = Vector3.one * scale;
+
+        var collider = instance.GetComponent<BoxCollider>();
+        if (collider == null) collider = instance.AddComponent<BoxCollider>();
+        collider.center = entry.bounds.center;
+        collider.size = entry.bounds.size;
+        collider.isTrigger = false;
+
+        Vector3 along = rotation * Vector3.right;
+        Vector3 across = rotation * Vector3.forward;
+        float halfAlong = entry.bounds.extents.x * scale;
+        float halfAcross = entry.bounds.extents.z * scale;
+        var footprint = new List<Vector3>(4)
+        {
+            center - along * halfAlong - across * halfAcross,
+            center + along * halfAlong - across * halfAcross,
+            center + along * halfAlong + across * halfAcross,
+            center - along * halfAlong + across * halfAcross
+        };
+
+        if (OSMRoadMeshBuilder.Instance?.SurfaceIndex?.OverlapsFootprint(footprint, .75f) == true ||
+            BusDepotManager.OverlapsDepotFootprint(footprint, .75f))
+        {
+            DestroySafe(instance);
+            return null;
+        }
+
+        importedBuildings.Add(instance);
+        if (registerSyntheticFootprint) syntheticPolygons[instance] = footprint;
+        return instance;
+    }
+
     public void ReleaseSyntheticBuilding(GameObject building) { DestroyBuildingObject(building); }
 
     /// <summary>
@@ -700,8 +991,18 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     void DestroyBuildingObject(GameObject building)
     {
         if (building == null) return;
+        bool imported = importedBuildings.Remove(building);
         syntheticPolygons.Remove(building);
-        MeshFilter filter = building.GetComponent<MeshFilter>();
+        if (mappedImportedCosts.TryGetValue(building, out int cost))
+        {
+            mappedImportedCosts.Remove(building);
+            importedMappedCount = Mathf.Max(0, importedMappedCount - 1);
+            importedMappedTriangles = Mathf.Max(0, importedMappedTriangles - cost);
+        }
+        // Synthetic buildings own their generated mesh. Imported prefabs only
+        // borrow meshes from the source FBX, so destroying those would corrupt
+        // every other instance and the source asset.
+        MeshFilter filter = imported ? null : building.GetComponent<MeshFilter>();
         if (filter != null && filter.sharedMesh != null) DestroySafe(filter.sharedMesh);
         DestroySafe(building);
     }
@@ -873,19 +1174,10 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         if (materialCache.TryGetValue(kind, out var cached) && cached != null)
             return cached;
 
-        var mat = new Material(ResolveDefaultBuildingShader());
-        mat.color = ResolveBuildingColor(kind);
-        if (defaultFacadeTexture == null)
-            defaultFacadeTexture = Resources.Load<Texture2D>("MapboxStyles/Styles/MapboxSampleStyles/Realistic/Assets/Textures/RealisticSideAlbedo");
-        if (defaultFacadeTexture != null)
-        {
-            defaultFacadeTexture.wrapMode = TextureWrapMode.Repeat;
-            mat.mainTexture = defaultFacadeTexture;
-            mat.mainTextureScale = new Vector2(1f, 1.2f);
-        }
-        if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0.05f);
-        if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
-        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.08f);
+        // One procedural facade for the whole city. The old material tiled the
+        // 2048px Mapbox side atlas over every wall: it repeated, shimmered at
+        // distance, and made a tower and a shed show the same window rows.
+        var mat = UrbanMaterials.Facade;
         materialCache[kind] = mat;
         return mat;
     }
@@ -897,16 +1189,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         if (roofMaterialCache.TryGetValue(kind, out var cached) && cached != null)
             return cached;
 
-        var mat = new Material(ResolveDefaultBuildingShader());
-        mat.color = Color.Lerp(ResolveBuildingColor(kind), new Color(.16f, .17f, .18f, 1f), .48f);
-        if (defaultRoofTexture == null)
-            defaultRoofTexture = Resources.Load<Texture2D>("MapboxStyles/Styles/MapboxSampleStyles/Realistic/Assets/Textures/RealisticTopAlbedo");
-        if (defaultRoofTexture != null)
-        {
-            defaultRoofTexture.wrapMode = TextureWrapMode.Repeat;
-            mat.mainTexture = defaultRoofTexture;
-        }
-        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", .04f);
+        var mat = UrbanMaterials.Roof;
         roofMaterialCache[kind] = mat;
         return mat;
     }
@@ -916,6 +1199,8 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
     // Several base colours per kind. One colour per kind meant that every house in
     // the city shared a wall tone and the per-building tint could only nudge its
     // brightness, which is what made whole districts look like one building.
+    static bool loggedBuildingMaterial;
+
     static readonly Color[] HousePalette =
     {
         new Color(0.86f, 0.75f, 0.62f, 1f), new Color(0.78f, 0.63f, 0.50f, 1f),
@@ -1053,7 +1338,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         return point;
     }
 
-    Mesh BuildExtrudedMesh(List<Vector3> footprint, float height, int facadeTiles = 1, RoofShape roofShape = RoofShape.Flat)
+    Mesh BuildExtrudedMesh(List<Vector3> footprint, float height, int facadeTiles = 1, RoofShape roofShape = RoofShape.Flat, long id = 0)
     {
         int n = footprint.Count;
         if (n < 3) return null;
@@ -1091,20 +1376,199 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         }
 
         // Pitched roofs where the footprint allows one, flat parapets everywhere else.
-        if (roofShape != RoofShape.Hip || !AddHipRoof(footprint, height, verts, uvs, roofTris))
+        bool hip = roofShape == RoofShape.Hip && AddHipRoof(footprint, height, verts, uvs, roofTris);
+        if (!hip)
             AddFlatRoof(footprint, height, verts, uvs, roofTris);
+
+        // Roof clutter, only on flat decks; a pitched roof has nowhere to stand.
+        List<int> propTris = hip ? null : AppendRoofProps(footprint, height, id, verts, uvs);
 
         Mesh mesh = new Mesh();
         mesh.name = "Building";
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = verts.ToArray();
-        mesh.subMeshCount = 2;
+        int subMeshCount = propTris != null && propTris.Count > 0 ? 3 : 2;
+        mesh.subMeshCount = subMeshCount;
         mesh.SetTriangles(wallTris, 0);
         mesh.SetTriangles(roofTris, 1);
+        if (subMeshCount == 3) mesh.SetTriangles(propTris, 2);
         mesh.uv = uvs.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
+    }
+
+    /// <summary>
+    /// Deterministic roof dressing: an air-handling box, a vent or a stubby water
+    /// tank, placed inside the inset roof deck. A skyline of bare flat caps is the
+    /// single clearest "procedural city" tell from bus height, and this is cheap —
+    /// the geometry joins the building mesh as a third submesh sharing the collider.
+    /// Returns null when the roof is too small to hold anything.
+    /// </summary>
+    static List<int> AppendRoofProps(List<Vector3> footprint, float height, long id, List<Vector3> verts, List<Vector2> uvs)
+    {
+        int n = footprint.Count;
+        if (n < 3) return null;
+
+        uint hash = MixId(id);
+        float roofY = Mathf.Max(0.5f, height - RoofLedgeDrop);
+
+        Vector3 center = Vector3.zero;
+        foreach (Vector3 p in footprint) center += p;
+        center /= n;
+
+        // Oriented frame from the longest wall, so props sit square with the building.
+        Vector3 along = Vector3.right;
+        float best = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            Vector3 edge = footprint[(i + 1) % n] - footprint[i];
+            edge.y = 0f;
+            float len = edge.magnitude;
+            if (len > best) { best = len; along = edge / len; }
+        }
+        if (best < .5f) return null;
+        Vector3 across = Vector3.Cross(Vector3.up, along).normalized;
+
+        // Largest circle that fits after the parapet inset. Props stay inside it.
+        float inscribed = float.MaxValue;
+        for (int i = 0; i < n; i++)
+        {
+            Vector3 a = footprint[i], b = footprint[(i + 1) % n];
+            Vector3 ab = b - a; ab.y = 0f;
+            float len = ab.magnitude;
+            if (len < .001f) continue;
+            Vector3 ap = center - a; ap.y = 0f;
+            float t = Mathf.Clamp01(Vector3.Dot(ap, ab) / (len * len));
+            inscribed = Mathf.Min(inscribed, (a + ab * t - center).magnitude);
+        }
+        float usable = Mathf.Min(inscribed - RoofLedgeInset - 1.0f, 3.2f);
+        if (usable < 1.1f) return null;
+
+        var tris = new List<int>();
+        // Rough footprint area decides how much clutter the deck can carry.
+        float area = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            Vector3 a = footprint[i], b = footprint[(i + 1) % n];
+            area += a.x * b.z - b.x * a.z;
+        }
+        area = Mathf.Abs(area) * .5f;
+        int count = area > 900f ? 3 : area > 260f ? 2 : 1;
+        // Most roofs carry one item; only large decks earn a second or third.
+        if (Rand01(hash ^ 0x51ed270bu) < .45f && count > 1) count--;
+
+        for (int k = 0; k < count; k++)
+        {
+            uint seed = hash ^ (uint)(k * 2654435761u);
+            float angle = Rand01(seed) * Mathf.PI * 2f;
+            float radius = Mathf.Sqrt(Rand01(seed ^ 0x9e3779b9u)) * usable * .55f;
+            Vector3 offset = (Mathf.Cos(angle) * along + Mathf.Sin(angle) * across) * radius;
+            Vector3 spot = new Vector3(center.x + offset.x, roofY, center.z + offset.z);
+            float yaw = AngleOf(along) + (Rand01(seed ^ 0x68bc21ebu) - .5f) * .5f;
+
+            if (Rand01(seed ^ 0x1234567du) < .38f)
+            {
+                // Water tank / chiller: a short cylinder.
+                AppendCylinder(verts, uvs, tris, spot,
+                    Mathf.Lerp(.55f, 1.1f, Rand01(seed ^ 0x1f83d9abu)),
+                    Mathf.Lerp(1.1f, 2.4f, Rand01(seed ^ 0x5bd1e995u)), yaw);
+            }
+            else
+            {
+                // Air-handling unit / stair bulkhead: a low box.
+                float sx = Mathf.Lerp(1.0f, 2.2f, Rand01(seed ^ 0x2545f491u));
+                float sz = Mathf.Lerp(.9f, 1.9f, Rand01(seed ^ 0x27d4eb2fu));
+                float sy = Mathf.Lerp(.5f, 1.1f, Rand01(seed ^ 0x165667b1u));
+                AppendBox(verts, uvs, tris, spot, sx, sz, sy, yaw);
+            }
+        }
+        return tris;
+    }
+
+    static float AngleOf(Vector3 planarDirection) => Mathf.Atan2(planarDirection.z, planarDirection.x);
+
+    /// <summary>Appends an open-bottomed box (six faces minus the floor) to the mesh.</summary>
+    static void AppendBox(List<Vector3> verts, List<Vector2> uvs, List<int> tris,
+        Vector3 baseCenter, float sizeX, float sizeZ, float sizeY, float yaw)
+    {
+        float sin = Mathf.Sin(yaw), cos = Mathf.Cos(yaw);
+        Vector3 right = new Vector3(cos, 0f, sin);
+        Vector3 fwd = new Vector3(-sin, 0f, cos);
+        Vector3 up = Vector3.up;
+
+        int start = verts.Count;
+        Vector3[] corner =
+        {
+            baseCenter - right * sizeX * .5f - fwd * sizeZ * .5f,
+            baseCenter + right * sizeX * .5f - fwd * sizeZ * .5f,
+            baseCenter + right * sizeX * .5f + fwd * sizeZ * .5f,
+            baseCenter - right * sizeX * .5f + fwd * sizeZ * .5f
+        };
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 bottom = corner[i];
+            Vector3 top = bottom + up * sizeY;
+            verts.Add(bottom); uvs.Add(new Vector2(bottom.x, bottom.z) * .25f);
+            verts.Add(top);    uvs.Add(new Vector2(top.x, top.z) * .25f);
+        }
+        // Vertex layout: 2i = bottom i, 2i+1 = top i.
+
+        Quad(0, 1, 3, 2); // front  (bottom0, top0, top1, bottom1)
+        Quad(2, 3, 5, 4); // right
+        Quad(4, 5, 7, 6); // back
+        Quad(6, 7, 1, 0); // left
+        Quad(1, 7, 5, 3); // top
+        return;
+
+        void Quad(int a, int b, int c, int d)
+        {
+            tris.Add(start + a); tris.Add(start + b); tris.Add(start + c);
+            tris.Add(start + a); tris.Add(start + c); tris.Add(start + d);
+        }
+    }
+
+    /// <summary>Appends an open-bottomed cylinder (walls plus a top cap).</summary>
+    static void AppendCylinder(List<Vector3> verts, List<Vector2> uvs, List<int> tris,
+        Vector3 baseCenter, float radius, float height, float yaw)
+    {
+        const int sides = 10;
+        float sin = Mathf.Sin(yaw), cos = Mathf.Cos(yaw);
+        Vector3 right = new Vector3(cos, 0f, sin);
+        Vector3 fwd = new Vector3(-sin, 0f, cos);
+        Vector3 up = Vector3.up;
+
+        int ring = verts.Count;
+        for (int i = 0; i < sides; i++)
+        {
+            float a = (i / (float)sides) * Mathf.PI * 2f;
+            Vector3 dir = right * Mathf.Cos(a) + fwd * Mathf.Sin(a);
+            Vector3 bottom = baseCenter + dir * radius;
+            Vector3 top = bottom + up * height;
+            verts.Add(bottom); uvs.Add(new Vector2(i / (float)sides, 0f));
+            verts.Add(top);    uvs.Add(new Vector2(i / (float)sides, 1f));
+        }
+        int cap = verts.Count;
+        verts.Add(baseCenter + up * height);
+        uvs.Add(new Vector2(.5f, .5f));
+
+        for (int i = 0; i < sides; i++)
+        {
+            int b0 = ring + i * 2, t0 = b0 + 1;
+            int next = (i + 1) % sides;
+            int b1 = ring + next * 2, t1 = b1 + 1;
+            tris.Add(b0); tris.Add(t1); tris.Add(b1);
+            tris.Add(b0); tris.Add(t0); tris.Add(t1);
+            tris.Add(cap); tris.Add(t1); tris.Add(t0);
+        }
+    }
+
+    static float Rand01(uint value)
+    {
+        value ^= value >> 16; value *= 0x7feb352du;
+        value ^= value >> 15; value *= 0x846ca68bu;
+        value ^= value >> 16;
+        return (value & 0xFFFFFF) / 16777215f;
     }
 
     /// <summary>

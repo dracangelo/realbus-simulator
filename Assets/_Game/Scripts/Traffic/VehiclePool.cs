@@ -32,7 +32,7 @@ public class VehiclePool : MonoBehaviour
 
     [Header("Pool")]
     public AIRoadGraph roadGraph;
-    public int poolSizePerScene = 50;
+    public int poolSizePerScene = 120;
     public VehiclePrefabEntry[] prefabs;
     public bool logSpawnEvents = true;
     public bool allowAutoResolveRoadGraph = true;
@@ -46,11 +46,35 @@ public class VehiclePool : MonoBehaviour
     public float roadGraphRetryIntervalSeconds = 1.5f;
     public float maxAutoBindDistanceMeters = 1200f;
 
+    [Header("Re-homing")]
+    /// <summary>
+    /// A dormant vehicle beyond this distance from the bus is moved to a node near it.
+    /// The bus is teleported to the chosen route or depot after the pool is warmed, and
+    /// it drives away from wherever it started: without this, the whole fleet is left
+    /// behind beyond the spline radius and every vehicle stays dormant, which is why
+    /// only a couple of cars ever appeared.
+    /// </summary>
+    public float rehomeDistanceMeters = 650f;
+    public int maxRehomesPerTick = 40;
+    public float rehomeIntervalSeconds = 0.5f;
+
+    [Header("Spawn Safety")]
+    [Tooltip("No vehicle is placed or re-homed closer than this to the player's bus.")]
+    public float minSpawnDistanceFromPlayerMeters = 80f;
+    [Tooltip("No vehicle is placed in the player's forward corridor within this distance, so traffic cannot pop into the bonnet.")]
+    public float spawnAheadClearanceMeters = 120f;
+    public float spawnAheadHalfWidthMeters = 9f;
+    [Tooltip("Minimum gap between a new/re-homed vehicle and any other traffic body.")]
+    public float vehicleSpawnClearanceMeters = 14f;
+    public int spawnClearanceAttempts = 512;
+    [Tooltip("Share of spawn attempts drawn from the streets in the forward view, so the traffic the player sees first exists first.")]
+    [Range(0f, 1f)] public float spawnFovShare = 0.65f;
+
     [Header("Tier Split (distance from player bus)")]
-    public float fullAiRadiusMeters = 200f;
-    public float splineRadiusMeters = 400f;
-    public float transitionHysteresisMeters = 25f;
-    [Range(15, 20)] public int maxFullAiVehicles = 18;
+    public float fullAiRadiusMeters = 280f;
+    public float splineRadiusMeters = 520f;
+    public float transitionHysteresisMeters = 30f;
+    [Range(15, 20)] public int maxFullAiVehicles = 20;
     public float tierUpdateIntervalSeconds = 0.2f;
 
     [Header("Density")]
@@ -61,15 +85,15 @@ public class VehiclePool : MonoBehaviour
     /// hour of the day.
     /// </summary>
     public int minActiveVehicles = 0;
-    public float minActiveFraction = 0.25f;
-    public float maxActiveFraction = 0.9f;
-    public float updateDensityEverySeconds = 4f;
+    public float minActiveFraction = 0.35f;
+    public float maxActiveFraction = 0.95f;
+    public float updateDensityEverySeconds = 3f;
 
     [Header("Rush Hour")]
     public float morningPeakMinutes = 7.5f * 60f;
     public float eveningPeakMinutes = 17.5f * 60f;
     public float peakWidthMinutes = 80f;
-    public float rushMultiplier = 3.5f;
+    public float rushMultiplier = 5f;
 
     [Header("Debug Gizmos")]
     public bool drawTierGizmos = true;
@@ -84,6 +108,8 @@ public class VehiclePool : MonoBehaviour
     readonly List<PooledVehicle> pooled = new List<PooledVehicle>();
     readonly HashSet<PooledVehicle> reservedFull = new HashSet<PooledVehicle>();
     readonly List<(PooledVehicle vehicle, float distance)> candidates = new List<(PooledVehicle, float)>(50);
+    readonly List<int> spawnNodeCandidates = new List<int>(512);
+    float spawnCandidateRefreshAt;
     float densityTick;
     float tierTick;
     float distanceLogTick;
@@ -94,6 +120,10 @@ public class VehiclePool : MonoBehaviour
     bool loggedMissingRoadGraph;
     bool loggedTrafficDisabled;
     float roadGraphRetryTick;
+    float rehomeTick;
+
+    /// <summary>True once the initial pool has been placed, or traffic is deliberately off.</summary>
+    public bool WarmupComplete { get; private set; }
 
     void Start()
     {
@@ -104,17 +134,19 @@ public class VehiclePool : MonoBehaviour
                 Debug.Log("[VehiclePool] Traffic disabled for this run (no aligned AIRoadGraph configured).");
                 loggedTrafficDisabled = true;
             }
+            WarmupComplete = true;
             return;
         }
 
-        var bus = FindAnyObjectByType<BusController>();
-        if (bus != null) playerBus = bus.transform;
+        ResolvePlayerBus();
         TryResolveRoadGraph();
+        if (roadGraph != null) roadGraph.SyncDrivingSide();
         WarmPool();
         ApplyDensityNow();
 
         if (debugForceActiveCount > 0)
             SetForcedActiveCount(debugForceActiveCount);
+        WarmupComplete = true;
     }
 
     void Update()
@@ -149,16 +181,21 @@ public class VehiclePool : MonoBehaviour
         densityTick += Time.deltaTime;
         tierTick += Time.deltaTime;
 
-        if (playerBus == null)
-        {
-            var bus = FindAnyObjectByType<BusController>();
-            if (bus != null) playerBus = bus.transform;
-        }
+        ResolvePlayerBus();
 
         if (densityTick >= updateDensityEverySeconds)
         {
             densityTick = 0f;
+            if (roadGraph != null && roadGraph.SyncDrivingSide())
+                RealignVehiclesToLanes();
             ApplyDensityNow();
+        }
+
+        rehomeTick += Time.deltaTime;
+        if (rehomeTick >= Mathf.Max(.25f, rehomeIntervalSeconds))
+        {
+            rehomeTick = 0f;
+            RehomeDistantVehicles();
         }
 
         if (tierTick >= tierUpdateIntervalSeconds)
@@ -186,6 +223,97 @@ public class VehiclePool : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// The bus the traffic is organised around: the one the mission actually drives,
+    /// not whichever BusController a scene search happens to return first. The scene
+    /// bus is replaced when the route starts, and a stale reference leaves the pool
+    /// measuring every distance against a bus the player has left behind.
+    /// </summary>
+    void ResolvePlayerBus()
+    {
+        var mission = MissionManager.Instance;
+        if (mission != null && mission.busController != null && mission.busController.gameObject.activeInHierarchy)
+        {
+            playerBus = mission.busController.transform;
+            return;
+        }
+
+        if (playerBus != null) return;
+        var bus = FindAnyObjectByType<BusController>();
+        if (bus != null) playerBus = bus.transform;
+    }
+
+    /// <summary>
+    /// Moves dormant vehicles that the bus has left behind to nodes around it. Only
+    /// dormant bodies are touched, and they are invisible, so this recycles the pool
+    /// without a visible teleport.
+    /// </summary>
+    void RehomeDistantVehicles()
+    {
+        if (playerBus == null || roadGraph == null || roadGraph.NodeCount == 0) return;
+
+        float radius = Mathf.Max(splineRadiusMeters, rehomeDistanceMeters);
+        float radiusSqr = radius * radius;
+        int moved = 0;
+        for (int i = 0; i < pooled.Count && moved < Mathf.Max(1, maxRehomesPerTick); i++)
+        {
+            var pv = pooled[i];
+            if (pv == null || pv.go == null || pv.full == null || pv.spline == null) continue;
+            if (pv.tier != SimulationTier.Dormant) continue;
+            // Only vehicles the density curve currently wants are worth recycling;
+            // the rest are part of the pool that stays off the road.
+            if (!pv.enabledByDensity) continue;
+            if ((pv.go.transform.position - playerBus.position).sqrMagnitude <= radiusSqr) continue;
+
+            if (!TryPickSpawnLink(pv, out int startNode, out int targetNode, out int lane, out float along01))
+                continue;
+
+            pv.full.PlaceOnLane(startNode, targetNode, lane, -1, along01);
+            pv.spline.Init(roadGraph, startNode, targetNode, lane, 0f);
+            pv.laneIndex = lane;
+            moved++;
+        }
+
+        if (moved > 0 && logSpawnEvents)
+            Debug.Log($"[VehiclePool] Re-homed {moved} dormant vehicles near the bus.");
+    }
+
+
+    /// <summary>
+    /// The selected city (and therefore the driving side) can become known a
+    /// frame after the pool first warms. Re-seat every live body onto its lane
+    /// when that happens; otherwise the early cars keep driving on the wrong
+    /// side of a two-way road while their lane index says otherwise.
+    /// </summary>
+    void RealignVehiclesToLanes()
+    {
+        if (roadGraph == null) return;
+        for (int i = 0; i < pooled.Count; i++)
+        {
+            var pv = pooled[i];
+            if (pv == null || pv.go == null || pv.full == null || pv.spline == null) continue;
+
+            var ai = pv.full;
+            if (!roadGraph.IsValidNode(ai.currentNodeIndex) || !roadGraph.IsValidNode(ai.targetNodeIndex))
+                continue;
+
+            Vector3 from = roadGraph.GetNodePosition(ai.currentNodeIndex);
+            Vector3 to = roadGraph.GetNodePosition(ai.targetNodeIndex);
+            Vector3 segment = to - from;
+            segment.y = 0f;
+            float along = segment.sqrMagnitude > .0001f
+                ? Mathf.Clamp01(Vector3.Dot(pv.go.transform.position - from, segment) / segment.sqrMagnitude)
+                : 0.5f;
+
+            float speedKmh = pv.tier == SimulationTier.Spline ? pv.spline.speedKmh : ai.currentSpeedKmh;
+            // Dormant bodies are inactive, so re-seating them is invisible and
+            // saves them from activating later on the old carriageway.
+            ai.PlaceOnLane(ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex, ai.previousNodeIndex, along);
+            pv.spline.Init(roadGraph, ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex, speedKmh);
+            ai.SetVelocityWorld(ai.transform.forward * (speedKmh / 3.6f));
+        }
+    }
+
     void WarmPool()
     {
         if (IsTrafficGraphDisabledByConfig())
@@ -209,6 +337,16 @@ public class VehiclePool : MonoBehaviour
 
             GameObject go = Instantiate(picked.prefab, transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(go.transform);
+            // One prefab per model would otherwise put the same colour on every
+            // instance of that model. The paint is a property block on the body
+            // slot, so the shared material stays batched.
+            TrafficLivery.Apply(go, picked.prefab.name, i);
+            // A car casts a tiny shadow, but there are 160 of them and every renderer
+            // part is submitted to the shadow pass again. Dropping traffic shadows
+            // halves the work these vehicles cost while the buildings still shade
+            // the street. The bodies still receive shadows and ambient light.
+            foreach (var carRenderer in go.GetComponentsInChildren<Renderer>(true))
+                carRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             var ai = go.GetComponent<AIVehicleController>();
             if (ai == null) ai = go.AddComponent<AIVehicleController>();
             ai.vehicleType = picked.type;
@@ -222,14 +360,31 @@ public class VehiclePool : MonoBehaviour
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.None;
 
-            int startNode = PickNearbySpawnNode();
+            int startNode;
+            int targetNode;
+            int lane;
+            float along01;
+            if (!TryPickSpawnLink(null, out startNode, out targetNode, out lane, out along01))
+            {
+                // No clear link anywhere in the pool's band. Keep the body dormant at
+                // a legal link rather than putting it on top of the player; Rehome
+                // will place it once there is room.
+                startNode = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
+                targetNode = roadGraph.GetRandomNextNode(startNode, -1);
+                lane = 0;
+                along01 = 0.5f;
+                if (!roadGraph.IsValidNode(startNode) || !roadGraph.IsValidNode(targetNode))
+                    continue;
+            }
+
             // Resolve a legal directed road link before choosing its lane.
-            ai.Init(roadGraph, startNode, 0, ai.vehicleType);
-            int targetNode = ai.targetNodeIndex;
-            int laneCount = Mathf.Max(1, roadGraph.GetLaneCount(startNode, targetNode));
-            int lane = Random.Range(0, laneCount);
-            ai.laneIndex = lane;
-            spline.Init(roadGraph, startNode, ai.targetNodeIndex, lane, 0f);
+            ai.Init(roadGraph, startNode, lane, ai.vehicleType);
+            // The lane is chosen after the link exists, so the body is placed on that
+            // lane's line rather than on the road's centre line. Spawning partway
+            // along the link also stops every car in a district appearing at the
+            // same junction at the same time.
+            ai.PlaceOnLane(startNode, targetNode, lane, -1, along01);
+            spline.Init(roadGraph, startNode, targetNode, lane, 0f);
 
             SetTier(go, ai, spline, rb, SimulationTier.Dormant, true);
 
@@ -251,17 +406,152 @@ public class VehiclePool : MonoBehaviour
             Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}).");
     }
 
-    int PickNearbySpawnNode()
+    /// <summary>
+    /// Chooses a directed link and lane whose spawn point is clear of the player and
+    /// of every other traffic body. Looping the pool around the bus is what populates
+    /// the street; placing one of those loops on the bus's own bonnet is what made
+    /// traffic appear to spawn on top of the player, so a candidate is only accepted
+    /// when it is far enough away and not in the player's forward corridor.
+    /// </summary>
+    bool TryPickSpawnLink(PooledVehicle ignore, out int startNode, out int targetNode, out int lane)
     {
-        int fallback = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
-        if (playerBus == null) return fallback;
-        for (int i = 0; i < 512; i++)
+        return TryPickSpawnLink(ignore, out startNode, out targetNode, out lane, out _);
+    }
+
+    bool TryPickSpawnLink(PooledVehicle ignore, out int startNode, out int targetNode, out int lane, out float along01)
+    {
+        startNode = -1;
+        targetNode = -1;
+        lane = 0;
+        along01 = 0.5f;
+        if (roadGraph == null || roadGraph.NodeCount == 0)
+            return false;
+
+        RefreshSpawnNodeCandidates();
+        int localCount = spawnNodeCandidates.Count;
+        int attempts = Mathf.Max(16, spawnClearanceAttempts);
+        for (int i = 0; i < attempts; i++)
         {
-            int node = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
-            float distance = Vector3.Distance(playerBus.position, roadGraph.GetNodePosition(node));
-            if (distance > 35f && distance < 350f) return node;
+            // Sample from the streets around the bus. Choosing from the whole
+            // city graph meant a 40k-node city needed thousands of tries before
+            // one node happened to fall inside the 520 m band, so the pool
+            // warmed with almost no traffic in sight.
+            int node;
+            if (localCount <= 0)
+            {
+                node = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
+            }
+            else
+            {
+                // Alternate between the forward-view slice and the whole local
+                // band. The visible slice fills first, while the alternating
+                // attempts still let traffic appear behind the bus instead of
+                // making the world one-sided.
+                int frontCount = Mathf.Max(1, Mathf.CeilToInt(localCount * Mathf.Clamp01(spawnFovShare)));
+                int pick = i % 2 == 0 ? Random.Range(0, frontCount) : Random.Range(0, localCount);
+                node = spawnNodeCandidates[pick];
+            }
+            if (!roadGraph.IsValidNode(node)) continue;
+
+            int next = roadGraph.GetRandomNextNode(node, -1);
+            if (!roadGraph.IsValidNode(next)) continue;
+
+            int laneCount = Mathf.Max(1, roadGraph.GetLaneCount(node, next));
+            int candidateLane = Random.Range(0, laneCount);
+            // Spread bodies along the link. Junction-only spawning created visible
+            // clumps and made re-homed traffic look like it had teleported.
+            float candidateAlong = Random.Range(0.12f, 0.88f);
+            Vector3 point = GetSpawnPoint(node, next, candidateLane, candidateAlong);
+            if (!IsSpawnPointClear(point, ignore)) continue;
+
+            // Keep the warm pool in the same 45-520 m band as before. The band is
+            // only applied once there is a player to measure from.
+            if (playerBus != null)
+            {
+                float distance = Vector3.Distance(playerBus.position, point);
+                if (distance < minSpawnDistanceFromPlayerMeters || distance > 520f) continue;
+            }
+
+            startNode = node;
+            targetNode = next;
+            lane = candidateLane;
+            along01 = candidateAlong;
+            return true;
         }
-        return fallback;
+
+        return false;
+    }
+
+    void RefreshSpawnNodeCandidates()
+    {
+        if (roadGraph == null || roadGraph.NodeCount == 0)
+            return;
+
+        // A full scan costs one pass over the graph. Refreshing it once a second
+        // is cheaper than the old loop's rejected random attempts on a big city
+        // and keeps the candidate band centred on a moving bus.
+        float now = Time.unscaledTime;
+        if (spawnNodeCandidates.Count > 0 && now < spawnCandidateRefreshAt)
+            return;
+
+        ResolvePlayerBus();
+        Vector3 center = playerBus != null ? playerBus.position : transform.position;
+        float radius = Mathf.Max(splineRadiusMeters, rehomeDistanceMeters) + 80f;
+        spawnNodeCandidates.Clear();
+        roadGraph.CollectNodesWithin(center, radius, spawnNodeCandidates);
+
+        if (spawnNodeCandidates.Count > 1 && playerBus != null)
+        {
+            Vector3 forward = ViewPriority.ResolveForward(playerBus);
+            spawnNodeCandidates.Sort((a, b) =>
+                ViewPriority.Score(center, forward, ViewPriority.DefaultFovDegrees,
+                    roadGraph.GetNodePosition(a)).CompareTo(
+                ViewPriority.Score(center, forward, ViewPriority.DefaultFovDegrees,
+                    roadGraph.GetNodePosition(b))));
+        }
+        spawnCandidateRefreshAt = now + 1.25f;
+    }
+
+    Vector3 GetSpawnPoint(int startNode, int targetNode, int lane, float along01 = 0f)
+    {
+        Vector3 start = roadGraph.GetNodePosition(startNode);
+        Vector3 end = roadGraph.GetNodePosition(targetNode);
+        Vector3 segment = end - start;
+        segment.y = 0f;
+        if (segment.sqrMagnitude < .0001f) return start;
+        segment.Normalize();
+        Vector3 point = Vector3.Lerp(start, end, Mathf.Clamp(along01, 0.02f, 0.98f));
+        return point + Vector3.Cross(Vector3.up, segment) * roadGraph.GetLaneOffset(startNode, targetNode, lane);
+    }
+
+    bool IsSpawnPointClear(Vector3 point, PooledVehicle ignore)
+    {
+        if (playerBus != null)
+        {
+            Vector3 offset = point - playerBus.position;
+            offset.y = 0f;
+            float distance = offset.magnitude;
+            if (distance < minSpawnDistanceFromPlayerMeters) return false;
+
+            // Directly in front of the bus is the one place a spawn is guaranteed to
+            // be driven into at speed, even when the straight-line distance is legal.
+            float ahead = Vector3.Dot(playerBus.forward, offset);
+            float lateral = Mathf.Abs(Vector3.Dot(playerBus.right, offset));
+            if (ahead > 0f && ahead < spawnAheadClearanceMeters && lateral < spawnAheadHalfWidthMeters)
+                return false;
+        }
+
+        float clearSqr = Mathf.Max(2f, vehicleSpawnClearanceMeters) * Mathf.Max(2f, vehicleSpawnClearanceMeters);
+        for (int i = 0; i < pooled.Count; i++)
+        {
+            var other = pooled[i];
+            if (other == null || other == ignore || other.go == null) continue;
+            Vector3 offset = other.go.transform.position - point;
+            offset.y = 0f;
+            if (offset.sqrMagnitude < clearSqr) return false;
+        }
+
+        return true;
     }
 
     bool IsTrafficGraphDisabledByConfig()
@@ -326,6 +616,7 @@ public class VehiclePool : MonoBehaviour
         }
 
         roadGraph = best;
+        roadGraph.SyncDrivingSide();
         loggedMissingRoadGraph = false;
         Debug.Log($"[VehiclePool] Auto-bound AIRoadGraph '{best.name}' ({best.NodeCount} nodes, nearestNode={bestNearestNode}, distance={bindDistance:0.0}m).");
         return true;
@@ -465,30 +756,39 @@ public class VehiclePool : MonoBehaviour
         {
             // Seamless promotion: preserve pose + spline velocity estimate.
             Vector3 vel = pv.spline != null ? pv.spline.GetVelocityWorld() : Vector3.zero;
-            int currentNode = pv.spline.currentNodeIndex;
-            int targetNode = pv.spline.targetNodeIndex;
-            if (pv.rb != null) pv.rb.isKinematic = false;
+            int currentNode = pv.spline != null ? pv.spline.currentNodeIndex : pv.full.currentNodeIndex;
+            int targetNode = pv.spline != null ? pv.spline.targetNodeIndex : pv.full.targetNodeIndex;
+            int previousNode = pv.spline != null ? pv.spline.previousNodeIndex : pv.full.previousNodeIndex;
+            if (pv.rb != null)
+            {
+                pv.rb.isKinematic = false;
+                // Physics interpolation was switched off while this body was a
+                // kinematic spline vehicle. Leaving it off on promotion makes the
+                // rigidbody step at the physics rate, which is what read as jumpy
+                // traffic near the player.
+                pv.rb.interpolation = RigidbodyInterpolation.Interpolate;
+                pv.rb.angularVelocity = Vector3.zero;
+            }
 
             if (pv.full != null)
             {
-                pv.full.SetRuntimeState(roadGraph, currentNode, targetNode, pv.laneIndex, pv.type, vel.magnitude * 3.6f);
+                pv.full.SetRuntimeState(roadGraph, currentNode, targetNode, pv.laneIndex, pv.type, vel.magnitude * 3.6f, previousNode);
                 pv.full.enabled = true;
                 pv.full.SetVelocityWorld(vel);
             }
             if (pv.spline != null)
                 pv.spline.enabled = false;
-            if (pv.rb != null)
-                pv.rb.isKinematic = false;
         }
         else if (desired == SimulationTier.Spline)
         {
             // Seamless demotion: preserve pose + current rigidbody velocity.
             Vector3 vel = pv.full != null ? pv.full.GetVelocityWorld() : Vector3.zero;
-            int currentNode = pv.full.currentNodeIndex;
-            int targetNode = pv.full.targetNodeIndex;
+            int currentNode = pv.full != null ? pv.full.currentNodeIndex : pv.spline.currentNodeIndex;
+            int targetNode = pv.full != null ? pv.full.targetNodeIndex : pv.spline.targetNodeIndex;
+            int previousNode = pv.full != null ? pv.full.previousNodeIndex : pv.spline.previousNodeIndex;
             if (pv.spline != null)
             {
-                pv.spline.Init(roadGraph, currentNode, targetNode, pv.laneIndex, vel.magnitude * 3.6f);
+                pv.spline.Init(roadGraph, currentNode, targetNode, pv.laneIndex, vel.magnitude * 3.6f, previousNode);
                 pv.spline.enabled = true;
                 pv.spline.SetVelocityWorld(vel);
             }
@@ -498,6 +798,9 @@ public class VehiclePool : MonoBehaviour
             {
                 if (!pv.rb.isKinematic) { pv.rb.linearVelocity = Vector3.zero; pv.rb.angularVelocity = Vector3.zero; }
                 pv.rb.isKinematic = true;
+                // A kinematic body moved through transform.position must not be
+                // rendered with physics interpolation, or it visibly stutters.
+                pv.rb.interpolation = RigidbodyInterpolation.None;
             }
         }
         else
@@ -508,6 +811,7 @@ public class VehiclePool : MonoBehaviour
             {
                 if (!pv.rb.isKinematic) { pv.rb.linearVelocity = Vector3.zero; pv.rb.angularVelocity = Vector3.zero; }
                 pv.rb.isKinematic = true;
+                pv.rb.interpolation = RigidbodyInterpolation.None;
             }
             pv.go.SetActive(false);
         }
@@ -552,7 +856,13 @@ public class VehiclePool : MonoBehaviour
 
         if (full != null) full.enabled = tier == SimulationTier.FullAI;
         if (spline != null) spline.enabled = tier == SimulationTier.Spline;
-        if (rb != null) rb.isKinematic = tier != SimulationTier.FullAI;
+        if (rb != null)
+        {
+            rb.isKinematic = tier != SimulationTier.FullAI;
+            rb.interpolation = tier == SimulationTier.FullAI
+                ? RigidbodyInterpolation.Interpolate
+                : RigidbodyInterpolation.None;
+        }
         if (tier == SimulationTier.Dormant)
             go.SetActive(false);
     }

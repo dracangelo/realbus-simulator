@@ -15,6 +15,13 @@ public class CityContentTests
     [TestCase("Jeep2", AIVehicleController.VehicleType.Car)]
     [TestCase("MicroBus4", AIVehicleController.VehicleType.Bus)]
     [TestCase("Van", AIVehicleController.VehicleType.Truck)]
+    [TestCase("toyota hilux 002", AIVehicleController.VehicleType.Car)]
+    [TestCase("jeep grand cherokee 001", AIVehicleController.VehicleType.Car)]
+    [TestCase("Land rover defender 001", AIVehicleController.VehicleType.Car)]
+    [TestCase("Lamborghini+Revuelto", AIVehicleController.VehicleType.Car)]
+    [TestCase("bugatti", AIVehicleController.VehicleType.Car)]
+    [TestCase("Nissan_GTR_nismo_2022", AIVehicleController.VehicleType.Car)]
+    [TestCase("dodge_HP", AIVehicleController.VehicleType.Car)]
     [TestCase("uploads_files_5533688_pickup test2", AIVehicleController.VehicleType.Truck)]
     [TestCase("Matatu 14", AIVehicleController.VehicleType.Bus)]
     [TestCase("uploads_files_4560086_FireEngine", AIVehicleController.VehicleType.Emergency)]
@@ -277,10 +284,13 @@ public class CityContentTests
         // the blocks used to stay empty.
         Vector3 along = Vector3.forward;
         float width = 12f, depth = 15f;
-        Vector3 center = new Vector3(8f, 0f, 0f);
+        // Put the footprint's near edge 3.5 m from the road. The centre is then
+        // 11 m away, which is the mistake the old centre-based test made.
+        Vector3 center = new Vector3(15f, 0f, 0f);
         Vector3 roadA = new Vector3(4f, 0f, -60f), roadB = new Vector3(4f, 0f, 60f);
         float clear = ProceduralBuildingFill.RectangleDistanceToSegment(center, along, width * .5f, depth * .5f, roadA, roadB);
-        Assert.That(clear, Is.EqualTo(depth * .5f - 4f).Within(0.01f), "the facade sits on the road edge");
+        Assert.That(clear, Is.EqualTo(center.x - depth * .5f - roadA.x).Within(0.01f),
+            "clearance is measured from the footprint edge, not the centre");
 
         // The same footprint straddling the road is zero, however far its centre is.
         Vector3 straddling = new Vector3(0f, 0f, 0f);

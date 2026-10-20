@@ -62,4 +62,22 @@ public class TrafficParticipant : MonoBehaviour
         }
         return false;
     }
+
+    /// <summary>
+    /// True when no active traffic body is within <paramref name="radius"/> of a point.
+    /// Used before a spawn so a new vehicle cannot materialise on top of an existing
+    /// one; the check is planar because road bodies sit at slightly different heights.
+    /// </summary>
+    public static bool IsSpawnAreaClear(Vector3 point, float radius)
+    {
+        float sqr = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
+        foreach (var other in active)
+        {
+            if (other == null) continue;
+            Vector3 offset = other.transform.position - point;
+            offset.y = 0f;
+            if (offset.sqrMagnitude < sqr) return false;
+        }
+        return true;
+    }
 }

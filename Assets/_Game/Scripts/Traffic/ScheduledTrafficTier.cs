@@ -9,16 +9,40 @@ public class ScheduledTrafficTier : MonoBehaviour
     Rigidbody body;
     Transform player;
     float nextUpdate;
-    void Awake() { full = GetComponent<AIVehicleController>(); spline = GetComponent<SplineVehicle>(); body = GetComponent<Rigidbody>(); }
+
+    void Awake() { ResolveComponents(); }
+
     void OnEnable()
     {
-        full.enabled = true; spline.enabled = false;
-        body.isKinematic = false; body.detectCollisions = true;
-        body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero;
+        ResolveComponents();
+        if (full != null) full.enabled = true;
+        if (spline != null) spline.enabled = false;
+        if (body != null)
+        {
+            body.isKinematic = false;
+            // Physics interpolation is what keeps a body driven by fixed steps from
+            // visibly stuttering between frames. It must be off while the body is
+            // kinematic and back on the moment it is promoted.
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            body.detectCollisions = true;
+            body.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
         nextUpdate = 0f;
     }
+
+    void ResolveComponents()
+    {
+        if (full == null) full = GetComponent<AIVehicleController>();
+        if (spline == null) spline = GetComponent<SplineVehicle>();
+        if (body == null) body = GetComponent<Rigidbody>();
+    }
+
     void Update()
     {
+        ResolveComponents();
+        if (full == null || spline == null) return;
         if (Time.time < nextUpdate) return;
         nextUpdate = Time.time + 0.2f;
         if (player == null) { var bus = FindAnyObjectByType<BusController>(); if (bus != null) player = bus.transform; }
@@ -29,15 +53,32 @@ public class ScheduledTrafficTier : MonoBehaviour
         if (wantFull == full.enabled) return;
         if (wantFull)
         {
-            body.isKinematic = false; body.detectCollisions = true;
-            full.SetRuntimeState(spline.roadGraph, spline.currentNodeIndex, spline.targetNodeIndex, spline.laneIndex, full.vehicleType, spline.speedKmh);
-            spline.enabled = false; full.enabled = true;
+            if (body != null)
+            {
+                body.isKinematic = false;
+                body.interpolation = RigidbodyInterpolation.Interpolate;
+                body.detectCollisions = true;
+                body.angularVelocity = Vector3.zero;
+            }
+            full.SetRuntimeState(spline.roadGraph, spline.currentNodeIndex, spline.targetNodeIndex,
+                spline.laneIndex, full.vehicleType, Mathf.Max(0f, spline.speedKmh), spline.previousNodeIndex);
+            if (body != null) body.linearVelocity = full.GetVelocityWorld();
+            spline.enabled = false;
+            full.enabled = true;
         }
         else
         {
-            spline.Init(full.roadGraph, full.currentNodeIndex, full.targetNodeIndex, full.laneIndex, full.currentSpeedKmh);
-            full.enabled = false; body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero;
-            body.isKinematic = true; body.detectCollisions = false; spline.enabled = true;
+            spline.Init(full.roadGraph, full.currentNodeIndex, full.targetNodeIndex, full.laneIndex,
+                Mathf.Max(0f, full.currentSpeedKmh), full.previousNodeIndex);
+            full.enabled = false;
+            if (body != null)
+            {
+                if (!body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; }
+                body.isKinematic = true;
+                body.interpolation = RigidbodyInterpolation.None;
+                body.detectCollisions = false;
+            }
+            spline.enabled = true;
         }
     }
 }

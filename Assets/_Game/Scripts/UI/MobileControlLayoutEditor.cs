@@ -7,7 +7,7 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class MobileControlLayoutEditor : MonoBehaviour
 {
-    const string KeyPrefix = "RealBus.ControlLayout.v1.";
+    const string KeyPrefix = "RealBus.ControlLayout.v2.";
 
     struct LayoutSnapshot
     {

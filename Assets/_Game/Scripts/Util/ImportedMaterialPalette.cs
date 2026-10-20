@@ -140,6 +140,12 @@ public static class ImportedMaterialPalette
     {
         if (material == null)
             return true;
+        // The player-bus livery shader intentionally has no albedo texture; its
+        // colours are per-zone material properties. Without this guard the late
+        // world-ready sweep would mistake it for an unpainted white import and
+        // replace the whole livery with the fallback shell colour.
+        if (material.shader != null && material.shader.name == "RealBus/BusPaint")
+            return false;
         if (HasMainTexture(material))
             return false;
 

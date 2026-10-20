@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a85fb766e3686375bf4c12677d1c015, type: 3}
   m_Name: OSM_3225904 2
   m_EditorClassIdentifier: GameScripts::BusRoute
-  routeNumber: 2
-  routeName: 'line 2 [OSM preview - requires validation]'
+  routeNumber: NBO-2
+  routeName: NBO 'line 2 [OSM preview - requires validation]'
   baseFare: 50
   osmRelationId: 3225904
   isRoadPathValidated: 0

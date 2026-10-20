@@ -115,8 +115,17 @@ public class BusController : MonoBehaviour
         // bus, enough to stall acceleration just after the first upshift.
         rb.linearDamping = 0f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
+        // A heavier bus needs a couple more solver passes to keep the wheel contacts
+        // from jittering under load, and a raised angular ceiling so a kerb strike
+        // does not get clipped into a hard spin.
+        rb.solverIterations = Mathf.Max(rb.solverIterations, 10);
+        rb.maxAngularVelocity = Mathf.Max(rb.maxAngularVelocity, 10f);
         rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
         ConfigureSuspensionForVehicleMass();
+
+        if (!TryGetComponent(out BusStabilityAssist stability))
+            stability = gameObject.AddComponent<BusStabilityAssist>();
+        stability.Bind(this, rb);
 
         CaptureModelRootBasePosition();
     }
@@ -396,7 +405,7 @@ public class BusController : MonoBehaviour
             travelR = (-right.transform.InverseTransformPoint(hitR.point).y
                       - right.radius) / Mathf.Max(0.001f, right.suspensionDistance);
 
-        float force = (travelL - travelR) * antiRollForce;
+        float force = (Mathf.Clamp(travelL, 0f, 1f) - Mathf.Clamp(travelR, 0f, 1f)) * antiRollForce;
 
         if (groundedL)
             rb.AddForceAtPosition(left.transform.up * -force, left.transform.position);

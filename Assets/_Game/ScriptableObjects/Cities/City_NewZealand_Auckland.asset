@@ -28,6 +28,13 @@ MonoBehaviour:
   buildingsFileName: buildings.xml
   availableRoutes:
   - {fileID: 11400000, guid: 11f0c58aa95dbe3ad90235968a15a981, type: 2}
+  - {fileID: 11400000, guid: a1727d6be1c3b2f07ae2755c4e81f597, type: 2}
+  - {fileID: 11400000, guid: e71e22b54e1fcd8aca0976f976cc3e59, type: 2}
+  - {fileID: 11400000, guid: a2d37eaabcffa94c6b8f3356b29f06b1, type: 2}
+  - {fileID: 11400000, guid: 3b420331d73c93fc693fe4427b2f1364, type: 2}
+  - {fileID: 11400000, guid: d69c9fd542eed4e05bac84de569bf538, type: 2}
+  - {fileID: 11400000, guid: cd2a5132933268dda99bbb16065de9c5, type: 2}
+  - {fileID: 11400000, guid: c5f759bb929f4084dac634b621a39c4e, type: 2}
   spawnLat: -36.8485
   spawnLon: 174.7633
   isDownloaded: 1

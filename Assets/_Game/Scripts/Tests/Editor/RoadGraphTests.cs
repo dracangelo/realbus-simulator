@@ -73,6 +73,48 @@ public class RoadGraphTests
     }
 
     [Test]
+    public void RoadGraph_AsymmetricLaneTags_GiveEachDirectionItsOwnCount()
+    {
+        const string json = "{\"elements\":[{\"type\":\"way\",\"id\":6,\"tags\":{\"highway\":\"primary\",\"lanes:forward\":\"2\",\"lanes:backward\":\"1\"},\"geometry\":[{\"lat\":-1,\"lon\":36},{\"lat\":-1,\"lon\":36.001}]}]}";
+        var go = new GameObject("Asymmetric lane converter");
+        var converter = go.AddComponent<CoordinateConverter>();
+        converter.mapOrigin = ScriptableObject.CreateInstance<MapOrigin>();
+        converter.mapOrigin.originLat = -1; converter.mapOrigin.originLon = 36;
+        var graph = RoadGraph.BuildFromOverpassWays(OverpassResponse.Deserialize(json), converter);
+
+        // The forward directed link has two lanes, the reverse link only one. Sharing
+        // half the total between both directions made the flows overlap.
+        Assert.That(graph.nodes[0].edges[0].laneCount, Is.EqualTo(2));
+        Assert.That(graph.nodes[1].edges[0].laneCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void AirRoadGraph_DrivingSide_MirrorsLaneOffsetForRightHandTraffic()
+    {
+        var root = new GameObject("Driving side graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var a = new GameObject("A").transform;
+        var b = new GameObject("B").transform; b.position = Vector3.forward * 20f;
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = a, nextNodeIndices = new[] { 1 }, outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 3.1f }, outgoingOneWays = new[] { false } },
+            new AIRoadGraph.RoadNode { point = b, nextNodeIndices = new[] { 0 }, outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 3.1f }, outgoingOneWays = new[] { false } }
+        };
+
+        graph.drivesOnLeft = true;
+        float leftHand = graph.GetLaneOffset(0, 1, 0);
+        graph.drivesOnLeft = false;
+        float rightHand = graph.GetLaneOffset(0, 1, 0);
+
+        Assert.That(leftHand, Is.EqualTo(-1.55f).Within(.01f));
+        Assert.That(rightHand, Is.EqualTo(1.55f).Within(.01f));
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(a.gameObject);
+        Object.DestroyImmediate(b.gameObject);
+    }
+
+    [Test]
     public void PlayerCityLibrary_PersistsFavouriteStateByCityCode()
     {
         var city = ScriptableObject.CreateInstance<CityDefinition>();
@@ -201,5 +243,64 @@ public class RoadGraphTests
         Object.DestroyImmediate(roadObj4);
         Object.DestroyImmediate(roadObj2);
         Object.DestroyImmediate(go);
+    }
+
+    [Test]
+    public void AirRoadGraph_PlacesEachDirectionInItsOwnLaneInsteadOfOnTheCentreLine()
+    {
+        var root = new GameObject("Lane geometry graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var a = new GameObject("A").transform;
+        var b = new GameObject("B").transform; b.position = Vector3.forward * 20f;
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = a, nextNodeIndices = new[] { 1 }, outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 3.1f }, outgoingOneWays = new[] { false } },
+            new AIRoadGraph.RoadNode { point = b, nextNodeIndices = new[] { 0 }, outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 3.1f }, outgoingOneWays = new[] { false } }
+        };
+
+        // A two-lane street has one lane each way, half a lane width out from the
+        // centre line. The old formula returned 0 here, which is why opposite
+        // directions met head-on in the middle of the road. The offset is measured
+        // from each direction's own right vector, so the numbers match while the
+        // world positions sit on opposite sides of the centre line.
+        Assert.That(graph.GetLaneOffset(0, 1, 0), Is.EqualTo(-1.55f).Within(.01f));
+        Assert.That(graph.GetLaneOffset(1, 0, 0), Is.EqualTo(-1.55f).Within(.01f));
+        Assert.That(graph.GetLaneOffset(1, 0, 9), Is.EqualTo(graph.GetLaneOffset(1, 0, 0)).Within(.001f));
+        Vector3 forwardLane = Vector3.Cross(Vector3.up, Vector3.forward) * graph.GetLaneOffset(0, 1, 0);
+        Vector3 reverseLane = Vector3.Cross(Vector3.up, Vector3.back) * graph.GetLaneOffset(1, 0, 0);
+        Assert.That(forwardLane.x, Is.LessThan(-1f));
+        Assert.That(reverseLane.x, Is.GreaterThan(1f));
+
+        // A way tagged as a single lane has no second carriageway to sit in, so both
+        // directions keep to the middle of the one lane they share.
+        graph.nodes[0].outgoingSharedLanes = new[] { true };
+        Assert.That(graph.GetLaneOffset(0, 1, 0), Is.EqualTo(0f).Within(.001f));
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(a.gameObject);
+        Object.DestroyImmediate(b.gameObject);
+    }
+
+    [Test]
+    public void AirRoadGraph_CentresLanesOnOneWayCarriageways()
+    {
+        var root = new GameObject("One-way lane graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var a = new GameObject("A").transform;
+        var b = new GameObject("B").transform; b.position = Vector3.forward * 20f;
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = a, nextNodeIndices = new[] { 1 }, outgoingLaneCounts = new[] { 3 }, outgoingLaneWidths = new[] { 3.3f }, outgoingOneWays = new[] { true } },
+            new AIRoadGraph.RoadNode { point = b }
+        };
+
+        // Three lanes of a one-way road are centred on the carriageway: -3.3, 0, +3.3.
+        Assert.That(graph.GetLaneOffset(0, 1, 0), Is.EqualTo(-3.3f).Within(.01f));
+        Assert.That(graph.GetLaneOffset(0, 1, 1), Is.EqualTo(0f).Within(.01f));
+        Assert.That(graph.GetLaneOffset(0, 1, 2), Is.EqualTo(3.3f).Within(.01f));
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(a.gameObject);
+        Object.DestroyImmediate(b.gameObject);
     }
 }

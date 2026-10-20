@@ -30,6 +30,7 @@ public static class TrafficModelImporter
 {
     const string SourceRoot = "Assets/unity models/traffic";
     const string Output = "Assets/_Game/Resources/TrafficGenerated";
+    const string MaterialFolder = Output + "/Materials";
     const string CatalogPath = "Assets/_Game/Resources/TrafficCatalog.asset";
 
     /// <summary>Above this, a model is kept but down-weighted: traffic must stay cheap.</summary>
@@ -52,7 +53,15 @@ public static class TrafficModelImporter
         Directory.CreateDirectory(Output);
         AssetDatabase.Refresh();
 
+        // Materials are rebuilt from the sources every time. A converted material used
+        // to exist only in memory while the prefab was saved, and a prefab cannot
+        // serialise a reference to an asset that was never created: every slot came
+        // back as a null material, which is the pink/untextured traffic that shipped.
+        if (AssetDatabase.IsValidFolder(MaterialFolder)) AssetDatabase.DeleteAsset(MaterialFolder);
+        AssetDatabase.CreateFolder(Output, "Materials");
+
         var entries = new List<TrafficCatalog.Entry>();
+
         List<string> sources = FindSourceModels();
         if (sources.Count == 0)
         {
@@ -66,6 +75,19 @@ public static class TrafficModelImporter
             if (entry != null) entries.Add(entry);
         }
 
+        // A slot with a null material renders as the error material; failing the build
+        // loudly is better than exporting another untextured pack silently.
+        int nullSlots = 0;
+        foreach (var entry in entries)
+        {
+            if (entry == null || entry.prefab == null) continue;
+            foreach (var renderer in entry.prefab.GetComponentsInChildren<Renderer>(true))
+                foreach (var material in renderer.sharedMaterials)
+                    if (material == null) nullSlots++;
+        }
+        if (nullSlots > 0)
+            Debug.LogError($"[Traffic] {nullSlots} material slots are still null after import; those submeshes will draw the error shader.");
+
         var catalog = AssetDatabase.LoadAssetAtPath<TrafficCatalog>(CatalogPath);
         if (catalog == null)
         {
@@ -76,9 +98,9 @@ public static class TrafficModelImporter
         EditorUtility.SetDirty(catalog);
         AssetDatabase.SaveAssets();
 
-        int triangles = 0;
-        foreach (var entry in entries) triangles += entry.triangles;
-        Debug.Log($"[Traffic] Prepared {entries.Count} traffic models from {sources.Count} sources ({triangles} triangles total). Sources were not modified.");
+        int totalTris = 0;
+        foreach (var entry in entries) if (entry != null) totalTris += entry.triangles;
+        Debug.Log($"[Traffic] Prepared {entries.Count} traffic models from {sources.Count} FBX sources ({totalTris} triangles total). Sources were not modified.");
     }
 
     static List<string> FindSourceModels()
@@ -165,7 +187,7 @@ public static class TrafficModelImporter
             body.center = new Vector3(0f, bounds.size.y * .5f, 0f);
             body.size = new Vector3(bounds.size.x * .94f, bounds.size.y * .96f, bounds.size.z * .96f);
 
-            ApplyMaterials(root, renderers, type, modelName);
+            ApplyMaterials(root, renderers, type, modelName, path);
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{Output}/{stem}.prefab");
             Debug.Log($"[Traffic] {modelName} -> {type}, length {TrafficModelRules.LengthOf(bounds.size):F1} m, {triangles} triangles, " +
@@ -210,10 +232,41 @@ public static class TrafficModelImporter
         if (stripped > 0) Debug.Log($"[Traffic] Stripped {stripped} interior parts from '{visual.name}'.");
     }
 
-    /// <summary>Converts every material slot to a Built-in material, keeping the download's look.</summary>
-    static void ApplyMaterials(GameObject root, Renderer[] renderers, AIVehicleController.VehicleType type, string modelName)
+    /// <summary>Converts every material slot to a Built-in material, keeping the download's look.
+    /// For the Stylized Vehicles pack the source material is in a sibling Materials folder;
+    /// that authored material already carries the texture atlas so it is preferred over
+    /// any embedded material that arrives without a texture.</summary>
+    static void ApplyMaterials(GameObject root, Renderer[] renderers, AIVehicleController.VehicleType type, string modelName, string sourcePath = null)
     {
         Shader target = BuiltInShaders.Lit;
+
+        // Search the sibling Materials folder for pre-authored materials (Stylized Vehicles pack).
+        // sourcePath is e.g. Assets/unity models/traffic/Stylized Vehicles/Models/Car2/Car2.fbx
+        // siblingMaterials -> Assets/unity models/traffic/Stylized Vehicles/Materials
+        string siblingMaterials = string.Empty;
+        if (!string.IsNullOrEmpty(sourcePath))
+        {
+            string sourceDir = System.IO.Path.GetDirectoryName(sourcePath).Replace('\\', '/');
+            string parent = System.IO.Path.GetDirectoryName(sourceDir)?.Replace('\\', '/');
+            if (!string.IsNullOrEmpty(parent))
+            {
+                string candidate = parent + "/Materials";
+                if (AssetDatabase.IsValidFolder(candidate))
+                    siblingMaterials = candidate;
+                // Also check one level up (e.g. Van/textuers -> Van/../Materials does not exist;
+                // but Stylized Vehicles/Models/Car2 -> Stylized Vehicles/Materials does).
+                if (string.IsNullOrEmpty(siblingMaterials))
+                {
+                    string grandParent = System.IO.Path.GetDirectoryName(parent)?.Replace('\\', '/');
+                    if (!string.IsNullOrEmpty(grandParent))
+                    {
+                        candidate = grandParent + "/Materials";
+                        if (AssetDatabase.IsValidFolder(candidate))
+                            siblingMaterials = candidate;
+                    }
+                }
+            }
+        }
 
         var replaced = new Dictionary<Material, Material>();
         int index = 0;
@@ -231,7 +284,20 @@ public static class TrafficModelImporter
                     continue;
                 }
 
-                Material converted = Convert(original, target, type, stem, index++);
+                // Try to load the authored material by name from the sibling Materials folder.
+                Material authored = null;
+                if (!string.IsNullOrEmpty(siblingMaterials) && original != null)
+                {
+                    // Authored materials sit either directly in Materials/ or in its
+                    // MapTextures/ subfolder; both are checked by path so no other pack
+                    // can supply a same-named atlas.
+                    string candidate = $"{siblingMaterials}/{original.name}.mat";
+                    authored = AssetDatabase.LoadAssetAtPath<Material>(candidate);
+                    if (authored == null)
+                        authored = AssetDatabase.LoadAssetAtPath<Material>($"{siblingMaterials}/MapTextures/{original.name}.mat");
+                }
+
+                Material converted = Convert(authored ?? original, target, type, stem, index++);
                 materials[i] = converted;
                 if (original != null) replaced[original] = converted;
             }
@@ -253,12 +319,14 @@ public static class TrafficModelImporter
 
         Texture texture = ReadTexture(original);
         Color color = ReadColor(original);
-        if (texture == null && IsNearNeutral(color))
+        if (texture == null && IsNearNeutral(color) && !KeepsAuthoredLook(original, material))
         {
             // Untextured panels arrive flat white; paint them so a pack without
-            // textures still reads as vehicles rather than white shells.
-            color = PaintFor(type, stem, index);
-        }        material.color = color;
+            // textures still reads as vehicles rather than white shells. One colour
+            // per model, so a car is a car and not a patchwork of palette entries.
+            color = PaintFor(type, stem);
+        }
+        material.color = color;
         if (material.HasProperty("_Color")) material.SetColor("_Color", color);
 
         if (texture != null && material.HasProperty("_MainTex"))
@@ -289,6 +357,11 @@ public static class TrafficModelImporter
         }
 
         material.enableInstancing = true;
+
+        // The material must exist on disk before the prefab that references it is
+        // saved, or the reference cannot be serialised and the slot becomes null.
+        string path = AssetDatabase.GenerateUniqueAssetPath($"{MaterialFolder}/{material.name}.mat");
+        AssetDatabase.CreateAsset(material, path);
         return material;
     }
 
@@ -316,8 +389,20 @@ public static class TrafficModelImporter
     static bool IsNearNeutral(Color color)
         => Mathf.Abs(color.r - color.g) < .06f && Mathf.Abs(color.g - color.b) < .06f && color.r > .5f;
 
+    /// <summary>
+    /// True for a white-ish slot that is not body paint and must keep its authored
+    /// appearance: lamps and glass, whose look comes from emission or transparency
+    /// rather than albedo.
+    /// </summary>
+    static bool KeepsAuthoredLook(Material original, Material converted)
+    {
+        string name = (original != null ? original.name : converted.name).ToLowerInvariant();
+        return name.Contains("light") || name.Contains("lamp") || name.Contains("glass") ||
+            name.Contains("kaca") || name.Contains("window") || name.Contains("chrome");
+    }
+
     /// <summary>Deterministic body colour for a model, so a pack without textures still has a palette.</summary>
-    static Color PaintFor(AIVehicleController.VehicleType type, string stem, int index)
+    static Color PaintFor(AIVehicleController.VehicleType type, string stem)
     {
         Color[] palette =
         {
@@ -328,7 +413,7 @@ public static class TrafficModelImporter
         if (type == AIVehicleController.VehicleType.Emergency) return new Color(.86f, .16f, .14f);
         int hash = 17;
         for (int i = 0; i < stem.Length; i++) hash = unchecked(hash * 31 + stem[i]);
-        return palette[Mathf.Abs(hash + index) % palette.Length];
+        return palette[Mathf.Abs(hash) % palette.Length];
     }
 
     /// <summary>

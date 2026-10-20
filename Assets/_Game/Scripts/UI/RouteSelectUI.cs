@@ -266,8 +266,9 @@ public class RouteSelectUI : MonoBehaviour
 
     string BuildRouteCode(BusRoute route)
     {
-        string code = string.IsNullOrWhiteSpace(route.routeNumber) ? "R1" : route.routeNumber.Trim().ToUpperInvariant();
-        return activeCity ? $"{activeCity.cityCode}-{code}" : code;
+        // The route asset already owns its NBO namespace. Prefixing the active
+        // city here produced NBO-NBO-8 for every imported service.
+        return RouteNaming.DisplayCode(route);
     }
 
     static string GetServiceClass(int difficulty)

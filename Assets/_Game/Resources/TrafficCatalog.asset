@@ -22,6 +22,15 @@ MonoBehaviour:
       m_Extent: {x: 1.0255015, y: 0.7198578, z: 2.25}
     triangles: 5176
     weight: 1
+  - prefab: {fileID: 4369632670981403783, guid: 3d84755dee3642444a4b36695e99843f, type: 3}
+    vehicleType: 0
+    displayName: Nissan_GTR_nismo_2022
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.7903746, z: 0.00000023841858}
+      m_Extent: {x: 0.95655674, y: 0.7903745, z: 2.25}
+    triangles: 1373970
+    weight: 0.05
   - prefab: {fileID: 3287785181858671953, guid: 08cafba770caedec1a5276541e95cf6b, type: 3}
     vehicleType: 0
     displayName: Jeep2
@@ -58,6 +67,51 @@ MonoBehaviour:
       m_Extent: {x: 1.1258627, y: 0.66019857, z: 2.25}
     triangles: 3468
     weight: 1
+  - prefab: {fileID: 6280712729460203033, guid: d8791026285b5a028969a58a3eaefc68, type: 3}
+    vehicleType: 0
+    displayName: Land rover defender 001
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.93598765, z: 0}
+      m_Extent: {x: 1.0232927, y: 0.93598765, z: 2.25}
+    triangles: 50142
+    weight: 0.17949025
+  - prefab: {fileID: 9184490780545547105, guid: 0349f20e0f111fec0b7d43944ac42d5f, type: 3}
+    vehicleType: 0
+    displayName: dodge_HP
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.7832076, z: 0}
+      m_Extent: {x: 1.0536321, y: 0.7832076, z: 2.25}
+    triangles: 646834
+    weight: 0.05
+  - prefab: {fileID: 3903553086017376589, guid: f78ea3b1e0b561199b1595950c43b081, type: 3}
+    vehicleType: 0
+    displayName: toyota hilux 002
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.8107136, z: 0}
+      m_Extent: {x: 0.96493405, y: 0.8107136, z: 2.25}
+    triangles: 49912
+    weight: 0.18031736
+  - prefab: {fileID: 4559084994930897217, guid: 885939dc615a08668b55412470867a6a, type: 3}
+    vehicleType: 0
+    displayName: jeep grand cherokee 001
+    lengthMeters: 4.5
+    bounds:
+      m_Center: {x: 0, y: 0.8279016, z: 0}
+      m_Extent: {x: 1.0108621, y: 0.8279016, z: 2.25}
+    triangles: 49886
+    weight: 0.18041134
+  - prefab: {fileID: 2416587294603377785, guid: 67544ce701eac6882b9b7b51db7f00c7, type: 3}
+    vehicleType: 0
+    displayName: Lamborghini+Revuelto
+    lengthMeters: 4.5000005
+    bounds:
+      m_Center: {x: 0, y: 0.514115, z: 0}
+      m_Extent: {x: 1.0328975, y: 0.514115, z: 2.2500002}
+    triangles: 497089
+    weight: 0.05
   - prefab: {fileID: 243617298386096965, guid: 4eb22c271d68178d79817284c58956ca, type: 3}
     vehicleType: 1
     displayName: Van

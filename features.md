@@ -49,8 +49,10 @@
 
 - Rush-hour passenger demand and destination-based journeys.
 - Capacity limits, wheelchair passengers, and reusable passenger visuals.
-- Pooled cars, trucks, buses, and vans built from the downloaded vehicle models, normalised, faced, and weighted by cost at import.
-- Traffic volume that follows the daily demand curve, with a floor so the road is never empty and a tier split by distance.
+- Pooled cars, trucks, buses, and vans built from the downloaded vehicle models, normalised, faced, weighted by cost at import, and textured from the pack's own assets (materials are saved as real assets, so no prefab ships with an empty slot).
+- Traffic that keeps its own lane on the correct side of the road, including shared single-lane streets, with lane-following steering instead of corner cutting.
+- Traffic that does not U-turn at ordinary two-way junctions (only at dead ends), and spawns that stay clear of the player and other vehicles.
+- Traffic volume that follows the daily demand curve, with a floor so the road is never empty, a tier split by distance, and a pool that re-homes dormant vehicles around the bus as it drives.
 - Full-physics, spline, billboard, and distance-culling traffic tiers.
 - Traffic lights, pedestrian crossings, passing, and emergency sirens.
 
@@ -68,6 +70,7 @@
 - Varied-height OSM buildings with façade and roof materials.
 - Optional city-scoped Overture building import (Tools > RealBus > OSM).
 - Streamed fictional infill that hugs the kerb and fills each block row by row until the next street, depot, or mapped footprint, with per-frame budgets and half-built cells finished on the next pass.
+- Downloaded building packs imported as bottom-centred, textured prefabs and mixed into the infill, fitted to each lot and capped by instance and triangle budgets; mapped OSM buildings are never replaced.
 - Road-clearance filtering for mapped and procedural building footprints.
 - Vehicle-proximity building streaming and physical road-edge boundaries with junction openings.
 - Imported road-surface models with automatic procedural-road fallback.

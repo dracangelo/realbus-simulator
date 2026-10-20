@@ -22,6 +22,11 @@ public class RuntimeCityContentDownloader : MonoBehaviour
     public bool IsDownloading { get; private set; }
     public string Status { get; private set; } = "Ready";
     public float Progress { get; private set; }
+
+    /// <summary>True when the last run completed from the city pack instead of the network.</summary>
+    public bool LastRunUsedFallback { get; private set; }
+    public int LastRunFallbackCount { get; private set; }
+
     public event Action<string, float> Changed;
     public event Action<CityDefinition, bool> Completed;
 
@@ -53,7 +58,16 @@ public class RuntimeCityContentDownloader : MonoBehaviour
 
     public void Download(CityDefinition city, CityContentDownloadKind kind, long relationId = 0)
     {
-        if (IsDownloading || city == null) return;
+        if (city == null)
+        {
+            SetStatus("Choose a city first.", 0f);
+            return;
+        }
+        if (IsDownloading)
+        {
+            SetStatus("A city download is already running. Wait for it to finish or cancel it.", Progress);
+            return;
+        }
         if (kind == CityContentDownloadKind.SingleRoute && relationId <= 0)
         {
             SetStatus("Enter a valid OpenStreetMap route relation ID.", 0f);
@@ -79,6 +93,8 @@ public class RuntimeCityContentDownloader : MonoBehaviour
     {
         IsDownloading = true;
         cancelRequested = false;
+        LastRunUsedFallback = false;
+        LastRunFallbackCount = 0;
         bool succeeded = false;
         var jobs = BuildJobs(city, kind, relationId);
         try
@@ -93,6 +109,18 @@ public class RuntimeCityContentDownloader : MonoBehaviour
                 if (cancelRequested) break;
                 if (!IsValidOverpassJson(response))
                 {
+                    // The shipped city pack is a real fallback, not a hidden
+                    // assumption: roads, stops and buildings are read from
+                    // StreamingAssets whenever a downloaded copy is absent.
+                    if (TryUseBuiltInFallback(city, job, kind, relationId, out string fallbackStatus))
+                    {
+                        LastRunUsedFallback = true;
+                        LastRunFallbackCount++;
+                        SetStatus(fallbackStatus, (i + 1f) / jobs.Count);
+                        yield return null;
+                        continue;
+                    }
+
                     SetStatus($"Download failed while fetching {job.label}.", i / (float)jobs.Count);
                     yield break;
                 }
@@ -104,9 +132,17 @@ public class RuntimeCityContentDownloader : MonoBehaviour
             }
 
             succeeded = !cancelRequested;
-            SetStatus(succeeded
-                ? $"{city.cityName} content ready • {FormatBytes(RuntimeCityContentStore.GetDownloadedBytes(city))}"
-                : "Download cancelled. Completed files were kept for resume.", succeeded ? 1f : Progress);
+            if (succeeded)
+            {
+                string source = LastRunFallbackCount > 0
+                    ? "using the built-in city pack where the network was unavailable"
+                    : FormatBytes(RuntimeCityContentStore.GetDownloadedBytes(city));
+                SetStatus($"{city.cityName} content ready • {source}", 1f);
+            }
+            else
+            {
+                SetStatus("Download cancelled. Completed files were kept for resume.", Progress);
+            }
         }
         finally
         {
@@ -142,6 +178,63 @@ public class RuntimeCityContentDownloader : MonoBehaviour
             jobs.Add(new DownloadJob("fuel.json", "fuel and charging stations", OverpassQueryBuilder.FuelAmenitiesQuery(city.minLat, city.minLon, city.maxLat, city.maxLon, 90)));
         }
         return jobs;
+    }
+
+    bool TryUseBuiltInFallback(CityDefinition city, DownloadJob job,
+        CityContentDownloadKind kind, long relationId, out string status)
+    {
+        status = null;
+        switch (job.fileName)
+        {
+            case "routes.json":
+                if (kind == CityContentDownloadKind.SingleRoute)
+                {
+                    BusRoute match = FindBuiltInRoute(city, relationId);
+                    if (match == null)
+                        return false;
+                    status = $"{city.cityName}: route {match.DisplayCode} is already in the built-in pack.";
+                    return true;
+                }
+                if (!RuntimeCityContentStore.HasRouteData(city))
+                    return false;
+                status = $"{city.cityName}: using the built-in route network.";
+                return true;
+
+            case "roads.json":
+            case "stops.json":
+                if (!RuntimeCityContentStore.HasBundledFile(city, job.fileName))
+                    return false;
+                status = $"{city.cityName}: using the built-in {job.label}.";
+                return true;
+
+            case "buildings.json":
+                if (!RuntimeCityContentStore.HasBundledFile(city, "buildings.json") &&
+                    !RuntimeCityContentStore.HasBundledFile(city, "buildings.xml"))
+                    return false;
+                status = $"{city.cityName}: using the built-in buildings.";
+                return true;
+
+            case "poi.json":
+            case "fuel.json":
+                // Places and fuel stations are extra detail. Failing the whole
+                // city download because one optional Overpass query timed out
+                // made the menu look broken while the playable world was fine.
+                status = $"{city.cityName}: skipped optional {job.label} (network unavailable).";
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    static BusRoute FindBuiltInRoute(CityDefinition city, long relationId)
+    {
+        if (city == null || city.availableRoutes == null || relationId <= 0)
+            return null;
+        foreach (BusRoute route in city.availableRoutes)
+            if (route != null && route.osmRelationId == relationId)
+                return route;
+        return null;
     }
 
     IEnumerator PostWithFallback(string query, Action<string> result)

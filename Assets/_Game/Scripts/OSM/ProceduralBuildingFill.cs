@@ -5,14 +5,14 @@ using UnityEngine;
 /// <summary>Fictional roadside infill; kept separate from real map footprints.</summary>
 public class ProceduralBuildingFill : MonoBehaviour
 {
-    public float loadRadius = 380f;
-    public float unloadRadius = 520f;
+    public float loadRadius = 560f;
+    public float unloadRadius = 760f;
     /// <summary>
     /// How many fictional buildings may stand at once. A block is filled until this runs
     /// out, and every cell that was cut short is walked again, so the number decides how
     /// far the built-up area reaches rather than where it stops.
     /// </summary>
-    public int maxBuildings = 1000;
+    public int maxBuildings = 3200;
     /// <summary>
     /// Milliseconds of infill work one frame may spend placing buildings. The walk used to
     /// raise a single building per frame, which leaves a district looking half-built for the
@@ -20,7 +20,7 @@ public class ProceduralBuildingFill : MonoBehaviour
     /// </summary>
     public float millisecondsPerFrame = 6f;
     /// <summary>Ceiling on buildings raised in one frame, so a fast machine cannot spike.</summary>
-    [Min(1)] public int maxBuildingsPerFrame = 24;
+    [Min(1)] public int maxBuildingsPerFrame = 40;
     const float CellSize = 100f;
     /// <summary>Grid used only to keep the neighbour-spacing test near constant time as a block fills.</summary>
     const float SpacingCellSize = 25f;
@@ -95,13 +95,21 @@ public class ProceduralBuildingFill : MonoBehaviour
     [Tooltip("Distance from the road edge to the first row's front face. The front row belongs on the pavement, not behind a yard.")]
     public float kerbGap = 1.2f;
     [Tooltip("How many rows deep a block is filled. Filling stops early at the next street, a depot or a mapped footprint.")]
-    [Range(1, 8)] public int rowsPerSide = 6;
+    [Range(1, 8)] public int rowsPerSide = 7;
     [Tooltip("Gap left behind each row for courtyards and service lanes.")]
     public float rowGap = 0.5f;
     [Tooltip("Smallest distance between two infill buildings.")]
     public float minBuildingSpacing = 5f;
     [Tooltip("Clearance kept around a mapped OSM footprint, so infill does not cut into real buildings.")]
     public float mappedClearance = 6f;
+
+    [Header("Imported building models")]
+    [Tooltip("Chance that a new infill slot uses a downloaded building model instead of a generated mesh.")]
+    [Range(0f, 1f)] public float importedBuildingChance = .65f;
+    [Tooltip("Most downloaded building instances allowed at once. Zero keeps the city generated-only.")]
+    [Min(0)] public int maxImportedBuildings = 240;
+    [Tooltip("Approximate triangle budget for downloaded buildings at once. Keeps hero models from becoming the whole city.")]
+    [Min(0)] public int importedTriangleBudget = 5000000;
 
     struct Segment { public Vector3 a, b; public float width; public long id; public bool fill; }
     readonly Dictionary<Vector2Int, List<Segment>> roads = new Dictionary<Vector2Int, List<Segment>>();
@@ -112,16 +120,22 @@ public class ProceduralBuildingFill : MonoBehaviour
     readonly HashSet<Vector2Int> incomplete = new HashSet<Vector2Int>();
     readonly List<Vector3> neighbours = new List<Vector3>();
     OSMBuildingMeshBuilder builder;
+    BuildingCatalog importedCatalog;
+    int importedCount;
+    int importedTriangles;
+    readonly Dictionary<GameObject, int> importedCosts = new Dictionary<GameObject, int>();
     public int ActiveCount => centers.Count;
+    public int ImportedCount => importedCount;
+
+    /// <summary>True once the first full pass around the spawn point has finished.</summary>
+    public bool InitialFillComplete { get; private set; }
 
     void OnEnable() { StartCoroutine(Stream()); }
 
     void OnDisable()
     {
         StopAllCoroutines();
-        if (builder != null)
-            foreach (var item in centers.Keys) builder.ReleaseSyntheticBuilding(item);
-        centers.Clear(); cells.Clear(); roads.Clear(); placedPerCell.Clear(); incomplete.Clear();
+        ReleaseAll();
     }
 
     IEnumerator Stream()
@@ -129,17 +143,29 @@ public class ProceduralBuildingFill : MonoBehaviour
         builder = GetComponent<OSMBuildingMeshBuilder>();
         while (builder != null && (!builder.buildingsBuilt || GPSManager.Instance == null || OSMLoader.Instance == null || !OSMLoader.Instance.dataLoaded))
             yield return null;
-        if (builder == null || !builder.enableProceduralFill) yield break;
+        if (builder == null || !builder.enableProceduralFill)
+        {
+            // Nothing will ever be placed. Mark the stage ready so a city that
+            // deliberately disables infill does not sit on the loading screen
+            // until the preload timeout.
+            InitialFillComplete = true;
+            yield break;
+        }
         IndexRoads(OSMLoader.Instance.osmData);
+        importedCatalog = Resources.Load<BuildingCatalog>("BuildingCatalog");
+        if (importedCatalog != null && importedCatalog.entries != null && importedCatalog.entries.Length > 0)
+            Debug.Log($"[Infill] {importedCatalog.entries.Length} imported building models available; up to {maxImportedBuildings} at a time.");
         while (enabled && builder != null && builder.enableProceduralFill)
         {
             var bus = MissionManager.Instance != null ? MissionManager.Instance.busController : FindAnyObjectByType<BusController>();
-            if (bus != null) yield return Refresh(bus.transform.position);
+            if (bus != null)
+            {
+                yield return Refresh(bus.transform.position);
+                InitialFillComplete = true;
+            }
             yield return new WaitForSeconds(1f);
         }
-        if (builder != null)
-            foreach (var item in centers.Keys) builder.ReleaseSyntheticBuilding(item);
-        centers.Clear(); cells.Clear(); placedPerCell.Clear(); incomplete.Clear();
+        ReleaseAll();
     }
 
     static Vector2Int Cell(Vector3 p) => new Vector2Int(Mathf.FloorToInt(p.x / CellSize), Mathf.FloorToInt(p.z / CellSize));
@@ -176,7 +202,7 @@ public class ProceduralBuildingFill : MonoBehaviour
         {
             Vector3 center = new Vector3((pair.Key.x + .5f) * CellSize, player.y, (pair.Key.y + .5f) * CellSize);
             if (Vector3.Distance(player, center) <= unloadRadius + CellSize) continue;
-            foreach (var item in pair.Value) { Forget(item); builder.ReleaseSyntheticBuilding(item); }
+            foreach (var item in pair.Value) Release(item);
             remove.Add(pair.Key);
         }
         foreach (var key in remove) { cells.Remove(key); incomplete.Remove(key); }
@@ -184,7 +210,13 @@ public class ProceduralBuildingFill : MonoBehaviour
         int radius = Mathf.CeilToInt(loadRadius / CellSize);
         float deadline = Time.realtimeSinceStartup + Mathf.Max(1f, millisecondsPerFrame) / 1000f;
         int placedThisFrame = 0;
+        int placedTotal = 0;
         for (int ring = 0; ring <= radius; ring++)
+        {
+            // The loading gate only needs the nearest blocks, not the full 560 m
+            // walk. Opening here keeps the first view populated while the outer
+            // rings continue to fill behind the loading screen.
+            if (ring == 2) InitialFillComplete = true;
         for (int dx = -ring; dx <= ring; dx++)
         for (int dz = -ring; dz <= ring; dz++)
         {
@@ -249,13 +281,19 @@ public class ProceduralBuildingFill : MonoBehaviour
                                 center + direction * width * .5f - right * depth * .5f, center + direction * width * .5f + right * depth * .5f,
                                 center - direction * width * .5f + right * depth * .5f };
                             var kind = InfillKind(hash);
-                            var instance = builder.CreateSyntheticBuilding(footprint, InfillHeight(hash, kind), -(long)hash - 1, kind);
+                            float height = InfillHeight(hash, kind);
+                            GameObject instance = null;
+                            if (ShouldTryImported(hash))
+                                instance = TryCreateImportedBuilding(center, right, side, width, depth, height, hash);
+                            if (instance == null)
+                                instance = builder.CreateSyntheticBuilding(footprint, height, -(long)hash - 1, kind);
                             if (instance != null)
                             {
                                 created.Add(instance);
                                 centers[instance] = center;
                                 Index(instance, center);
                                 rowDepth = Mathf.Max(rowDepth, depth);
+                                if (!InitialFillComplete && ++placedTotal >= 8) InitialFillComplete = true;
                                 if (++placedThisFrame >= Mathf.Max(1, maxBuildingsPerFrame) ||
                                     Time.realtimeSinceStartup >= deadline)
                                 {
@@ -276,6 +314,8 @@ public class ProceduralBuildingFill : MonoBehaviour
             }
             if (filled) incomplete.Remove(key); else incomplete.Add(key);
         }
+        }
+        InitialFillComplete = true;
     }
 
     /// <summary>
@@ -340,6 +380,95 @@ public class ProceduralBuildingFill : MonoBehaviour
         if (!centers.TryGetValue(instance, out var center)) { centers.Remove(instance); return; }
         centers.Remove(instance);
         if (placedPerCell.TryGetValue(SpacingCell(center), out var list)) list.Remove(instance);
+    }
+
+    /// <summary>
+    /// Releases every building this streamer owns. Used on disable and when the
+    /// stream coroutine ends so imported triangle budgets do not leak.
+    /// </summary>
+    void ReleaseAll()
+    {
+        var remaining = new List<GameObject>(centers.Keys);
+        foreach (var item in remaining) Release(item);
+        centers.Clear(); cells.Clear(); roads.Clear(); placedPerCell.Clear(); incomplete.Clear();
+        importedCosts.Clear(); importedCount = 0; importedTriangles = 0;
+    }
+
+    void Release(GameObject building)
+    {
+        if (ReferenceEquals(building, null)) return;
+        Forget(building);
+        if (importedCosts.TryGetValue(building, out int cost))
+        {
+            importedCosts.Remove(building);
+            importedCount = Mathf.Max(0, importedCount - 1);
+            importedTriangles = Mathf.Max(0, importedTriangles - cost);
+        }
+        if (builder != null) builder.ReleaseSyntheticBuilding(building); else DestroySafe(building);
+    }
+
+    bool ShouldTryImported(uint hash)
+    {
+        if (importedCatalog == null || importedCatalog.entries == null || importedCatalog.entries.Length == 0) return false;
+        if (importedBuildingChance <= 0f || maxImportedBuildings <= 0 || importedTriangleBudget <= 0) return false;
+        if (importedCount >= maxImportedBuildings) return false;
+        uint roll = Mix(hash * 53u + 11u) % 1000u;
+        return roll < (uint)Mathf.RoundToInt(Mathf.Clamp01(importedBuildingChance) * 1000f);
+    }
+
+    GameObject TryCreateImportedBuilding(Vector3 center, Vector3 right, int side, float lotWidth, float lotDepth,
+        float targetHeight, uint hash)
+    {
+        var entries = importedCatalog.entries;
+        int start = (int)(Mix(hash * 37u + 5u) % (uint)entries.Length);
+        for (int i = 0; i < entries.Length; i++)
+        {
+            var entry = entries[(start + i) % entries.Length];
+            if (entry == null || entry.prefab == null) continue;
+            int cost = Mathf.Max(0, entry.triangles);
+            if (importedTriangles + cost > importedTriangleBudget) continue;
+            if (!TryFitImportedBuilding(entry.bounds, lotWidth, lotDepth, targetHeight, out float scale)) continue;
+
+            // Keep the frontage on the same line as the generated row. A model
+            // shallower than the lot moves toward the road, so its facade lands
+            // on the lot's front edge instead of sitting in the front garden.
+            float modelDepth = entry.bounds.size.z * scale;
+            Vector3 placedCenter = center - right * side * ((lotDepth - modelDepth) * .5f);
+            Quaternion rotation = Quaternion.LookRotation(-right * side, Vector3.up);
+            var instance = builder.CreateImportedBuilding(entry, placedCenter, rotation, scale, -(long)hash - 1000000);
+            if (instance == null) continue;
+
+            if (importedCount == 0)
+                Debug.Log($"[Infill] First imported building '{entry.sourceName}' at {placedCenter} scale {scale:F2}.");
+            importedCosts[instance] = cost;
+            importedCount++;
+            importedTriangles += cost;
+            return instance;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Fits a model into a generated lot without changing its proportions. Width
+    /// and depth are the hard limits; height must stay within a plausible band for
+    /// the row, which keeps a 100 m tower out of a two-storey terrace while still
+    /// allowing one in an apartment or commercial block.
+    /// </summary>
+    public static bool TryFitImportedBuilding(Bounds bounds, float lotWidth, float lotDepth, float targetHeight, out float scale)
+    {
+        scale = 0f;
+        Vector3 size = bounds.size;
+        if (size.x <= .01f || size.y <= .01f || size.z <= .01f) return false;
+        if (lotWidth <= .01f || lotDepth <= .01f) return false;
+
+        scale = Mathf.Min(lotWidth / size.x, lotDepth / size.z);
+        if (scale < .02f || float.IsNaN(scale) || float.IsInfinity(scale)) return false;
+
+        float target = Mathf.Max(1f, targetHeight);
+        float height = size.y * scale;
+        float minimum = Mathf.Max(4f, target * .55f);
+        float maximum = Mathf.Max(minimum, target * 3.5f);
+        return height >= minimum && height <= maximum;
     }
 
     static Vector2Int SpacingCell(Vector3 p) => new Vector2Int(Mathf.FloorToInt(p.x / SpacingCellSize), Mathf.FloorToInt(p.z / SpacingCellSize));
@@ -454,9 +583,8 @@ public class ProceduralBuildingFill : MonoBehaviour
         int removed = 0;
         foreach (var building in doomed)
         {
-            Forget(building);
-            if (building == null) continue;
-            if (builder != null) builder.ReleaseSyntheticBuilding(building); else DestroySafe(building);
+            if (ReferenceEquals(building, null)) continue;
+            Release(building);
             removed++;
         }
 

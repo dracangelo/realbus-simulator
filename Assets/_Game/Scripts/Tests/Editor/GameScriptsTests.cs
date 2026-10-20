@@ -254,7 +254,7 @@ public class GameScriptsTests
 
         var result = MissionResult.Generate(route);
 
-        Assert.That(result.routeName, Is.EqualTo("CBD - Westlands"));
+        Assert.That(result.routeName, Is.EqualTo("NBO CBD - Westlands"));
         Assert.That(result.totalScore, Is.EqualTo(85f));
         Assert.That(result.starRating, Is.EqualTo(4));
         Assert.That(result.punctualityScore, Is.EqualTo(90f));
@@ -781,6 +781,31 @@ public class GameScriptsTests
     }
 
     [Test]
+    public void AIRoadGraph_GetRandomNextNode_DoesNotDoubleBackOnTwoWayChain()
+    {
+        var graph = CreateTwoWayAirRoadGraph();
+
+        // At a mid-chain node the only alternatives are back where the car came from
+        // and straight on. The incoming edge must never win that draw.
+        for (int i = 0; i < 64; i++)
+            Assert.That(graph.GetRandomNextNode(1, 0), Is.EqualTo(2));
+
+        // A dead end has no alternative, so reversing is still allowed there.
+        graph.nodes[3].nextNodeIndices = new[] { 2 };
+        Assert.That(graph.GetRandomNextNode(3, 2), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void AIRoadGraph_GetRandomNextNode_WithoutPreviousNodeStillMovesForward()
+    {
+        var graph = CreateTwoWayAirRoadGraph();
+
+        // Spawn code has no incoming edge yet; it must still pick a valid neighbour.
+        int picked = graph.GetRandomNextNode(0, -1);
+        Assert.That(picked, Is.EqualTo(1));
+    }
+
+    [Test]
     public void AIRoadGraph_TryFindNodePath_AvoidsBlockedNodes_WhenAlternateExists()
     {
         var graph = CreateComponent<AIRoadGraph>("AIRoadGraph");
@@ -1090,8 +1115,8 @@ public class GameScriptsTests
         var route = ScriptableObject.CreateInstance<BusRoute>();
         var stop = new BusStopData();
 
-        Assert.That(route.routeNumber, Is.EqualTo("1"));
-        Assert.That(route.routeName, Is.EqualTo("CBD - Westlands"));
+        Assert.That(route.routeNumber, Is.EqualTo("NBO-1"));
+        Assert.That(route.routeName, Is.EqualTo("NBO CBD - Westlands"));
         Assert.That(route.baseFare, Is.EqualTo(50f));
         Assert.That(stop.waitTimeSeconds, Is.EqualTo(10f));
     }
@@ -1911,6 +1936,39 @@ public class GameScriptsTests
                 laneWidth = 3.3f,
                 speedLimitKmh = 40f,
                 nextNodeIndices = i < graph.nodes.Length - 1 ? new[] { i + 1 } : new[] { i - 1 }
+            };
+        }
+
+        return graph;
+    }
+
+    /// <summary>A four-node street with a directed edge in both directions between
+    /// every pair, the shape that used to make traffic U-turn at every node.</summary>
+    private static AIRoadGraph CreateTwoWayAirRoadGraph()
+    {
+        var graph = CreateComponent<AIRoadGraph>("TwoWayAIRoadGraph");
+        graph.nodes = new AIRoadGraph.RoadNode[4];
+
+        for (int i = 0; i < graph.nodes.Length; i++)
+        {
+            var point = new GameObject($"TwoWayNode_{i}").transform;
+            point.position = new Vector3(i * 12f, 0f, 0f);
+
+            var next = new System.Collections.Generic.List<int>(2);
+            if (i > 0) next.Add(i - 1);
+            if (i < graph.nodes.Length - 1) next.Add(i + 1);
+
+            graph.nodes[i] = new AIRoadGraph.RoadNode
+            {
+                id = $"T{i}",
+                point = point,
+                laneCount = 1,
+                laneWidth = 3.1f,
+                speedLimitKmh = 40f,
+                nextNodeIndices = next.ToArray(),
+                outgoingLaneCounts = next.Count == 2 ? new[] { 1, 1 } : new[] { 1 },
+                outgoingLaneWidths = next.Count == 2 ? new[] { 3.1f, 3.1f } : new[] { 3.1f },
+                outgoingOneWays = next.Count == 2 ? new[] { false, false } : new[] { false }
             };
         }
 

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a85fb766e3686375bf4c12677d1c015, type: 3}
   m_Name: Route_New
   m_EditorClassIdentifier: Assembly-CSharp::BusRoute
-  routeNumber: 1
-  routeName: CBD - Westlands
+  routeNumber: NBO-1
+  routeName: NBO CBD - Westlands
   baseFare: 50
   stops: []

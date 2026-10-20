@@ -83,6 +83,10 @@ public class BusDepotManager : MonoBehaviour
     // clearing the map tiles underneath.
     private const float ApronTopOffset = -0.03f;
     private const float ApronThickness = 0.1f;
+    // The yard aisles overlap the kerb and a little of the street. Both surfaces sit
+    // at roadYOffset, so without a hair of lift the two coplanar meshes z-fight in the
+    // overlap; 12 mm is invisible on a bus wheel but settles the depth test.
+    private const float DrivewayLift = 0.012f;
 
     [Header("Imported model fallback")]
     [Tooltip("Applied only to untextured near-white materials on imported depot props (concrete/steel tone).")]
@@ -464,6 +468,10 @@ public class BusDepotManager : MonoBehaviour
         // 2. Yard roads: one-way entry and exit aisles meeting the street kerb
         BuildDepotRoadNetwork(currentDepot.transform, kerbPos, roadFacing);
 
+        // Open the street kerb where the driveways now meet it. The city raised its
+        // physical kerbs before this depot existed, so the junction is cut here.
+        ClearStreetKerbAcrossDriveways();
+
         // 3. Parking bays (Bay 1 to 4)
         BuildBaysAndStops(currentDepot.transform, out bayPosition, out bayRotation);
 
@@ -568,9 +576,15 @@ public class BusDepotManager : MonoBehaviour
         float exitZ = entryZ - Mathf.Max(depotRoadWidth + 1f, 5.5f);
         float loopEndX = -side * (halfWidth - 6f);
         float turnX = -side * (halfWidth - 3f);
-        float outerX = localKerb.x - side * 1f;
+        // The aisle runs at right angles to the kerb, so its last point is its end
+        // cap - it has to sit ON the street, past the kerb line, or the driveway stops
+        // a metre short and reads as a strip of tarmac lying beside the road. `side`
+        // points from the yard towards the street, so adding it crosses the kerb. The
+        // kerb sits 0.6 m outside the asphalt, so 1.6 m past it leaves about a metre
+        // of tarmac overlapping the carriageway.
+        float outerX = localKerb.x + side * 1.6f;
 
-        Vector3 Local(float x, float z) => parent.TransformPoint(new Vector3(x, 0f, z));
+        Vector3 Local(float x, float z) => parent.TransformPoint(new Vector3(x, DrivewayLift, z));
 
         var entryPoints = new List<Vector3> { Local(outerX, entryZ), Local(loopEndX, entryZ) };
         var turnPoints = new List<Vector3> { Local(loopEndX, entryZ), Local(turnX, entryZ), Local(turnX, exitZ), Local(loopEndX, exitZ) };
@@ -585,10 +599,99 @@ public class BusDepotManager : MonoBehaviour
         if (exit != null) depotRoadLines.Add(exitPoints.ToArray());
 
         if (depotRoadLines.Count == 0) BuildFallbackDriveway(parent, outerX, entryZ, exitZ);
+        else BuildDroppedKerbs(parent, localKerb, side, entryZ, exitZ);
 
         // Departure is reported when the bus reaches the road at the end of the
         // exit aisle, which is the point the yard actually funnels it towards.
         currentExitPosition = exit != null ? exitPoints[exitPoints.Count - 1] : kerbPos;
+    }
+
+    /// <summary>
+    /// A driveway is a dropped kerb, not asphalt butting into a raised one. The city
+    /// raises a kerb strip (and a physical collider) along every street edge before a
+    /// route ever picks its start, so the depot cannot rely on the junction being cut
+    /// for it. These two little ramps bridge the kerb at the mouth of each aisle: they
+    /// carry the driveway surface over the kerb strip so the join reads as a real
+    /// driveway, and the matching colliders are dropped in
+    /// <see cref="ClearStreetKerbAcrossDriveways"/> so nothing invisible blocks the bus.
+    /// </summary>
+    void BuildDroppedKerbs(Transform parent, Vector3 localKerb, float side, float entryZ, float exitZ)
+    {
+        var builder = OSMRoadMeshBuilder.Resolve();
+        if (builder == null) return;
+
+        float streetX = localKerb.x + side * 1.5f;   // just short of the driveway mouth
+        float yardX = localKerb.x - side * 0.5f;     // back onto the driveway
+        float kerbLift = builder.boundaryHeight + 0.01f;
+        BuildDroppedKerb(parent, builder, streetX, yardX, kerbLift, entryZ);
+        BuildDroppedKerb(parent, builder, streetX, yardX, kerbLift, exitZ);
+    }
+
+    void BuildDroppedKerb(Transform parent, OSMRoadMeshBuilder builder, float streetX, float yardX, float kerbLift, float laneZ)
+    {
+        var points = new List<Vector3>
+        {
+            parent.TransformPoint(new Vector3(streetX, DrivewayLift, laneZ)),
+            parent.TransformPoint(new Vector3((streetX + yardX) * 0.5f, kerbLift, laneZ)),
+            parent.TransformPoint(new Vector3(yardX, DrivewayLift, laneZ))
+        };
+
+        Mesh mesh = builder.BuildRoadSegmentMesh(points, depotRoadWidth, 1, false);
+        if (mesh == null) return;
+
+        var ramp = new GameObject("Depot_DroppedKerb");
+        ramp.transform.SetParent(parent, false);
+        ramp.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var surface = ramp.AddComponent<MeshRenderer>();
+        surface.sharedMaterial = builder.RoadSurfaceMaterial();
+        surface.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        surface.receiveShadows = false;
+    }
+
+    /// <summary>
+    /// Removes the city's physical kerb colliders where the depot's driveways meet the
+    /// street. Those 0.7 m boxes are raised when the city is built, from every junction
+    /// that existed then; a depot placed afterwards is not one of them, so without this
+    /// the bus is walled into its own yard. The visual kerb is bridged by
+    /// <see cref="BuildDroppedKerbs"/>, so only the colliders need removing.
+    /// </summary>
+    void ClearStreetKerbAcrossDriveways()
+    {
+        if (depotRoadLines.Count == 0) return;
+
+        float corridor = depotRoadWidth * 0.5f + 0.8f;
+        var colliders = Object.FindObjectsByType<BoxCollider>(FindObjectsSortMode.None);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            BoxCollider collider = colliders[i];
+            if (collider == null) continue;
+            Transform owner = collider.transform.parent;
+            if (owner == null || owner.name != "PhysicalRoadBoundaries") continue;
+
+            // Kerb colliders are long segments, not points: one can run the length of
+            // a block and still cross a driveway with its centre far away. Compare the
+            // collider's full segment (its long local axis) against the lanes.
+            Transform t = collider.transform;
+            Vector3 halfLength = t.forward * (collider.size.z * 0.5f * Mathf.Abs(t.lossyScale.z));
+            Vector3 a = t.position - halfLength;
+            Vector3 b = t.position + halfLength;
+            if (!BoundaryCrossesDepotLane(a, b, corridor)) continue;
+            DestroySafe(collider.gameObject);
+        }
+    }
+
+    bool BoundaryCrossesDepotLane(Vector3 a, Vector3 b, float corridor)
+    {
+        float sqrCorridor = corridor * corridor;
+        for (int l = 0; l < depotRoadLines.Count; l++)
+        {
+            Vector3[] line = depotRoadLines[l];
+            if (line == null) continue;
+            for (int i = 1; i < line.Length; i++)
+                if (RoadSurfaceIndex.SegmentDistanceSquared(a, b, line[i - 1], line[i]) <= sqrCorridor)
+                    return true;
+        }
+        return false;
     }
 
     /// <summary>

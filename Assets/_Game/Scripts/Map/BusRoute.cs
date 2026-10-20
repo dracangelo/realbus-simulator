@@ -4,8 +4,8 @@ using UnityEngine;
 public class BusRoute : ScriptableObject
 {
     [Header("Route Info")]
-    public string routeNumber = "1";
-    public string routeName = "CBD - Westlands";
+    public string routeNumber = "NBO-1";
+    public string routeName = "NBO CBD - Westlands";
     public float baseFare = 50f; // KES
     public long osmRelationId;
     public bool isRoadPathValidated;
@@ -36,8 +36,17 @@ public class BusRoute : ScriptableObject
         return stops != null ? stops.Length : 0;
     }
 
+    /// <summary>The route number with exactly one NBO prefix, safe to print in any UI.</summary>
+    public string DisplayCode => RouteNaming.DisplayCode(this);
+
     public void EnsureRuntimeData()
     {
+        // Routes can arrive from a downloaded OSM pack, an older asset, or a
+        // hand-authored test fixture. Normalising here means every consumer -
+        // menu, HUD, save file - sees the same NBO name without each one having
+        // to remember to add the prefix.
+        RouteNaming.Apply(this);
+
         if ((stops == null || stops.Length == 0) && busStops != null && busStops.Length > 0)
             SyncLegacyStopsFromBusStops();
 

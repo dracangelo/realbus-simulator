@@ -152,6 +152,13 @@ public static class BusRouteParser
             ? name
             : (string.IsNullOrEmpty(parsed.routeRef) ? "Bus Route" : $"Route {parsed.routeRef}");
 
+        // Every route leaves the parser in the NBO namespace. The importer and
+        // the editor both call the same helper, so an OSM ref of "8" becomes
+        // "NBO-8" exactly once rather than once per pipeline stage.
+        parsed.routeRef = RouteNaming.NormalizeCode(
+            parsed.routeRef, parsed.osmRelationId > 0 ? "OSM" + parsed.osmRelationId : null);
+        parsed.routeName = RouteNaming.NormalizeName(parsed.routeName);
+
         // ── Geometry (prefer inline, fall back to member ways) ─────────
         if (elem.geometry != null && elem.geometry.Count > 0)
         {

@@ -48,7 +48,7 @@ public class MissionResult
         var result = new MissionResult();
         var missionData = MissionManager.Instance != null ? MissionManager.Instance.missionData : null;
 
-        result.routeName = route != null ? route.routeName : "Unknown";
+        result.routeName = route != null ? RouteNaming.NormalizeName(route.routeName) : "Unknown";
         result.totalScore = ScoreTracker.Instance != null ? ScoreTracker.Instance.totalScore : 0f;
         result.starRating = ScoreTracker.Instance != null ? ScoreTracker.Instance.GetStarRating() : 1;
 

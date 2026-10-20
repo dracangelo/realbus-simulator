@@ -205,12 +205,17 @@ public class RealismSystemsTests
             // the street past the yard edge so the bus can leave without reversing.
             Vector3 entryOuter = yard.InverseTransformPoint(lines[0][0]);
             Vector3 exitOuter = yard.InverseTransformPoint(lines[2][lines[2].Length - 1]);
+            Vector3 kerbLocal = yard.InverseTransformPoint(depotManager.currentKerbPosition);
             Assert.That(Mathf.Abs(entryOuter.z - exitOuter.z), Is.GreaterThanOrEqualTo(depotManager.depotRoadWidth + 1f - 0.01f),
                 "the entry and exit aisles must not overlap");
             Assert.That(Mathf.Abs(entryOuter.x), Is.GreaterThan(depotManager.yardWidth * 0.5f),
                 "the entry driveway must reach past the yard edge to the street");
             Assert.That(Mathf.Abs(exitOuter.x), Is.GreaterThan(depotManager.yardWidth * 0.5f),
                 "the exit driveway must reach past the yard edge to the street");
+            Assert.That(Mathf.Abs(entryOuter.x), Is.GreaterThan(Mathf.Abs(kerbLocal.x)),
+                "the entry driveway must cross the kerb line onto the carriageway");
+            Assert.That(Mathf.Abs(exitOuter.x), Is.GreaterThan(Mathf.Abs(kerbLocal.x)),
+                "the exit driveway must cross the kerb line onto the carriageway");
 
             // The bays stay behind the driving band, the player is dropped in Bay 1,
             // and the departure gate sits on the road at the end of the exit aisle.
@@ -417,6 +422,18 @@ public class RealismSystemsTests
             Assert.That(FlatDistance(traffic.Graph.GetNodePosition(DepotTrafficSpawner.StreetDepartureNode), kerb),
                 Is.GreaterThan(traffic.approachDistanceMeters * 0.5f), "and leave onto it");
 
+            // Street traffic has to sit the configured distance off the kerb, not off
+            // the driveway mouth (which now reaches onto the carriageway), or the
+            // ambient lane would be dragged into the middle of the road.
+            Vector3 yardForward = depotManager.currentDepot.transform.forward;
+            Vector3 toStreet = kerb - depotManager.currentDepot.transform.position;
+            toStreet.y = 0f;
+            toStreet = Vector3.ProjectOnPlane(toStreet, yardForward).normalized;
+            Vector3 approachNode = traffic.Graph.GetNodePosition(DepotTrafficSpawner.StreetApproachNode);
+            float lateral = Vector3.Dot(approachNode - kerb, toStreet);
+            Assert.That(lateral, Is.EqualTo(traffic.streetLaneOffsetMeters).Within(0.05f),
+                "the street lane must be offset from the kerb, not from the driveway mouth");
+
             // The gate: traffic is held off the aisles while the player's bus is in
             // the yard, and a vehicle already inside is allowed to finish leaving.
             Assert.IsTrue(DepotTrafficSpawner.ShouldHoldTraffic(true, false), "street traffic must hold for a bus in the yard");
@@ -479,6 +496,53 @@ public class RealismSystemsTests
             Assert.IsFalse(bus.ShouldReleaseParkingBrake(1f, 0f, 0f), "a released brake has nothing to release");
         }
         finally { Object.DestroyImmediate(busGo); }
+    }
+
+    [Test]
+    public void BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt()
+    {
+        var depotGo = new GameObject("DepotKerbTest");
+        var busGo = new GameObject("DepotKerbBus");
+        var roadGo = new GameObject("DepotKerbBuilder");
+        GameObject kerbRoot = null;
+        BusDepotManager.ResetZones();
+        try
+        {
+            roadGo.AddComponent<OSMRoadMeshBuilder>();
+            var depotManager = depotGo.AddComponent<BusDepotManager>();
+            var bus = busGo.AddComponent<BusController>();
+
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(DepotTestRoute(), new Vector3(100f, 0f, 100f), bus,
+                out _, out _, out _));
+
+            Vector3 entryMouth = depotManager.CurrentDepotRoads[0][0];
+            Vector3 kerb = depotManager.currentKerbPosition;
+            Quaternion facing = depotManager.currentDepot.transform.rotation;
+
+            // The city raises these 0.7 m boxes along every street edge before a route
+            // exists, so fake one long collider lying across the entry mouth.
+            kerbRoot = new GameObject("PhysicalRoadBoundaries");
+            var edge = new GameObject("Edge_1_1");
+            edge.transform.SetParent(kerbRoot.transform, false);
+            edge.transform.SetPositionAndRotation(new Vector3(kerb.x, kerb.y + 0.35f, entryMouth.z), facing);
+            var box = edge.AddComponent<BoxCollider>();
+            box.size = new Vector3(0.38f, 0.7f, 30f);
+
+            // Re-place the yard: this run has to cut the kerb it now knows about.
+            Assert.IsTrue(depotManager.TrySpawnDepotAndResolveBay(DepotTestRoute(), new Vector3(100f, 0f, 100f), bus,
+                out _, out _, out _));
+
+            Assert.IsTrue(edge == null,
+                "the street kerb collider across the driveway must be removed so the bus can leave");
+        }
+        finally
+        {
+            BusDepotManager.ResetZones();
+            if (kerbRoot != null) Object.DestroyImmediate(kerbRoot);
+            Object.DestroyImmediate(depotGo);
+            Object.DestroyImmediate(busGo);
+            Object.DestroyImmediate(roadGo);
+        }
     }
 
     static float FlatDistance(Vector3 a, Vector3 b)

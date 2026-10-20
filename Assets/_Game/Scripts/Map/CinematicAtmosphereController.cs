@@ -190,8 +190,18 @@ public class CinematicAtmosphereController : MonoBehaviour
         if (cam != null)
         {
             cam.depthTextureMode |= DepthTextureMode.Depth | DepthTextureMode.MotionVectors;
-            cam.nearClipPlane = Mathf.Min(cam.nearClipPlane, 0.2f);
-            cam.farClipPlane = Mathf.Max(cam.farClipPlane, 1500f);
+            // Depth precision is set by the near/far ratio. The old 0.05–4000 m pair
+            // left so little precision at road distance that the asphalt and the
+            // ground tile underneath it could swap depth from one frame to the next
+            // - the ground flicker. The gameplay camera sits 12.5 m behind the bus,
+            // so 0.3 m is still comfortably ahead of the nearest bodywork, and the
+            // fog closes well before 2.5 km.
+            cam.nearClipPlane = Mathf.Clamp(cam.nearClipPlane, 0.3f, 0.5f);
+            cam.farClipPlane = Mathf.Clamp(cam.farClipPlane, 1500f, 2500f);
+            // The adaptive resolution used by MobilePerformanceManager only takes
+            // effect when the camera opts in; without this the buffer resize was a
+            // no-op and a thermally throttled phone kept rendering at full size.
+            if (Application.isMobilePlatform) cam.allowDynamicResolution = true;
         }
     }
 }

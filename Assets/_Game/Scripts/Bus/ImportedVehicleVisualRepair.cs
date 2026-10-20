@@ -11,10 +11,31 @@ using UnityEngine.Rendering;
 /// </summary>
 public class ImportedVehicleVisualRepair : MonoBehaviour
 {
+    /// <summary>
+    /// One body slot the repair pass painted with the fallback colour. The
+    /// player-bus livery system uses this instead of guessing which of the
+    /// imported meshes are bodywork, so the glass, lamps, wheels and interior
+    /// keep the finishes assigned here.
+    /// </summary>
+    public struct BodyPaintSlot
+    {
+        public Renderer renderer;
+        public int materialIndex;
+
+        public BodyPaintSlot(Renderer renderer, int materialIndex)
+        {
+            this.renderer = renderer;
+            this.materialIndex = materialIndex;
+        }
+    }
+
     [Tooltip("Tint untextured, neutral body panels when the FBX contains no body artwork.")]
     public bool useFallbackBodyColor = true;
     public Color fallbackBodyColor = new Color(0.08f, 0.28f, 0.22f, 1f);
     readonly List<Material> runtimeMaterials = new List<Material>();
+    readonly List<BodyPaintSlot> bodyPaintSlots = new List<BodyPaintSlot>();
+    public IReadOnlyList<BodyPaintSlot> BodyPaintSlots => bodyPaintSlots;
+    Transform lastRepairedRoot;
     bool repairApplied;
 
     void Start()
@@ -30,6 +51,20 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
             return GetComponentsInChildren<Renderer>(true).Length;
 
         Transform root = visualRoot != null ? visualRoot : transform;
+        // A replacement model means the old slot list belongs to a destroyed
+        // hierarchy. modelRoot and the bus root are the same tree, so a repair
+        // through either entry point must not discard the slots recorded by the
+        // other - that is exactly what happens when Start() runs after the
+        // livery has already bound to modelRoot.
+        bool sameHierarchy = lastRepairedRoot != null &&
+            (root == lastRepairedRoot ||
+             root.IsChildOf(lastRepairedRoot) ||
+             lastRepairedRoot.IsChildOf(root));
+        if (!sameHierarchy)
+        {
+            bodyPaintSlots.Clear();
+        }
+        lastRepairedRoot = root;
         var bus = GetComponent<BusController>();
         DisableEmbeddedCameras(bus != null ? bus.modelRoot : root);
         Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
@@ -57,6 +92,14 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
                 bool invalid = source == null || source.shader == null || !source.shader.isSupported ||
                     source.shader.name.Contains("InternalErrorShader");
                 string materialName = source != null ? source.name.ToLowerInvariant() : "";
+                // Interior slots are already finished and must not be cloned again.
+                if (materialName.Contains("(interior)")) continue;
+                // Runtime materials have already been through this pass. Cloning
+                // them again on a repeat call would stack copies and lose the
+                // livery slot bookkeeping.
+                if (materialName.Contains("(runtime)")) continue;
+                if (source != null && source.shader != null &&
+                    source.shader.name == "RealBus/BusPaint") continue;
                 bool glass = materialName.Contains("glass") || materialName.Contains("kaca");
                 Color sourceColor = ReadColor(source);
                 bool bodyPanel = materialName == "bodi" || materialName == "body" || materialName == "karoseri";
@@ -70,18 +113,34 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
                 // renders as flat white.
                 bool whiteShell = ImportedMaterialPalette.IsUntexturedWhite(source);
                 bool fallbackPaint = useFallbackBodyColor && untextured && (bodyPanel || whiteShell);
-                if ((!invalid && !glass && !fallbackPaint) || targetShader == null) continue;
+                // The dashboard, seats, floor, ceiling and screens are untextured in
+                // most of these model packs, so they import as flat white or light
+                // grey panels. Give each one a plausible cockpit finish instead of
+                // leaving the driver in a white plastic shell.
+                Color interiorColor = Color.white;
+                float interiorSmoothness = .3f;
+                float interiorMetallic = 0f;
+                Color interiorEmission = Color.black;
+                bool interior = !glass && TryComponentFinish(renderer.name.ToLowerInvariant(), materialName, out interiorColor,
+                    out interiorSmoothness, out interiorMetallic, out interiorEmission);
+                // Interior and detail finishes win over the generic body
+                // fallback: otherwise an untextured white dashboard, seat or
+                // number plate would also be recorded as a body slot and the
+                // player livery would paint the cabin.
+                if (interior) fallbackPaint = false;
+                if ((!invalid && !glass && !fallbackPaint && !interior) || targetShader == null) continue;
 
                 if (source != null && replacements.TryGetValue(source, out Material cached))
                 {
                     materials[i] = cached;
                     changed = true;
+                    if (fallbackPaint) AddBodySlot(renderer, i);
                     continue;
                 }
 
                 Material replacement = !invalid ? new Material(source) : new Material(targetShader);
-                replacement.name = (source != null ? source.name : renderer.name) + " (Runtime)";
-                Color color = fallbackPaint ? fallbackBodyColor : sourceColor;
+                replacement.name = (source != null ? source.name : renderer.name) + (interior ? " (Interior)" : " (Runtime)");
+                Color color = interior ? interiorColor : fallbackPaint ? fallbackBodyColor : sourceColor;
                 color.a = glass ? Mathf.Clamp(color.a, 0.22f, 0.55f) : Mathf.Max(color.a, 0.9f);
                 // Write the Built-in albedo slot, and set .color as well so a shader
                 // that only exposes the property still gets the intended colour.
@@ -96,14 +155,22 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
                     replacement.SetTextureScale("_MainTex", source.GetTextureScale("_MainTex"));
                     replacement.SetTextureOffset("_MainTex", source.GetTextureOffset("_MainTex"));
                 }
-                if (replacement.HasProperty("_Glossiness")) replacement.SetFloat("_Glossiness", glass ? 0.82f : 0.34f);
-                if (replacement.HasProperty("_Smoothness")) replacement.SetFloat("_Smoothness", glass ? 0.82f : 0.34f);
+                if (replacement.HasProperty("_Glossiness")) replacement.SetFloat("_Glossiness", glass ? 0.82f : interior ? interiorSmoothness : 0.34f);
+                if (replacement.HasProperty("_Smoothness")) replacement.SetFloat("_Smoothness", glass ? 0.82f : interior ? interiorSmoothness : 0.34f);
+                if (replacement.HasProperty("_Metallic")) replacement.SetFloat("_Metallic", interior ? interiorMetallic : 0f);
+                if (interior && interiorEmission.maxColorComponent > 0.001f)
+                {
+                    replacement.EnableKeyword("_EMISSION");
+                    if (replacement.HasProperty("_EmissionColor")) replacement.SetColor("_EmissionColor", interiorEmission);
+                    replacement.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                }
                 if (glass) ConfigureGlass(replacement);
 
                 runtimeMaterials.Add(replacement);
                 if (source != null) replacements[source] = replacement;
                 materials[i] = replacement;
                 changed = true;
+                if (fallbackPaint) AddBodySlot(renderer, i);
                 repaired++;
             }
             if (changed) renderer.sharedMaterials = materials;
@@ -117,6 +184,109 @@ public class ImportedVehicleVisualRepair : MonoBehaviour
             ImportedMaterialPalette.RegisterImportedRoot(root, fallbackBodyColor);
         Debug.Log($"ImportedVehicleVisualRepair: '{root.name}' has {renderers.Length} renderers; repaired {repaired} material slots for the Built-in Render Pipeline.");
         return renderers.Length;
+    }
+
+    /// <summary>
+    /// A plausible finish for an interior or detail material, matched by the names
+    /// used across the imported bus packs (Indonesian, English and a few
+    /// misspellings): dasbor, kursi, lantai, plafon, gorden, krum, outih, plus the
+    /// renderer names for lights, rims, plates and screens. Without this pass the
+    /// generic white fallback paints every untextured white panel body-green,
+    /// including wheel rims, number plates and the tablet screen. Returns false for
+    /// body and glazing materials so exterior paint and glass are untouched.
+    /// </summary>
+    static bool TryComponentFinish(string rendererName, string name, out Color color, out float smoothness, out float metallic, out Color emission)
+    {
+        color = Color.white;
+        smoothness = .3f;
+        metallic = 0f;
+        emission = Color.black;
+        if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(rendererName)) return false;
+
+        // Interior display and its bezel.
+        if (rendererName.Contains("tv_layar") || name.Contains("layar") || name.Contains("screen"))
+        {
+            color = new Color(.012f, .014f, .02f); smoothness = .7f;
+            emission = new Color(.06f, .10f, .15f); return true;
+        }
+        if (rendererName == "tv" || rendererName.Contains("tv") || name.Contains("monitor") || name.Contains("display"))
+        {
+            color = new Color(.02f, .02f, .022f); smoothness = .55f; return true;
+        }
+        // Lamps: the white lens colours are not body paint.
+        if (rendererName.Contains("lampu_dalem") || name.Contains("lampu dalem") || name.Contains("interior light"))
+        {
+            color = new Color(.9f, .82f, .66f); smoothness = .35f;
+            emission = new Color(.35f, .29f, .2f); return true;
+        }
+        if (rendererName.Contains("lampu_belakang") || name.Contains("lampu blakang"))
+        {
+            color = name.Contains("atret") ? new Color(.62f, .62f, .60f) : new Color(.36f, .03f, .025f);
+            smoothness = .72f; return true;
+        }
+        if (rendererName.Contains("lampu_sein") || name.Contains("sein"))
+        {
+            color = new Color(.5f, .24f, .035f); smoothness = .7f; return true;
+        }
+        if (rendererName.Contains("lampu") || name.Contains("headlight") || name.Contains("lampu depan"))
+        {
+            color = new Color(.7f, .71f, .68f); smoothness = .82f; return true;
+        }
+        // Number plate, rims and tyres.
+        if (rendererName.Contains("plat") || name.Contains("license"))
+        {
+            color = new Color(.76f, .76f, .72f); smoothness = .4f; metallic = .1f; return true;
+        }
+        if (rendererName == "rim" || rendererName.Contains("rim"))
+        {
+            color = new Color(.55f, .56f, .58f); smoothness = .8f; metallic = 1f; return true;
+        }
+        if (rendererName == "ban" || rendererName == "bsn" || name.Contains("tyre") || name.Contains("tire"))
+        {
+            color = new Color(.032f, .032f, .035f); smoothness = .12f; return true;
+        }
+        if (name == "ac" || name.Contains("lampu ac"))
+        {
+            color = new Color(.72f, .72f, .70f); smoothness = .3f; return true;
+        }
+
+        if (name.Contains("dasbor") || name.Contains("dashboard") || name.Contains("dash board") || name.Contains("cockpit"))
+        {
+            color = new Color(.052f, .055f, .06f); smoothness = .42f; metallic = .04f; return true;
+        }
+        if (name.Contains("kursi") || name.Contains("seat"))
+        {
+            color = new Color(.07f, .09f, .13f); smoothness = .16f; return true;
+        }
+        if (name.Contains("lantai") || name.Contains("floor") || rendererName.Contains("lantai") || rendererName.Contains("floor"))
+        {
+            color = new Color(.075f, .075f, .08f); smoothness = .32f; return true;
+        }
+        if (name.Contains("plafon") || name.Contains("ceiling") || name.Contains("headliner"))
+        {
+            color = new Color(.58f, .56f, .52f); smoothness = .12f; return true;
+        }
+        if (name.Contains("krum") || name.Contains("chrome") || name.Contains("cermin") || name.Contains("mirror"))
+        {
+            color = new Color(.66f, .68f, .70f); smoothness = .92f; metallic = 1f; return true;
+        }
+        if (name.Contains("gorden") || name.Contains("curtain"))
+        {
+            color = new Color(.08f, .17f, .19f); smoothness = .06f; return true;
+        }
+        if (name.Contains("outih") || name.Contains("interior panel") || name.Contains("trim panel"))
+        {
+            color = new Color(.4f, .4f, .38f); smoothness = .3f; return true;
+        }
+        return false;
+    }
+
+    void AddBodySlot(Renderer renderer, int materialIndex)
+    {
+        if (renderer == null || materialIndex < 0) return;
+        for (int i = 0; i < bodyPaintSlots.Count; i++)
+            if (bodyPaintSlots[i].renderer == renderer && bodyPaintSlots[i].materialIndex == materialIndex) return;
+        bodyPaintSlots.Add(new BodyPaintSlot(renderer, materialIndex));
     }
 
     static Color ReadColor(Material source)

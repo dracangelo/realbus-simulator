@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c68267b08fa84ab6d9649421466ab4b2, type: 3}
+  m_Name: BuildingCatalog
+  m_EditorClassIdentifier: GameScripts::BuildingCatalog
+  entries:
+  - prefab: {fileID: 1225620800587638377, guid: 3ad974fd52461872a8784c7cf197e7eb, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 15.771787, z: 0}
+      m_Extent: {x: 23.164047, y: 15.771787, z: 9.482416}
+    triangles: 184684
+    sourceName: 10_f_building
+  - prefab: {fileID: 6689346043942117837, guid: 7c5b3c5355921cb1886fefe9f5f2a70d, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 35.07775, z: 0}
+      m_Extent: {x: 11.591011, y: 35.07775, z: 11.591014}
+    triangles: 224908
+    sourceName: Building-Big-01
+  - prefab: {fileID: 6827740791498060971, guid: ccb6e9db5228ebb77a948dde5fa087e3, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 39.885933, z: 0}
+      m_Extent: {x: 18.778679, y: 39.885933, z: 10.920481}
+    triangles: 104316
+    sourceName: Building-Big-Wide-01
+  - prefab: {fileID: 4688066453376802703, guid: a4a38bc2f8e88805a9fea245934cf494, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 39.885933, z: 0}
+      m_Extent: {x: 17.223341, y: 39.885933, z: 9.778573}
+    triangles: 104316
+    sourceName: Building-Big-Wide-02
+  - prefab: {fileID: 8465244354975617650, guid: 787dbe6e5811776828a903f601382c6f, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 16.832808, z: 0}
+      m_Extent: {x: 6.376289, y: 16.832808, z: 7.4069967}
+    triangles: 427330
+    sourceName: Building-Medium-01
+  - prefab: {fileID: 5866196577566641026, guid: eb3b7616529692b19b447d9cc3f99bfe, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 25.321102, z: 0}
+      m_Extent: {x: 8.506664, y: 25.321102, z: 8.480475}
+    triangles: 40256
+    sourceName: Building-Medium-02
+  - prefab: {fileID: 634118407870333257, guid: dd56dfe5ed5d45018b117d00fa1edb66, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 14.25, z: 0}
+      m_Extent: {x: 6.4424386, y: 14.25, z: 6.44244}
+    triangles: 150664
+    sourceName: Building-Small
+  - prefab: {fileID: 3093488636482113536, guid: 2dad61d925954e69e8efaf1fb30862b6, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 14.020804, z: 0}
+      m_Extent: {x: 6.7818003, y: 14.020804, z: 8.783832}
+    triangles: 58453
+    sourceName: Mixed Use Building_2_FBX
+  - prefab: {fileID: 4304072701455034142, guid: cb55716b081f4615cbeba7dd92749bff, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 49.983963, z: 0}
+      m_Extent: {x: 10.143401, y: 49.983963, z: 10.122196}
+    triangles: 89312
+    sourceName: Skyscraper-01
+  - prefab: {fileID: 693338583243609486, guid: 68329260d03798f378b9146ca4504e9c, type: 3}
+    bounds:
+      m_Center: {x: 0.0000019073486, y: 14.614133, z: 0.0000019073486}
+      m_Extent: {x: 32.7568, y: 14.614133, z: 28.310022}
+    triangles: 1702
+    sourceName: bina1
+  - prefab: {fileID: 8815124980162868268, guid: 4a2161b50e8cda62c929293fde90e9eb, type: 3}
+    bounds:
+      m_Center: {x: -0.0000005364418, y: 76.26303, z: -0.0000005364418}
+      m_Extent: {x: 51.862335, y: 76.26303, z: 47.48557}
+    triangles: 8926
+    sourceName: bina3
+  - prefab: {fileID: 5942130792206541985, guid: bfab3bed8545fbd5ca04fece9e48d5a7, type: 3}
+    bounds:
+      m_Center: {x: -0.0000024132896, y: 74.26802, z: -0.0000065751374}
+      m_Extent: {x: 27.001877, y: 74.26802, z: 27.043314}
+    triangles: 3715
+    sourceName: bina4
+  - prefab: {fileID: 2143269594495721914, guid: 6665f2683d3e4729c8f64f8dc2340dc1, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 35.814465, z: 0.00000023841858}
+      m_Extent: {x: 13.769269, y: 35.814465, z: 18.157112}
+    triangles: 1437
+    sourceName: bina6
+  - prefab: {fileID: 1477802601815758139, guid: f325feba7a1a32db68a0e2018fa0ca1f, type: 3}
+    bounds:
+      m_Center: {x: -0.0000018323772, y: 18.981424, z: 0.00000166893}
+      m_Extent: {x: 44.35738, y: 18.981424, z: 23.61216}
+    triangles: 4262
+    sourceName: bina8
+  - prefab: {fileID: 5157256689763442540, guid: e25db5702b544d0f4ad9d27915670fbe, type: 3}
+    bounds:
+      m_Center: {x: 0.000000059604645, y: 24.725014, z: 0.0000011462457}
+      m_Extent: {x: 16.645159, y: 24.725014, z: 16.000011}
+    triangles: 1893
+    sourceName: bina9

@@ -17,14 +17,17 @@ public class Phase7MenuController : MonoBehaviour
     GameObject settingsPanel, mobileSettingsPanel, contentDownloadsPanel, vehiclePacksPanel, creditsPanel, pausePanel, dailyPanel;
     TextMeshProUGUI pauseScore;
     TextMeshProUGUI dailySummary;
-    TextMeshProUGUI contentCityLabel, contentStatusLabel;
+    TextMeshProUGUI contentCityLabel, contentStatusLabel, routePickerLabel;
     TMP_InputField routeRelationInput;
     TMP_InputField vehiclePackUrlInput;
     Slider contentProgress;
     Slider vehiclePackProgress;
     TextMeshProUGUI vehiclePackStatusLabel;
     CityDefinition[] downloadableCities = Array.Empty<CityDefinition>();
+    BusRoute[] downloadableRoutes = Array.Empty<BusRoute>();
     int contentCityIndex;
+    int contentRouteIndex;
+    CityDefinition pendingMapCity;
     bool paused;
 
     // Tabs inside settings
@@ -99,8 +102,14 @@ public class Phase7MenuController : MonoBehaviour
         }
         if (gameplay)
         {
-            CreateButton(canvas.transform, "II", new Vector2(-28f, -210f), new Vector2(78f, 78f), TogglePause, Vector2.one, Vector2.one);
-            CreateButton(canvas.transform, "CAM", new Vector2(-120f, -210f), new Vector2(78f, 78f), () => MobileCameraController.EnsureExists().CycleCamera(), Vector2.one, Vector2.one);
+            // Camera and pause used to sit at the top-right, on top of the speed dial,
+            // the indicator lamps and the vitals panel. They now live in the clear strip
+            // under the top-left minimap card.
+            Color glass = new Color(.03f, .045f, .055f, .92f);
+            Button pauseButton = CreateStyledButton(canvas.transform, "II", new Vector2(20f, -340f), new Vector2(60f, 60f), TogglePause, glass, UITheme.BusAmber, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Button cameraButton = CreateStyledButton(canvas.transform, "CAM", new Vector2(90f, -340f), new Vector2(60f, 60f), () => MobileCameraController.EnsureExists().CycleCamera(), glass, UITheme.BusAmber, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            StyleRoundActionButton(pauseButton);
+            StyleRoundActionButton(cameraButton);
         }
 
         BuildSettings();
@@ -594,15 +603,20 @@ public class Phase7MenuController : MonoBehaviour
         CreateStyledButton(panel, "WORLD DATA", new Vector2(0f, 150f), new Vector2(270f, 64f), () => DownloadContent(CityContentDownloadKind.World), UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.worldData");
         CreateStyledButton(panel, "ALL ROUTES", new Vector2(310f, 150f), new Vector2(270f, 64f), () => DownloadContent(CityContentDownloadKind.Routes), UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.allRoutes");
         CreateStyledButton(panel, "★ FAVOURITE", new Vector2(-180f, 80f), new Vector2(250f, 54f), ToggleFavouriteCity, UITheme.TransitCard, UITheme.Accent, null, null, "btn.favourite");
-        CreateStyledButton(panel, "COMPLETE CITY", new Vector2(180f, 80f), new Vector2(250f, 54f), () => DownloadContent(CityContentDownloadKind.CompleteCity), UITheme.TransitLedGreen, UITheme.Background, null, null, "btn.completeCity");
+        CreateStyledButton(panel, "COMPLETE CITY", new Vector2(180f, 80f), new Vector2(250f, 54f), DownloadCompleteCity, UITheme.TransitLedGreen, UITheme.Background, null, null, "btn.completeCity");
 
-        CreateText(panel, "Map: offline road tiles  •  World: buildings & places  •  Routes: transit graphs & stops", 19f,
-            new Vector2(0f, 25f), new Vector2(930f, 42f), TextAlignmentOptions.Center);
+        CreateText(panel, "Complete City downloads the map, world and routes without extra steps.\nBuilt-in data is used automatically when a request cannot reach the network.", 18f,
+            new Vector2(0f, 22f), new Vector2(930f, 52f), TextAlignmentOptions.Center);
 
-        CreateText(panel, "ONE ROUTE BY OSM RELATION ID", 22f, new Vector2(-230f, -45f), new Vector2(470f, 52f), TextAlignmentOptions.Left);
-        routeRelationInput = CreateInput(panel, "Example: 123456", new Vector2(160f, -45f), new Vector2(310f, 54f));
-        CreateStyledButton(panel, "VEHICLE PACKS", new Vector2(-310f, -115f), new Vector2(260f, 58f), OpenVehiclePacks, UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.vehiclePacks");
-        CreateStyledButton(panel, "DOWNLOAD ROUTE", new Vector2(310f, -115f), new Vector2(260f, 58f), DownloadSingleRoute, UITheme.Accent, UITheme.Background, null, null, "btn.downloadRoute");
+        CreateText(panel, "ROUTE", 22f, new Vector2(-430f, -45f), new Vector2(110f, 52f), TextAlignmentOptions.Left);
+        CreateButton(panel, "‹", new Vector2(-360f, -45f), new Vector2(50f, 54f), () => CycleDownloadRoute(-1));
+        routePickerLabel = CreateText(panel, "Loading routes…", 19f, new Vector2(10f, -45f), new Vector2(680f, 54f), TextAlignmentOptions.Center);
+        routePickerLabel.color = UITheme.BusAmber;
+        CreateButton(panel, "›", new Vector2(380f, -45f), new Vector2(50f, 54f), () => CycleDownloadRoute(1));
+
+        CreateStyledButton(panel, "VEHICLE PACKS", new Vector2(-330f, -115f), new Vector2(250f, 58f), OpenVehiclePacks, UITheme.TransitCard, UITheme.TextPrimary, null, null, "btn.vehiclePacks");
+        CreateStyledButton(panel, "DOWNLOAD ROUTE", new Vector2(-30f, -115f), new Vector2(250f, 58f), DownloadSingleRoute, UITheme.Accent, UITheme.Background, null, null, "btn.downloadRoute");
+        routeRelationInput = CreateInput(panel, "or OSM ID", new Vector2(300f, -115f), new Vector2(260f, 54f));
 
         contentProgress = CreateSlider(panel, new Vector2(0f, -185f), new Vector2(850f, 24f));
         contentStatusLabel = CreateText(panel, Localization.Get("status.ready"), 22f, new Vector2(0f, -240f), new Vector2(900f, 70f), TextAlignmentOptions.Center);
@@ -792,11 +806,61 @@ public class Phase7MenuController : MonoBehaviour
         CityPredownloader maps = FindAnyObjectByType<CityPredownloader>();
         if (maps == null) maps = new GameObject("CityPredownloader").AddComponent<CityPredownloader>();
         var mapStatus = maps.GetStatus(city, true);
+        bool hasWorld = RuntimeCityContentStore.IsAvailable(city, "buildings.json") ||
+                        RuntimeCityContentStore.IsAvailable(city, "buildings.xml");
+        bool hasRoutes = RuntimeCityContentStore.HasRouteData(city);
         string files = $"{(PlayerCityLibrary.IsFavourite(city) ? "★ FAVOURITE" : "☆ NOT FAVOURITE")}   " +
             $"{(mapStatus != null && mapStatus.cached > 0 ? "MAP ✓" : "MAP —")}   " +
-            $"{(RuntimeCityContentStore.IsDownloaded(city, "buildings.json") ? "WORLD ✓" : "WORLD —")}   " +
-            $"{(RuntimeCityContentStore.IsDownloaded(city, "routes.json") ? "ROUTES ✓" : "ROUTES —")}";
+            $"{(hasWorld ? "WORLD ✓" : "WORLD —")}   " +
+            $"{(hasRoutes ? "ROUTES ✓" : "ROUTES —")}";
         contentCityLabel.text = $"{city.country.ToUpperInvariant()}  /  {city.cityName.ToUpperInvariant()}\n<size=18>{files}  •  {RuntimeCityContentDownloader.FormatBytes(bytes)}</size>";
+        RefreshDownloadRoutes(city);
+    }
+
+    void RefreshDownloadRoutes(CityDefinition city)
+    {
+        var routes = new List<BusRoute>();
+        if (city != null && city.availableRoutes != null)
+        {
+            foreach (BusRoute route in city.availableRoutes)
+            {
+                if (route == null || route.osmRelationId <= 0)
+                    continue;
+                route.EnsureRuntimeData();
+                routes.Add(route);
+            }
+        }
+        routes.Sort((a, b) =>
+        {
+            int code = string.CompareOrdinal(RouteNaming.DisplayCode(a), RouteNaming.DisplayCode(b));
+            return code != 0 ? code : string.CompareOrdinal(a.routeName, b.routeName);
+        });
+        downloadableRoutes = routes.ToArray();
+        contentRouteIndex = 0;
+        UpdateRoutePickerLabel();
+    }
+
+    void CycleDownloadRoute(int direction)
+    {
+        if (downloadableRoutes == null || downloadableRoutes.Length == 0)
+        {
+            HandleContentDownloadChanged("This city uses its built-in route pack. Enter an OSM relation ID only for a new route.", 0f);
+            return;
+        }
+        contentRouteIndex = (contentRouteIndex + direction + downloadableRoutes.Length) % downloadableRoutes.Length;
+        UpdateRoutePickerLabel();
+    }
+
+    void UpdateRoutePickerLabel()
+    {
+        if (routePickerLabel == null) return;
+        if (downloadableRoutes == null || downloadableRoutes.Length == 0)
+        {
+            routePickerLabel.text = "Built-in routes ready • no network needed";
+            return;
+        }
+        BusRoute route = downloadableRoutes[contentRouteIndex];
+        routePickerLabel.text = $"{contentRouteIndex + 1}/{downloadableRoutes.Length}   {RouteNaming.DisplayCode(route)}  ·  {route.routeName}";
     }
 
     void ToggleFavouriteCity()
@@ -808,12 +872,18 @@ public class Phase7MenuController : MonoBehaviour
 
     void DownloadOfflineMap()
     {
-        CityDefinition city = SelectedDownloadCity(); if (city == null) return;
+        DownloadOfflineMap(SelectedDownloadCity());
+    }
+
+    void DownloadOfflineMap(CityDefinition city)
+    {
+        if (city == null) return;
         CityPredownloader maps = FindAnyObjectByType<CityPredownloader>();
         if (maps == null) maps = new GameObject("CityPredownloader").AddComponent<CityPredownloader>();
         maps.OnProgress -= HandleContentDownloadProgress; maps.OnProgress += HandleContentDownloadProgress;
         maps.OnComplete -= HandleMapDownloadComplete; maps.OnComplete += HandleMapDownloadComplete;
-        maps.StartDownloadForCity(city);
+        if (!maps.StartDownloadForCity(city))
+            HandleContentDownloadChanged(maps.LastFailure ?? "Offline map could not start.", 0f);
     }
 
     void HandleContentDownloadProgress(float progress) => HandleContentDownloadChanged("Downloading offline map…", progress);
@@ -832,6 +902,24 @@ public class Phase7MenuController : MonoBehaviour
         RefreshContentCity();
     }
 
+    void DownloadCompleteCity()
+    {
+        CityDefinition city = SelectedDownloadCity();
+        if (city == null) return;
+
+        // One button for the whole city: map tiles, OSM world data and routes.
+        // The map starts only after the content pass finishes so the two
+        // downloaders do not compete for the same connection.
+        RuntimeCityContentDownloader downloader = RuntimeCityContentDownloader.EnsureExists();
+        if (downloader.IsDownloading)
+        {
+            HandleContentDownloadChanged("A city download is already running. Wait for it to finish or cancel it.", 0f);
+            return;
+        }
+        pendingMapCity = city;
+        downloader.Download(city, CityContentDownloadKind.CompleteCity);
+    }
+
     void DownloadContent(CityContentDownloadKind kind)
     {
         CityDefinition city = SelectedDownloadCity();
@@ -843,12 +931,32 @@ public class Phase7MenuController : MonoBehaviour
     {
         CityDefinition city = SelectedDownloadCity();
         if (city == null) return;
-        if (!long.TryParse(routeRelationInput != null ? routeRelationInput.text : string.Empty, out long relationId) || relationId <= 0)
+
+        string manual = routeRelationInput != null ? routeRelationInput.text.Trim() : string.Empty;
+        if (!string.IsNullOrEmpty(manual))
         {
-            HandleContentDownloadChanged("Enter the numeric OSM relation ID shown on openstreetmap.org.", 0f);
+            if (!long.TryParse(manual, out long entered) || entered <= 0)
+            {
+                HandleContentDownloadChanged("Enter the numeric OSM relation ID shown on openstreetmap.org.", 0f);
+                return;
+            }
+            RuntimeCityContentDownloader.EnsureExists().Download(city, CityContentDownloadKind.SingleRoute, entered);
             return;
         }
-        RuntimeCityContentDownloader.EnsureExists().Download(city, CityContentDownloadKind.SingleRoute, relationId);
+
+        if (downloadableRoutes == null || downloadableRoutes.Length == 0)
+        {
+            HandleContentDownloadChanged("No OSM route is listed for this city. Use ALL ROUTES or the built-in pack.", 0f);
+            return;
+        }
+
+        BusRoute selected = downloadableRoutes[contentRouteIndex];
+        if (selected == null || selected.osmRelationId <= 0)
+        {
+            HandleContentDownloadChanged("The selected route has no OpenStreetMap relation ID.", 0f);
+            return;
+        }
+        RuntimeCityContentDownloader.EnsureExists().Download(city, CityContentDownloadKind.SingleRoute, selected.osmRelationId);
     }
 
     void RemoveSelectedCityContent()
@@ -870,6 +978,13 @@ public class Phase7MenuController : MonoBehaviour
     void HandleContentDownloadCompleted(CityDefinition city, bool success)
     {
         RefreshContentCity();
+        if (pendingMapCity == city)
+        {
+            pendingMapCity = null;
+            if (success)
+                DownloadOfflineMap(city);
+        }
+
         if (!success || city == null || !RuntimeCityContentStore.IsDownloaded(city, "routes.json")) return;
         if (GameState.Instance != null && GameState.Instance.selectedCity == city)
         {
@@ -1032,6 +1147,25 @@ public class Phase7MenuController : MonoBehaviour
         t.font = UITheme.GetFont(UITheme.FontWeight.Bold);
         if (!string.IsNullOrEmpty(localizationKey)) LocalizedText.Bind(t.gameObject, localizationKey);
         return b;
+    }
+
+    // Small round HUD verbs (camera, pause) need a tighter label than the big modal
+    // buttons and a ring that reads against the world behind them.
+    static void StyleRoundActionButton(Button button)
+    {
+        if (button == null) return;
+        Outline outline = button.GetComponent<Outline>();
+        if (outline == null) outline = button.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(1f, 1f, 1f, .28f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (text != null)
+        {
+            text.fontSize = 22f;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+        }
     }
 
     TMP_InputField CreateInput(Transform parent, string placeholder, Vector2 position, Vector2 size,

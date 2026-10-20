@@ -23,10 +23,14 @@ using System.Collections;
 public class RuntimeTarmacApplier : MonoBehaviour
 {
     [Header("Material")]
-    public Color  tarmacColor  = new Color(0.15f, 0.15f, 0.15f, 1f); // Lighter gray for visibility
+    // Mid-dark asphalt, not the near-black value the scene used to carry. The
+    // shared asphalt shader supplies grain, wear and a normal map on top of this.
+    public Color  tarmacColor  = new Color(0.33f, 0.335f, 0.345f, 1f);
     public float  metallic     = 0f;
-    public float  smoothness   = 0.1f;
+    public float  smoothness   = 0.2f;
     public Vector2 textureScale = new Vector2(6f, 6f);
+    [Tooltip("Keep the city asphalt material on generated roads instead of repainting it with the tarmac fallback.")]
+    public bool keepCityAsphalt = true;
     [Tooltip("Enable to see debug logs about tarmac application")]
     public bool debugLogging = true;
 
@@ -152,13 +156,20 @@ public class RuntimeTarmacApplier : MonoBehaviour
             // Kerbs/boundary strips and painted lane markings have their own materials.
             // Painting them with asphalt made them visually disappear into the roadway.
             if (mr.gameObject.name == "RoadBoundaries" ||
+                mr.gameObject.name == "RoadShoulders" ||
                 mr.gameObject.name == "RoadMarkings" ||
                 mr.gameObject.name.Contains("Marking") ||
                 HasNamedAncestor(mr.transform, "RoadVisual_")) continue;
+            // The road builder already gave this ribbon the full asphalt material
+            // (world-space grain, wear and normal map). Replacing it with the flat
+            // fallback at a darker serialized colour was what made the street black.
+            if (keepCityAsphalt && UsesCityAsphalt(mr.sharedMaterial)) continue;
             mr.enabled  = true;
             mr.material = runtimeMaterial;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            mr.receiveShadows    = false;
+            // Building and tree shadows are most of what gives the road depth. The
+            // old override disabled them, flattening every street into one tone.
+            mr.receiveShadows    = true;
             count++;
         }
 
@@ -172,39 +183,25 @@ public class RuntimeTarmacApplier : MonoBehaviour
         return false;
     }
 
+    static bool UsesCityAsphalt(Material material)
+        => material != null && material.shader != null &&
+           material.shader.name == "RealBus/Asphalt";
+
     Material CreateTarmacMaterial()
     {
-        // The same shader the road builder uses, so tarmac and roadway match.
-        Shader shader = BuiltInShaders.Lit;
-
-        if (shader == null)
+        // The same shader, tone and grain the road builder uses, so yards and
+        // driveways read as the same asphalt as the street they join.
+        Material mat = UrbanMaterials.CreateAsphalt("Tarmac");
+        if (mat == null)
         {
-            Debug.LogError("[RuntimeTarmacApplier] Failed to find any suitable shader for tarmac material!");
+            Debug.LogError("[RuntimeTarmacApplier] Failed to create the asphalt material!");
             return null;
         }
 
-        if (debugLogging) Debug.Log($"[RuntimeTarmacApplier] Creating tarmac material with shader: {shader.name}");
-
-        var mat = new Material(shader)
-        {
-            color        = tarmacColor,
-            // FIX: render on top of map tile quads (renderQueue ~2000)
-            renderQueue  = 2100
-        };
-
+        mat.SetColor("_Color", tarmacColor);
         if (mat.HasProperty("_Metallic"))   mat.SetFloat("_Metallic",   metallic);
         if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", smoothness);
         if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
-        Texture2D asphalt = OSMRoadMeshBuilder.GetOrCreateAsphaltTexture();
-        if (mat.HasProperty("_MainTex")) { mat.SetTexture("_MainTex", asphalt); mat.SetTextureScale("_MainTex", textureScale); }
-
-        // FIX: disable culling so roads are visible regardless of winding
-        // order — belt-and-suspenders alongside the mesh fix in the builder.
-        if (mat.HasProperty("_Cull"))
-            mat.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
-
-        if (mat.HasProperty("_ZWrite"))  mat.SetFloat("_ZWrite",  1f);
-
         if (debugLogging) Debug.Log($"[RuntimeTarmacApplier] Tarmac material created: color={tarmacColor}, queue={mat.renderQueue}");
 
         return mat;

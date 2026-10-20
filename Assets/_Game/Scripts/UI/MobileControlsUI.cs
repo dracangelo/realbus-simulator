@@ -14,6 +14,7 @@ public class MobileControlsUI : MonoBehaviour
     public Button retarderButton, hornButton, shiftUpButton, shiftDownButton;
     public Button doorButton;
     public SteeringWheelControl steeringWheel;
+    RectTransform controlDock;
     public ControlScheme controlScheme;
     public float tiltSensitivity = 2f;
     [Range(0.25f, 1.5f)] public float steeringSensitivity = 1f;
@@ -39,19 +40,49 @@ public class MobileControlsUI : MonoBehaviour
 
     void ApplyCinematicLayout()
     {
-        StyleControl(accelerateButton,  "ACCEL", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-138f, 28f),  new Vector2(110f, 230f), 18f);
-        StyleControl(brakeButton,       "BRAKE", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-264f, 28f),  new Vector2(116f, 190f), 17f);
-        StyleControl(steerLeftButton,   "‹",     Vector2.zero,         Vector2.zero,         new Vector2( 34f,  34f),  new Vector2(170f, 170f), 72f);
-        StyleControl(steerRightButton,  "›",     Vector2.zero,         Vector2.zero,         new Vector2(220f,  34f),  new Vector2(170f, 170f), 72f);
-        StyleControl(shiftDownButton,   "▼",     new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 286f),  new Vector2(92f,  72f),  34f);
-        StyleControl(shiftUpButton,     "▲",     new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 370f),  new Vector2(92f,  72f),  34f);
-        StyleControl(retarderButton,    "R",     new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 458f),  new Vector2(92f,  78f),  28f, UITheme.Accent);
-        StyleControl(hornButton,        "HORN",  new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 550f),  new Vector2(92f,  78f),  15f);
-        doorButton = EnsureActionButton(doorButton, "DoorButton", "DOOR");
-        StyleControl(doorButton,        "DOOR",  new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-44f, 642f),  new Vector2(92f,  78f),  14f);
+        // Primary driving controls keep the two corners a thumb expects: steering
+        // on the left, pedals on the right.
+        StyleControl(accelerateButton,  "ACCEL", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-138f, 24f), new Vector2(112f, 224f), 18f, UITheme.BusAmber, new Color(.11f, .085f, .045f, .95f));
+        StyleControl(brakeButton,       "BRAKE", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-262f, 24f), new Vector2(116f, 188f), 17f, new Color(1f, .45f, .4f, .85f), new Color(.10f, .05f, .05f, .95f));
+        StyleControl(steerLeftButton,   "‹",     Vector2.zero,         Vector2.zero,         new Vector2(34f,  30f),  new Vector2(168f, 168f), 72f);
+        StyleControl(steerRightButton,  "›",     Vector2.zero,         Vector2.zero,         new Vector2(218f, 30f),  new Vector2(168f, 168f), 72f);
+
+        // Secondary actions live in a compact dock along the bottom centre. The old
+        // right-hand column stacked up to y=642, which climbed into the HUD (and the
+        // camera/pause buttons) on wide, short screens.
+        EnsureControlDock();
+        StyleControl(shiftUpButton,     "▲",     new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(-166f, 18f), new Vector2(70f, 62f), 24f);
+        StyleControl(shiftDownButton,   "▼",     new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(-86f,  18f), new Vector2(70f, 62f), 24f);
+        StyleControl(retarderButton,    "R",     new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(-6f,   18f), new Vector2(70f, 62f), 22f, UITheme.Accent);
+        StyleControl(hornButton,        "HORN",  new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(74f,   18f), new Vector2(70f, 62f), 13f);
+        doorButton = EnsureActionButton(doorButton, "DoorButton", "DOORS");
+        StyleControl(doorButton,        "DOORS", new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(154f, 18f), new Vector2(82f, 62f), 12f);
+
         AddPedalGrooves(accelerateButton, 5);
         AddPedalGrooves(brakeButton, 4);
+        AddPedalCap(accelerateButton, UITheme.BusAmber);
+        AddPedalCap(brakeButton, new Color(1f, .45f, .4f, .85f));
         EnsureSteeringWheel();
+    }
+
+    void EnsureControlDock()
+    {
+        if (controlDock != null) return;
+        GameObject dock = new GameObject("ControlDock", typeof(RectTransform), typeof(Image));
+        dock.transform.SetParent(transform, false);
+        controlDock = dock.GetComponent<RectTransform>();
+        controlDock.anchorMin = controlDock.anchorMax = controlDock.pivot = new Vector2(.5f, 0f);
+        controlDock.anchoredPosition = new Vector2(0f, 10f);
+        controlDock.sizeDelta = new Vector2(430f, 82f);
+        Image image = dock.GetComponent<Image>();
+        image.color = new Color(.03f, .045f, .055f, .88f);
+        image.raycastTarget = false;
+        RuntimeUiShapes.Rounded(image);
+        RuntimeUiShapes.SoftShadow(image, .55f, 8f);
+        Outline outline = dock.AddComponent<Outline>();
+        outline.effectColor = new Color(1f, 1f, 1f, .14f);
+        outline.effectDistance = new Vector2(2f, -2f);
+        dock.transform.SetAsFirstSibling();
     }
 
     Button EnsureActionButton(Button button, string objectName, string label)
@@ -99,27 +130,52 @@ public class MobileControlsUI : MonoBehaviour
         RectTransform rect = spoke.rectTransform; rect.anchorMin = rect.anchorMax = Vector2.zero; rect.pivot = new Vector2(0f, .5f); rect.anchoredPosition = position; rect.sizeDelta = new Vector2(105f, 22f); rect.localEulerAngles = new Vector3(0f, 0f, angle);
     }
 
-    static void StyleControl(Button button, string label, Vector2 anchor, Vector2 pivot, Vector2 position, Vector2 size, float fontSize, Color? accent = null)
+    static void StyleControl(Button button, string label, Vector2 anchor, Vector2 pivot, Vector2 position, Vector2 size, float fontSize, Color? accent = null, Color? fill = null)
     {
         if (!button) return;
         RectTransform rect = button.transform as RectTransform;
         rect.anchorMin = rect.anchorMax = anchor; rect.pivot = pivot; rect.anchoredPosition = position; rect.sizeDelta = size; rect.localScale = Vector3.one;
+        Color accentColor = accent ?? new Color(1f, 1f, 1f, .48f);
         Image image = button.GetComponent<Image>();
         if (image)
         {
-            image.color = new Color(.035f, .04f, .042f, .92f);
+            image.color = fill ?? new Color(.035f, .04f, .042f, .92f);
+            image.raycastTarget = true;
             bool circular = Mathf.Abs(size.x - size.y) < 18f && Mathf.Max(size.x, size.y) <= 190f;
             if (circular) RuntimeUiShapes.Circle(image); else RuntimeUiShapes.Rounded(image);
             RuntimeUiShapes.SoftShadow(image, .42f, 7f);
         }
         Outline outline = button.GetComponent<Outline>(); if (!outline) outline = button.gameObject.AddComponent<Outline>();
-        outline.effectColor = accent ?? new Color(1f, 1f, 1f, .48f); outline.effectDistance = new Vector2(3f, -3f);
+        outline.effectColor = accentColor; outline.effectDistance = new Vector2(3f, -3f);
+        ColorBlock colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1.12f, 1.12f, 1.12f, 1f);
+        colors.pressedColor = new Color(.82f, .82f, .82f, 1f);
+        colors.selectedColor = Color.white;
+        colors.disabledColor = new Color(.5f, .5f, .5f, .5f);
+        colors.fadeDuration = .08f;
+        button.colors = colors;
         TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>(true);
         if (text)
         {
             text.text = label; text.fontSize = fontSize; text.font = UITheme.GetFont(UITheme.FontWeight.Bold);
             text.color = accent ?? UITheme.TextPrimary; text.alignment = TextAlignmentOptions.Center;
+            text.textWrappingMode = TextWrappingModes.NoWrap; text.overflowMode = TextOverflowModes.Ellipsis;
         }
+    }
+
+    static void AddPedalCap(Button button, Color color)
+    {
+        if (button == null || button.transform.Find("PedalCap") != null) return;
+        Image cap = new GameObject("PedalCap", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        cap.transform.SetParent(button.transform, false);
+        cap.color = new Color(color.r, color.g, color.b, .85f);
+        cap.raycastTarget = false;
+        RuntimeUiShapes.Rounded(cap);
+        RectTransform rect = cap.rectTransform;
+        rect.anchorMin = new Vector2(.16f, 1f); rect.anchorMax = new Vector2(.84f, 1f); rect.pivot = new Vector2(.5f, 1f);
+        rect.anchoredPosition = new Vector2(0f, -6f); rect.sizeDelta = new Vector2(0f, 6f);
+        cap.transform.SetAsFirstSibling();
     }
 
     static void AddPedalGrooves(Button button, int count)
@@ -239,6 +295,7 @@ public class MobileControlsUI : MonoBehaviour
         Add(accelerateButton, list); Add(brakeButton, list); Add(steerLeftButton, list); Add(steerRightButton, list);
         Add(retarderButton, list); Add(hornButton, list); Add(shiftUpButton, list); Add(shiftDownButton, list);
         Add(doorButton, list);
+        if (controlDock != null) list.Add(controlDock);
         if (steeringWheel != null) list.Add(steeringWheel.GetComponent<RectTransform>());
         return list.ToArray();
     }

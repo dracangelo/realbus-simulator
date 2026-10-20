@@ -29,8 +29,11 @@ public class PedestrianSpawner : MonoBehaviour
 
     [Header("Pedestrians")]
     public GameObject pedestrianPrefab;
-    // Raised from 50 so crossings are busy enough to read as a living city.
-    public int maxActivePedestrians = 120;
+    // Raised from 50 so crossings are busy enough to read as a living city. The
+    // imported pedestrian is a multi-part model (about ten renderers each), so 120
+    // of them meant 1,200 draw calls for people who are a few pixels tall at the
+    // far end of the street. 64 still fills a crossing while halving that bill.
+    public int maxActivePedestrians = 64;
     public float spawnCheckInterval = 0.5f;
     public float walkSpeed = 1.4f;
     public bool logSpawnEvents = false;
@@ -70,6 +73,10 @@ public class PedestrianSpawner : MonoBehaviour
         for (int i = 0; i < maxActivePedestrians; i++)
         {
             var go = Instantiate(pedestrianPrefab, transform);
+            // Pedestrians are too small for their shadows to read as anything but
+            // extra draw calls; the street keeps the building shadows.
+            foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             var pedestrian = go.GetComponent<SimplePedestrian>() ?? go.AddComponent<SimplePedestrian>();
             go.SetActive(false); spare.Push(pedestrian);
         }

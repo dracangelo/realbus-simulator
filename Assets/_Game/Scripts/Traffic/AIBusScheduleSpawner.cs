@@ -20,14 +20,34 @@ public class AIBusScheduleSpawner : MonoBehaviour
     public GameObject aiBusPrefab;
     public ScheduledAIBusRoute[] routes;
 
+    [Header("Spawn Safety")]
+    [Tooltip("An ambient bus is never placed closer than this to the player's bus.")]
+    public float minPlayerSpawnDistanceMeters = 80f;
+    [Tooltip("An ambient bus is never placed in the player's forward corridor within this distance.")]
+    public float playerAheadClearanceMeters = 120f;
+    public float playerAheadHalfWidthMeters = 10f;
+    [Tooltip("Minimum gap between a spawned bus and any other active traffic body.")]
+    public float vehicleSpawnClearanceMeters = 18f;
+    [Tooltip("Real-time seconds to wait before retrying a route whose spawn point was blocked.")]
+    public float blockedRetrySeconds = 5f;
+
     readonly Dictionary<int, int[]> routeSequences = new Dictionary<int, int[]>();
     readonly Stack<GameObject> spare = new Stack<GameObject>();
     readonly Dictionary<int, float> nextSpawnTimeByRoute = new Dictionary<int, float>();
+    readonly Dictionary<int, float> retryAfterRealtime = new Dictionary<int, float>();
     readonly Dictionary<int, int> activeByRoute = new Dictionary<int, int>();
+    Transform playerBus;
 
     void Start()
     {
         if (routes == null || routes.Length == 0) return;
+
+        // Freeze the side of the road before any bus is placed.
+        for (int i = 0; i < routes.Length; i++)
+            if (routes[i] != null && routes[i].graph != null)
+                routes[i].graph.SyncDrivingSide();
+
+        ResolvePlayerBus();
 
         int capacity = 0;
         foreach (var route in routes) if (route != null) capacity += Mathf.Max(1, route.maxConcurrentBuses);
@@ -47,6 +67,7 @@ public class AIBusScheduleSpawner : MonoBehaviour
     {
         if (aiBusPrefab == null || routes == null) return;
 
+        ResolvePlayerBus();
         float now = ScheduleManager.Instance != null ? ScheduleManager.Instance.currentTimeMinutes : 8f * 60f;
         for (int i = 0; i < routes.Length; i++)
         {
@@ -60,33 +81,173 @@ public class AIBusScheduleSpawner : MonoBehaviour
 
             if (now >= nextSpawnTimeByRoute[i] && spare.Count > 0 && AIVehicleController.ActiveCount < 20)
             {
-                SpawnBusOnRoute(i, route, resolvedSequence);
-                nextSpawnTimeByRoute[i] = now + Mathf.Max(2f, route.headwayMinutes);
+                // A blocked spawn is retried on a real-time timer rather than a whole
+                // headway: ambient buses should fill a gap in the street, not skip it.
+                retryAfterRealtime.TryGetValue(i, out float retryAt);
+                if (Time.time < retryAt) continue;
+
+                bool spawned = SpawnBusOnRoute(i, route, resolvedSequence);
+                if (spawned)
+                {
+                    nextSpawnTimeByRoute[i] = now + Mathf.Max(2f, route.headwayMinutes);
+                    retryAfterRealtime[i] = 0f;
+                }
+                else
+                {
+                    retryAfterRealtime[i] = Time.time + Mathf.Max(1f, blockedRetrySeconds);
+                }
             }
         }
     }
 
-    void SpawnBusOnRoute(int routeIndex, ScheduledAIBusRoute route, int[] sequence)
+    bool SpawnBusOnRoute(int routeIndex, ScheduledAIBusRoute route, int[] sequence)
     {
-        int startNode = sequence[0];
-        if (!route.graph.IsValidNode(startNode)) return;
+        if (route == null || route.graph == null || sequence == null || sequence.Length < 2 || spare.Count == 0)
+            return false;
+
+        if (!TryPickSpawnLink(route.graph, sequence, out int startIndex, out int lane, out _))
+            return false;
 
         GameObject go = spare.Pop();
-        go.transform.position = route.graph.GetNodePosition(startNode);
-        go.transform.rotation = Quaternion.LookRotation(route.graph.GetNodePosition(sequence[1]) - go.transform.position);
-        go.SetActive(true);
+        if (go == null) return false;
+
         var ai = go.GetComponent<AIVehicleController>();
         if (ai == null) ai = go.AddComponent<AIVehicleController>();
-        ai.Init(route.graph, startNode, 0, AIVehicleController.VehicleType.Bus);
-        ai.targetNodeIndex = sequence[1];
-        ai.currentSpeedKmh = 0f;
+        var spline = go.GetComponent<SplineVehicle>();
+        if (spline == null) spline = go.AddComponent<SplineVehicle>();
+        var rb = go.GetComponent<Rigidbody>();
+        if (rb == null) rb = go.AddComponent<Rigidbody>();
+        if (go.GetComponent<TrafficParticipant>() == null) go.AddComponent<TrafficParticipant>();
         if (go.GetComponent<ScheduledTrafficTier>() == null) go.AddComponent<ScheduledTrafficTier>();
+
+        int startNode = sequence[startIndex];
+        int targetNode = sequence[startIndex + 1];
+
+        // Place the body on its own lane while it is still inactive, so the first
+        // visible frame is already at the spawn point.
+        ai.Init(route.graph, startNode, lane, AIVehicleController.VehicleType.Bus);
+        ai.PlaceOnLane(startNode, targetNode, lane);
+        ai.targetNodeIndex = targetNode;
+        ai.currentSpeedKmh = 0f;
+
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.detectCollisions = true;
+            rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // Starting mid-route is fine for ambient traffic, and it means a blocked
+        // stop near the player does not permanently stall the whole route.
+        int[] runSequence = sequence;
+        if (startIndex > 0)
+        {
+            runSequence = new int[sequence.Length - startIndex];
+            System.Array.Copy(sequence, startIndex, runSequence, 0, runSequence.Length);
+        }
 
         var runner = go.GetComponent<AIBusRouteRunner>();
         if (runner == null) runner = go.AddComponent<AIBusRouteRunner>();
-        runner.Init(sequence, () => { activeByRoute[routeIndex] = Mathf.Max(0, activeByRoute[routeIndex] - 1); if (go != null) { go.SetActive(false); spare.Push(go); } });
+        runner.Init(runSequence, () =>
+        {
+            activeByRoute[routeIndex] = Mathf.Max(0, activeByRoute[routeIndex] - 1);
+            if (go != null) { go.SetActive(false); spare.Push(go); }
+        });
 
+        go.SetActive(true);
         activeByRoute[routeIndex]++;
+        return true;
+    }
+
+    /// <summary>
+    /// Chooses a link on the route whose lane point is clear of the player and of
+    /// every other traffic body. Tries links in a random order so two buses of the
+    /// same route do not always appear at the same junction.
+    /// </summary>
+    bool TryPickSpawnLink(AIRoadGraph graph, int[] sequence, out int startIndex, out int lane, out Vector3 point)
+    {
+        startIndex = -1;
+        lane = 0;
+        point = Vector3.zero;
+        if (graph == null || sequence == null || sequence.Length < 2)
+            return false;
+
+        int linkCount = sequence.Length - 1;
+        int first = linkCount > 1 ? Random.Range(0, linkCount) : 0;
+        for (int offset = 0; offset < linkCount; offset++)
+        {
+            int index = (first + offset) % linkCount;
+            int from = sequence[index];
+            int to = sequence[index + 1];
+            if (!graph.IsValidNode(from) || !graph.IsValidNode(to))
+                continue;
+
+            // A bus is 10-12 m long; a link shorter than that has no room for it.
+            if (Vector3.Distance(graph.GetNodePosition(from), graph.GetNodePosition(to)) < 8f)
+                continue;
+
+            int laneCount = Mathf.Max(1, graph.GetLaneCount(from, to));
+            int candidateLane = Random.Range(0, laneCount);
+            Vector3 candidatePoint = GetLanePoint(graph, from, to, candidateLane);
+            if (!IsSpawnPointClear(candidatePoint))
+                continue;
+
+            startIndex = index;
+            lane = candidateLane;
+            point = candidatePoint;
+            return true;
+        }
+
+        return false;
+    }
+
+    static Vector3 GetLanePoint(AIRoadGraph graph, int fromNode, int toNode, int lane)
+    {
+        Vector3 point = graph.GetNodePosition(fromNode);
+        Vector3 segment = graph.GetNodePosition(toNode) - point;
+        segment.y = 0f;
+        if (segment.sqrMagnitude < .0001f)
+            return point;
+
+        segment.Normalize();
+        return point + Vector3.Cross(Vector3.up, segment) * graph.GetLaneOffset(fromNode, toNode, lane);
+    }
+
+    bool IsSpawnPointClear(Vector3 point)
+    {
+        if (playerBus != null)
+        {
+            Vector3 offset = point - playerBus.position;
+            offset.y = 0f;
+            if (offset.magnitude < minPlayerSpawnDistanceMeters)
+                return false;
+
+            // A legal straight-line distance is not enough when the point is dead
+            // ahead: at road speed the bus would reach it before it could react.
+            float ahead = Vector3.Dot(playerBus.forward, offset);
+            float lateral = Mathf.Abs(Vector3.Dot(playerBus.right, offset));
+            if (ahead > 0f && ahead < playerAheadClearanceMeters && lateral < playerAheadHalfWidthMeters)
+                return false;
+        }
+
+        return TrafficParticipant.IsSpawnAreaClear(point, vehicleSpawnClearanceMeters);
+    }
+
+    void ResolvePlayerBus()
+    {
+        var mission = MissionManager.Instance;
+        if (mission != null && mission.busController != null && mission.busController.gameObject.activeInHierarchy)
+        {
+            playerBus = mission.busController.transform;
+            return;
+        }
+
+        if (playerBus != null) return;
+        var bus = FindAnyObjectByType<BusController>();
+        if (bus != null) playerBus = bus.transform;
     }
 
     void EnsureRouteState(int routeIndex, float now)

@@ -106,26 +106,34 @@ public class DepotTrafficSpawner : MonoBehaviour
         Vector3[] turn = lanes[1];
         Vector3[] exit = lanes[2];
 
-        // The road lies beyond the kerb, away from the yard centre, so the lane
-        // offset is simply "keep going past the kerb".
-        Vector3 toStreet = kerbWorld - yardTransform.position;
-        toStreet.y = 0f;
-        if (toStreet.sqrMagnitude < 0.01f) toStreet = yardTransform.right;
-        Vector3 streetLane = toStreet.normalized * streetLaneOffsetMeters;
+        // The road lies beyond the kerb, away from the yard centre. The depot sits
+        // slightly along the road from the kerb point, so the straight line to it is
+        // diagonal; take the component across the road only, or the ambient lane is
+        // dragged up the street instead of sitting in the near lane.
+        Vector3 toKerb = kerbWorld - yardTransform.position;
+        toKerb.y = 0f;
         Vector3 streetAxis = yardTransform.forward;
+        Vector3 outward = Vector3.ProjectOnPlane(toKerb, streetAxis);
+        if (outward.sqrMagnitude < 0.01f) outward = yardTransform.right;
+        Vector3 streetLane = outward.normalized * streetLaneOffsetMeters;
 
         Vector3 entryMouth = Flat(entry[0], groundY);
         Vector3 exitMouth = Flat(exit[exit.Length - 1], groundY);
 
+        // The street lane is measured from the KERB, not from the driveway mouth.
+        // The mouths now reach onto the carriageway, so measuring from them would
+        // push the approach and departure nodes up to a lane too far across the road.
+        Vector3 streetBase = Flat(kerbWorld, groundY) + streetLane;
+
         var positions = new Vector3[NodeCount];
-        positions[StreetApproachNode] = entryMouth + streetAxis * approachDistanceMeters + streetLane;
+        positions[StreetApproachNode] = streetBase + streetAxis * approachDistanceMeters;
         positions[EntryMouthNode] = entryMouth;
         positions[EntryDeepNode] = Flat(entry[entry.Length - 1], groundY);
         positions[TurnInNode] = Flat(turn[1], groundY);
         positions[TurnOutNode] = Flat(turn[2], groundY);
         positions[ExitDeepNode] = Flat(exit[0], groundY);
         positions[ExitMouthNode] = exitMouth;
-        positions[StreetDepartureNode] = exitMouth - streetAxis * approachDistanceMeters + streetLane;
+        positions[StreetDepartureNode] = streetBase - streetAxis * approachDistanceMeters;
 
         graph = gameObject.GetComponent<AIRoadGraph>();
         if (graph == null) graph = gameObject.AddComponent<AIRoadGraph>();

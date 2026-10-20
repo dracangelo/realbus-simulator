@@ -122,8 +122,12 @@ public class GarageProgressionPanel : MonoBehaviour
         }
 
         liveryEditor = gameObject.GetComponent<LiveryEditor>();
-        if (liveryEditor == null) liveryEditor = gameObject.AddComponent<LiveryEditor>();
         BusController bus = FindAnyObjectByType<BusController>();
+        // Prefer the editor that already lives on the player bus so the garage
+        // and gameplay share one current livery instead of each keeping a copy.
+        if (bus != null && bus.GetComponent<LiveryEditor>() != null)
+            liveryEditor = bus.GetComponent<LiveryEditor>();
+        if (liveryEditor == null) liveryEditor = gameObject.AddComponent<LiveryEditor>();
         Renderer[] renderers = bus != null ? bus.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
         liveryEditor.Initialize(activeBus.busId, renderers);
 

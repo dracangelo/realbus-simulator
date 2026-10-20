@@ -89,7 +89,15 @@ public class OfflineMapsUI : MonoBehaviour
             return;
         }
 
-        predownloader.StartDownloadForCity(city);
+        if (!predownloader.StartDownloadForCity(city))
+        {
+            string failure = string.IsNullOrWhiteSpace(predownloader.LastFailure)
+                ? "Offline map could not start. The built-in city layout is still playable."
+                : predownloader.LastFailure;
+            if (progressLabel != null) progressLabel.text = failure;
+            SubtitleManager.EnsureExists().Show("Offline maps", failure, 4f);
+            return;
+        }
         SetProgress(progress);
     }
 

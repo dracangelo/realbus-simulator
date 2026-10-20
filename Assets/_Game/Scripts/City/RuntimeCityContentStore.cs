@@ -17,14 +17,43 @@ public static class RuntimeCityContentStore
         return Path.Combine(CityDirectory(city != null ? city.cityCode : null), Path.GetFileName(fileName));
     }
 
+    public static string BundledPath(CityDefinition city, string fileName)
+    {
+        return Path.Combine(Application.streamingAssetsPath, "Cities",
+            city != null && !string.IsNullOrWhiteSpace(city.cityCode) ? city.cityCode : "NBO",
+            Path.GetFileName(fileName));
+    }
+
     public static string ResolveReadPath(CityDefinition city, string fileName)
     {
         string downloaded = WritablePath(city, fileName);
         if (IsUsefulFile(downloaded)) return downloaded;
-        return Path.Combine(Application.streamingAssetsPath, "Cities", city != null ? city.cityCode : "NBO", Path.GetFileName(fileName));
+        return BundledPath(city, fileName);
     }
 
     public static bool IsDownloaded(CityDefinition city, string fileName) => IsUsefulFile(WritablePath(city, fileName));
+
+    /// <summary>True when the shipped city pack already contains this file.</summary>
+    public static bool HasBundledFile(CityDefinition city, string fileName) => IsUsefulFile(BundledPath(city, fileName));
+
+    /// <summary>True when the game can read this file, downloaded or shipped.</summary>
+    public static bool IsAvailable(CityDefinition city, string fileName)
+        => IsDownloaded(city, fileName) || HasBundledFile(city, fileName);
+
+    /// <summary>
+    /// Routes are split across two storage models: an imported routes.json, or the
+    /// route assets referenced by the city definition. Both are playable without a
+    /// fresh download, so the menu should not imply the city has no routes.
+    /// </summary>
+    public static bool HasRouteData(CityDefinition city)
+        => IsAvailable(city, "routes.json") || (city != null && city.availableRoutes != null && city.availableRoutes.Length > 0);
+
+    public static string SourceLabel(CityDefinition city, string fileName)
+    {
+        if (IsDownloaded(city, fileName)) return "downloaded";
+        if (HasBundledFile(city, fileName)) return "built-in";
+        return "missing";
+    }
 
     public static long GetDownloadedBytes(CityDefinition city)
     {

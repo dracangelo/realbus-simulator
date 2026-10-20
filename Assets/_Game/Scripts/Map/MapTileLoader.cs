@@ -44,12 +44,21 @@ public class MapTileLoader : MonoBehaviour
 
     [Header("Tile Visual Quality")]
     public bool forceSharpTileFiltering = true;
-    [Range(-2f, 2f)] public float tileMipMapBias = -0.75f;
+    [Tooltip("Negative values sharpen the ground but make distant rows crawl. Kept near zero so the imagery stays stable while the bus moves.")]
+    [Range(-2f, 2f)] public float tileMipMapBias = 0f;
     [Range(1, 16)] public int tileAnisoLevel = 16;
 
-    private List<GameObject> activeTiles = new List<GameObject>();
+    // Tiles are kept, not rebuilt: a follow update used to destroy all 25 quads and
+    // download them again every time the bus crossed half a tile. That made the
+    // ground blink out and back, and it spent a frame or two uploading 25 textures
+    // while the bus was moving. The window now slides: tiles that stay in range are
+    // left untouched, only the newly exposed ring is fetched, and only tiles that
+    // left the window are destroyed.
+    private readonly Dictionary<Vector2Int, GameObject> activeTiles = new Dictionary<Vector2Int, GameObject>();
+    private readonly HashSet<Vector2Int> requestedTiles = new HashSet<Vector2Int>();
     private OfflineCacheManager cacheManager;
     private int centerTileX, centerTileY;
+    private int activeZoom = -1;
     private int loadVersion;
     private bool initStarted;
     private bool loggedFirstTile;
@@ -57,6 +66,29 @@ public class MapTileLoader : MonoBehaviour
     /// <summary>True once the map tile directly beneath the route start / city
     /// centre has been downloaded and displayed.</summary>
     public bool CenterTileLoaded => centerTileLoaded;
+    public int LoadedTileCount => activeTiles.Count;
+    public int RequestedTileCount => requestedTiles.Count;
+
+    /// <summary>
+    /// True once the high-priority tile ring around the centre is on screen.
+    /// The loading overlay uses this instead of the single centre tile: the
+    /// player steps out of a bus that fills the middle of the screen, so a
+    /// one-tile world still showed bare fallback plane down both sides of the road.
+    /// </summary>
+    public bool NearTilesLoaded
+    {
+        get
+        {
+            if (!centerTileLoaded) return false;
+            int ring = Mathf.Clamp(Mathf.Min(tilesX, tilesY) / 2, 1, 2);
+            for (int dx = -ring; dx <= ring; dx++)
+            for (int dy = -ring; dy <= ring; dy++)
+                if (!activeTiles.ContainsKey(new Vector2Int(centerTileX + dx, centerTileY + dy)))
+                    return false;
+            return true;
+        }
+    }
+
     private int tileFailureLogCount;
     private bool loggedAuthFailureHint;
     private bool authFailureDetected;
@@ -232,10 +264,21 @@ public class MapTileLoader : MonoBehaviour
         // sequence has seen a city, so the credential is resolved here too.
         ResolveTokenOnce();
 
-        ClearTiles();
         loadVersion++;
-        centerTileLoaded = false;
+        // In-flight requests belong to the previous window. They abandon themselves on
+        // the version check, so their coordinates are released rather than leaked.
+        requestedTiles.Clear();
         authFailureDetected = false;
+
+        // A tile coordinate means nothing without its zoom: z15/100,200 and
+        // z17/100,200 are different pieces of ground. Changing zoom (city switch,
+        // quality change) has to start from a clean window or the old imagery would
+        // be considered already loaded.
+        if (zoom != activeZoom)
+        {
+            ClearTiles();
+            activeZoom = zoom;
+        }
 
         centreLat = lat;
         centreLon = lon;
@@ -244,42 +287,102 @@ public class MapTileLoader : MonoBehaviour
         centerTileX = LonToTileX(lon, zoom);
         centerTileY = LatToTileY(lat, zoom);
 
-        int halfX = tilesX / 2;
-        int halfY = tilesY / 2;
-        int localVersion = loadVersion;
+        var window = SurroundingTiles(centerTileX, centerTileY, tilesX, tilesY);
+        var wanted = new HashSet<Vector2Int>(window);
 
-        var highPriority = new List<(int x, int y)>();
-        var deferred = new List<(int x, int y, int ring)>();
+        // Drop only what left the window. Everything else keeps its quad, material
+        // and texture, so the ground never has a hole and no texture is re-uploaded.
+        var stale = new List<Vector2Int>();
+        foreach (var pair in activeTiles)
+            if (!wanted.Contains(pair.Key)) stale.Add(pair.Key);
+        for (int i = 0; i < stale.Count; i++) DestroyTile(stale[i]);
 
-        for (int x = -halfX; x <= halfX; x++)
+        centerTileLoaded = activeTiles.ContainsKey(new Vector2Int(centerTileX, centerTileY));
+        if (centerTileLoaded) HideFallbackPlane();
+
+        var highPriority = new List<Vector2Int>();
+        var deferred = new List<(Vector2Int tile, int ring)>();
+
+        for (int i = 0; i < window.Count; i++)
         {
-            for (int y = -halfY; y <= halfY; y++)
-            {
-                int ring = Mathf.Max(Mathf.Abs(x), Mathf.Abs(y));
-                if (ring <= Mathf.Max(0, highPriorityRing))
-                    highPriority.Add((x, y));
-                else
-                    deferred.Add((x, y, ring));
-            }
+            Vector2Int tile = window[i];
+            if (activeTiles.ContainsKey(tile) || !requestedTiles.Add(tile)) continue;
+
+            int dx = tile.x - centerTileX;
+            int dy = tile.y - centerTileY;
+            int ring = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+            if (ring <= Mathf.Max(0, highPriorityRing))
+                highPriority.Add(tile);
+            else
+                deferred.Add((tile, ring));
         }
 
-        highPriority.Sort((a, b) => (a.x * a.x + a.y * a.y).CompareTo(b.x * b.x + b.y * b.y));
+        Transform viewer = MissionManager.Instance != null && MissionManager.Instance.busController != null
+            ? MissionManager.Instance.busController.transform
+            : null;
+        if (viewer == null)
+        {
+            var bus = FindAnyObjectByType<BusController>();
+            if (bus != null) viewer = bus.transform;
+        }
+        Vector3 viewOrigin = viewer != null ? viewer.position : transform.position;
+        Vector3 viewForward = viewer != null ? ViewPriority.ResolveForward(viewer) : Vector3.forward;
+
+        highPriority.Sort((a, b) =>
+        {
+            float scoreA = ViewPriority.Score(viewOrigin, viewForward, ViewPriority.DefaultFovDegrees, TileCenterWorld(a));
+            float scoreB = ViewPriority.Score(viewOrigin, viewForward, ViewPriority.DefaultFovDegrees, TileCenterWorld(b));
+            return scoreA.CompareTo(scoreB);
+        });
         deferred.Sort((a, b) => a.ring != b.ring
             ? a.ring.CompareTo(b.ring)
-            : (a.x * a.x + a.y * a.y).CompareTo(b.x * b.x + b.y * b.y));
+            : ViewPriority.Score(viewOrigin, viewForward, ViewPriority.DefaultFovDegrees, TileCenterWorld(a.tile))
+                .CompareTo(ViewPriority.Score(viewOrigin, viewForward, ViewPriority.DefaultFovDegrees, TileCenterWorld(b.tile))));
 
+        int localVersion = loadVersion;
         for (int i = 0; i < highPriority.Count; i++)
         {
-            var item = highPriority[i];
-            StartCoroutine(DownloadTile(centerTileX + item.x, centerTileY + item.y, item.x, item.y, zoom, localVersion));
+            Vector2Int tile = highPriority[i];
+            StartCoroutine(DownloadTile(tile.x, tile.y, tile.x - centerTileX, tile.y - centerTileY, zoom, localVersion));
         }
 
         for (int i = 0; i < deferred.Count; i++)
         {
-            var item = deferred[i];
+            Vector2Int tile = deferred[i].tile;
             float delay = Mathf.Max(0f, deferredTileStartDelay) * (i + 1);
-            StartCoroutine(DownloadTileDelayed(centerTileX + item.x, centerTileY + item.y, item.x, item.y, zoom, localVersion, delay));
+            StartCoroutine(DownloadTileDelayed(tile.x, tile.y, tile.x - centerTileX, tile.y - centerTileY, zoom, localVersion, delay));
         }
+    }
+
+    /// <summary>
+    /// The tile coordinates a loader of this size wants centred on a tile, ordered
+    /// centre-out. Kept pure so the window can be checked without a network or a scene.
+    /// </summary>
+    public static List<Vector2Int> SurroundingTiles(int centerX, int centerY, int sizeX, int sizeY)
+    {
+        int halfX = Mathf.Max(0, sizeX) / 2;
+        int halfY = Mathf.Max(0, sizeY) / 2;
+        var tiles = new List<Vector2Int>(Mathf.Max(1, sizeX * sizeY));
+        for (int x = -halfX; x <= halfX; x++)
+            for (int y = -halfY; y <= halfY; y++)
+                tiles.Add(new Vector2Int(centerX + x, centerY + y));
+
+        tiles.Sort((a, b) => FlatDistanceSq(a, centerX, centerY).CompareTo(FlatDistanceSq(b, centerX, centerY)));
+        return tiles;
+    }
+
+    static int FlatDistanceSq(Vector2Int tile, int centerX, int centerY)
+    {
+        int dx = tile.x - centerX;
+        int dy = tile.y - centerY;
+        return dx * dx + dy * dy;
+    }
+
+    Vector3 TileCenterWorld(Vector2Int tile)
+    {
+        double lat = TileYToLat(tile.y + 0.5, zoomLevel);
+        double lon = TileXToLon(tile.x + 0.5, zoomLevel);
+        return GpsToWorldPosition(lat, lon);
     }
 
     IEnumerator DownloadTileDelayed(int tileX, int tileY, int offsetX, int offsetY, int zoom, int version, float delay)
@@ -349,6 +452,17 @@ public class MapTileLoader : MonoBehaviour
     {
         ApplyTileTextureSettings(tex);
 
+        var key = new Vector2Int(tileX, tileY);
+        requestedTiles.Remove(key);
+        if (activeTiles.ContainsKey(key))
+        {
+            // A second response for the same tile can arrive if the window moved while
+            // the request was in flight. Keep the first quad rather than stacking a
+            // coplanar duplicate that would z-fight with it.
+            Destroy(tex);
+            return;
+        }
+
         GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
         quad.name = $"Tile_{tileX}_{tileY}";
         quad.transform.SetParent(transform, false);
@@ -378,11 +492,14 @@ public class MapTileLoader : MonoBehaviour
 
         var renderer = quad.GetComponent<Renderer>();
 
-        renderer.material = new Material(ResolveTileShader());
-        renderer.material.mainTexture = tex;
-        renderer.material.color = Color.white;
+        // A lit ground material, not Unlit/Texture. The imagery already carries its
+        // own baked shading, but an unlit quad ignores every shadow the buildings and
+        // trees cast, which is most of why the street read as flat. Standard keeps
+        // the imagery, receives the sun's cascaded shadows and takes fog, so the
+        // ground also fades into the haze instead of ending at a hard edge.
+        renderer.material = CreateGroundMaterial(tex);
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        renderer.receiveShadows = false;
+        renderer.receiveShadows = true;
 
         if (renderer.material.HasProperty("_Cull"))
             renderer.material.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
@@ -392,7 +509,7 @@ public class MapTileLoader : MonoBehaviour
         if (!keepTileColliders)
             Destroy(quad.GetComponent<Collider>());
         if (tileLayer > 0) quad.layer = tileLayer;
-        activeTiles.Add(quad);
+        activeTiles[key] = quad;
 
         if (tileX == centerTileX && tileY == centerTileY)
         {
@@ -416,25 +533,55 @@ public class MapTileLoader : MonoBehaviour
         tex.wrapMode = TextureWrapMode.Clamp;
         tex.filterMode = FilterMode.Trilinear;
         tex.anisoLevel = Mathf.Clamp(tileAnisoLevel, 1, 16);
-        tex.mipMapBias = tileMipMapBias;
+        // A negative bias sharpens the near ground but makes the far rows crawl as the
+        // bus moves; the old -0.75 was the shimmer. Zero keeps mip selection honest.
+        tex.mipMapBias = Mathf.Clamp(tileMipMapBias, -0.35f, 0f);
+    }
+
+    Material CreateGroundMaterial(Texture2D tex)
+    {
+        // Legacy Diffuse with fullforwardshadows: a shadow-receiving, fog-aware
+        // ground for a fraction of Standard's cost. Ground is the largest surface on
+        // screen, so the cheapest lit shader that still takes building shadows is the
+        // right one here. Standard is the fallback if a build strips the legacy shader.
+        Shader shader = Shader.Find("Legacy Shaders/Diffuse");
+        if (shader == null) shader = Shader.Find("Standard");
+        if (shader == null) shader = BuiltInShaders.UnlitTexture;
+
+        var material = new Material(shader) { name = "Mapbox Ground Tile" };
+        material.mainTexture = tex;
+        material.color = new Color(0.82f, 0.84f, 0.82f, 1f);
+        if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", 0.03f);
+        if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.03f);
+        if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
+        if (material.HasProperty("_Cull"))
+            material.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
+        return material;
     }
 
     Shader ResolveTileShader() => BuiltInShaders.UnlitTexture;
 
+    void DestroyTile(Vector2Int key)
+    {
+        if (!activeTiles.TryGetValue(key, out GameObject tile)) return;
+        activeTiles.Remove(key);
+        if (tile == null) return;
+
+        var renderer = tile.GetComponent<Renderer>();
+        if (renderer != null && renderer.sharedMaterial != null)
+        {
+            if (renderer.sharedMaterial.mainTexture != null) Destroy(renderer.sharedMaterial.mainTexture);
+            Destroy(renderer.sharedMaterial);
+        }
+        Destroy(tile);
+    }
+
     void ClearTiles()
     {
-        foreach (var tile in activeTiles)
-            if (tile != null)
-            {
-                var renderer = tile.GetComponent<Renderer>();
-                if (renderer != null && renderer.sharedMaterial != null)
-                {
-                    Destroy(renderer.sharedMaterial.mainTexture);
-                    Destroy(renderer.sharedMaterial);
-                }
-                Destroy(tile);
-            }
+        var keys = new List<Vector2Int>(activeTiles.Keys);
+        for (int i = 0; i < keys.Count; i++) DestroyTile(keys[i]);
         activeTiles.Clear();
+        requestedTiles.Clear();
         loggedFirstTile = false;
         centerTileLoaded = false;
         tileFailureLogCount = 0;
@@ -477,7 +624,12 @@ public class MapTileLoader : MonoBehaviour
         if (!hideFallbackPlaneWhenTilesLoad)
             return;
 
-        var plane = GameObject.Find(fallbackPlaneObjectName);
+        // The scene builder names its temporary ground "Fallback_Test_Plane",
+        // while older scenes used "Plane". Looking only for the serialized name
+        // left the 1.6 km fallback plane alive under the loaded tiles forever.
+        GameObject plane = GameObject.Find(fallbackPlaneObjectName);
+        if (plane == null) plane = GameObject.Find("Fallback_Test_Plane");
+        if (plane == null) plane = GameObject.Find("Plane");
         if (plane == null)
             return;
 

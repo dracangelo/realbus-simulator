@@ -13,9 +13,10 @@ using System.Collections.Generic;
 ///   2. TWO-SIDED MATERIAL — even with correct winding, a single-sided shader
 ///      will vanish if the camera ever dips below the road plane. CreateDefault-
 ///      RoadMaterial now sets _Cull = Off.
-///   3. Y-OFFSET — map tiles sit at y=0.15 (MapTileLoader.tileSurfaceY). Roads
-///      were at y=0.02, so they rendered *under* the tile quads. Default roadY-
-///      Offset bumped to 0.25 so roads are always on top of tiles.
+///   3. Y-OFFSET — map tiles sit at tileSurfaceY (0.12 in the generated scene).
+///      Roads were at y=0.02, so they rendered *under* the tile quads. The scene
+///      now sets roadYOffset to tileSurfaceY + 0.12, which is far enough apart
+///      that the depth buffer keeps the asphalt in front out to the fog wall.
 ///   4. CENTERLINE LOCAL-SPACE BUG — LineRenderer was set to useWorldSpace=false
 ///      but was given world-space positions converted via InverseTransformPoint on
 ///      a parent that sits at world origin, making them correct only when the
@@ -39,12 +40,14 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     [Header("Materials")]
     public Material roadMaterial;
     public Material pavementMaterial;
+    public Material shoulderMaterial;
 
     [Header("Road Model Visuals")]
     public bool useRoadModelInstances = true;
     public string roadModelResourcePath = "RoadsGenerated";
     public RoadModelForwardAxis roadModelForwardAxis = RoadModelForwardAxis.ZAxis;
-    public float roadModelSurfaceLift = 0.01f;
+    [Tooltip("Metres the imported road piece sits above the generated ribbon. The old 1 cm left the two coplanar surfaces fighting for depth at any distance, which made the asphalt flicker as the bus moved.")]
+    public float roadModelSurfaceLift = 0.05f;
     public bool overrideRoadModelMaterials = false;
 
     [Header("Median Barriers")]
@@ -72,8 +75,10 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     public float laneMarkingWidth = 0.15f;
     public float dashLengthMeters = 3.0f;
     public float dashGapMeters = 3.0f;
-    public Color laneMarkingWhiteColor = new Color(0.96f, 0.96f, 0.95f, 1f);
-    public Color laneMarkingYellowColor = new Color(1f, 0.8f, 0.12f, 1f);
+    // Weathered paint: fresh white is the brightest thing in a street and makes the
+    // asphalt around it read even darker.
+    public Color laneMarkingWhiteColor = new Color(0.70f, 0.70f, 0.67f, 1f);
+    public Color laneMarkingYellowColor = new Color(0.72f, 0.58f, 0.16f, 1f);
     public bool drawOuterEdgeLines = true;
     public float outerEdgeLineOffset = 0.22f;
 
@@ -88,6 +93,12 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     [Min(0.2f)] public float physicalBoundaryHeight = 0.7f;
     [Min(0f)] public float junctionOpeningMeters = 7f;
 
+    [Header("Road Shoulders")]
+    [Tooltip("A gravel/dirt verge between the asphalt edge and the kerb. It hides the razor-sharp seam where the ribbon meets the map tile.")]
+    public bool generateRoadShoulders = true;
+    [Min(0f)] public float shoulderWidth = 0.9f;
+    public Color shoulderColor = new Color(0.32f, 0.28f, 0.23f, 1f);
+
     [Header("State")]
     public bool roadsBuilt = false;
     public RoadSurfaceIndex SurfaceIndex { get; private set; }
@@ -99,7 +110,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     public PhysicsMaterial RoadColliderMaterial => ResolveRoadPhysicsMaterial();
 
     /// <summary>Asphalt material for a runtime-built road surface (depot driveway).</summary>
-    public Material RoadSurfaceMaterial() => roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
+    public Material RoadSurfaceMaterial() => ResolveRoadMaterial();
 
     /// <summary>
     /// Returns the road-side clearance index, creating an empty one before the OSM
@@ -121,7 +132,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     private bool medianBarrierLoadAttempted;
     private PhysicsMaterial runtimeRoadPhysicMaterial;
     private Material runtimeBoundaryMaterial;
+    private Material runtimeShoulderMaterial;
     private static Texture2D runtimeAsphaltTexture;
+    static bool loggedRoadMaterial;
 
     /// <summary>
     /// The active road builder, finding it in the scene when nothing has claimed
@@ -266,10 +279,21 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         var mf = roadObj.AddComponent<MeshFilter>();
         var mr = roadObj.AddComponent<MeshRenderer>();
         mf.mesh = mesh;
-        mr.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
+        // One shared asphalt material for every ribbon: the shader tiles in world
+        // space, so a per-renderer material bought nothing and broke batching.
+        mr.sharedMaterial = ResolveRoadMaterial();
+        if (!loggedRoadMaterial && mr.sharedMaterial != null)
+        {
+            loggedRoadMaterial = true;
+            Material road = mr.sharedMaterial;
+            Debug.Log($"Asphalt surface: shader={road.shader.name} " +
+                $"tone={(road.HasProperty("_Color") ? road.GetColor("_Color").ToString() : "n/a")} queue={road.renderQueue}");
+        }
         mr.enabled = renderRoadSurface;
         mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        mr.receiveShadows = false;
+        // Building and tree shadows have to fall across the road; without this the
+        // street is lit uniformly and reads as a flat ribbon.
+        mr.receiveShadows = true;
 
         if (ShouldUseRoadModelVisuals())
             BuildRoadModelVisuals(roadObj.transform, points, width, way.id);
@@ -286,6 +310,12 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (addPhysicalBoundaryColliders)
                 BuildPhysicalRoadBoundaries(roadObj.transform, sourcePoints, sourceNodeIds, data, width, way.id);
         }
+
+        // A gravel verge under the kerb, drawn before the boundary so the raised kerb
+        // sits on top. This is the roadside dirt/gravel detail between the asphalt and
+        // whatever the map tile shows.
+        if (generateRoadShoulders && shoulderWidth > 0.05f)
+            BuildRoadShoulders(points, width, way.id);
 
         if (autoGenerateMedianBarriers && way.ShouldGenerateMedianBarrier())
             BuildMedianBarrier(roadObj.transform, points, way.GetRoadWidth(), way.GetOneWayDirectionSign(), way.id);
@@ -376,16 +406,17 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         var tris  = new List<int>((points.Count - 1) * (lateralCols - 1) * 6);
         var uvs   = new List<Vector2>(points.Count * lateralCols);
         var uv2s  = new List<Vector2>(points.Count * lateralCols);
+        var uv3s  = new List<Vector2>(points.Count * lateralCols);
 
         float halfWidth  = width * 0.5f;
-        float uvProgress = 0f;
+        float alongDistance = 0f;
 
         for (int i = 0; i < points.Count; i++)
         {
             Vector3 offset = RoadJoinOffset(points, i, halfWidth);
 
             if (i > 0)
-                uvProgress += Vector3.Distance(points[i], points[i - 1]) / Mathf.Max(0.01f, width);
+                alongDistance += Vector3.Distance(points[i], points[i - 1]);
 
             for (int col = 0; col < lateralCols; col++)
             {
@@ -403,7 +434,12 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
                 verts.Add(vPos);
                 uvs.Add(new Vector2(vPos.x, vPos.z) * 0.1f);
-                uv2s.Add(new Vector2(tNorm * laneCount, uvProgress));
+                // UV2 is the asphalt shader's road frame: x is the lane coordinate
+                // (0 at the left kerb, laneCount at the right) and y is distance in
+                // metres along the ribbon. The shader uses it for wheel paths, edge
+                // dirt and markings that must not stretch with the way length.
+                uv2s.Add(new Vector2(tNorm * laneCount, alongDistance));
+                uv3s.Add(new Vector2(laneCount, width));
             }
 
             if (i > 0)
@@ -431,6 +467,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         mesh.SetTriangles(tris, 0);
         mesh.SetUVs(0, uvs);
         mesh.SetUVs(1, uv2s);
+        mesh.SetUVs(2, uv3s);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
@@ -651,7 +688,13 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         int fwdLanes = way.GetForwardLaneCount();
         float halfWidth = roadWidth * 0.5f;
         float laneWidth = roadWidth / lanes;
-        float markingsY = roadYOffset + (useRoadModelInstances ? roadModelSurfaceLift : 0f) + 0.015f;
+        float markingsY = roadYOffset + (useRoadModelInstances ? roadModelSurfaceLift : 0f) + 0.06f;
+
+        // The graph lays traffic on the country's driving side. Markings have to use
+        // the same side, or a right-hand-drive city paints its forward lanes where
+        // the traffic does not drive.
+        bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
+        float dividerSide = leftTraffic ? 1f : -1f;
 
         var whiteBuilder = new MarkingMeshBuilder();
         var yellowBuilder = new MarkingMeshBuilder();
@@ -672,7 +715,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         {
             for (int divider = 1; divider < lanes; divider++)
             {
-                float dividerOffset = -halfWidth + laneWidth * divider;
+                float dividerOffset = dividerSide * (-halfWidth + laneWidth * divider);
                 bool isCenterDivider = !isOneWay && (divider == fwdLanes);
 
                 if (isCenterDivider)
@@ -852,7 +895,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         for (int i = 0; i < points.Count; i++)
         {
             var p = points[i];
-            p.y = roadYOffset + 0.03f;
+            p.y = roadYOffset + (useRoadModelInstances ? roadModelSurfaceLift : 0f) + 0.06f;
             worldPts[i] = p;
         }
         lr.SetPositions(worldPts);
@@ -910,6 +953,73 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         if (runtimeBoundaryMaterial.HasProperty("_Smoothness")) runtimeBoundaryMaterial.SetFloat("_Smoothness", .08f);
         if (runtimeBoundaryMaterial.HasProperty("_Metallic")) runtimeBoundaryMaterial.SetFloat("_Metallic", 0f);
         return runtimeBoundaryMaterial;
+    }
+
+    /// <summary>
+    /// A gravel/dirt verge strip either side of the asphalt, between the road edge
+    /// and the kerb. It is drawn just below the ribbon so the seam where a road meets
+    /// the map tile is broken up by a rough, dirtier surface rather than a hard line.
+    /// No collider: the driving surface stays the road width.
+    /// </summary>
+    void BuildRoadShoulders(List<Vector3> points, float roadWidth, long wayId)
+    {
+        if (points == null || points.Count < 2) return;
+
+        Vector3[] left = new Vector3[points.Count];
+        Vector3[] right = new Vector3[points.Count];
+        float offset = roadWidth * .5f + shoulderWidth * .5f;
+        for (int i = 0; i < points.Count; i++)
+        {
+            Vector3 side = RoadJoinOffset(points, i, offset);
+            Vector3 basePoint = points[i];
+            // One centimetre below the ribbon, still eleven centimetres above
+            // the map tile. The old 5 mm left the verge fighting the tile at
+            // distance, which showed as flickering dirt beside the road, while
+            // dropping it further would open a visible step at the kerb.
+            basePoint.y = roadYOffset - 0.01f;
+            left[i] = basePoint - side;
+            right[i] = basePoint + side;
+        }
+
+        var combine = new List<CombineInstance>();
+        foreach (var edge in new[] { left, right })
+            for (int i = 1; i < edge.Length; i++)
+                foreach (var run in SurfaceIndex.ClearRuns(edge[i - 1], edge[i], wayId, Mathf.Max(2f, junctionOpeningMeters * .5f)))
+                {
+                    var mesh = BuildRoadSegmentMesh(
+                        new List<Vector3> { Vector3.Lerp(edge[i - 1], edge[i], run.x), Vector3.Lerp(edge[i - 1], edge[i], run.y) },
+                        Mathf.Max(.1f, shoulderWidth));
+                    if (mesh != null) combine.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.identity });
+                }
+        if (combine.Count == 0) return;
+
+        Mesh combined = new Mesh { name = "RoadShoulders", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+        combined.CombineMeshes(combine.ToArray(), true, false);
+        foreach (var item in combine) Destroy(item.mesh);
+
+        GameObject shoulder = new GameObject("RoadShoulders");
+        shoulder.transform.SetParent(roadsParent.transform, false);
+        MeshFilter filter = shoulder.AddComponent<MeshFilter>();
+        MeshRenderer renderer = shoulder.AddComponent<MeshRenderer>();
+        filter.sharedMesh = combined;
+        renderer.sharedMaterial = ResolveShoulderMaterial();
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = true;
+    }
+
+    Material ResolveShoulderMaterial()
+    {
+        if (shoulderMaterial != null) return shoulderMaterial;
+        if (runtimeShoulderMaterial != null) return runtimeShoulderMaterial;
+        runtimeShoulderMaterial = new Material(ResolveShader()) { color = shoulderColor, renderQueue = 2105 };
+        // The asphalt grain atlas doubles as loose-gravel mottling: the UVs from
+        // BuildRoadSegmentMesh are world-space, so the patches never stretch.
+        if (runtimeShoulderMaterial.HasProperty("_MainTex"))
+            runtimeShoulderMaterial.SetTexture("_MainTex", UrbanMaterials.AsphaltAlbedo);
+        if (runtimeShoulderMaterial.HasProperty("_Glossiness")) runtimeShoulderMaterial.SetFloat("_Glossiness", .03f);
+        if (runtimeShoulderMaterial.HasProperty("_Smoothness")) runtimeShoulderMaterial.SetFloat("_Smoothness", .03f);
+        if (runtimeShoulderMaterial.HasProperty("_Metallic")) runtimeShoulderMaterial.SetFloat("_Metallic", 0f);
+        return runtimeShoulderMaterial;
     }
 
     void BuildPhysicalRoadBoundaries(Transform parent, List<Vector3> points, List<long> nodeIds, OSMData data, float roadWidth, long wayId)
@@ -1097,7 +1207,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 {
                     renderer.enabled = renderRoadSurface;
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    renderer.receiveShadows = false;
+                    // The imported piece covers the generated ribbon, so if it did not
+                    // receive shadows the street would lose every building shadow.
+                    renderer.receiveShadows = true;
 
                     if (overrideRoadModelMaterials)
                         renderer.material = roadMaterial != null ? roadMaterial : CreateDefaultRoadMaterial();
@@ -1226,32 +1338,13 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     Shader ResolveShader() => BuiltInShaders.Lit;
 
-    Material CreateDefaultRoadMaterial()
-    {
-        var mat = new Material(ResolveShader())
-        {
-            color      = new Color(0.12f, 0.12f, 0.12f, 1f),
-            // Render on top of map tile quads (default queue 2000) but below UI
-            renderQueue = 2100
-        };
+    Material CreateDefaultRoadMaterial() => UrbanMaterials.Road;
 
-        // Matte, non-reflective asphalt look
-        if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0f);
-        if (mat.HasProperty("_Metallic"))   mat.SetFloat("_Metallic",   0f);
-        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.05f);
-        Texture2D asphalt = GetOrCreateAsphaltTexture();
-        if (mat.HasProperty("_MainTex")) { mat.SetTexture("_MainTex", asphalt); mat.SetTextureScale("_MainTex", new Vector2(1f, 2f)); }
-
-        // FIX: disable back-face culling so the mesh is visible regardless of
-        // winding order issues and from below (debug camera angles, etc.)
-        if (mat.HasProperty("_Cull"))
-            mat.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
-
-        // Ensure opaque mode
-        if (mat.HasProperty("_ZWrite"))  mat.SetFloat("_ZWrite",  1f);
-
-        return mat;
-    }
+    /// <summary>
+    /// The shared asphalt material. An explicit material in the inspector still wins,
+    /// but the default keeps one shader and one texture for every road in the city.
+    /// </summary>
+    Material ResolveRoadMaterial() => roadMaterial != null ? roadMaterial : UrbanMaterials.Road;
 
     public static Texture2D GetOrCreateAsphaltTexture()
     {

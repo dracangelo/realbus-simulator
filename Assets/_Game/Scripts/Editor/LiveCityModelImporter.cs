@@ -120,6 +120,25 @@ public static class LiveCityModelImporter
         return true;
     }
 
+    static readonly Color[] ClothingPalette =
+    {
+        new Color(.20f, .29f, .42f), new Color(.45f, .15f, .14f), new Color(.16f, .34f, .26f),
+        new Color(.56f, .47f, .30f), new Color(.30f, .30f, .35f), new Color(.62f, .58f, .52f)
+    };
+
+    static Color PedestrianTone(string materialName)
+    {
+        if (materialName.Contains("skin") || materialName.Contains("head") || materialName.Contains("face"))
+            return new Color(.60f, .43f, .32f);
+        if (materialName.Contains("hair")) return new Color(.09f, .07f, .06f);
+        if (materialName.Contains("heel") || materialName.Contains("shoe") || materialName.Contains("boot"))
+            return new Color(.10f, .10f, .11f);
+        if (materialName.Contains("eye") || materialName.Contains("brow")) return new Color(.12f, .10f, .09f);
+        int hash = 0;
+        foreach (char c in materialName) hash = unchecked(hash * 31 + c);
+        return ClothingPalette[Mathf.Abs(hash) % ClothingPalette.Length];
+    }
+
     static int Triangles(Mesh mesh)
     {
         if (mesh == null) return 0;
@@ -137,12 +156,18 @@ public static class LiveCityModelImporter
         Texture texture = source != null && source.HasProperty("_MainTex") ? source.GetTexture("_MainTex") : null;
         Color color = source != null && source.HasProperty("_Color") ? source.color : Color.white;
         bool neutral = Mathf.Abs(color.r - color.g) < .03f && Mathf.Abs(color.g - color.b) < .03f;
-        if (texture == null && neutral && kind != LiveCityCatalog.Kind.Pedestrian)
+        if (texture == null && neutral)
         {
             string name = result.name.ToLowerInvariant();
-            color = kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant
-                ? (name.Contains("trunk") || name.Contains("bark") ? new Color(.3f, .21f, .12f) : new Color(.2f, .42f, .12f))
-                : kind == LiveCityCatalog.Kind.Rock ? new Color(.4f, .38f, .32f) : new Color(.26f, .3f, .31f);
+            // Pedestrians used to be skipped here, which left the untextured walker
+            // model as a white mannequin. Skin, hair, shoes and clothing each get a
+            // tone derived from the material name instead.
+            if (kind == LiveCityCatalog.Kind.Pedestrian)
+                color = PedestrianTone(name);
+            else
+                color = kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant
+                    ? (name.Contains("trunk") || name.Contains("bark") ? new Color(.3f, .21f, .12f) : new Color(.2f, .42f, .12f))
+                    : kind == LiveCityCatalog.Kind.Rock ? new Color(.4f, .38f, .32f) : new Color(.26f, .3f, .31f);
         }
         result.SetColor("_Color", color);
         result.SetTexture("_MainTex", texture);

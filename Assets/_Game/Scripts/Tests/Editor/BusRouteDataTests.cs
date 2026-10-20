@@ -20,7 +20,7 @@ public class BusRouteDataTests
         var routes = BusRouteParser.ParseRoutes(response);
 
         Assert.That(routes.Count, Is.EqualTo(1));
-        Assert.That(routes[0].routeRef, Is.EqualTo("23"));
+        Assert.That(routes[0].routeRef, Is.EqualTo("NBO-23"));
         Assert.That(routes[0].destinationName, Is.EqualTo("Westlands"));
         Assert.That(routes[0].stops.Count, Is.EqualTo(3));
         Assert.That(routes[0].stops[0].stopName, Is.EqualTo("CBD Terminal"));

@@ -7,9 +7,9 @@ public class RouteVisualizer : MonoBehaviour
     public BusRoute route;
 
     [Header("Line Settings")]
-    public Color routeColor = new Color(1f, 0.5f, 0f);
-    public float lineWidth = 0.1f;
-    public float lineHeightY = 0.2f;
+    public Color routeColor = new Color(1f, 0.57f, 0.2f, 0.9f);
+    public float lineWidth = 0.75f;
+    public float lineHeightY = 0.3f;
 
     private LineRenderer lineRenderer;
     private int lastGuidanceVersion = -1;
@@ -27,11 +27,15 @@ public class RouteVisualizer : MonoBehaviour
             lineRenderer = gameObject.AddComponent<LineRenderer>();
 
         lineRenderer.material = new Material(BuiltInShaders.Overlay);
-        lineRenderer.material.color = routeColor;
+        // The unlit overlay shader multiplies vertex colour by material colour, so
+        // keep the material white and let the gradient carry the route tint.
+        lineRenderer.material.color = Color.white;
         lineRenderer.startColor = routeColor;
         lineRenderer.endColor = routeColor;
-        lineRenderer.startWidth = 3f;
-        lineRenderer.endWidth = 3f;
+        lineRenderer.startWidth = lineWidth;
+        lineRenderer.endWidth = lineWidth;
+        lineRenderer.numCapVertices = 4;
+        lineRenderer.numCornerVertices = 4;
         lineRenderer.useWorldSpace = true;
 
         StartCoroutine(DrawRouteNextFrame());

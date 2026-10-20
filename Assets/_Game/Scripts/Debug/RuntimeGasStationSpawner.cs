@@ -76,6 +76,9 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
             ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
             ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
+            foreach (var renderer in station.GetComponentsInChildren<Renderer>(true))
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            station.AddComponent<DistanceVisibility>().visibleDistance = 340f;
             placed.Add(world);
             spawned++;
 
@@ -128,6 +131,9 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
             ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
             ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
+            foreach (var renderer in station.GetComponentsInChildren<Renderer>(true))
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            station.AddComponent<DistanceVisibility>().visibleDistance = 340f;
             placed.Add(world);
             spawned++;
         }

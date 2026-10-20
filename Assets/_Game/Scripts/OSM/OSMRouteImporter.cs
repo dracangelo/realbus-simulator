@@ -243,6 +243,7 @@ public class OSMRouteImporter : MonoBehaviour
         route.difficulty = parsed.difficulty;
         route.geometryLatLonFlat = new double[parsed.geometry.Count * 2];
         route.pathPoints = new Vector3[parsed.geometry.Count];
+        RouteNaming.Apply(route);
         for (int i = 0; i < parsed.geometry.Count; i++)
         {
             var point = parsed.geometry[i];

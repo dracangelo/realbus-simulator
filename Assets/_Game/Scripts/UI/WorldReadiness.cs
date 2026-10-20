@@ -24,6 +24,11 @@ public static class WorldReadiness
         public bool roadsBuilt;
         public bool buildingsRingReady;
         public bool tilesLoaded;
+        /// <summary>Near/FOV assets are still being warmed (tiles, buildings, traffic, props).</summary>
+        public bool preloadRequired;
+        public bool preloadReady;
+        public float preloadProgress;
+        public string preloadStatus;
         /// <summary>Depot must be placed before control is handed over (mission starts only).</summary>
         public bool depotRequired;
         public bool depotBuilt;
@@ -60,6 +65,17 @@ public static class WorldReadiness
         if (!milestones.tilesLoaded)
             return new Snapshot { progress = 0.86f, status = "DOWNLOADING MAP TILES...", ready = false };
 
+        if (milestones.preloadRequired && !milestones.preloadReady)
+        {
+            string status = string.IsNullOrWhiteSpace(milestones.preloadStatus)
+                ? "PREPARING NEARBY ASSETS..."
+                : milestones.preloadStatus;
+            // Keep the bar moving through the near-field warm-up instead of
+            // parking it at 90% for the whole streaming pass.
+            float progress = Mathf.Lerp(0.88f, 0.99f, Mathf.Clamp01(milestones.preloadProgress));
+            return new Snapshot { progress = progress, status = status, ready = false };
+        }
+
         if (milestones.depotRequired && !milestones.depotBuilt)
             return new Snapshot { progress = 0.94f, status = "PLACING BUS DEPOT...", ready = false };
 
@@ -88,6 +104,12 @@ public static class WorldReadiness
         milestones.buildingsRingReady = buildings == null || buildings.InitialRingReady;
 
         milestones.tilesLoaded = MapTileLoader.Instance == null || MapTileLoader.Instance.CenterTileLoaded;
+
+        var preload = WorldPreloadCoordinator.Instance;
+        milestones.preloadRequired = preload != null && !preload.IsReady;
+        milestones.preloadReady = !milestones.preloadRequired;
+        milestones.preloadProgress = preload != null ? preload.Progress : 0f;
+        milestones.preloadStatus = preload != null ? preload.Status : null;
 
         var depot = BusDepotManager.Instance;
         milestones.depotRequired = RequiresDepot();
@@ -131,6 +153,7 @@ public static class WorldReadiness
         if (!milestones.roadsBuilt) pending.Add("roads");
         if (!milestones.buildingsRingReady) pending.Add("buildings");
         if (!milestones.tilesLoaded) pending.Add("tiles");
+        if (milestones.preloadRequired && !milestones.preloadReady) pending.Add("nearby assets");
         if (milestones.depotRequired && !milestones.depotBuilt) pending.Add("depot");
         return pending.Count == 0 ? "none" : string.Join(", ", pending);
     }

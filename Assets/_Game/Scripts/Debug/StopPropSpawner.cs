@@ -148,11 +148,17 @@ public class StopPropSpawner : MonoBehaviour
 
             var model = Instantiate(prefab, stopRoot.transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(model.transform);
+            // Street furniture sits in a building's shadow already; adding its own
+            // small shadow only multiplies the shadow pass across every stop.
+            foreach (var renderer in model.GetComponentsInChildren<Renderer>(true))
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            model.AddComponent<DistanceVisibility>().visibleDistance = 420f;
             // Shelters, benches and signs are imported FBX models whose source
             // textures are missing, so they import flat white. Recolour the
             // untextured slots immediately; the spawner root is registered once
             // (see Start) so a late sweep re-checks every stop prop.
             ImportedMaterialPalette.ApplyFallback(model, importedPropFallbackColor);
+            RepairShelterGlass(model);
             model.transform.localPosition = Vector3.up * stopModelVerticalOffset;
             model.transform.localRotation = Quaternion.Euler(0f, Random.Range(randomYawRange.x, randomYawRange.y), 0f);
             float scale = Random.Range(randomScaleRange.x, randomScaleRange.y);
@@ -188,6 +194,42 @@ public class StopPropSpawner : MonoBehaviour
 
             if (logSpawns)
                 Debug.Log($"[StopPropSpawner] Spawned {propPath} with posters at stop '{stop.stopName}'.");
+        }
+    }
+
+    /// <summary>
+    /// Shelter glazing imports as an opaque white panel. That flat white slab is one
+    /// of the most obvious "unfinished asset" tells at a bus stop, so every panel
+    /// whose material says glass/window is switched to alpha-blended glass on a
+    /// per-renderer copy (the imported material asset itself is left untouched).
+    /// </summary>
+    static void RepairShelterGlass(GameObject model)
+    {
+        foreach (var renderer in model.GetComponentsInChildren<Renderer>(true))
+        {
+            Material[] materials = renderer.sharedMaterials;
+            bool changed = false;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                Material source = materials[i];
+                if (source == null) continue;
+                string name = source.name.ToLowerInvariant();
+                bool glass = name.Contains("glass") || name.Contains("kaca") ||
+                             name.Contains("window") || name.Contains("transparent");
+                if (!glass) continue;
+
+                var material = new Material(source) { name = source.name + " (Stop Glass)" };
+                ImportedVehicleVisualRepair.ConfigureGlass(material);
+                Color color = material.HasProperty("_Color") ? material.GetColor("_Color") : Color.white;
+                color.a = .32f;
+                material.color = color;
+                if (material.HasProperty("_Color")) material.SetColor("_Color", color);
+                if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", .82f);
+                if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", .82f);
+                materials[i] = material;
+                changed = true;
+            }
+            if (changed) renderer.sharedMaterials = materials;
         }
     }
 

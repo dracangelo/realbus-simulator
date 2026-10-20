@@ -25,7 +25,11 @@ public class OsmCityPopulationSystem : MonoBehaviour
     {
         "BussimAssets/trees/Sour wood_Spring corona",
         "BussimAssets/trees/uploads_files_2986400_FBX+Corona",
-        "BussimAssets/trees/uploads_files_6970825_TUALANG"
+        "BussimAssets/trees/uploads_files_6970825_TUALANG",
+        "BussimAssets/trees/Banana_Plant_01",
+        "BussimAssets/trees/CocosNucifera_025_100_3698",
+        "BussimAssets/trees/Tree_v1_001",
+        "BussimAssets/trees/TreeOld_3"
     };
     public string[] roadsideVehicleResourcePaths =
     {
@@ -49,15 +53,15 @@ public class OsmCityPopulationSystem : MonoBehaviour
     };
 
     [Header("Trees")]
-    public int maxTrees = 320;
-    public float treeSpacingMeters = 28f;
-    public float treeOffsetFromRoadEdgeMeters = 5f;
-    public Vector2 treeScaleRange = new Vector2(0.8f, 1.35f);
+    public int maxTrees = 600;
+    public float treeSpacingMeters = 18f;
+    public float treeOffsetFromRoadEdgeMeters = 4f;
+    public Vector2 treeScaleRange = new Vector2(0.75f, 1.45f);
 
     [Header("Roadside Vehicles")]
-    public int maxRoadsideVehicles = 48;
-    public float roadsideVehicleSpacingMeters = 85f;
-    public float roadsideVehicleOffsetFromRoadEdgeMeters = 4.5f;
+    public int maxRoadsideVehicles = 80;
+    public float roadsideVehicleSpacingMeters = 70f;
+    public float roadsideVehicleOffsetFromRoadEdgeMeters = 4f;
     public Vector2 roadsideVehicleScaleRange = new Vector2(0.95f, 1.1f);
 
     [Header("POI Activity")]

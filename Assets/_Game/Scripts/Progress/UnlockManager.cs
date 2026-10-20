@@ -340,8 +340,8 @@ public class UnlockManager : MonoBehaviour
         var grandTour = ScriptableObject.CreateInstance<BusRoute>();
         grandTour.name = $"{city.cityCode}_GrandTour";
         grandTour.hideFlags = HideFlags.DontUnloadUnusedAsset;
-        grandTour.routeNumber = "GT";
-        grandTour.routeName = $"{city.cityName} Grand Tour";
+        grandTour.routeNumber = RouteNaming.NormalizeCode("GT");
+        grandTour.routeName = RouteNaming.NormalizeName($"{city.cityName} Grand Tour");
         grandTour.baseFare = totalFare / Mathf.Max(1, baseRoutes.Count);
         grandTour.stops = combinedStops.ToArray();
         grandTour.pathPoints = combinedPath.Count > 1 ? combinedPath.ToArray() : null;

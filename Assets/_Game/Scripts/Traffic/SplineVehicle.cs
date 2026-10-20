@@ -9,6 +9,7 @@ public class SplineVehicle : MonoBehaviour
     public AIRoadGraph roadGraph;
     public int currentNodeIndex = -1;
     public int targetNodeIndex = -1;
+    public int previousNodeIndex = -1;
     public int laneIndex = 0;
 
     [Header("Motion")]
@@ -43,11 +44,12 @@ public class SplineVehicle : MonoBehaviour
         ActiveSplineVehicles.Remove(this);
     }
 
-    public void Init(AIRoadGraph graph, int currentNode, int targetNode, int lane, float initialSpeedKmh)
+    public void Init(AIRoadGraph graph, int currentNode, int targetNode, int lane, float initialSpeedKmh, int previousNode = -1)
     {
         roadGraph = graph;
         currentNodeIndex = currentNode;
         targetNodeIndex = targetNode;
+        previousNodeIndex = previousNode;
         laneIndex = lane;
         speedKmh = Mathf.Max(0f, initialSpeedKmh);
         RebuildPath();
@@ -76,14 +78,45 @@ public class SplineVehicle : MonoBehaviour
         // edge, so clamp after a turn onto a road with fewer lanes.
         laneIndex = Mathf.Clamp(laneIndex, 0, Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex)) - 1);
 
-        Vector3 target = roadGraph.GetNodePosition(targetNodeIndex);
-        Vector3 segment = (target - roadGraph.GetNodePosition(currentNodeIndex)).normalized;
+        Vector3 nodeA = roadGraph.GetNodePosition(currentNodeIndex);
+        Vector3 nodeB = roadGraph.GetNodePosition(targetNodeIndex);
+        Vector3 segment = nodeB - nodeA;
+        segment.y = 0f;
+        if (segment.sqrMagnitude < .0001f) return;
+        segment.Normalize();
         emergencyYieldSeconds = Mathf.Max(0f, emergencyYieldSeconds - Time.deltaTime);
-        target += Vector3.Cross(Vector3.up, segment) * (roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex) - (emergencyYieldSeconds > 0f ? 3f : 0f));
-        Vector3 to = target - transform.position;
+
+        // The same lane line the full-physics controller drives: a lane point at each
+        // end of this link, and a lookahead on it, so a low-detail car also stays in
+        // its lane instead of cutting diagonally towards the next junction.
+        float yieldOffset = emergencyYieldSeconds > 0f
+            ? AIVehicleController.KerbShift(roadGraph, currentNodeIndex, targetNodeIndex, laneIndex, 3f)
+            : 0f;
+        float offset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex) + yieldOffset;
+        Vector3 lateral = Vector3.Cross(Vector3.up, segment) * offset;
+        Vector3 laneA = nodeA + lateral;
+        Vector3 laneB = nodeB + lateral;
+        Vector3 lane = laneB - laneA;
+        float laneLength = lane.magnitude;
+        Vector3 laneDir = laneLength > .01f ? lane / laneLength : segment;
+        float along = laneLength > .01f
+            ? Mathf.Clamp01(Vector3.Dot(transform.position - laneA, laneDir) / laneLength)
+            : 1f;
+        float lookahead = Mathf.Clamp(speedKmh / 3.6f * 1.1f, 4f, 12f);
+        Vector3 target = laneA + laneDir * Mathf.Min(laneLength, along * laneLength + lookahead);
+
+        // The same lateral correction the full-physics controller uses, so a car
+        // nudged off its line comes back rather than running parallel to it.
+        Vector3 right = Vector3.Cross(Vector3.up, segment);
+        target -= right * Vector3.Dot(transform.position - laneA, right) * AIVehicleController.LaneCenteringGain;
+
+        Vector3 to = laneB - transform.position;
         to.y = 0f;
         float dist = to.magnitude;
-        Vector3 dir = dist > 0.001f ? to / dist : transform.forward;
+        Vector3 dir = target - transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < .0001f) dir = segment;
+        else dir.Normalize();
 
         float desired = roadGraph.GetSpeedLimitKmh(currentNodeIndex);
         if (emergencyYieldSeconds > 0f) desired = Mathf.Min(desired, 8f);
@@ -107,6 +140,7 @@ public class SplineVehicle : MonoBehaviour
 
         if (dist <= 3.5f)
         {
+            previousNodeIndex = currentNodeIndex;
             currentNodeIndex = targetNodeIndex;
             EnsureTargetNode(forceAdvance: true);
         }
@@ -118,7 +152,13 @@ public class SplineVehicle : MonoBehaviour
         bool legitimateStop = emergencyYieldSeconds > 0f || roadGraph.IsRedSignal(targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, minHeadway + 2f);
         if (moved > 0.025f || speedKmh > 1.5f || legitimateStop) { stuckSeconds = 0f; return; }
         stuckSeconds += Time.deltaTime;
-        if (stuckSeconds >= 18f) { cachedPath.Clear(); EnsureTargetNode(forceAdvance: true); stuckSeconds = 0f; }
+        if (stuckSeconds >= 18f)
+        {
+            cachedPath.Clear();
+            int next = roadGraph != null ? roadGraph.GetRandomNextNode(currentNodeIndex, previousNodeIndex) : -1;
+            if (roadGraph != null && roadGraph.IsValidNode(next)) targetNodeIndex = next;
+            stuckSeconds = 0f;
+        }
     }
 
     float ApplyHeadwayLimit(float desiredKmh)
@@ -158,12 +198,18 @@ public class SplineVehicle : MonoBehaviour
     {
         if (roadGraph == null) return;
 
-        bool invalid = !roadGraph.IsValidNode(targetNodeIndex);
+        bool invalid = !roadGraph.IsValidNode(targetNodeIndex) || targetNodeIndex == currentNodeIndex;
         if (forceAdvance || invalid)
         {
             if (cachedPath.Count == 0)
                 RebuildPath();
-            targetNodeIndex = cachedPath.Count > 0 ? cachedPath.Dequeue() : roadGraph.GetRandomNextNode(currentNodeIndex);
+            if (cachedPath.Count > 0)
+                targetNodeIndex = cachedPath.Dequeue();
+            else
+                targetNodeIndex = roadGraph.GetRandomNextNode(currentNodeIndex, previousNodeIndex);
+
+            if (targetNodeIndex == currentNodeIndex)
+                targetNodeIndex = roadGraph.GetRandomNextNode(currentNodeIndex, -1);
         }
     }
 
@@ -173,13 +219,20 @@ public class SplineVehicle : MonoBehaviour
         if (roadGraph == null || !roadGraph.IsValidNode(currentNodeIndex))
             return;
 
-        int cursor = roadGraph.IsValidNode(targetNodeIndex) ? targetNodeIndex : currentNodeIndex;
+        // The queue starts after the current target. Walk the chain with the node
+        // just left excluded, so a two-way road does not make the cached path
+        // alternate backwards and forwards at every segment.
+        int cursor = roadGraph.IsValidNode(targetNodeIndex) && targetNodeIndex != currentNodeIndex
+            ? targetNodeIndex
+            : currentNodeIndex;
+        int previous = cursor == targetNodeIndex ? currentNodeIndex : previousNodeIndex;
         for (int i = 0; i < lookaheadNodes; i++)
         {
-            int next = roadGraph.GetRandomNextNode(cursor);
+            int next = roadGraph.GetRandomNextNode(cursor, previous);
             if (!roadGraph.IsValidNode(next))
                 break;
             cachedPath.Enqueue(next);
+            previous = cursor;
             cursor = next;
         }
     }

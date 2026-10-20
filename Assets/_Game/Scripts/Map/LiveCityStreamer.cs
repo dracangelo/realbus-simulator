@@ -6,36 +6,42 @@ using UnityEngine;
 public class LiveCityStreamer : MonoBehaviour
 {
     public LiveCityCatalog catalog;
-    public float loadRadius = 250f;
-    public float unloadRadius = 300f;
+    public float loadRadius = 340f;
+    public float unloadRadius = 400f;
 
     // Budgets and spacing drive how much street dressing exists. They are raised
     // well above the original values so the city reads as populated and planted:
     // placement is bounded per frame, so denser dressing costs frame time
     // gradually rather than all at once.
-    public int maxProps = 2400;
-    public int triangleBudget = 9000000;
+    public int maxProps = 4000;
+    /// <summary>
+    /// Props are kept alive out to the load radius but only drawn near the bus. The
+    /// far half of a 340 m ring is a few pixels of greenery, and keeping thousands of
+    /// those renderers in the shadow pass was most of the street scene's draw cost.
+    /// </summary>
+    public float propRenderDistance = 240f;
+    public int triangleBudget = 14000000;
     public int maxWalkers = 40;
     [Tooltip("Distance between placement samples along a road. Smaller = denser.")]
-    [Min(2f)] public float spacing = 3.4f;
+    [Min(2f)] public float spacing = 2.6f;
     [Tooltip("Models placed per frame while a street fills. Higher fills faster and costs more frame time.")]
-    [Min(1)] public int instancesPerFrame = 10;
+    [Min(1)] public int instancesPerFrame = 16;
     [Tooltip("Chance a kerb sample plants the first row of greenery behind it, so streets have depth instead of a single line of trees.")]
-    [Range(0f, 1f)] public float secondRowChance = 0.9f;
+    [Range(0f, 1f)] public float secondRowChance = 0.95f;
     [Tooltip("Extra distance behind the kerb row for the first planting row, in metres.")]
-    public float secondRowOffset = 3.6f;
+    public float secondRowOffset = 3.2f;
     [Tooltip("How many planting rows may stand behind the kerb row, each half as likely as the one in front of it.")]
     [Range(0, 4)] public int deepRowCount = 4;
 
     [Header("Open ground")]
     [Tooltip("Side of one open-ground cell, in metres. The scatter plants inside these, not along a road.")]
-    [Min(6f)] public float scatterCellSize = 26f;
+    [Min(6f)] public float scatterCellSize = 22f;
     [Tooltip("Greenery spots offered per open-ground cell.")]
-    [Range(1, 6)] public int scatterPerCell = 2;
+    [Range(1, 6)] public int scatterPerCell = 4;
     [Tooltip("Chance an offered spot is actually planted, so greenery clumps like parks and verges instead of covering the ground evenly.")]
-    [Range(0f, 1f)] public float scatterChance = 0.5f;
+    [Range(0f, 1f)] public float scatterChance = 0.72f;
     [Tooltip("Most greenery props standing away from any road at once.")]
-    public int maxScatterProps = 700;
+    public int maxScatterProps = 1400;
 
     const float FirstSampleOffset = 12f;
     /// <summary>Key offset that keeps a deeper-row prop distinct from the kerb sample it grew from.</summary>
@@ -151,6 +157,9 @@ public class LiveCityStreamer : MonoBehaviour
     public int ActiveCount => active.Count;
     public int WalkerCount => walkers;
     public int TriangleCount => triangles;
+
+    /// <summary>True once the first near-ring pass of props and planting has finished.</summary>
+    public bool InitialPassComplete { get; private set; }
     public int RoadOverlapCount
     {
         get
@@ -173,7 +182,11 @@ public class LiveCityStreamer : MonoBehaviour
     {
         if (catalog == null) catalog = Resources.Load<LiveCityCatalog>("LiveCityCatalog");
         if (catalog == null || catalog.entries.Length == 0)
-        { Debug.LogWarning("[LiveCity] No catalog. Run Tools > RealBus > Setup > Build Live City Models."); yield break; }
+        {
+            Debug.LogWarning("[LiveCity] No catalog. Run Tools > RealBus > Setup > Build Live City Models.");
+            InitialPassComplete = true;
+            yield break;
+        }
         while (enabled)
         {
             var roads = OSMRoadMeshBuilder.Instance;
@@ -187,7 +200,11 @@ public class LiveCityStreamer : MonoBehaviour
                 index = roads.SurfaceIndex;
             }
             var bus = MissionManager.Instance != null ? MissionManager.Instance.busController : FindAnyObjectByType<BusController>();
-            if (bus != null && index != null) yield return Refresh(bus.transform, buildings);
+            if (bus != null && index != null)
+            {
+                yield return Refresh(bus.transform, buildings);
+                InitialPassComplete = true;
+            }
             yield return new WaitForSeconds(1f);
         }
     }
@@ -227,9 +244,16 @@ public class LiveCityStreamer : MonoBehaviour
                     seed = PlacementSeed(segment.wayId, center, side) });
             }
         }
-        candidates.Sort((a, b) => FlatDistanceSquared(a.center, player).CompareTo(FlatDistanceSquared(b.center, player)));
+        Vector3 viewForward = viewer != null ? ViewPriority.ResolveForward(viewer) : Vector3.forward;
+        candidates.Sort((a, b) =>
+        {
+            float scoreA = ViewPriority.Score(player, viewForward, ViewPriority.DefaultFovDegrees, a.center);
+            float scoreB = ViewPriority.Score(player, viewForward, ViewPriority.DefaultFovDegrees, b.center);
+            return scoreA.CompareTo(scoreB);
+        });
         int examined = 0;
         int placedThisFrame = 0;
+        int placedTotal = 0;
         foreach (var candidate in candidates)
         {
             if (viewer == null || FlatDistanceSquared(viewer.position, player) > 30f * 30f) yield break;
@@ -272,11 +296,20 @@ public class LiveCityStreamer : MonoBehaviour
             if (entry.kind == LiveCityCatalog.Kind.Tree || entry.kind == LiveCityCatalog.Kind.Plant || entry.kind == LiveCityCatalog.Kind.Rock)
                 rotation = Quaternion.Euler(0, candidate.seed % 360, 0);
             var go = Instantiate(entry.prefab, position, rotation, transform);
+            // Street planting does not need a shadow pass of its own: the ground now
+            // receives the building shadows, which are the ones that give the street
+            // its shape, and these props are what pushed the shadow pass over budget.
+            foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             go.transform.localScale = Vector3.one * scale;
             active[(candidate.segment, candidate.sample, candidate.side)] = new Spawned { go = go, entry = entry, center = position,
                 direction = candidate.direction, rotation = rotation, radius = radius, phase = (candidate.seed % 1000) * .01f };
             triangles += entry.triangles;
             if (walking) walkers++;
+            // The first few props are sorted into the player's view. Opening the
+            // loading gate there is enough for the first frame; the rest of the
+            // street keeps filling while the player is already in the bus.
+            if (!InitialPassComplete && ++placedTotal >= 12) InitialPassComplete = true;
             if (++placedThisFrame >= Mathf.Max(1, instancesPerFrame)) { placedThisFrame = 0; yield return null; }
 
             // Planting rows behind the kerb make a street read as planted rather than
@@ -303,6 +336,8 @@ public class LiveCityStreamer : MonoBehaviour
                 if (!deepSpace) break;
                 Quaternion deepRotation = Quaternion.Euler(0, deepSeed % 360, 0);
                 var deepGo = Instantiate(deep.prefab, deepPosition, deepRotation, transform);
+                foreach (var renderer in deepGo.GetComponentsInChildren<Renderer>(true))
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 deepGo.transform.localScale = Vector3.one * deepScale;
                 active[(candidate.segment, deepKey, candidate.side)] = new Spawned { go = deepGo, entry = deep, center = deepPosition,
                     direction = candidate.direction, rotation = deepRotation, radius = deepRadius, phase = (deepSeed % 1000) * .01f };
@@ -333,14 +368,13 @@ public class LiveCityStreamer : MonoBehaviour
     {
         int roll = (int)(seed % 100);
         LiveCityCatalog.Kind kind;
-        // Vegetation first, because it is what makes a street look lived in and it is
-        // what the user asked to see more of: 62% Trees, 31% Plants/Shrubs, then the
-        // street furniture that keeps a pavement from being only greenery.
-        if (roll < 62) kind = LiveCityCatalog.Kind.Tree;
-        else if (roll < 93) kind = LiveCityCatalog.Kind.Plant;
-        else if (roll < 94) kind = LiveCityCatalog.Kind.Pedestrian;
-        else if (roll < 97) kind = LiveCityCatalog.Kind.Bench;
-        else if (roll < 99) kind = LiveCityCatalog.Kind.Billboard;
+        // Vegetation first, because it is what makes a street look lived in:
+        // 52% Trees, 37% Plants/Shrubs (lush tropical look), then street furniture.
+        if (roll < 52) kind = LiveCityCatalog.Kind.Tree;
+        else if (roll < 89) kind = LiveCityCatalog.Kind.Plant;
+        else if (roll < 90) kind = LiveCityCatalog.Kind.Pedestrian;
+        else if (roll < 93) kind = LiveCityCatalog.Kind.Bench;
+        else if (roll < 97) kind = LiveCityCatalog.Kind.Billboard;
         else kind = LiveCityCatalog.Kind.Rock;
 
         var picked = PickWeighed(catalog.entries, kind, seed / 10);
@@ -398,6 +432,8 @@ public class LiveCityStreamer : MonoBehaviour
 
                 Quaternion rotation = Quaternion.Euler(0, seed % 360, 0);
                 var go = Instantiate(entry.prefab, position, rotation, transform);
+                foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 go.transform.localScale = Vector3.one * scale;
                 active[(segment, slot, ScatterSide)] = new Spawned { go = go, entry = entry, center = position, direction = Vector3.forward,
                     rotation = rotation, radius = radius, phase = (seed % 1000) * .01f, scattered = true };
@@ -436,11 +472,21 @@ public class LiveCityStreamer : MonoBehaviour
             Quaternion.identity, ~0, QueryTriggerInteraction.Ignore) == 0;
     }
 
+    float cullTick;
+
     void Update()
     {
+        cullTick += Time.deltaTime;
+        if (cullTick >= 0.5f)
+        {
+            cullTick = 0f;
+            var bus = MissionManager.Instance != null ? MissionManager.Instance.busController : null;
+            if (bus != null) CullDistantProps(bus.transform.position);
+        }
+
         foreach (var item in active.Values)
         {
-            if (item.go == null) continue;
+            if (item.go == null || !item.go.activeSelf) continue;
             float t = Time.time + item.phase;
             if (item.entry.kind == LiveCityCatalog.Kind.Pedestrian)
             {
@@ -451,6 +497,23 @@ public class LiveCityStreamer : MonoBehaviour
             }
             else if (item.entry.kind == LiveCityCatalog.Kind.Tree || item.entry.kind == LiveCityCatalog.Kind.Plant)
                 item.go.transform.rotation = item.rotation * Quaternion.Euler(Mathf.Sin(t * .8f) * .4f, 0, Mathf.Sin(t * .6f) * .35f);
+        }
+    }
+
+    /// <summary>
+    /// Draws only the props close enough to read. Inactive objects are skipped by
+    /// culling, the shadow pass and their per-frame sway, while the prop stays in the
+    /// active table so walking back toward it is instant rather than a re-spawn.
+    /// </summary>
+    void CullDistantProps(Vector3 player)
+    {
+        float sqr = Mathf.Max(40f, propRenderDistance);
+        sqr *= sqr;
+        foreach (var item in active.Values)
+        {
+            if (item.go == null) continue;
+            bool visible = FlatDistanceSquared(item.center, player) <= sqr;
+            if (item.go.activeSelf != visible) item.go.SetActive(visible);
         }
     }
 

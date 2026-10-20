@@ -94,17 +94,41 @@ public class CityPredownloader : MonoBehaviour
     /// <summary>Whether the last download left the whole requested area cached. Read by the menu.</summary>
     public bool LastDownloadCoveredEveryTile { get; private set; }
 
+    /// <summary>Why the last attempt could not start. Null after a successful start.</summary>
+    public string LastFailure { get; private set; }
+
     // ── Public API ─────────────────────────────────────────────────────
 
-    public void StartDownloadForCity(CityDefinition city)
+    /// <summary>
+    /// Starts a map pre-download. Returns false with <see cref="LastFailure"/>
+    /// filled when the map cannot be fetched; the caller can then tell the
+    /// player that the built-in city layout is still playable.
+    /// </summary>
+    public bool StartDownloadForCity(CityDefinition city)
     {
-        if (isDownloading || city == null) return;
+        if (city == null)
+        {
+            LastFailure = "Choose a city first.";
+            return false;
+        }
+        if (isDownloading)
+        {
+            LastFailure = "A map download is already running.";
+            return false;
+        }
+        if (Application.internetReachability == NetworkReachability.NotReachable)
+        {
+            LastFailure = "No network connection. The built-in city layout is still available.";
+            return false;
+        }
+
         SyncTileGeometryFromLoader();
         if (!Settings.HasToken)
         {
+            LastFailure = "No Mapbox token is configured. The built-in city layout is still available.";
             Debug.LogWarning($"[CityPredownloader] Map download needs the token the rest of the map stack uses, " +
                              $"and none was resolved ({Settings.TokenSource}).");
-            return;
+            return false;
         }
 
         // A download without a cache cannot store a single tile, so it would run to the end
@@ -112,11 +136,14 @@ public class CityPredownloader : MonoBehaviour
         _cache = OfflineCacheManager.EnsureInstance();
         if (_cache == null)
         {
+            LastFailure = "The tile cache could not be created. The built-in city layout is still available.";
             Debug.LogWarning("[CityPredownloader] No tile cache could be created, so nothing can be stored offline.");
-            return;
+            return false;
         }
 
+        LastFailure = null;
         StartCoroutine(DownloadRoutine(city));
+        return true;
     }
 
     /// <summary>

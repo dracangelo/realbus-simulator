@@ -340,7 +340,13 @@ public class SceneBootstrap : MonoBehaviour
             liveryEditor = busController.gameObject.AddComponent<LiveryEditor>();
 
         Transform visualRoot = busController.modelRoot != null ? busController.modelRoot : busController.transform;
-        liveryEditor.Initialize(spec.busId, visualRoot.GetComponentsInChildren<Renderer>(true));
+        // ApplyBusSpec can swap in a different imported model after the support
+        // systems ran. Repair that model before the livery asks which slots are
+        // bodywork, otherwise the new shell is left flat white.
+        var visualRepair = busController.GetComponent<ImportedVehicleVisualRepair>();
+        if (visualRepair != null)
+            visualRepair.RepairNow(visualRoot);
+        liveryEditor.Initialize(spec.busId, visualRoot.GetComponentsInChildren<Renderer>(true), null, visualRoot);
     }
 
     void EnsureGpsManager()
@@ -421,11 +427,23 @@ public class SceneBootstrap : MonoBehaviour
         var mapLoader = FindAnyObjectByType<MapTileLoader>();
         if (mapLoader != null)
         {
-            roadBuilder.roadYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.02f);
+            // Twelve centimetres, not three. The ground tile and the road ribbon
+            // are coplanar enough at distance that the depth buffer swapped them
+            // from frame to frame; at 0.3 m near clip and 12 cm separation the
+            // order stays stable out past the 950 m fog wall.
+            roadBuilder.roadYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.12f, 0.12f);
             mapLoader.zoomLevel = Mathf.Max(mapLoader.zoomLevel, 17);
+            mapLoader.tilesX = Mathf.Max(mapLoader.tilesX, 7);
+            mapLoader.tilesY = Mathf.Max(mapLoader.tilesY, 7);
+            // Load the 5x5 window first, not just the centre cross: the
+            // loading overlay now waits for the near ring and the player
+            // should not land on a half-tiled street.
+            mapLoader.highPriorityRing = Mathf.Max(mapLoader.highPriorityRing, 2);
             mapLoader.forceSharpTileFiltering = true;
             mapLoader.tileAnisoLevel = 16;
-            mapLoader.tileMipMapBias = -0.75f;
+            // A negative mip bias sharpened the near ground but made the far
+            // rows crawl as the bus moved. Zero keeps mip selection honest.
+            mapLoader.tileMipMapBias = 0f;
             mapLoader.preferLabelFreeSatellite = true;
         }
     }
@@ -849,14 +867,28 @@ public class SceneBootstrap : MonoBehaviour
 
         var mapLoader = FindAnyObjectByType<MapTileLoader>();
         if (mapLoader != null)
-            builder.buildingBaseYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.03f, 0.2f);
+            builder.buildingBaseYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.12f, 0.24f);
 
         builder.maxBuildingsPerFrame = Mathf.Max(builder.maxBuildingsPerFrame, 500);
         builder.enableDistanceCulling = false;
         builder.streamAroundVehicle = true;
-        builder.buildingLoadDistance = Mathf.Max(500f, builder.buildingLoadDistance);
-        builder.buildingUnloadDistance = Mathf.Max(builder.buildingLoadDistance + 150f, builder.buildingUnloadDistance);
+        builder.buildingLoadDistance = Mathf.Max(700f, builder.buildingLoadDistance);
+        builder.buildingUnloadDistance = Mathf.Max(builder.buildingLoadDistance + 200f, builder.buildingUnloadDistance);
+        builder.maxBuildingLoadsPerRefresh = Mathf.Max(400, builder.maxBuildingLoadsPerRefresh);
         builder.drawFootprints = false;
+
+        // Fill the blocks as well as the mapped footprints. The infill is what
+        // makes unmapped Nairobi streets read as a city instead of a road
+        // network in a field.
+        var infill = builder.GetComponent<ProceduralBuildingFill>();
+        if (infill == null)
+            infill = builder.gameObject.AddComponent<ProceduralBuildingFill>();
+        infill.loadRadius = Mathf.Max(infill.loadRadius, 560f);
+        infill.unloadRadius = Mathf.Max(infill.unloadRadius, 760f);
+        infill.maxBuildings = Mathf.Max(infill.maxBuildings, 3200);
+        infill.maxBuildingsPerFrame = Mathf.Max(infill.maxBuildingsPerFrame, 40);
+        infill.rowsPerSide = Mathf.Max(infill.rowsPerSide, 7);
+        infill.maxImportedBuildings = Mathf.Max(infill.maxImportedBuildings, 240);
 
         var activeBuildingsRoot = GameObject.Find("OSM_Buildings");
         if (activeBuildingsRoot != null)
@@ -941,17 +973,15 @@ public class SceneBootstrap : MonoBehaviour
         }
 
         pool.prefabs = entries.ToArray();
-        // The downloaded models are cheap (a few thousand triangles each) and there are
-        // several of them, so the pool can be a pool rather than a handful. Traffic used
-        // to be pinned at ten vehicles with the density curve switched off, which is why
-        // the imported cars were barely on the road; the curve now drives the count with
-        // a floor under it, and the pin is left to the scenes that ask for it.
-        pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, importedModels > 0 ? 96 : 64);
-        pool.minActiveVehicles = importedModels > 0 ? 24 : 10;
+        // The downloaded FBX models (Stylized Vehicles + Van) are cheap geometry that
+        // drives on the correct side of the road via CityManager.activeCountry.DrivesOnLeft.
+        // A larger pool at higher density fractions is what puts them visibly on the streets.
+        pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, importedModels > 0 ? 160 : 80);
+        pool.minActiveVehicles = importedModels > 0 ? 32 : 12;
         if (importedModels > 0)
-            pool.maxActiveFraction = Mathf.Clamp(pool.maxActiveFraction, 0.3f, 0.55f);
+            pool.maxActiveFraction = Mathf.Clamp(pool.maxActiveFraction, 0.45f, 0.75f);
         else
-            pool.debugForceActiveCount = Mathf.Max(pool.debugForceActiveCount, 10);
+            pool.debugForceActiveCount = Mathf.Max(pool.debugForceActiveCount, 14);
         pool.logSpawnEvents = false;
     }
 
@@ -1219,6 +1249,10 @@ public class SceneBootstrap : MonoBehaviour
         if (usableGraph == null)
             usableGraph = TryRebuildAlignedRoadGraph(route);
 
+        // Fix which side this graph's traffic keeps to before any vehicle is placed.
+        if (usableGraph != null)
+            usableGraph.SyncDrivingSide();
+
         var vehiclePool = FindAnyObjectByType<VehiclePool>();
         if (vehiclePool != null)
         {
@@ -1340,6 +1374,7 @@ public class SceneBootstrap : MonoBehaviour
             int[] laneCounts = sourceNode.edges != null ? new int[sourceNode.edges.Count] : System.Array.Empty<int>();
             float[] laneWidths = sourceNode.edges != null ? new float[sourceNode.edges.Count] : System.Array.Empty<float>();
             bool[] oneWays = sourceNode.edges != null ? new bool[sourceNode.edges.Count] : System.Array.Empty<bool>();
+            bool[] sharedLanes = sourceNode.edges != null ? new bool[sourceNode.edges.Count] : System.Array.Empty<bool>();
 
             if (sourceNode.edges != null)
             {
@@ -1350,6 +1385,7 @@ public class SceneBootstrap : MonoBehaviour
                     laneCounts[edgeIndex] = Mathf.Max(1, edge.laneCount);
                     laneWidths[edgeIndex] = Mathf.Max(2.6f, edge.laneWidth);
                     oneWays[edgeIndex] = edge.oneWay;
+                    sharedLanes[edgeIndex] = edge.sharedLane;
                 }
             }
 
@@ -1364,7 +1400,8 @@ public class SceneBootstrap : MonoBehaviour
                 nextNodeIndices = nextNodeIndices,
                 outgoingLaneCounts = laneCounts,
                 outgoingLaneWidths = laneWidths,
-                outgoingOneWays = oneWays
+                outgoingOneWays = oneWays,
+                outgoingSharedLanes = sharedLanes
             };
         }
 

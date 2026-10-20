@@ -91,6 +91,7 @@ public static class GameSceneRebuilder
         tiles.zoomLevel = 17;
         tiles.tilesX = 7;
         tiles.tilesY = 7;
+        tiles.highPriorityRing = 2;
         tiles.tileWorldSize = 220f;
         tiles.tileSurfaceY = 0.12f;
         tiles.forceSharpTileFiltering = true;

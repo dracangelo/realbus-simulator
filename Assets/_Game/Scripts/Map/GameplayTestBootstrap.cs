@@ -105,8 +105,8 @@ public class GameplayTestBootstrap : MonoBehaviour
         }
         if (path == null) return false;
         route = ScriptableObject.CreateInstance<BusRoute>();
-        route.name = route.routeName = "Nairobi training service (generated)";
-        route.routeNumber = "TRAINING";
+        route.name = route.routeName = RouteNaming.NormalizeName("Nairobi training service (generated)");
+        route.routeNumber = RouteNaming.NormalizeCode("TRAINING");
         route.isRoadPathValidated = true;
         route.pathPoints = new Vector3[path.Count];
         route.geometryLatLonFlat = new double[path.Count * 2];

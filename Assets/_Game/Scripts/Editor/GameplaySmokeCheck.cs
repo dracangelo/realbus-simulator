@@ -21,6 +21,11 @@ public static class GameplaySmokeCheck
     static int highestGear;
     static readonly System.Collections.Generic.List<Transform> depotTrafficVehicles = new System.Collections.Generic.List<Transform>();
     static readonly System.Collections.Generic.List<Vector3> depotTrafficStarts = new System.Collections.Generic.List<Vector3>();
+    // Frame samples, collected only while the smoke scene is playing. They make the
+    // run report whether a change actually bought frame time instead of asking the
+    // next person to eyeball a game view.
+    static readonly System.Collections.Generic.List<float> frameTimes = new System.Collections.Generic.List<float>(2048);
+    static int sampledFrame = -1;
     static GameplaySmokeCheck() { EditorApplication.update += Tick; }
 
     public static void Run()
@@ -121,6 +126,7 @@ public static class GameplaySmokeCheck
             Debug.Log($"LIVE CITY unload props={city.ActiveCount} triangles={city.TriangleCount} passed={passed}");
             SessionState.SetBool("RealBus.SmokeCheck", false);
             SessionState.SetBool("RealBus.SmokeLiveCity", false);
+            LogPerformance();
             EditorApplication.Exit(passed ? 0 : 2);
         }
     }
@@ -148,6 +154,14 @@ public static class GameplaySmokeCheck
     static void Tick()
     {
         if (!SessionState.GetBool("RealBus.SmokeCheck", false) || !EditorApplication.isPlaying) return;
+        if (Time.frameCount != sampledFrame)
+        {
+            sampledFrame = Time.frameCount;
+            float frameTime = Time.unscaledDeltaTime;
+            // Skip the first second: loading, shader compilation and the initial
+            // streamed build are not the steady state this measures.
+            if (Time.time > 1f && frameTime > 0f && frameTime < 1f) frameTimes.Add(frameTime);
+        }
         if (started == 0) started = EditorApplication.timeSinceStartup;
         double elapsed = EditorApplication.timeSinceStartup - started;
         if (SessionState.GetBool("RealBus.SmokeLiveCity", false)) { TickLiveCity(elapsed); return; }
@@ -155,6 +169,7 @@ public static class GameplaySmokeCheck
         {
             Debug.LogError("SMOKE timed out before completing the driving/camera check.");
             SessionState.SetBool("RealBus.SmokeCheck", false);
+            LogPerformance();
             EditorApplication.Exit(2);
             return;
         }
@@ -227,7 +242,10 @@ public static class GameplaySmokeCheck
         {
         float moved = bus != null ? Vector3.Distance(bus.transform.position, startPosition) : 0;
         Debug.Log($"SMOKE driveDistance={moved:F2} speed={bus?.currentSpeedKmh} throttle={bus?.throttleInput} assist={bus?.AssistThrottleLimit} brake={bus?.AssistBrakeFloor}");
-        Debug.Log($"SMOKE trafficSide={(CityManager.Instance?.activeCountry?.DrivesOnLeft == true ? "left" : "right")} syntheticBuildings={Object.FindAnyObjectByType<ProceduralBuildingFill>()?.ActiveCount}");
+        var infill = Object.FindAnyObjectByType<ProceduralBuildingFill>();
+        var mappedBuilder = Object.FindAnyObjectByType<OSMBuildingMeshBuilder>();
+        Debug.Log($"SMOKE trafficSide={(CityManager.Instance?.activeCountry?.DrivesOnLeft == true ? "left" : "right")} syntheticBuildings={infill?.ActiveCount} importedBuildings={infill?.ImportedCount} mappedBuildings={mappedBuilder?.ActiveBuildingCount} importedMapped={mappedBuilder?.ImportedMappedCount} importedMappedTriangles={mappedBuilder?.ImportedMappedTriangles}");
+        passed &= CheckTraffic();
         if (bus != null)
         {
             Debug.Log($"SMOKE physics position={bus.transform.position} kinematic={bus.Rigidbody.isKinematic} constraints={bus.Rigidbody.constraints} rpm={bus.currentRPM} gear={bus.transmissionData.currentGear} brakeInput={bus.brakeInput} com={bus.Rigidbody.centerOfMass} steer={bus.steerInput}");
@@ -376,26 +394,248 @@ public static class GameplaySmokeCheck
         SessionState.SetBool("RealBus.SmokeCheck", false);
         SessionState.SetBool("RealBus.SmokeExtended", false);
         SessionState.SetBool("RealBus.SmokeHandling", false);
+        LogPerformance();
         EditorApplication.Exit(passed ? 0 : 2);
+    }
+
+    /// <summary>
+    /// Traffic has to be textured, varied and on the road, not merely present in a pool.
+    /// This measures what a driver sees: how many imported models the pool can spawn,
+    /// whether their materials carry the pack's texture, and how far each active vehicle
+    /// sits from the lane its own graph link assigns it.
+    /// </summary>
+    static bool CheckTraffic()
+    {
+        var pool = Object.FindAnyObjectByType<VehiclePool>();
+        if (pool == null)
+        {
+            Debug.LogError("SMOKE traffic: no VehiclePool in the scene");
+            return false;
+        }
+
+        pool.GetTierCounts(out int fullAi, out int spline, out int dormant, out int densityEnabled);
+        var models = new System.Collections.Generic.List<VehiclePool.VehiclePrefabEntry>();
+        var seen = new System.Collections.Generic.HashSet<GameObject>();
+        if (pool.prefabs != null)
+            foreach (var entry in pool.prefabs)
+                if (entry != null && entry.prefab != null && seen.Add(entry.prefab)) models.Add(entry);
+
+        // The body is the renderer carrying the most vertices; it must be either
+        // textured from the pack or deliberately painted, never left as the flat
+        // white/error material an unmaterialised import produces.
+        int untextured = 0;
+        foreach (var entry in models)
+        {
+            Renderer body = null;
+            int bestVertices = -1;
+            foreach (var renderer in entry.prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                var filter = renderer.GetComponent<MeshFilter>();
+                int vertices = filter != null && filter.sharedMesh != null ? filter.sharedMesh.vertexCount : 0;
+                if (vertices <= bestVertices) continue;
+                bestVertices = vertices;
+                body = renderer;
+            }
+            var material = body != null ? body.sharedMaterial : null;
+            bool materialised = material != null && material.shader != null &&
+                (material.mainTexture != null ||
+                 Mathf.Min(material.color.r, Mathf.Min(material.color.g, material.color.b)) < .75f);
+            if (!materialised)
+            {
+                untextured++;
+                Debug.LogWarning($"SMOKE traffic model '{entry.prefab.name}' has no texture or body paint on its largest part.");
+            }
+        }
+
+        var playerBus = MissionManager.Instance != null ? MissionManager.Instance.busController : Object.FindAnyObjectByType<BusController>();
+        int pooledCount = 0, atOrigin = 0;
+        float nearest = float.MaxValue, farthest = 0f;
+        foreach (Transform child in pool.transform)
+        {
+            if (child.GetComponent<AIVehicleController>() == null) continue;
+            pooledCount++;
+            if (child.position.sqrMagnitude < .01f) atOrigin++;
+            if (playerBus == null) continue;
+            float distance = Vector3.Distance(child.position, playerBus.transform.position);
+            nearest = Mathf.Min(nearest, distance);
+            farthest = Mathf.Max(farthest, distance);
+        }
+
+        // Liveries are per-instance property blocks, so the only honest check is to
+        // read them back off the pooled vehicles: one prefab per model means the
+        // prefab alone cannot show whether the road has more than one paint on it.
+        var liveryColors = new System.Collections.Generic.HashSet<Color>();
+        int liveryPainted = 0;
+        foreach (Transform child in pool.transform)
+        {
+            if (child.GetComponent<AIVehicleController>() == null) continue;
+            Renderer body = null;
+            int bestVertices = -1;
+            foreach (var renderer in child.GetComponentsInChildren<Renderer>(true))
+            {
+                var filter = renderer.GetComponent<MeshFilter>();
+                int vertices = filter != null && filter.sharedMesh != null ? filter.sharedMesh.vertexCount : 0;
+                if (vertices <= bestVertices) continue;
+                bestVertices = vertices;
+                body = renderer;
+            }
+            if (body == null) continue;
+
+            Material[] materials = body.sharedMaterials;
+            for (int m = 0; m < materials.Length; m++)
+            {
+                if (!TrafficLivery.IsBodyPaint(materials[m])) continue;
+                var block = new MaterialPropertyBlock();
+                body.GetPropertyBlock(block, m);
+                Color paint = block.GetColor("_Color");
+                if (paint.a > 0.5f) { liveryPainted++; liveryColors.Add(paint); }
+                break;
+            }
+        }
+        bool liveriesOk = liveryColors.Count >= 3;
+
+        int laneSamples = 0, steadySamples = 0, offLane = 0;
+        float worstDeviation = 0f, worstSteady = 0f;
+        string worstVehicle = string.Empty;
+        foreach (var ai in Object.FindObjectsByType<AIVehicleController>(FindObjectsInactive.Exclude))
+        {
+            // A spline-tier vehicle still carries the disabled controller, whose
+            // indices stop matching the pose the spline drives it to.
+            if (!ai.isActiveAndEnabled) continue;
+            // Overtaking and yielding deliberately leave the lane line.
+            if (ai.isOvertaking || ai.isYieldingToEmergency) continue;
+            var graph = ai.roadGraph;
+            if (graph == null || !graph.IsValidNode(ai.currentNodeIndex) || !graph.IsValidNode(ai.targetNodeIndex)) continue;
+            Vector3 from = graph.GetNodePosition(ai.currentNodeIndex);
+            Vector3 segment = graph.GetNodePosition(ai.targetNodeIndex) - from;
+            segment.y = 0f;
+            if (segment.sqrMagnitude < .01f) continue;
+            float segmentLength = segment.magnitude;
+            segment.Normalize();
+            float expected = graph.GetLaneOffset(ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex);
+            float actual = Vector3.Dot(ai.transform.position - from, Vector3.Cross(Vector3.up, segment));
+            float deviation = Mathf.Abs(actual - expected);
+            laneSamples++;
+            if (deviation > worstDeviation)
+            {
+                worstDeviation = deviation;
+                worstVehicle = ai.name;
+            }
+
+            // A body crossing a junction is briefly wide of the new lane line; lane
+            // keeping is judged on the part of the link where the wheels should be
+            // settled, not on the turn itself.
+            float along = Vector3.Dot(ai.transform.position - from, segment);
+            float junctionMargin = ai.vehicleLength * 1.2f;
+            if (along < junctionMargin || segmentLength - along < junctionMargin) continue;
+            steadySamples++;
+            worstSteady = Mathf.Max(worstSteady, deviation);
+            if (deviation > 1.2f) offLane++;
+            if (deviation > .8f)
+                Debug.Log($"SMOKE traffic lane sample {deviation:F2}m on {ai.name} along {along:F1}/{segmentLength:F1}m " +
+                    $"node {ai.currentNodeIndex}->{ai.targetNodeIndex} lane {ai.laneIndex}/{graph.GetLaneCount(ai.currentNodeIndex, ai.targetNodeIndex)} " +
+                    $"expected {expected:F2} actual {actual:F2} speed {ai.currentSpeedKmh:F0}");
+        }
+
+        // No active vehicle at all is a failure: a pool that never leaves its dormant
+        // tier is the bug that made traffic look like two parked cars. A recovery nudge
+        // or a shove from the car ahead can move one body off its line for a moment, so
+        // up to a third of the steady samples may be wide, but never by more than a
+        // lane width's worth.
+        bool laneOk = steadySamples >= 3
+            ? offLane <= Mathf.Max(1, steadySamples / 3) && worstSteady <= 2.5f
+            : laneSamples > 0 && worstDeviation <= 3f;
+        bool texturedOk = untextured == 0;
+        bool variedOk = models.Count >= 3;
+        bool trafficOk = laneOk && texturedOk && variedOk && liveriesOk;
+        Debug.Log($"SMOKE liveries painted={liveryPainted} distinct={liveryColors.Count} passed={liveriesOk}");
+        Debug.Log($"SMOKE traffic pool={pool.GetPoolCount()} spawned={pooledCount} atOrigin={atOrigin} " +
+            $"busDistance={(playerBus != null && pooledCount > 0 ? $"{nearest:F0}-{farthest:F0}m" : "n/a")} models={models.Count} " +
+            $"[{string.Join(",", models.Select(m => m.prefab.name))}] untextured={untextured} " +
+            $"density={densityEnabled} fullAi={fullAi} spline={spline} dormant={dormant} " +
+            $"laneSamples={laneSamples} steadySamples={steadySamples} offLane={offLane} worstLaneDeviation={worstDeviation:F2} " +
+            $"worstSteadyLaneDeviation={worstSteady:F2} worst={worstVehicle} passed={trafficOk}");
+        return trafficOk;
     }
 
     static float EmissionRate(ParticleSystem system)
         => system != null && system.isPlaying ? system.emission.rateOverTime.constant : 0f;
 
+    /// <summary>
+    /// Steady-state frame time for this run, as a percentile summary rather than an
+    /// average that hides the hitches. Worst frame and the number over 33/50 ms are
+    /// the numbers that read as "stutters".
+    /// </summary>
+    static void LogPerformance()
+    {
+        if (frameTimes.Count == 0)
+        {
+            Debug.Log("SMOKE perf no samples");
+            return;
+        }
+
+        var sorted = new System.Collections.Generic.List<float>(frameTimes);
+        sorted.Sort();
+        float total = 0f;
+        int over33 = 0, over50 = 0;
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            total += sorted[i];
+            if (sorted[i] > 0.0334f) over33++;
+            if (sorted[i] > 0.05f) over50++;
+        }
+        int p50 = Mathf.Clamp(Mathf.RoundToInt(sorted.Count * 0.50f) - 1, 0, sorted.Count - 1);
+        int p95 = Mathf.Clamp(Mathf.RoundToInt(sorted.Count * 0.95f) - 1, 0, sorted.Count - 1);
+        int renderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Exclude).Length;
+        Debug.Log($"SMOKE perf samples={sorted.Count} avgFps={sorted.Count / Mathf.Max(0.001f, total):F1} " +
+            $"p50Ms={sorted[p50] * 1000f:F1} p95Ms={sorted[p95] * 1000f:F1} worstMs={sorted[sorted.Count - 1] * 1000f:F1} " +
+            $"over33ms={over33} over50ms={over50} renderers={renderers}");
+
+        // Where the draw calls come from. A renderer count on its own does not say
+        // whether the city, the props or the traffic is the expensive half.
+        var roots = new System.Collections.Generic.List<(string name, int count)>();
+        foreach (GameObject root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+        {
+            int count = root.GetComponentsInChildren<Renderer>(true).Length;
+            if (count > 0) roots.Add((root.name, count));
+        }
+        roots.Sort((a, b) => b.count.CompareTo(a.count));
+        var parts = new System.Text.StringBuilder();
+        for (int i = 0; i < Mathf.Min(8, roots.Count); i++)
+        {
+            if (i > 0) parts.Append(',');
+            parts.Append(roots[i].name).Append('=').Append(roots[i].count);
+        }
+        Debug.Log($"SMOKE perf roots={parts}");
+    }
+
     static void CaptureCamera(string path)
     {
+        // CI and software-rendered batch runs can spend minutes inside a single
+        // multisampled camera render. The gameplay checks still run without the
+        // screenshot, so let those runners opt out of the capture.
+        if (System.Environment.GetEnvironmentVariable("REALBUS_SMOKE_SKIP_CAPTURE") == "1") return;
+
         Camera camera = Camera.main;
         if (camera == null) return;
-        var target = RenderTexture.GetTemporary(1280, 720, 24);
+        // 4x MSAA: the quality tier the game ships with. A single-sample target made
+        // every screenshot look softer than the actual build and hid edge quality.
+        // A software-rendered batch run can override this with REALBUS_SMOKE_MSAA=1
+        // against the resolve stalling on the emulated MSAA path.
+        int samples = 4;
+        string sampleOverride = System.Environment.GetEnvironmentVariable("REALBUS_SMOKE_MSAA");
+        if (!string.IsNullOrEmpty(sampleOverride) && int.TryParse(sampleOverride, out int parsed) && parsed >= 1 && parsed <= 8)
+            samples = parsed;
+        var target = RenderTexture.GetTemporary(1600, 900, 24, RenderTextureFormat.Default, RenderTextureReadWrite.Linear, samples);
         var previousTarget = camera.targetTexture;
         var previousActive = RenderTexture.active;
-        var image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+        var image = new Texture2D(1600, 900, TextureFormat.RGB24, false);
         try
         {
             camera.targetTexture = target;
             camera.Render();
             RenderTexture.active = target;
-            image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
+            image.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0);
             image.Apply();
             System.IO.File.WriteAllBytes(path, image.EncodeToPNG());
         }

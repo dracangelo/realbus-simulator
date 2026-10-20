@@ -52,6 +52,9 @@ public class RoadGraph
         public int      laneCount;
         public float    laneWidth;
         public bool     oneWay;
+        /// <summary>True when the way has a single lane in total, so both directions
+        /// use the same centred lane instead of inventing a half each.</summary>
+        public bool     sharedLane;
     }
 
     // ── Storage ────────────────────────────────────────────────────────
@@ -225,7 +228,16 @@ public class RoadGraph
             bool oneWay   = IsOneWay(elem.tags, roadType);
             int totalLanes = ParseLaneCount(elem.tags, roadType, oneWay);
             float laneWidth = ParseLaneWidth(elem.tags, totalLanes, roadType);
-            int travelLanes = oneWay ? totalLanes : Mathf.Max(1, totalLanes / 2);
+            // Each directed link carries the lane count of its own direction. Using
+            // half the total for both directions was only right on a symmetric road:
+            // a 3-lane way has 1 lane forward and 2 backward, and the extra lane made
+            // the two flows overlap on the backward half.
+            int forwardLanes = ParseForwardLaneCount(elem.tags, totalLanes, oneWay);
+            int backwardLanes = oneWay ? totalLanes : Mathf.Max(1, totalLanes - forwardLanes);
+            // A two-way way tagged as a single lane has nowhere to put two
+            // carriageways, so its traffic stays centred rather than being pushed
+            // half a lane off the asphalt.
+            bool sharedLane = !oneWay && totalLanes <= 1;
 
             int prev = -1;
             for (int pointIndex = 0; pointIndex < elem.geometry.Count; pointIndex++)
@@ -236,9 +248,10 @@ public class RoadGraph
                 if (prev >= 0 && n != prev)
                 {
                     bool reverse = elem.tags.TryGetValue("oneway", out var direction) && direction == "-1";
-                    graph.AddEdge(reverse ? n : prev, reverse ? prev : n, speed, roadType, travelLanes, laneWidth, oneWay);
+                    graph.AddEdge(reverse ? n : prev, reverse ? prev : n, speed, roadType,
+                        oneWay ? totalLanes : forwardLanes, laneWidth, oneWay, sharedLane);
                     if (!oneWay)
-                        graph.AddEdge(n, prev, speed, roadType, travelLanes, laneWidth, false);
+                        graph.AddEdge(n, prev, speed, roadType, backwardLanes, laneWidth, false, sharedLane);
                 }
                 prev = n;
             }
@@ -310,7 +323,7 @@ public class RoadGraph
 
     // ── Private: edge management ───────────────────────────────────────
 
-    void AddEdge(int from, int to, float speedKmh, RoadType type, int laneCount, float laneWidth, bool oneWay)
+    void AddEdge(int from, int to, float speedKmh, RoadType type, int laneCount, float laneWidth, bool oneWay, bool sharedLane = false)
     {
         if (!ValidNode(from) || !ValidNode(to)) return;
 
@@ -328,7 +341,8 @@ public class RoadGraph
             travelTimeSec = travelSec,
             laneCount     = Mathf.Clamp(laneCount, 1, 4),
             laneWidth     = Mathf.Clamp(laneWidth, 2.6f, 4.2f),
-            oneWay        = oneWay
+            oneWay        = oneWay,
+            sharedLane    = sharedLane
         });
     }
 
@@ -417,6 +431,19 @@ public class RoadGraph
             RoadType.Service => 1,
             _ => 2
         };
+    }
+
+    /// <summary>
+    /// Lanes available in the way's authored direction. Mirrors OSMWay so the road
+    /// mesh's markings and the traffic graph place the same number of lanes on the
+    /// same side of the centre line.
+    /// </summary>
+    static int ParseForwardLaneCount(Dictionary<string, string> tags, int totalLanes, bool oneWay)
+    {
+        if (oneWay) return Mathf.Max(1, totalLanes);
+        if (tags != null && tags.TryGetValue("lanes:forward", out var raw) && int.TryParse(raw, out int forward))
+            return Mathf.Clamp(forward, 1, Mathf.Max(1, totalLanes));
+        return Mathf.Max(1, totalLanes / 2);
     }
 
     static float ParseLaneWidth(Dictionary<string, string> tags, int lanes, RoadType type)
