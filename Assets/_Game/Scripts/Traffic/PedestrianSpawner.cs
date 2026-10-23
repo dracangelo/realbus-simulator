@@ -212,7 +212,9 @@ public class PedestrianSpawner : MonoBehaviour
 
     ZebraCrossing[] BuildRandomCrossingsFromRoadGraph()
     {
-        var graph = roadGraph != null ? roadGraph : FindAnyObjectByType<AIRoadGraph>();
+        var graph = roadGraph != null && !roadGraph.privateLaneCircuit
+            ? roadGraph
+            : AIRoadGraph.FindCityGraph();
         if (graph == null || graph.NodeCount < 2)
         {
             Debug.LogWarning("[PedestrianSpawner] Cannot generate crossings because AIRoadGraph is missing or too small.");

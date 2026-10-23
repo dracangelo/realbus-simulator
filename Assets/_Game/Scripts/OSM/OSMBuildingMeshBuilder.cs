@@ -238,18 +238,27 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         float frameStart = Time.realtimeSinceStartup;
 
         ResolveStreamingTarget();
-        Vector3 focus = streamingTarget != null ? streamingTarget.position : Vector3.zero;
-        if (streamingTarget == null && MissionManager.Instance != null && MissionManager.Instance.currentRoute != null &&
-            MissionManager.Instance.currentRoute.stops != null && MissionManager.Instance.currentRoute.stops.Length > 0 &&
-            GPSManager.Instance != null)
-        {
-            focus = GPSManager.Instance.GpsToWorld(
-                MissionManager.Instance.currentRoute.stops[0].latitude,
-                MissionManager.Instance.currentRoute.stops[0].longitude);
-        }
-
+        Vector3 focus = ResolveInitialBuildFocus();
         float immediateDistSq = 430f * 430f;
         Vector3 viewForward = streamingTarget != null ? ViewPriority.ResolveForward(streamingTarget) : Vector3.forward;
+        if (MissionManager.Instance != null && MissionManager.Instance.currentRoute != null &&
+            MissionManager.Instance.currentRoute.stops != null && MissionManager.Instance.currentRoute.stops.Length > 1 &&
+            GPSManager.Instance != null)
+        {
+            Vector3 firstStop = GPSManager.Instance.GpsToWorld(
+                MissionManager.Instance.currentRoute.stops[0].latitude,
+                MissionManager.Instance.currentRoute.stops[0].longitude);
+            if ((focus - firstStop).sqrMagnitude < 4f)
+            {
+                Vector3 nextStop = GPSManager.Instance.GpsToWorld(
+                    MissionManager.Instance.currentRoute.stops[1].latitude,
+                    MissionManager.Instance.currentRoute.stops[1].longitude);
+                Vector3 routeForward = nextStop - firstStop;
+                routeForward.y = 0f;
+                if (routeForward.sqrMagnitude > 1f)
+                    viewForward = routeForward.normalized;
+            }
+        }
         var immediateWays = new List<OSMWay>();
         var deferredWays = new List<OSMWay>();
 
@@ -1044,6 +1053,29 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             return;
         BusController bus = FindAnyObjectByType<BusController>();
         streamingTarget = bus != null ? bus.transform : Camera.main != null ? Camera.main.transform : null;
+    }
+
+    /// <summary>
+    /// The first building pass must centre on where the player is about to be,
+    /// not where the direct-play scene happened to leave the bus before the
+    /// mission sequence teleports it. Without this, an outlying route start can
+    /// finish its loading card with a fully built city three kilometres behind it.
+    /// </summary>
+    Vector3 ResolveInitialBuildFocus()
+    {
+        Vector3 busPosition = streamingTarget != null ? streamingTarget.position : Vector3.zero;
+        var mission = MissionManager.Instance;
+        if (mission == null || mission.currentRoute == null || mission.currentRoute.stops == null ||
+            mission.currentRoute.stops.Length == 0 || GPSManager.Instance == null)
+            return busPosition;
+
+        Vector3 routeStart = GPSManager.Instance.GpsToWorld(
+            mission.currentRoute.stops[0].latitude,
+            mission.currentRoute.stops[0].longitude);
+
+        return streamingTarget == null || (busPosition - routeStart).sqrMagnitude > 300f * 300f
+            ? routeStart
+            : busPosition;
     }
 
     float GetSignedAreaXZ(List<Vector3> footprint)

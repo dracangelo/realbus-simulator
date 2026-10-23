@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
@@ -122,8 +123,45 @@ public class VisualQualityController : MonoBehaviour
         Transform existing = bus.transform.Find("Bus Reflection Probe");
         if (QualitySettings.GetQualityLevel() <= 0) { if (existing != null) existing.gameObject.SetActive(false); return; }
         GameObject probeObject = existing != null ? existing.gameObject : new GameObject("Bus Reflection Probe"); probeObject.transform.SetParent(bus.transform, false); probeObject.transform.localPosition = new Vector3(0f, 2f, 0f); probeObject.SetActive(true);
-        busReflectionProbe = probeObject.GetComponent<ReflectionProbe>(); if (busReflectionProbe == null) busReflectionProbe = probeObject.AddComponent<ReflectionProbe>(); busReflectionProbe.mode = ReflectionProbeMode.Realtime; busReflectionProbe.refreshMode = ReflectionProbeRefreshMode.ViaScripting; busReflectionProbe.resolution = QualitySettings.GetQualityLevel() >= 2 ? 128 : 64; busReflectionProbe.size = new Vector3(24f, 12f, 24f); busReflectionProbe.intensity = 0.65f;
-        busReflectionProbe.RenderProbe();
+        busReflectionProbe = probeObject.GetComponent<ReflectionProbe>(); if (busReflectionProbe == null) busReflectionProbe = probeObject.AddComponent<ReflectionProbe>();
+        busReflectionProbe.mode = ReflectionProbeMode.Realtime;
+        busReflectionProbe.refreshMode = ReflectionProbeRefreshMode.ViaScripting;
+        busReflectionProbe.timeSlicingMode = ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
+        busReflectionProbe.resolution = QualitySettings.GetQualityLevel() >= 2 ? 128 : 64;
+        // A wider, slightly taller box covers the bus, the pavement and the walls
+        // it is parked against. The old 24 m cube reflected mostly sky and missed
+        // the shelter and shopfront that give the first frame its context.
+        busReflectionProbe.size = new Vector3(36f, 16f, 36f);
+        busReflectionProbe.blendDistance = 10f;
+        busReflectionProbe.intensity = 0.78f;
+        busReflectionProbe.hdr = true;
+        busReflectionProbe.importance = 1;
+        busReflectionProbe.cullingMask = ~0;
+        busReflectionProbe.nearClipPlane = 0.3f;
+        busReflectionProbe.farClipPlane = 650f;
+        // Rendering here would capture the depot before the city has streamed in.
+        if (isActiveAndEnabled) StartCoroutine(RenderProbeWhenWorldIsReady());
+    }
+
+    IEnumerator RenderProbeWhenWorldIsReady()
+    {
+        float waited = 0f;
+        while (waited < 45f)
+        {
+            waited += Time.unscaledDeltaTime;
+            if (WorldReadiness.Evaluate(WorldReadiness.Capture()).ready) break;
+            yield return null;
+        }
+
+        // One more second so the last chunk of near-field buildings is actually
+        // drawn before the probe looks at it.
+        yield return new WaitForSecondsRealtime(1f);
+
+        // Rendered exactly once, after the near-field city exists. A realtime probe
+        // re-render is six faces of the whole city; doing it again as the clock moved
+        // looked free on a GPU and cost minutes on a software rasterizer, so the sky
+        // reflection (which is a 16-pixel cubemap) is what follows the sun instead.
+        if (busReflectionProbe != null) busReflectionProbe.RenderProbe();
     }
 
     void DisableMotionBlurOnLow()

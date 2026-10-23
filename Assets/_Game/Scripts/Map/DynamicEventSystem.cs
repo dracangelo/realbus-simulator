@@ -355,16 +355,21 @@ public class DynamicEventSystem : MonoBehaviour
             return;
 
         WeatherState state = PickTransitionWeatherState();
-        float intensity = GetWeatherIntensity(state);
-        float temp = WeatherSystem.Instance.temperature;
-        WeatherSystem.Instance.ApplyWeather(state, intensity, temp);
+        // Fade it in like the ordinary weather cycle. A dynamic event used to snap
+        // the sky, fog and road grip in a single frame.
+        WeatherSystem.Instance.TransitionWeather(state);
     }
 
     WeatherState PickTransitionWeatherState()
     {
         WeatherState current = WeatherSystem.Instance != null ? WeatherSystem.Instance.currentWeather : WeatherState.Clear;
-        if (current == WeatherState.Clear || current == WeatherState.PartlyCloudy)
-            return Random.value < 0.5f ? WeatherState.Overcast : WeatherState.LightRain;
+        if (current == WeatherState.Clear || current == WeatherState.PartlyCloudy || current == WeatherState.Windy)
+        {
+            float roll = Random.value;
+            return roll < 0.4f ? WeatherState.Overcast
+                 : roll < 0.7f ? WeatherState.LightRain
+                 : WeatherState.Windy;
+        }
         if (current == WeatherState.Overcast)
             return Random.value < 0.5f ? WeatherState.LightRain : WeatherState.HeavyRain;
         if (current == WeatherState.LightRain)
@@ -372,23 +377,6 @@ public class DynamicEventSystem : MonoBehaviour
         if (current == WeatherState.HeavyRain)
             return Random.value < 0.5f ? WeatherState.Thunderstorm : WeatherState.Fog;
         return WeatherState.Overcast;
-    }
-
-    float GetWeatherIntensity(WeatherState state)
-    {
-        switch (state)
-        {
-            case WeatherState.PartlyCloudy: return 0.2f;
-            case WeatherState.Overcast: return 0.4f;
-            case WeatherState.Fog: return 0.7f;
-            case WeatherState.Drizzle: return 0.3f;
-            case WeatherState.LightRain: return 0.5f;
-            case WeatherState.HeavyRain: return 0.85f;
-            case WeatherState.Thunderstorm: return 1f;
-            case WeatherState.Snow: return 0.6f;
-            case WeatherState.Blizzard: return 1f;
-            default: return 0f;
-        }
     }
 
     float GetRouteProgress01(MissionManager mission)

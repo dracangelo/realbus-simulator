@@ -7,6 +7,11 @@ public class SceneLoader : MonoBehaviour
 
     [Header("Scene Catalog")]
     public SceneCatalog sceneCatalog;
+
+    [Header("Gameplay Transition")]
+    [Tooltip("A short deliberate beat after the route is confirmed. It gives the loading card time to appear before the scene swap, so the player never sees a half-built street flash past.")]
+    [SerializeField, Min(0f)] float gameplayPreparationDelaySeconds = 0.8f;
+
     bool isLoading;
 
     public static SceneLoader EnsureExists()
@@ -54,7 +59,60 @@ public class SceneLoader : MonoBehaviour
     public void LoadCountrySelect() => LoadScene("CountrySelect", sceneCatalog != null ? sceneCatalog.countrySelectBuildIndex : 1);
     public void LoadCitySelect() => LoadScene("CitySelect", sceneCatalog != null ? sceneCatalog.citySelectBuildIndex : 2);
     public void LoadRouteSelect() => LoadScene("RouteSelect", sceneCatalog != null ? sceneCatalog.routeSelectBuildIndex : 3);
-    public void LoadGame() => LoadScene("GameScene", sceneCatalog != null ? sceneCatalog.gameplayBuildIndex : 4);
+
+    /// <summary>
+    /// Route selection goes through a deliberate preparation beat. Unity can
+    /// activate the gameplay scene in a few frames, but the map, roads and
+    /// buildings are still streaming in; showing the loading card before the
+    /// swap lets <see cref="WorldReadyLoadingScreen"/> take over without a
+    /// visible half-built frame.
+    /// </summary>
+    public void LoadGame()
+    {
+        if (isLoading) return;
+        StartCoroutine(PrepareAndLoadGame());
+    }
+
+    System.Collections.IEnumerator PrepareAndLoadGame()
+    {
+        isLoading = true;
+
+        LoadingScreenUI screen = LoadingScreenUI.EnsureExists();
+        screen.Show();
+        BusRoute route = GameState.Instance != null ? GameState.Instance.selectedRoute : null;
+        screen.SetStatus(route != null
+            ? $"PREPARING {RouteNaming.DisplayCode(route)}..."
+            : "PREPARING YOUR ROUTE...");
+
+        // Do the wait on unscaled time: pause/UI timescale should never make the
+        // loading card disappear before the scene is actually ready.
+        float delay = Mathf.Max(0f, gameplayPreparationDelaySeconds);
+        float elapsed = 0f;
+        while (elapsed < delay)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            screen.SetProgress(delay > 0f ? Mathf.Clamp01(elapsed / delay) * 0.12f : 0.12f);
+            yield return null;
+        }
+        screen.SetProgress(0.12f);
+
+        int fallbackBuildIndex = sceneCatalog != null ? sceneCatalog.gameplayBuildIndex : 4;
+        AsyncOperation operation = null;
+        if (Application.CanStreamedLevelBeLoaded("GameScene"))
+            operation = SceneManager.LoadSceneAsync("GameScene");
+        else if (fallbackBuildIndex >= 0)
+            operation = SceneManager.LoadSceneAsync(fallbackBuildIndex);
+
+        if (operation == null)
+        {
+            Debug.LogError("SceneLoader: Could not load GameScene by name or build index.");
+            screen.Hide();
+            isLoading = false;
+            yield break;
+        }
+
+        yield return LoadAsync(operation);
+    }
 
     public void LoadCitySelectChecked()
     {
@@ -134,11 +192,17 @@ public class SceneLoader : MonoBehaviour
         if (operation == null) yield break;
         isLoading = true;
         LoadingScreenUI screen = LoadingScreenUI.EnsureExists();
-        screen.Show();
+        if (!screen.IsVisible) screen.Show();
+        BusRoute route = GameState.Instance != null ? GameState.Instance.selectedRoute : null;
+        screen.SetStatus(route != null
+            ? $"LOADING {RouteNaming.DisplayCode(route)}..."
+            : "LOADING THE CITY...");
         operation.allowSceneActivation = false;
         while (operation.progress < 0.9f)
         {
-            screen.SetProgress(operation.progress / 0.9f);
+            // Start above the preparation card's 12% so the bar never jumps
+            // backwards between "preparing" and the actual scene load.
+            screen.SetProgress(Mathf.Lerp(0.12f, 1f, operation.progress / 0.9f));
             yield return null;
         }
         screen.SetProgress(1f);

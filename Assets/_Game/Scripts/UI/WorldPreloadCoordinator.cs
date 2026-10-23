@@ -24,7 +24,8 @@ public class WorldPreloadCoordinator : MonoBehaviour
     [SerializeField] float buildingTimeoutSeconds = 12f;
     [SerializeField] float trafficTimeoutSeconds = 8f;
     [SerializeField] float sceneryTimeoutSeconds = 9f;
-    [SerializeField] float overallTimeoutSeconds = 24f;
+    [SerializeField] float detailTimeoutSeconds = 18f;
+    [SerializeField] float overallTimeoutSeconds = 32f;
 
     public bool IsReady { get; private set; }
     public bool TimedOut { get; private set; }
@@ -67,6 +68,12 @@ public class WorldPreloadCoordinator : MonoBehaviour
         yield return null;
 
         float start = Time.realtimeSinceStartup;
+
+        // Start the near-field detail pass in parallel with the shared catalogs and
+        // the map/road stages. It is bounded independently, so a slow optional
+        // shelter pack can never extend the whole load past its own budget.
+        NearFieldAssetWarmup detail = NearFieldAssetWarmup.EnsureExists();
+
         RequestCore<BuildingCatalog>("BuildingCatalog");
         RequestCore<TrafficCatalog>("TrafficCatalog");
         RequestCore<LiveCityCatalog>("LiveCityCatalog");
@@ -106,9 +113,9 @@ public class WorldPreloadCoordinator : MonoBehaviour
         VehiclePool traffic = null;
         LiveCityStreamer scenery = null;
         bool mapReady = false, roadsReady = false, buildingsReady = false;
-        bool infillReady = false, trafficReady = false, sceneryReady = false;
+        bool infillReady = false, trafficReady = false, sceneryReady = false, detailReady = false;
         bool mapComplete = false, roadsComplete = false, buildingsComplete = false;
-        bool infillComplete = false, trafficComplete = false, sceneryComplete = false;
+        bool infillComplete = false, trafficComplete = false, sceneryComplete = false, detailComplete = false;
 
         while (Time.realtimeSinceStartup - start < overallTimeoutSeconds)
         {
@@ -123,6 +130,7 @@ public class WorldPreloadCoordinator : MonoBehaviour
             if (infill == null && buildings != null) infill = buildings.GetComponent<ProceduralBuildingFill>();
             if (traffic == null) traffic = FindAnyObjectByType<VehiclePool>();
             if (scenery == null) scenery = FindAnyObjectByType<LiveCityStreamer>();
+            if (detail == null) detail = NearFieldAssetWarmup.EnsureExists();
 
             mapComplete = map == null || map.NearTilesLoaded;
             roadsComplete = roads == null || roads.roadsBuilt;
@@ -130,6 +138,7 @@ public class WorldPreloadCoordinator : MonoBehaviour
             infillComplete = infill == null || infill.InitialFillComplete;
             trafficComplete = traffic == null || traffic.WarmupComplete;
             sceneryComplete = scenery == null || scenery.InitialPassComplete;
+            detailComplete = detail == null || detail.IsReady;
 
             // A stage that runs past its ceiling still lets the next one start,
             // but it remains a timeout for the warning and diagnostics below.
@@ -139,14 +148,16 @@ public class WorldPreloadCoordinator : MonoBehaviour
             infillReady = infillComplete || elapsed >= buildingTimeoutSeconds;
             trafficReady = trafficComplete || elapsed >= trafficTimeoutSeconds;
             sceneryReady = sceneryComplete || elapsed >= sceneryTimeoutSeconds;
+            detailReady = detailComplete || elapsed >= detailTimeoutSeconds;
 
             float readiness = 0f;
-            readiness += mapReady ? 0.20f : 0f;
-            readiness += roadsReady ? 0.12f : 0f;
-            readiness += buildingsReady ? 0.20f : 0f;
-            readiness += infillReady ? 0.16f : 0f;
-            readiness += trafficReady ? 0.18f : 0f;
-            readiness += sceneryReady ? 0.14f : 0f;
+            readiness += mapReady ? 0.16f : 0f;
+            readiness += roadsReady ? 0.09f : 0f;
+            readiness += buildingsReady ? 0.15f : 0f;
+            readiness += infillReady ? 0.11f : 0f;
+            readiness += trafficReady ? 0.13f : 0f;
+            readiness += sceneryReady ? 0.10f : 0f;
+            readiness += detailReady ? 0.26f : 0f;
             Progress = Mathf.Lerp(0.25f, 0.98f, readiness);
 
             if (!mapReady)
@@ -159,28 +170,47 @@ public class WorldPreloadCoordinator : MonoBehaviour
                 Status = "SPAWNING TRAFFIC...";
             else if (!sceneryReady)
                 Status = "STREAMING STREET DETAIL...";
+            else if (!detailReady)
+                Status = detail != null && !string.IsNullOrWhiteSpace(detail.Status)
+                    ? detail.Status
+                    : "PREPARING STOP PROPS & BANNERS...";
             else
                 break;
 
             yield return null;
         }
 
+        // A long synchronous frame (shelter placement, a building ring) can take
+        // the loop past its ceiling before the flags are refreshed. Re-read the
+        // live systems once so the log and the timeout decision describe the world
+        // we actually finished with, not the frame before the stall.
+        if (map != null) mapComplete = map.NearTilesLoaded;
+        if (roads != null) roadsComplete = roads.roadsBuilt;
+        if (buildings != null) buildingsComplete = buildings.InitialRingReady;
+        if (infill != null) infillComplete = infill.InitialFillComplete;
+        if (traffic != null) trafficComplete = traffic.WarmupComplete;
+        if (scenery != null) sceneryComplete = scenery.InitialPassComplete;
+        if (detail != null) detailComplete = detail.IsReady;
+
         TimedOut = !(mapComplete && roadsComplete && buildingsComplete &&
-                     infillComplete && trafficComplete && sceneryComplete);
+                     infillComplete && trafficComplete && sceneryComplete && detailComplete);
         if (TimedOut)
         {
             Debug.LogWarning(
                 $"[WorldPreload] Near-field warm-up exceeded its budget after " +
                 $"{Time.realtimeSinceStartup - start:0.0}s (map={mapComplete}, roads={roadsComplete}, " +
-                $"buildings={buildingsComplete}, infill={infillComplete}, traffic={trafficComplete}, scenery={sceneryComplete}). " +
+                $"buildings={buildingsComplete}, infill={infillComplete}, traffic={trafficComplete}, " +
+                $"scenery={sceneryComplete}, detail={detailComplete}). " +
                 "Streaming continues behind the loading screen.");
         }
 
         if (!TimedOut)
         {
+            string coverage = detail != null ? detail.Coverage : "no detail warmer";
             Debug.Log($"[WorldPreload] Near-field ready in {Time.realtimeSinceStartup - start:0.0}s " +
                 $"(map={mapComplete}, roads={roadsComplete}, buildings={buildingsComplete}, " +
-                $"infill={infillComplete}, traffic={trafficComplete}, scenery={sceneryComplete}).");
+                $"infill={infillComplete}, traffic={trafficComplete}, scenery={sceneryComplete}, " +
+                $"detail={detailComplete}, view={coverage}).");
         }
 
         Progress = 1f;

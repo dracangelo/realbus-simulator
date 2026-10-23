@@ -14,6 +14,7 @@ public static class GameplaySmokeCheck
     static Vector3 startPosition;
     static float sampledAt;
     static int captureStage;
+    static bool introCaptured;
     static bool passed;
     static int lastTelemetrySecond = -1;
     static float peakSpeed;
@@ -77,9 +78,12 @@ public static class GameplaySmokeCheck
         if (clock != null && !string.IsNullOrEmpty(timeValue) && float.TryParse(timeValue, out float minutes))
         {
             // The schedule would otherwise drag the clock back to the run's own
-            // start time on the next frame.
+            // start time on the next frame, and the compressed world day would move
+            // the pinned hour during the drive. A smoke check is meant to hold still.
             clock.followScheduleManager = false;
+            clock.advanceTimeAutomatically = false;
             clock.currentTimeMinutes = minutes;
+            clock.SetTimeOfDay(minutes);
             Debug.Log($"SMOKE override timeOfDay={minutes:F0} minutes");
         }
 
@@ -164,6 +168,7 @@ public static class GameplaySmokeCheck
         }
         if (started == 0) started = EditorApplication.timeSinceStartup;
         double elapsed = EditorApplication.timeSinceStartup - started;
+        CaptureCinematicIntroOnce();
         if (SessionState.GetBool("RealBus.SmokeLiveCity", false)) { TickLiveCity(elapsed); return; }
         if (elapsed > 240)
         {
@@ -265,6 +270,8 @@ public static class GameplaySmokeCheck
         if (extended) passed &= peakSpeed > 40f && highestGear > 0 && maxCameraRoll < 1f;
         Debug.Log($"SMOKE peakSpeed={peakSpeed:F1} highestGear={highestGear} maxCameraRoll={maxCameraRoll:F2}");
         Debug.Log($"SMOKE screenCameras={screenCameras} passed={passed}");
+        var hud = HUDManager.Instance;
+        Debug.Log($"SMOKE hud={(hud != null)} bound={hud?.IsBound} visible={hud?.IsVisible}");
         var roadIndex = OSMRoadMeshBuilder.Instance?.SurfaceIndex;
         int stopModels = 0, blockedStops = 0, crossingKerbs = 0;
         if (roadIndex != null)
@@ -311,6 +318,10 @@ public static class GameplaySmokeCheck
         var haze = CinematicAtmosphereController.Instance;
         var weather = WeatherSystem.Instance;
         var clock = TimeOfDaySystem.Instance;
+        var wind = WindSystem.Instance;
+        var grade = Object.FindAnyObjectByType<CinematicColorGrade>();
+        Light dayLight = RenderSettings.sun != null ? RenderSettings.sun : FindDirectionalSun();
+        float coverage = sky != null ? sky.cloudCoverage : 0f;
         bool cloudsBuilt = sky != null && sky.transform.Find("SkyEnvironment_Domes/SkyEnvironment_Clouds") != null;
         bool starsBuilt = sky != null && sky.transform.Find("SkyEnvironment_Domes/SkyEnvironment_Stars") != null;
         bool rainBuilt = rain != null && rain.rainParticles != null;
@@ -335,11 +346,45 @@ public static class GameplaySmokeCheck
             $"hazeColor={(haze != null ? haze.TintedHazeColor().ToString() : "none")} hazeOwnsFog={(haze != null && haze.HazeMayOwnFogNow())} " +
             $"weatherFogActive={(weatherFog != null && weatherFog.WeatherFogActive)} daylight={(clock != null ? clock.GetDaylightFactor() : 0f):F2} " +
             $"skyTint={(clock != null ? clock.GetSkyTint().ToString() : "none")} " +
-            $"rainBuilt={rainBuilt} snowBuilt={snowBuilt} rainRate={rainRate:F0} snowRate={snowRate:F0} fogController={(fog != null)}");
+            $"rainBuilt={rainBuilt} snowBuilt={snowBuilt} rainRate={rainRate:F0} snowRate={snowRate:F0} fogController={(fog != null)} " +
+            $"wind={(wind != null ? wind.SpeedKmh : 0f):F1}kmh windDir={(wind != null ? wind.DirectionDegrees : 0f):F0} gust={(wind != null ? wind.Gust01 : 0f):F2} " +
+            $"sunTint={(clock != null ? clock.GetSunTint().ToString() : "none")} sunVisibility={(clock != null ? clock.GetSunVisibilityFactor() : 0f):F2} " +
+            $"sunIntensity={(dayLight != null ? dayLight.intensity : 0f):F3} shadowStrength={(dayLight != null ? dayLight.shadowStrength : 0f):F2} " +
+            $"ambientMode={RenderSettings.ambientMode} ambientIntensity={RenderSettings.ambientIntensity:F2} " +
+            $"reflectionIntensity={RenderSettings.reflectionIntensity:F2} fogTarget={(weatherFog != null ? weatherFog.TargetFogColor.ToString() : "none")} " +
+            $"grade={(grade != null && grade.enabled)} gradeExposure={(grade != null ? grade.CurrentExposure : 0f):F3} " +
+            $"gradeContrast={(grade != null ? grade.CurrentContrast : 0f):F3} gradeSaturation={(grade != null ? grade.CurrentSaturation : 0f):F3} " +
+            $"gradeTint={(grade != null ? grade.CurrentTint.ToString() : "none")}");
         passed &= sky != null && RenderSettings.skybox != null && cloudsBuilt && starsBuilt;
-        passed &= rainBuilt && snowBuilt && fog != null && clock != null && weather != null;
+        passed &= rainBuilt && snowBuilt && fog != null && clock != null && weather != null && wind != null;
+        // The grade is part of the cinematic look now; if it failed to attach, the
+        // scene silently falls back to an ungraded frame. Very Low deliberately
+        // disables it, so only assert on the tiers that keep it.
+        if (QualitySettings.GetQualityLevel() > 0)
+            passed &= grade != null && grade.enabled;
         passed &= wetWeather ? rainRate > 0f : rainRate <= 0f;
         passed &= frozenWeather ? snowRate > 0f : snowRate <= 0f;
+
+        // The light has to agree with the sky the game just reported. A storm that
+        // still casts a crisp shadow or mirrors a blue sky is the specific bug this
+        // check exists to catch, and it is invisible in a still frame.
+        if (dayLight != null)
+        {
+            if (coverage > 0.85f)
+            {
+                passed &= dayLight.shadowStrength < 0.5f;
+                passed &= RenderSettings.reflectionIntensity < 0.4f;
+                Debug.Log("SMOKE lighting heavyOvercast=True");
+            }
+            else if (coverage < 0.2f)
+            {
+                passed &= dayLight.shadowStrength > 0.5f;
+                // The floor is the night reflection (0.20), not the day one: this
+                // branch runs for a clear sky at any hour.
+                passed &= RenderSettings.reflectionIntensity > 0.1f;
+                Debug.Log("SMOKE lighting heavyOvercast=False");
+            }
+        }
 
 
         // The depot is the other half of "the bus can leave": it has to own its
@@ -502,8 +547,8 @@ public static class GameplaySmokeCheck
             // A spline-tier vehicle still carries the disabled controller, whose
             // indices stop matching the pose the spline drives it to.
             if (!ai.isActiveAndEnabled) continue;
-            // Overtaking and yielding deliberately leave the lane line.
-            if (ai.isOvertaking || ai.isYieldingToEmergency) continue;
+            // Overtaking, yielding and stuck recovery deliberately leave the lane line.
+            if (ai.IsChangingLane) continue;
             var graph = ai.roadGraph;
             if (graph == null || !graph.IsValidNode(ai.currentNodeIndex) || !graph.IsValidNode(ai.targetNodeIndex)) continue;
             Vector3 from = graph.GetNodePosition(ai.currentNodeIndex);
@@ -549,9 +594,11 @@ public static class GameplaySmokeCheck
         bool variedOk = models.Count >= 3;
         bool trafficOk = laneOk && texturedOk && variedOk && liveriesOk;
         Debug.Log($"SMOKE liveries painted={liveryPainted} distinct={liveryColors.Count} passed={liveriesOk}");
+        string laneFloor = pool.roadGraph != null ? pool.roadGraph.MinimumLaneWidth.ToString("F2") : "n/a";
         Debug.Log($"SMOKE traffic pool={pool.GetPoolCount()} spawned={pooledCount} atOrigin={atOrigin} " +
             $"busDistance={(playerBus != null && pooledCount > 0 ? $"{nearest:F0}-{farthest:F0}m" : "n/a")} models={models.Count} " +
             $"[{string.Join(",", models.Select(m => m.prefab.name))}] untextured={untextured} " +
+            $"widestModel={pool.WidestVehicleWidth:F2}m laneFloor={laneFloor}m " +
             $"density={densityEnabled} fullAi={fullAi} spline={spline} dormant={dormant} " +
             $"laneSamples={laneSamples} steadySamples={steadySamples} offLane={offLane} worstLaneDeviation={worstDeviation:F2} " +
             $"worstSteadyLaneDeviation={worstSteady:F2} worst={worstVehicle} passed={trafficOk}");
@@ -560,6 +607,14 @@ public static class GameplaySmokeCheck
 
     static float EmissionRate(ParticleSystem system)
         => system != null && system.isPlaying ? system.emission.rateOverTime.constant : 0f;
+
+    static Light FindDirectionalSun()
+    {
+        var lights = Object.FindObjectsByType<Light>(FindObjectsInactive.Include);
+        for (int i = 0; i < lights.Length; i++)
+            if (lights[i] != null && lights[i].type == LightType.Directional) return lights[i];
+        return null;
+    }
 
     /// <summary>
     /// Steady-state frame time for this run, as a percentile summary rather than an
@@ -607,6 +662,24 @@ public static class GameplaySmokeCheck
             parts.Append(roots[i].name).Append('=').Append(roots[i].count);
         }
         Debug.Log($"SMOKE perf roots={parts}");
+    }
+
+    /// <summary>
+    /// Grabs one frame of the low hero pass, so the framing can be checked without sitting
+    /// in the editor. Only runs when the shot was opted back in for a batch run; the
+    /// overlay's letterbox is a screen-space canvas, so this frame shows the 3D shot only.
+    /// The frame is taken after the cut rather than on the opening frame, because the pass
+    /// is the shot that can actually be framed wrong.
+    /// </summary>
+    static void CaptureCinematicIntroOnce()
+    {
+        if (introCaptured) return;
+        var intro = Object.FindAnyObjectByType<CinematicIntroSequence>();
+        if (intro == null || !intro.IsPlaying) return;
+        if (intro.Progress < 0.42f) return;
+        introCaptured = true;
+        CaptureCamera("/tmp/realbus-cinematic-intro.png");
+        Debug.Log($"SMOKE cinematic intro captured at {intro.Progress:0.00}");
     }
 
     static void CaptureCamera(string path)

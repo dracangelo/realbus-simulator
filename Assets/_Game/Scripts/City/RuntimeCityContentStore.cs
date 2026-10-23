@@ -83,7 +83,11 @@ public static class RuntimeCityContentStore
 
     static bool IsUsefulFile(string path)
     {
-        try { return File.Exists(path) && new FileInfo(path).Length > 24; }
+        // Placeholder files in older packs were 26 bytes (an empty <osm/> root).
+        // Treating those as real content made the downloader say the built-in
+        // pack was complete and then the building loader found no footprints.
+        // Anything smaller than a practical minimal data file is not usable.
+        try { return File.Exists(path) && new FileInfo(path).Length > 128; }
         catch (IOException) { return false; }
     }
 }

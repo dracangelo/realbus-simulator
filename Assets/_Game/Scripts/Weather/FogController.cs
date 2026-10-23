@@ -22,6 +22,8 @@ public class FogController : MonoBehaviour
 
     [Header("Fog Colors")]
     public Color clearFogColor    = new Color(0.78f, 0.84f, 0.92f);
+    [Tooltip("Overcast is a grey ceiling, not a dim clear day: the distance has to lose its blue with the sky.")]
+    public Color overcastFogColor = new Color(0.62f, 0.64f, 0.66f);
     public Color rainFogColor     = new Color(0.35f, 0.38f, 0.44f);
     public Color thunderFogColor  = new Color(0.15f, 0.15f, 0.20f);
     public Color fogFogColor      = new Color(0.72f, 0.72f, 0.72f);
@@ -51,6 +53,12 @@ public class FogController : MonoBehaviour
     /// haze asks this before it applies, so the two do not overwrite each other.
     /// </summary>
     public bool WeatherFogActive => fogActive;
+
+    /// <summary>The colour the fog is currently fading toward; also what the smoke check reports.</summary>
+    public Color TargetFogColor => targetFogColor;
+
+    /// <summary>The visibility the fog is fading toward, in metres.</summary>
+    public float TargetVisibility => targetFogEnd;
 
     void Awake()
     {
@@ -125,11 +133,16 @@ public class FogController : MonoBehaviour
                 return;
 
             case WeatherState.PartlyCloudy:
-                SetLinear(clearVisibility * 0.8f, clearFogColor);
+                SetLinear(clearVisibility * 0.8f, Color.Lerp(clearFogColor, overcastFogColor, 0.45f));
                 break;
 
             case WeatherState.Overcast:
-                SetLinear(overcastVisibility, clearFogColor);
+                SetLinear(overcastVisibility, overcastFogColor);
+                break;
+
+            case WeatherState.Windy:
+                // A gusty dry day is still hazy, but not as closed in as an overcast.
+                SetLinear(clearVisibility * 0.72f, Color.Lerp(clearFogColor, overcastFogColor, 0.55f));
                 break;
 
             case WeatherState.Drizzle:

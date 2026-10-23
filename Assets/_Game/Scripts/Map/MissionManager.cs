@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 public class MissionManager : MonoBehaviour
 {
-    const float MaxSpawnDistanceFromMapCenterMeters = 3500f;
     const float SpawnRaycastHeight = 600f;
     const float SpawnRaycastDistance = 2000f;
     const float SpawnClearanceAboveGround = 1.2f;
@@ -80,7 +79,7 @@ public class MissionManager : MonoBehaviour
     public bool RecalculateGuidanceFromBus()
     {
         if (busController == null || currentRoute == null) return false;
-        AIRoadGraph graph = FindAnyObjectByType<AIRoadGraph>();
+        AIRoadGraph graph = AIRoadGraph.ResolveCityGraph(busController.transform.position, 2500f);
         if (graph != null && TryBuildGraphGuidancePath(graph, busController.transform.position, currentStopIndex,
             diversionActive ? blockedDiversionNodes : null, out Vector3[] recalculated))
         {
@@ -114,6 +113,8 @@ public class MissionManager : MonoBehaviour
         if (routeActive || missionStarting || currentCountdownValue > 0 || busController == null || GPSManager.Instance == null || route == null) return;
         if (route.busStops != null && route.busStops.Length > 0) route.SyncLegacyStopsFromBusStops();
         if (route.stops == null || route.stops.Length < 2) return;
+        route.EnsureRuntimeData();
+        route.EnsureWorldPathPoints();
         StopAllCoroutines();
         FreeDriveSession.Instance?.EndSession();
         PassengerManager.Instance?.ResetForFreeDriveMode();
@@ -151,19 +152,20 @@ public class MissionManager : MonoBehaviour
         DriverShiftSystem.Instance?.PrepareRoute(currentRoute, missionData);
 
         var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
-        double spawnLat = city != null ? city.spawnLat : currentRoute.stops[0].latitude;
-        double spawnLon = city != null ? city.spawnLon : currentRoute.stops[0].longitude;
-        double routeLat = currentRoute.stops[0].latitude;
-        double routeLon = currentRoute.stops[0].longitude;
+        double spawnLat = currentRoute.stops[0].latitude;
+        double spawnLon = currentRoute.stops[0].longitude;
 
-        if (IsSpawnNearLoadedMap(routeLat, routeLon))
+        // The map loader has already been asked to centre on this route start.
+        // The old 3.5 km-from-origin guard rejected perfectly valid outlying
+        // terminals (Kigali's Kwa Mironko is 3.55 km from the city centre) and
+        // dropped the bus at the city spawn, leaving the minimap blank and the
+        // first stop three kilometres away. Only reject coordinates that are
+        // not actually a place on Earth.
+        if (city != null && !IsPlausibleRouteStart(spawnLat, spawnLon))
         {
-            spawnLat = routeLat;
-            spawnLon = routeLon;
-        }
-        else
-        {
-            Debug.LogWarning("MissionManager: First route stop is outside loaded map bounds. Using city spawn instead.");
+            Debug.LogWarning("MissionManager: Route start is not a valid coordinate. Using city spawn instead.");
+            spawnLat = city.spawnLat;
+            spawnLon = city.spawnLon;
         }
 
         if (repositionBusOnStart) yield return WaitForRoadSurfaceIfAvailable();
@@ -270,6 +272,11 @@ public class MissionManager : MonoBehaviour
         }
         if (ScheduleManager.Instance != null && checkpoint.scheduleTimeMinutes > 0f)
             ScheduleManager.Instance.currentTimeMinutes = checkpoint.scheduleTimeMinutes;
+        // The world clock normally runs its own compressed day, but a checkpoint is
+        // an explicit point in the mission's day: restore the sky to the same hour so
+        // a reloaded afternoon route does not start under a morning sun.
+        if (TimeOfDaySystem.Instance != null && checkpoint.scheduleTimeMinutes > 0f)
+            TimeOfDaySystem.Instance.SetTimeOfDay(checkpoint.scheduleTimeMinutes);
         ScoreTracker.Instance?.RestoreCheckpoint(checkpoint.punctualityScore, checkpoint.satisfactionScore,
             checkpoint.safetyScore, checkpoint.efficiencyScore, checkpoint.stopsCompleted,
             checkpoint.pointDeductions, checkpoint.collisions, checkpoint.redLights);
@@ -300,14 +307,18 @@ public class MissionManager : MonoBehaviour
         }
     }
 
-    bool IsSpawnNearLoadedMap(double lat, double lon)
+    static bool IsPlausibleRouteStart(double lat, double lon)
     {
-        if (GPSManager.Instance == null)
+        if (double.IsNaN(lat) || double.IsNaN(lon) ||
+            double.IsInfinity(lat) || double.IsInfinity(lon))
             return false;
 
-        var world = GPSManager.Instance.GpsToWorld(lat, lon);
-        world.y = 0f;
-        return world.sqrMagnitude <= MaxSpawnDistanceFromMapCenterMeters * MaxSpawnDistanceFromMapCenterMeters;
+        // (0, 0) is the default value of an unfilled stop, not a terminal in
+        // the Gulf of Guinea.
+        if (System.Math.Abs(lat) < 0.000001d && System.Math.Abs(lon) < 0.000001d)
+            return false;
+
+        return System.Math.Abs(lat) <= 90d && System.Math.Abs(lon) <= 180d;
     }
 
     float ResolveSpawnHeight(Vector3 spawnWorldPos)
@@ -738,7 +749,7 @@ public class MissionManager : MonoBehaviour
         if (currentRoute == null || currentRoute.stops == null || currentRoute.stops.Length == 0 || busController == null)
             return false;
 
-        var graph = FindAnyObjectByType<AIRoadGraph>();
+        var graph = AIRoadGraph.ResolveCityGraph(busController.transform.position, 2500f);
         if (graph == null || graph.NodeCount == 0 || GPSManager.Instance == null)
             return false;
 
@@ -783,7 +794,9 @@ public class MissionManager : MonoBehaviour
             return;
         }
 
-        var graph = FindAnyObjectByType<AIRoadGraph>();
+        var graph = busController != null
+            ? AIRoadGraph.ResolveCityGraph(busController.transform.position, 2500f)
+            : AIRoadGraph.FindCityGraph();
         if (graph == null || busController == null || !TryBuildGraphGuidancePath(graph, busController.transform.position, currentStopIndex, blockedDiversionNodes, out var diversionPath))
         {
             ClearTemporaryDiversion();
@@ -828,7 +841,12 @@ public class MissionManager : MonoBehaviour
         if (currentRoute == null)
             return System.Array.Empty<Vector3>();
 
-        if (currentRoute.pathPoints != null && currentRoute.pathPoints.Length >= 2)
+        // Never trust serialized pathPoints until they have been checked against
+        // the active map. A stale foreign-origin path makes the minimap blank and
+        // reports a 13,000 km off-route deviation.
+        currentRoute.EnsureWorldPathPoints();
+        if (currentRoute.pathPoints != null && currentRoute.pathPoints.Length >= 2 &&
+            currentRoute.HasUsableWorldPath())
             return (Vector3[])currentRoute.pathPoints.Clone();
 
         if (currentRoute.stops == null || currentRoute.stops.Length == 0 || GPSManager.Instance == null)

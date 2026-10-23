@@ -110,6 +110,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/Localization.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MissionState.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/Weathersystem.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/SkyReflectionEnvironment.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/PassengerLoadDynamics.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/PhysicsTestTrack.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/RoadGraph.cs" />
@@ -118,6 +119,8 @@
     <Compile Include="Assets/_Game/Scripts/Map/ScoreTracker.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/SignalViolationDetector.cs" />
     <Compile Include="Assets/_Game/Scripts/Debug/RuntimeGasStationSpawner.cs" />
+    <Compile Include="Assets/_Game/Scripts/UI/CinematicLoadingCard.cs" />
+    <Compile Include="Assets/_Game/Scripts/Weather/WindSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusStabilityAssist.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusController.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/BusStopPosterBuilder.cs" />
@@ -161,6 +164,8 @@
     <Compile Include="Assets/_Game/Scripts/UI/OfflineMapsUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/SkyEnvironmentController.cs" />
     <Compile Include="Assets/_Game/Scripts/City/PlayerCityLibrary.cs" />
+    <Compile Include="Assets/_Game/Scripts/Weather/WeatherLighting.cs" />
+    <Compile Include="Assets/_Game/Scripts/UI/CinematicIntroSequence.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/FogController.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficParticipant.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RouteVisualizer.cs" />
@@ -201,6 +206,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/HUDManager.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMTypes.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RoadSurfaceIndex.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/StreetTextureLibrary.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MobilePerformanceManager.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMParser.cs" />
     <Compile Include="Assets/_Game/Scripts/Progress/BalanceTelemetryRecorder.cs" />
@@ -225,6 +231,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/RouteSelectUI.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MissionDrivingMonitor.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/GarageProgressionPanel.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/CinematicColorGrade.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/VehicleDistanceLod.cs" />
     <Compile Include="Assets/_Game/Scripts/City/CitySelector.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/CosmeticDamageSystem.cs" />
@@ -249,10 +256,12 @@
     <Compile Include="Assets/_Game/Scripts/Map/RoadNetworkSurface.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/StopTrigger.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/MapboxMapSettings.cs" />
+    <Compile Include="Assets/_Game/Scripts/UI/NearFieldAssetWarmup.cs" />
     <Compile Include="Assets/_Game/Scripts/Progress/SaveManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Progress/UnlockManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AIRoadGraph.cs" />
     <Compile Include="Assets/_Game/Scripts/City/RuntimeCityContentStore.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/RoadWidthPolicy.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMBuildingLoader.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/VehiclePolishEffects.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MissionBriefingUI.cs" />
@@ -263,6 +272,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/_Game/GameScripts.asmdef" />
+    <None Include="Assets/_Game/Resources/Shaders/RealBusCinematicGrade.shader" />
     <None Include="Assets/_Game/Shaders/RealBusFacade.shader" />
     <None Include="Assets/_Game/Shaders/RealBusRoof.shader" />
     <None Include="Assets/_Game/Shaders/RealBusBusPaint.shader" />

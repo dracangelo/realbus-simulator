@@ -82,14 +82,47 @@ REALBUS_SMOKE_TIME=780 REALBUS_SMOKE_WEATHER=Thunderstorm LD_PRELOAD="$XML" xvfb
 grep "SMOKE environment" /tmp/smoke-storm.log
 ```
 
-`REALBUS_SMOKE_TIME` is minutes past midnight (0 = midnight, 780 = 13:00) and `REALBUS_SMOKE_WEATHER` is any `WeatherState` name (`Clear`, `PartlyCloudy`, `Overcast`, `Fog`, `Drizzle`, `LightRain`, `HeavyRain`, `Thunderstorm`, `Snow`, `Blizzard`). The `SMOKE environment` line reports the skybox, cloud coverage, star visibility, moonlight, sun elevation, fog distances and colour, and the precipitation emission rates, and the check fails the run when the environment is missing or when rain and weather disagree.
+`REALBUS_SMOKE_TIME` is minutes past midnight (0 = midnight, 780 = 13:00) and `REALBUS_SMOKE_WEATHER` is any `WeatherState` name (`Clear`, `PartlyCloudy`, `Windy`, `Overcast`, `Fog`, `Drizzle`, `LightRain`, `HeavyRain`, `Thunderstorm`, `Snow`, `Blizzard`). The `SMOKE environment` line reports the skybox, cloud coverage, star visibility, moonlight, sun elevation, fog distances and colour, the precipitation emission rates, the sun intensity/shadow strength, the ambient/reflection intensities, and the cinematic grade state (`grade`, `gradeExposure`, `gradeContrast`, `gradeSaturation`, `gradeTint`). The check fails the run when the environment is missing, when rain and weather disagree, when a heavy overcast still has a near-full shadow/reflection (or a clear sky has none), or when the grade failed to attach on a quality tier above Very Low.
+
+Pinned examples used for the cinematic pass:
+
+```bash
+# Clear noon
+REALBUS_SMOKE_SKIP_CAPTURE=1 REALBUS_SMOKE_TIME=720 REALBUS_SMOKE_WEATHER=Clear \
+  LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -projectPath "$PWD" \
+  -executeMethod GameplaySmokeCheck.Run -logFile /tmp/smoke-noon.log
+grep "SMOKE environment" /tmp/smoke-noon.log
+
+# Clear night
+REALBUS_SMOKE_SKIP_CAPTURE=1 REALBUS_SMOKE_TIME=60 REALBUS_SMOKE_WEATHER=Clear \
+  LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -projectPath "$PWD" \
+  -executeMethod GameplaySmokeCheck.Run -logFile /tmp/smoke-night.log
+grep "SMOKE environment" /tmp/smoke-night.log
+
+# Broken cloud and wind at 08:00
+REALBUS_SMOKE_SKIP_CAPTURE=1 REALBUS_SMOKE_TIME=480 REALBUS_SMOKE_WEATHER=Windy \
+  LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -projectPath "$PWD" \
+  -executeMethod GameplaySmokeCheck.Run -logFile /tmp/smoke-windy.log
+grep "SMOKE environment" /tmp/smoke-windy.log
+```
+
+The assembled scene runs a compressed world clock: `TimeOfDaySystem` starts at the timetable's opening hour and covers a full 24 game hours in 30 real minutes, while `ScheduleManager` keeps its own one-game-minute-per-real-minute timetable for stop punctuality. A pinned `REALBUS_SMOKE_TIME` disables that advance so the sky holds still for the duration of a smoke run. The weather cycle starts after the real WeatherService lookup, or after a short 45-second hold when the offline simulated weather is used, then holds each state for 90–240 real seconds and cross-fades over 45–90 seconds.
+
+## Cinematic exposure and colour grade
+
+The grade is not a scene component and not a package. `CinematicAtmosphereController` attaches `CinematicColorGrade` to `Camera.main` on scene load and after a quality change; the component runs one `OnRenderImage` pass with `Assets/_Game/Resources/Shaders/RealBusCinematicGrade.shader` (also in `GraphicsSettings`' Always Included Shaders). It is disabled on the Very Low tier and reattached after scene reloads because the atmosphere controller is `DontDestroyOnLoad`.
+
+The pass reads `TimeOfDaySystem.SunElevationDegrees` and `SkyEnvironmentController.cloudCoverage`; it does not own the sun, ambient, fog or reflections. That means a smoke run can assert both the lighting and the grade in the same `SMOKE environment` line. A normal clear-noon run should show `grade=True`, exposure near `1.00`, contrast near `1.06`, saturation near `1.08`, and a near-white tint; a clear-night run should show exposure above `1.0`, saturation below `1.0`, and a blue-biased tint.
+
+Manual screenshot capture (`/tmp/realbus-exterior.png`, `/tmp/realbus-cockpit.png`) still stalls under software rendering, including with `REALBUS_SMOKE_MSAA=1`, so batch runs should use `REALBUS_SMOKE_SKIP_CAPTURE=1`. The final look, especially vignette strength and exposure at golden hour, needs a real display/device pass.
 
 ## Checks that need no Unity license
 
-An expired offline entitlement stops the editor before any test runs, and the run then exits `198` with
-`No valid Unity Editor license found`. `~/.config/unity3d/Unity/Unity.Licensing.Client.log` names the
-reason; `LicenseGroupOfflineValidityPeriodIsExpired` means Unity Hub has to sign in once so the licence
-can be renewed online. Everything below still works while that is outstanding.
+The licence is currently valid, so the normal EditMode and smoke commands above run. If an offline
+entitlement expires, the editor stops before any test and exits `198` with `No valid Unity Editor license
+found`; `~/.config/unity3d/Unity/Unity.Licensing.Client.log` names the reason, and
+`LicenseGroupOfflineValidityPeriodIsExpired` means Unity Hub has to sign in once so the licence can be
+renewed online. Everything below still works while that is outstanding.
 
 - `dotnet build GameScripts.csproj` (and `GameScripts.Editor.csproj`, `GameScriptsTests.Editor.csproj`)
   compiles the game, editor and test assemblies against the editor's own managed assemblies, so a

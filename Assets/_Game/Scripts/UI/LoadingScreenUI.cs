@@ -1,8 +1,17 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// The scene-load half of the loading experience. It draws the same
+/// <see cref="CinematicLoadingCard"/> the world warm-up draws, so when the gameplay
+/// scene activates and <see cref="WorldReadyLoadingScreen"/> takes over there is no
+/// visible change: one title card, letterboxed, from menu to city.
+///
+/// The canvas persists between scenes, so it is dismissed from the sceneLoaded event
+/// as a safety net even when the loading coroutine is interrupted while Unity
+/// activates the destination scene.
+/// </summary>
 public class LoadingScreenUI : MonoBehaviour
 {
     static readonly string[] Tips =
@@ -15,9 +24,12 @@ public class LoadingScreenUI : MonoBehaviour
     };
 
     public static LoadingScreenUI Instance { get; private set; }
+
+    /// <summary>True while the card canvas is visible. Used to avoid resetting a card that is already showing a preparation step.</summary>
+    public bool IsVisible => canvas != null && canvas.gameObject.activeSelf;
+
     Canvas canvas;
-    TextMeshProUGUI cityText, tipText, progressText;
-    Image progress;
+    CinematicLoadingCard card;
 
     public static LoadingScreenUI EnsureExists()
     {
@@ -42,50 +54,59 @@ public class LoadingScreenUI : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    // The loading canvas persists between scenes. Always dismiss it from the
-    // sceneLoaded event as a safety net, even if the loading coroutine is
-    // interrupted while Unity activates the destination scene.
     void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Hide();
 
     public void Show()
     {
-        CityDefinition city = GameState.Instance != null ? GameState.Instance.selectedCity : null;
-        cityText.text = city != null ? city.cityName.ToUpperInvariant() : "REALBUS";
-        tipText.text = "DRIVING TIP\n" + Tips[Random.Range(0, Tips.Length)];
-        SetProgress(0f); canvas.gameObject.SetActive(true);
+        if (canvas == null) return;
+        canvas.gameObject.SetActive(true);
+
+        card.SetSubject();
+        card.SetEyebrow("LOADING");
+        card.SetTip(Tips[Random.Range(0, Tips.Length)]);
+        card.SetStatus("PREPARING THE CITY");
+        card.SetProgress(0f);
+        // Instant: this screen is often only up for a fraction of a second, and a
+        // reveal tween that never finishes reads as a flicker.
+        card.Reveal(instant: true);
     }
 
     public void SetProgress(float value)
     {
-        value = Mathf.Clamp01(value); progress.fillAmount = value; progressText.text = Mathf.RoundToInt(value * 100f) + "%";
+        if (card != null) card.SetProgress(value);
     }
 
-    public void Hide() { if (canvas != null) canvas.gameObject.SetActive(false); }
+    /// <summary>
+    /// Names the current preparation step while the gameplay scene is still
+    /// activating. The card otherwise shows a generic city message, which makes
+    /// a route load look stalled when the network is slow.
+    /// </summary>
+    public void SetStatus(string message)
+    {
+        if (card != null && !string.IsNullOrWhiteSpace(message))
+            card.SetStatus(message);
+    }
+
+    public void Hide()
+    {
+        if (card != null) card.Dismiss(instant: true);
+        if (canvas != null) canvas.gameObject.SetActive(false);
+    }
 
     void Build()
     {
-        GameObject c = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler)); c.transform.SetParent(transform, false);
-        canvas = c.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 500;
-        CanvasScaler scaler = c.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920f, 1080f);
-        Image background = CreateImage("Background", c.transform, UITheme.Background); Stretch(background.rectTransform);
-        cityText = CreateText("City", background.transform, "REALBUS", 72f, new Vector2(0f, 110f), new Vector2(1100f, 110f));
-        tipText = CreateText("Tip", background.transform, "", 30f, new Vector2(0f, -20f), new Vector2(1100f, 150f));
-        Image track = CreateImage("ProgressTrack", background.transform, UITheme.SurfaceBright); track.rectTransform.sizeDelta = new Vector2(820f, 16f); track.rectTransform.anchoredPosition = new Vector2(0f, -155f);
-        progress = CreateImage("Progress", track.transform, UITheme.Accent); Stretch(progress.rectTransform); progress.type = Image.Type.Filled; progress.fillMethod = Image.FillMethod.Horizontal; progress.fillOrigin = 0;
-        progressText = CreateText("ProgressText", background.transform, "0%", 28f, new Vector2(0f, -205f), new Vector2(300f, 50f));
-    }
+        var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler));
+        canvasGo.transform.SetParent(transform, false);
 
-    static Image CreateImage(string name, Transform parent, Color color)
-    {
-        GameObject o = new GameObject(name, typeof(RectTransform), typeof(Image)); o.transform.SetParent(parent, false); Image i = o.GetComponent<Image>(); i.color = color; return i;
-    }
+        canvas = canvasGo.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 500;
 
-    static TextMeshProUGUI CreateText(string name, Transform parent, string value, float size, Vector2 position, Vector2 dimensions)
-    {
-        GameObject o = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI)); o.transform.SetParent(parent, false);
-        RectTransform r = o.GetComponent<RectTransform>(); r.sizeDelta = dimensions; r.anchoredPosition = position;
-        TextMeshProUGUI t = o.GetComponent<TextMeshProUGUI>(); t.text = value; t.fontSize = size; t.alignment = TextAlignmentOptions.Center; t.color = UITheme.TextPrimary; t.font = UITheme.GetFont(size >= 40f ? UITheme.FontWeight.Bold : UITheme.FontWeight.Medium); return t;
-    }
+        var scaler = canvasGo.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
 
-    static void Stretch(RectTransform r) { r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = r.offsetMax = Vector2.zero; }
+        card = CinematicLoadingCard.Create(canvasGo.transform);
+    }
 }

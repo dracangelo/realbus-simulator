@@ -277,7 +277,11 @@ public class LiveCityStreamer : MonoBehaviour
             if (walking)
             {
                 bool clear = true;
-                for (int step = -5; step <= 5; step++)
+                // Dense kerbside planting leaves fewer uninterrupted 11 m runs than
+                // the old sparse streets did. Five metres is enough for the short
+                // ambient walk cycle and keeps a walker from being rejected by a
+                // tree two sample steps away.
+                for (int step = -1; step <= 1; step++)
                     if (!Clear(position + candidate.direction * step, radius, buildings)) { clear = false; break; }
                 if (!clear)
                 {
@@ -290,7 +294,13 @@ public class LiveCityStreamer : MonoBehaviour
             }
             bool space = true;
             foreach (var item in active.Values)
-                if (FlatDistanceSquared(position, item.center) < Mathf.Pow(radius + item.radius + (walking || item.entry.kind == LiveCityCatalog.Kind.Pedestrian ? 5f : 0.8f), 2)) { space = false; break; }
+            {
+                // A walker may pass a tree or bench on the pavement. Only keep
+                // walkers from overlapping each other; vegetation keeps its full
+                // clearance from every prop.
+                if (walking && item.entry.kind != LiveCityCatalog.Kind.Pedestrian) continue;
+                if (FlatDistanceSquared(position, item.center) < Mathf.Pow(radius + item.radius + (walking ? 0.2f : 0.8f), 2)) { space = false; break; }
+            }
             if (!space) continue;
             Quaternion rotation = Quaternion.LookRotation(-right * candidate.side);
             if (entry.kind == LiveCityCatalog.Kind.Tree || entry.kind == LiveCityCatalog.Kind.Plant || entry.kind == LiveCityCatalog.Kind.Rock)
@@ -302,6 +312,10 @@ public class LiveCityStreamer : MonoBehaviour
             foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             go.transform.localScale = Vector3.one * scale;
+            // Advertisements and benches are the imported props that still carried
+            // no albedo. Decorate after the instance exists so the variant follows
+            // this exact placement seed and survives streaming out and back.
+            StreetTextureLibrary.Decorate(go, entry.kind, candidate.seed);
             active[(candidate.segment, candidate.sample, candidate.side)] = new Spawned { go = go, entry = entry, center = position,
                 direction = candidate.direction, rotation = rotation, radius = radius, phase = (candidate.seed % 1000) * .01f };
             triangles += entry.triangles;
@@ -396,6 +410,14 @@ public class LiveCityStreamer : MonoBehaviour
     /// </summary>
     IEnumerator Scatter(Vector3 player, Transform viewer, OSMBuildingMeshBuilder buildings)
     {
+        // Scatter fills the gaps between loaded roads. If there is no road within
+        // the load ring the player is outside the city (or a teleport has just
+        // left it), so planting open ground there would keep thousands of props
+        // alive in the void and make unloading impossible.
+        bool hasRoad = false;
+        foreach (var _ in index.Around(player, loadRadius)) { hasRoad = true; break; }
+        if (!hasRoad) yield break;
+
         var origin = ScatterCell(player);
         int ringCount = Mathf.CeilToInt(loadRadius / scatterCellSize);
         int plantedThisFrame = 0;

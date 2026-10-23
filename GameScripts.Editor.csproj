@@ -57,7 +57,9 @@
     <Compile Include="Assets/_Game/Scripts/Editor/OSMRouteImporterEditorTool.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/CountryImporter.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/Phase3MapTools.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/ImportedModelTextureBinder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/AIRoadGraphGenerator.cs" />
+    <Compile Include="Assets/_Game/Scripts/Editor/ImportedModelImportSettings.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/ParkingLotModelPostprocessor.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/GameSceneRebuilder.cs" />
     <Compile Include="Assets/_Game/Scripts/Editor/RouteEditorWindow.cs" />

@@ -1,7 +1,7 @@
 # RealBus Simulator — Scene Hierarchy & Component Reference
 
 > **Last updated:** Phase 7 implementation complete; device acceptance pending
-> **Unity version:** 6000.3.10f1 (Unity 6.3 LTS)  
+> **Unity version:** 6000.6.0f1 (Unity 6.6)
 > **Platform:** Android (Samsung Galaxy S20 / A54)
 > **Orientation target:** Landscape-only on Android phones and tablets
 
@@ -59,9 +59,10 @@ Assets/
 │   │   ├── Editor/
 │   │   │   └── CountryImporter.cs     (Editor tool only)
 │   │   ├── Environment/
-│   │   │   ├── WeatherSystem.cs       (Phase 5.3 — added after 6.5)
-│   │   │   ├── TimeOfDaySystem.cs     (Phase 5.3 — sun arc, sky tint, night lights)
+│   │   │   ├── WeatherSystem.cs       (states incl. Windy, real observations, natural state cycle)
+│   │   │   ├── TimeOfDaySystem.cs     (sun arc, compressed world clock, sky tint, night lights)
 │   │   │   ├── SkyEnvironmentController.cs (clouds, stars, moon, skybox)
+│   │   │   ├── WindSystem.cs          (weather-driven wind, gusts, cloud/precipitation drift)
 │   │   │   ├── RainController.cs
 │   │   │   ├── FogController.cs
 │   │   │   ├── SnowController.cs
@@ -78,7 +79,10 @@ Assets/
 │   │   │   ├── MissionState.cs        (enum)
 │   │   │   ├── MissionData.cs         (ScriptableObject)
 │   │   │   ├── MissionResult.cs
-│   │   │   └── ScheduleManager.cs
+│   │   │   ├── ScheduleManager.cs
+│   │   │   ├── CinematicAtmosphereController.cs (sun, ambient trilight, haze, sky reflections, camera grade)
+│   │   │   ├── CinematicColorGrade.cs (runtime exposure/colour grade, quality-gated)
+│   │   │   └── SkyReflectionEnvironment.cs (generated sky cubemap for reflections)
 │   │   ├── OSM/
 │   │   │   ├── OSMTypes.cs
 │   │   │   ├── OSMParser.cs
@@ -595,6 +599,23 @@ Each stop has:
 | `MissionResultUI` | resultCanvasGroup→ResultPanel, all slots wired |
 | `MobileControlsUI` | All 8 button slots wired to Bus_Root/BusController |
 | `SceneBootstrap` | Does NOT redirect from GameScene (GameScene is exempt) |
+
+### Runtime cinematic lighting
+
+The lighting stack is assembled at runtime rather than baked into `GameScene`:
+
+| Component | Responsibility |
+|-----------|----------------|
+| `TimeOfDaySystem` | Compressed 30-minute world day; sun arc/elevation/azimuth, sun tint, soft-shadow strength, night lights |
+| `SkyController` | Per-weather sun colour/intensity, cloud-scaled direct light and ambient colour |
+| `SkyEnvironmentController` | Procedural skybox, clouds, stars, moon, sky exposure, cloud cover |
+| `CinematicAtmosphereController` | Warm soft sun, trilight ambient, distance haze, generated sky reflection cubemap, camera features; `DontDestroyOnLoad`, reapplied on scene load |
+| `CinematicColorGrade` | One-pass exposure/contrast/saturation/tint/shadow-lift/vignette on `Camera.main`; reads the clock and cloud cover; disabled on Very Low |
+| `VisualQualityController` | One-shot 36 m realtime bus reflection probe, cabin fill light, quality-dependent setup |
+
+`CinematicAtmosphereController` attaches `CinematicColorGrade` to the active camera in `ConfigureCameraFeatures`, so the camera does not need a serialized component in the scene. The grade shader is `Assets/_Game/Resources/Shaders/RealBusCinematicGrade.shader` and is also listed in `GraphicsSettings`' Always Included Shaders.
+
+**No static lightmap or baked Light Probe Group is used.** The city is streamed procedurally and the same scene must render a clear noon, a cloudy afternoon and a night with a moving sun. A bake would freeze one time and one cloud state, and the moving bus would sample probes lit by the wrong hour. The runtime equivalents are the `Trilight` ambient (day/night and cloud scaled), the generated sky cubemap used as `RenderSettings.customReflectionTexture`, and the bus's realtime reflection probe. There is no `LightProbeGroup` in the scene; imported bus renderers therefore use the runtime ambient and the bus probe rather than baked probe data.
 
 ---
 

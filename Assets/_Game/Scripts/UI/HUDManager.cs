@@ -17,6 +17,9 @@ public class HUDManager : MonoBehaviour
 {
     public static HUDManager Instance { get; private set; }
 
+    public bool IsBound => bus != null;
+    public bool IsVisible => canvas != null && canvas.gameObject.activeSelf;
+
     Canvas canvas;
     GameObject safeRoot;
     TextMeshProUGUI speedText, gearText, nextStopText, etaText, guidanceText, scheduleText;
@@ -40,6 +43,7 @@ public class HUDManager : MonoBehaviour
     int shownTemperature = int.MinValue, shownPax = int.MinValue, shownCapacity = int.MinValue;
     int shownClockMinute = int.MinValue;
     float routeTextTick;
+    bool binding;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap() { EnsureExists(); }
@@ -61,14 +65,37 @@ public class HUDManager : MonoBehaviour
     }
 
     void Start() { StartCoroutine(BindWhenReady()); }
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode) { StartCoroutine(BindWhenReady()); }
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        StopAllCoroutines();
+        binding = false;
+        StartCoroutine(BindWhenReady());
+    }
     void OnDestroy() { if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded; }
 
     IEnumerator BindWhenReady()
     {
-        yield return null;
-        bus = FindAnyObjectByType<BusController>();
-        if (bus == null) { SetVisible(false); yield break; }
+        if (binding) yield break;
+        binding = true;
+
+        // The bus is created by SceneBootstrap, which can finish after the HUD's
+        // AfterSceneLoad callback. Giving up after one frame left the whole HUD —
+        // including the route minimap — permanently hidden. Wait for the bus and
+        // let Update retry if it is replaced by a scene reload.
+        float deadline = Time.realtimeSinceStartup + 30f;
+        while (bus == null && Time.realtimeSinceStartup < deadline)
+        {
+            bus = FindAnyObjectByType<BusController>();
+            if (bus == null) yield return null;
+        }
+
+        if (bus == null)
+        {
+            SetVisible(false);
+            binding = false;
+            yield break;
+        }
+
         mission = MissionManager.Instance;
         passengers = PassengerManager.Instance != null ? PassengerManager.Instance : FindAnyObjectByType<PassengerManager>();
         fuel = bus.GetComponent<FuelSystem>();
@@ -79,11 +106,18 @@ public class HUDManager : MonoBehaviour
         if (minimap != null) { minimap.bus = bus; minimap.mission = mission; }
         renderedStopCount = -1;
         SetVisible(true);
+        binding = false;
     }
 
     void Update()
     {
-        if (canvas == null || bus == null) return;
+        if (bus == null)
+        {
+            if (canvas != null) canvas.gameObject.SetActive(false);
+            if (!binding) StartCoroutine(BindWhenReady());
+            return;
+        }
+        if (canvas == null) return;
         mission = MissionManager.Instance;
         bool drivingState = mission == null || (mission.missionState != MissionState.Completed && mission.missionState != MissionState.Failed);
         if (canvas.gameObject.activeSelf != drivingState) canvas.gameObject.SetActive(drivingState);
@@ -172,7 +206,11 @@ public class HUDManager : MonoBehaviour
         if (weatherText != null)
         {
             WeatherSystem weather = WeatherSystem.Instance;
-            weatherText.text = weather != null ? $"{WeatherLabel(weather.currentWeather)}  {weather.temperature:0}°" : "";
+            // Wind is only worth a readout once it is doing something: a still sky
+            // should not print "4 km/h" next to the temperature.
+            WindSystem wind = WindSystem.Instance;
+            string windReadout = wind != null && wind.SpeedKmh >= 8f ? $"  ·  {wind.SpeedKmh:0} km/h" : string.Empty;
+            weatherText.text = weather != null ? $"{WeatherLabel(weather.currentWeather)}  {weather.temperature:0}°{windReadout}" : "";
         }
     }
 
@@ -236,6 +274,7 @@ public class HUDManager : MonoBehaviour
             case WeatherState.Clear: return "CLEAR";
             case WeatherState.PartlyCloudy: return "PARTLY CLD";
             case WeatherState.Overcast: return "OVERCAST";
+            case WeatherState.Windy: return "WINDY";
             case WeatherState.Fog: return "FOG";
             case WeatherState.Drizzle: return "DRIZZLE";
             case WeatherState.LightRain: return "RAIN";
@@ -353,7 +392,9 @@ public class HUDManager : MonoBehaviour
 
         clockText = Text("Clock", sign, "08:00", 22, TextAlignmentOptions.Right, new Vector2(-18f, 10f), new Vector2(150f, 30f));
         clockText.rectTransform.anchorMin = clockText.rectTransform.anchorMax = new Vector2(1f, 0.5f); clockText.rectTransform.pivot = new Vector2(1f, 0.5f);
-        weatherText = Text("Weather", sign, "CLEAR 20°", 12, TextAlignmentOptions.Right, new Vector2(-18f, -14f), new Vector2(150f, 22f));
+        // Wide enough for the wind readout below the temperature; the right pivot lets
+        // it grow leftwards instead of running into the clock above it.
+        weatherText = Text("Weather", sign, "CLEAR 20°", 12, TextAlignmentOptions.Right, new Vector2(-18f, -14f), new Vector2(210f, 22f));
         weatherText.rectTransform.anchorMin = weatherText.rectTransform.anchorMax = new Vector2(1f, 0.5f); weatherText.rectTransform.pivot = new Vector2(1f, 0.5f);
         weatherText.color = UITheme.TextMuted;
     }

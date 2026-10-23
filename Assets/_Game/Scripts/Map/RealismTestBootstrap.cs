@@ -196,12 +196,16 @@ public class RealismTestBootstrap : MonoBehaviour
         GUI.Label(new Rect(695, 438, 520, 25), $"AI {full} physics / {spline} lightweight / {dormant} dormant | {weather.CurrentCompositeWeatherLabel}");
         GUI.Label(new Rect(695, 462, 520, 25), $"Passengers {passengers.currentPassengers}/80 | Satisfaction {passengers.averageSatisfaction:P0} | Brake {maintenance.BrakeConditionPercent:F0}%");
         GUI.Label(new Rect(695, 486, 520, 25), $"Tyres {maintenance.GetAxleConditionPercent(0):F0}/{maintenance.GetAxleConditionPercent(1):F0}/{maintenance.GetAxleConditionPercent(2):F0}% | Engine {maintenance.EngineHours:F2}h");
-        WeatherState[] states = { WeatherState.Clear, WeatherState.Overcast, WeatherState.LightRain, WeatherState.HeavyRain, WeatherState.Fog };
-        for (int i = 0; i < states.Length; i++) if (GUI.Button(new Rect(695 + i * 103, 515, 100, 28), states[i].ToString())) weather.TransitionWeather(states[i]);
-        if (GUI.Button(new Rect(695, 550, 120, 28), "Day / night")) ScheduleManager.Instance.currentTimeMinutes = clock.IsNight ? 480f : 1200f;
+        WeatherState[] states = { WeatherState.Clear, WeatherState.PartlyCloudy, WeatherState.Windy, WeatherState.Overcast, WeatherState.LightRain, WeatherState.HeavyRain, WeatherState.Fog };
+        for (int i = 0; i < states.Length; i++) if (GUI.Button(new Rect(695 + i * 74, 515, 72, 28), states[i].ToString())) weather.TransitionWeather(states[i]);
+        if (GUI.Button(new Rect(695, 550, 120, 28), "Day / night"))
+        {
+            clock.SetTimeOfDay(clock.IsNight ? 480f : 1200f);
+            if (ScheduleManager.Instance != null) ScheduleManager.Instance.currentTimeMinutes = clock.currentTimeMinutes;
+        }
         if (GUI.Button(new Rect(825, 550, 120, 28), "Cabin view")) { showCabin = !showCabin; if (bus.modelRoot != null) bus.modelRoot.GetComponent<Renderer>().enabled = !showCabin; }
         if (GUI.Button(new Rect(955, 550, 120, 28), "Benchmark")) benchmark.Begin();
-        GUI.Label(new Rect(695, 588, 520, 45), benchmark.Running ? "Benchmark running: remain on the road; CSV records actual active tiers." : benchmark.LastReportPath ?? "Weather transitions take 3–5 minutes. Start the mission in the Phase 4 panel.");
+        GUI.Label(new Rect(695, 588, 520, 45), benchmark.Running ? "Benchmark running: remain on the road; CSV records actual active tiers." : benchmark.LastReportPath ?? "Weather transitions take 45–90 seconds. Start the mission in the Phase 4 panel.");
     }
     void OnDestroy()
     {

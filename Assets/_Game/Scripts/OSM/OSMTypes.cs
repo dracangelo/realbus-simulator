@@ -127,27 +127,39 @@ public class OSMWay
 
     public float GetLaneWidthMeters()
     {
-        if (tags != null && tags.TryGetValue("width", out var widthRaw))
+        float laneWidth;
+        if (tags != null && tags.TryGetValue("width", out var widthRaw) &&
+            float.TryParse(widthRaw.ToLowerInvariant().Replace("m", "").Trim(), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out float width))
         {
-            string cleaned = widthRaw.ToLowerInvariant().Replace("m", "").Trim();
-            if (float.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out float width))
-                return Mathf.Clamp(width / Mathf.Max(1, GetLaneCount()), 2.6f, 4.2f);
+            laneWidth = Mathf.Clamp(width / Mathf.Max(1, GetLaneCount()), 2.6f, 4.2f);
+        }
+        else
+        {
+            string highway = GetRoadType();
+            switch (highway)
+            {
+                case "motorway":
+                case "trunk":
+                    laneWidth = 3.6f;
+                    break;
+                case "primary":
+                case "secondary":
+                    laneWidth = 3.3f;
+                    break;
+                case "service":
+                    laneWidth = 2.8f;
+                    break;
+                default:
+                    laneWidth = 3.1f;
+                    break;
+            }
         }
 
-        string highway = GetRoadType();
-        switch (highway)
-        {
-            case "motorway":
-            case "trunk":
-                return 3.6f;
-            case "primary":
-            case "secondary":
-                return 3.3f;
-            case "service":
-                return 2.8f;
-            default:
-                return 3.1f;
-        }
+        // The road ribbon and the traffic graph share this floor. Without it the
+        // graph could space a wide imported bus into a lane whose asphalt still
+        // ends under the model's wheels.
+        return RoadWidthPolicy.Fit(laneWidth);
     }
 
     public bool IsJunction()
@@ -208,14 +220,36 @@ public class OSMWay
             return 6f;
 
         float laneWidth = GetLaneWidthMeters();
-        float width = GetLaneCount() * laneWidth;
+        int totalLanes = GetLaneCount();
+        bool oneWay = IsOneWay();
+        float width;
+
+        if (!oneWay && totalLanes <= 1)
+        {
+            // A two-way way tagged with one shared lane has one ribbon, not two
+            // carriageways. Both directions use its centre.
+            width = laneWidth;
+        }
+        else if (oneWay)
+        {
+            width = totalLanes * laneWidth;
+        }
+        else
+        {
+            // OSM allows asymmetric lanes:forward/lanes:backward. Rendering the
+            // total lane count symmetrically would leave the wider direction with
+            // less than half the ribbon. Give both sides the wider direction's
+            // envelope so a 2+1 street cannot put its two-lane flow on the kerb.
+            int sideLanes = Mathf.Max(1, Mathf.Max(GetForwardLaneCount(), GetBackwardLaneCount()));
+            width = sideLanes * 2f * laneWidth;
+        }
 
         if (tags != null && tags.TryGetValue("shoulder", out var shoulder) && (shoulder == "yes" || shoulder == "both"))
             width += 1.5f;
         if (ShouldGenerateMedianBarrier())
             width += 0.75f;
 
-        return Mathf.Clamp(width, 4.0f, 32f);
+        return Mathf.Clamp(width, 4.0f, 48f);
     }
 
     public bool IsBuilding()

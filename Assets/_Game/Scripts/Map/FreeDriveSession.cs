@@ -3,7 +3,6 @@ using System.Collections;
 
 public class FreeDriveSession : MonoBehaviour
 {
-    const float MaxSpawnDistanceFromMapCenterMeters = 3500f;
     const float SpawnRaycastHeight = 600f;
     const float SpawnRaycastDistance = 2000f;
     const float SpawnClearanceAboveGround = 1.2f;
@@ -43,7 +42,10 @@ public class FreeDriveSession : MonoBehaviour
 
         BusRoute selectedRoute = GameState.Instance != null ? GameState.Instance.selectedRoute : null;
         if (selectedRoute != null)
+        {
             selectedRoute.EnsureRuntimeData();
+            selectedRoute.EnsureWorldPathPoints();
+        }
 
         if (selectedRoute != null && selectedRoute.GetStopCount() >= 2)
             StartCoroutine(BeginSelectedRouteWhenReady(selectedRoute));
@@ -138,14 +140,14 @@ public class FreeDriveSession : MonoBehaviour
         {
             double routeLat = selectedRoute.stops[0].latitude;
             double routeLon = selectedRoute.stops[0].longitude;
-            if (IsSpawnNearLoadedMap(routeLat, routeLon))
+            if (IsPlausibleRouteStart(routeLat, routeLon))
             {
                 lat = routeLat;
                 lon = routeLon;
             }
             else
             {
-                Debug.LogWarning($"FreeDriveSession: Route spawn is outside loaded map. Falling back to city spawn for {city.cityName}.");
+                Debug.LogWarning($"FreeDriveSession: Route spawn has invalid coordinates. Falling back to city spawn for {city.cityName}.");
             }
         }
 
@@ -176,11 +178,14 @@ public class FreeDriveSession : MonoBehaviour
         }
     }
 
-    bool IsSpawnNearLoadedMap(double lat, double lon)
+    static bool IsPlausibleRouteStart(double lat, double lon)
     {
-        var world = GPSManager.Instance.GpsToWorld(lat, lon);
-        world.y = 0f;
-        return world.sqrMagnitude <= MaxSpawnDistanceFromMapCenterMeters * MaxSpawnDistanceFromMapCenterMeters;
+        if (double.IsNaN(lat) || double.IsNaN(lon) ||
+            double.IsInfinity(lat) || double.IsInfinity(lon))
+            return false;
+        if (System.Math.Abs(lat) < 0.000001d && System.Math.Abs(lon) < 0.000001d)
+            return false;
+        return System.Math.Abs(lat) <= 90d && System.Math.Abs(lon) <= 180d;
     }
 
     float ResolveSpawnHeight(Vector3 spawnWorldPos)

@@ -152,11 +152,17 @@ public class CitySelector : MonoBehaviour
         yield return null;
 
         // ── Step 6: Route import (demand) ─────────────────────────────
+        // A downloaded routes.json is also a reason to import: a city can ship a
+        // built-in fallback route pack and still have a newer/full route network
+        // saved by the player. Relying only on "availableRoutes is empty" meant a
+        // successful ALL ROUTES download was silently ignored when the player
+        // later returned to that city.
+        bool hasDownloadedRoutes = RuntimeCityContentStore.IsDownloaded(runtimeCity, "routes.json");
         bool needsImport = config.loadRoutesOnDemand
             && importRoutesOnLoad
             && routeImporter != null
             && !routeImporter.importInProgress
-            && (runtimeCity.availableRoutes == null || runtimeCity.availableRoutes.Length == 0);
+            && ((runtimeCity.availableRoutes == null || runtimeCity.availableRoutes.Length == 0) || hasDownloadedRoutes);
 
         if (needsImport)
         {

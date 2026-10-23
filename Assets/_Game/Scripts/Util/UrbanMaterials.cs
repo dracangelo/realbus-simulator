@@ -37,6 +37,33 @@ public static class UrbanMaterials
     static Material sharedRoof;
     static Material sharedRoofProp;
 
+    /// <summary>
+    /// True once the shared road/facade materials and their generated maps exist.
+    /// Generating a 512 px albedo, normal and wear atlas is cheap but not free, and
+    /// doing it on the first bend of the route was a visible hitch.
+    /// </summary>
+    public static bool WarmupComplete { get; private set; }
+
+    /// <summary>
+    /// Builds the shared city materials and generated textures once. Called by
+    /// <see cref="NearFieldAssetWarmup"/> while the loading card covers the scene.
+    /// </summary>
+    public static void Warmup()
+    {
+        if (WarmupComplete) return;
+
+        _ = Road;
+        _ = Facade;
+        _ = Roof;
+        _ = RoofProp;
+        _ = AsphaltAlbedo;
+        _ = AsphaltNormalTexture;
+        _ = AsphaltWearTexture;
+        _ = FacadeWallTexture;
+        _ = FacadeWallNormalTexture;
+        WarmupComplete = true;
+    }
+
     public static Shader AsphaltShader => Resolve(ref asphaltShader, "RealBus/Asphalt");
     public static Shader FacadeShader => Resolve(ref facadeShader, "RealBus/Facade");
     public static Shader RoofShader => Resolve(ref roofShader, "RealBus/Roof");
@@ -230,7 +257,11 @@ public static class UrbanMaterials
             material.SetTexture("_WearMap", AsphaltWearTexture);
             material.SetFloat("_WorldTile", 7f);
             material.SetFloat("_NormalStrength", 1.1f);
-            material.SetFloat("_Smoothness", .2f);
+            // A little more sheen than before so the sun and the bus's local
+            // reflection probe catch the crown and the polished wheel paths. It is
+            // still a dark, mostly diffuse surface - .26 is not a wet road; the rain
+            // controller takes it to .85 when the asphalt actually is wet.
+            material.SetFloat("_Smoothness", .26f);
             material.SetFloat("_WearStrength", .45f);
             material.SetFloat("_WearTile", 38f);
             // Roads are one-sided ribbons; OSM way direction is not reliable enough

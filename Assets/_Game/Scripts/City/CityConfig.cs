@@ -130,6 +130,15 @@ public class CityConfig : ScriptableObject
                 ? (BusRoute[])availableRoutes.Clone()
                 : System.Array.Empty<BusRoute>();
         }
+
+        // City packs (and pre-existing runtime routes) can predate the NBO naming
+        // rule. Normalise them at the moment they enter the runtime city, so every
+        // picker/HUD/import path sees the same code even for an old config.
+        if (city.availableRoutes != null)
+        {
+            for (int i = 0; i < city.availableRoutes.Length; i++)
+                RouteNaming.Apply(city.availableRoutes[i]);
+        }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────

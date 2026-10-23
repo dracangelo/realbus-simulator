@@ -55,6 +55,7 @@
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/RoadGraphTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/LocalizationTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/CityContentTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/CinematicPolishTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/LiveCityTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/CoordinateConverterTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/UIAndStabilityTests.cs" />
@@ -72,11 +73,13 @@
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/Phase3MapTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/RouteNamingTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/CinematicIntroTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/Phase6ProgressionTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusRouteDataTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/OfflineMapTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusLiveryTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/CinematicGradeTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.asmdef" />

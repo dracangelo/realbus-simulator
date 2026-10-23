@@ -1291,9 +1291,9 @@ public class GameScriptsTests
     [TestCase(999, WeatherState.Clear)]
     public void WeatherSystem_WmoCodeMapping_ReturnsExpectedState(int code, WeatherState expected)
     {
-        var weatherSystem = CreateComponent<WeatherSystem>("WeatherSystem");
-
-        var result = (WeatherState)InvokePrivateMethodWithResult(weatherSystem, "WMOCodeToWeatherState", code);
+        // The mapping is public and static now: it has no instance state, and the
+        // weather-cycle rules need to call it without a live scene component.
+        var result = WeatherSystem.StateForWmoCode(code);
 
         Assert.That(result, Is.EqualTo(expected));
     }
@@ -1373,6 +1373,7 @@ public class GameScriptsTests
                     result == WeatherState.LightRain ||
                     result == WeatherState.Fog ||
                     result == WeatherState.PartlyCloudy ||
+                    result == WeatherState.Windy ||
                     result == WeatherState.Clear,
                     Is.True);
                 break;
@@ -1401,6 +1402,7 @@ public class GameScriptsTests
                     Assert.That(
                         result == WeatherState.LightRain ||
                         result == WeatherState.PartlyCloudy ||
+                        result == WeatherState.Windy ||
                         result == WeatherState.Clear,
                         Is.True);
                     Assert.That(result, Is.Not.EqualTo(WeatherState.HeavyRain));

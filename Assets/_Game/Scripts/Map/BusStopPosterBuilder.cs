@@ -15,6 +15,21 @@ public static class BusStopPosterBuilder
     static Material[] cachedPosterMaterials;
     static Material cachedFrameMaterial;
 
+    /// <summary>
+    /// True once the eight poster textures and their materials exist. The loading
+    /// card calls <see cref="Prewarm"/> so the first stop does not generate them
+    /// while the player is pulling out of the depot.
+    /// </summary>
+    public static bool IsPrewarmed { get; private set; }
+
+    public static void Prewarm()
+    {
+        if (IsPrewarmed) return;
+        EnsurePostersBuilt();
+        GetFrameMaterial();
+        IsPrewarmed = true;
+    }
+
     // 5x7 font: ASCII 32 (' ') to 90 ('Z')
     // Each character is represented by 7 rows of 5 bits (0..31)
     static readonly byte[,] Font5x7 = new byte[59, 7]
@@ -169,12 +184,13 @@ public static class BusStopPosterBuilder
         totemLocalPos.z += bounds.extents.z + 0.7f;
         totemLocalPos.y = 0f;
 
-        CreatePosterTotem(stopRoot.transform, totemLocalPos, Quaternion.Euler(0, 90f, 0), frontPoster, backPoster);
+        GameObject totem = CreatePosterTotem(stopRoot.transform, totemLocalPos, Quaternion.Euler(0, 90f, 0), frontPoster, backPoster);
+        KeepTotemClearOfRoad(totem, stopRoot.transform, sideSign);
 
         // Attach an additional route map / timetable poster directly to the shelter's side or rear wall
         if (shelterModel != null)
         {
-            AttachShelterWallPoster(shelterModel, (stopIndex + 3) % PosterCount);
+            AttachShelterWallPoster(shelterModel, (stopIndex + 3) % PosterCount, leftTraffic ? -1f : 1f);
         }
 
         // Spawn ambient waiting commuters
@@ -186,9 +202,62 @@ public static class BusStopPosterBuilder
     {
         if (stopRoot == null) return;
         float sideSign = leftTraffic ? -1f : 1f;
-        Vector3 totemPos = new Vector3(sideSign * 1.5f, 0f, 0.5f);
-        CreatePosterTotem(stopRoot.transform, totemPos, Quaternion.Euler(0, 90f, 0), stopIndex % PosterCount, (stopIndex + 2) % PosterCount);
+        // The docking root is deliberately inset toward the kerb so the bus can
+        // reach the door trigger. The totem therefore has to sit further out on
+        // the pavement: at 1.5 m its 1.15 m-wide base still clipped a narrow
+        // lane on downloaded streets. 2.5 m clears the largest scaled footprint
+        // while keeping the poster inside the stop's visual footprint.
+        Vector3 totemPos = new Vector3(sideSign * 2.5f, 0f, 0.5f);
+        GameObject totem = CreatePosterTotem(stopRoot.transform, totemPos, Quaternion.Euler(0, 90f, 0), stopIndex % PosterCount, (stopIndex + 2) % PosterCount);
+        KeepTotemClearOfRoad(totem, stopRoot.transform, sideSign);
         SpawnAmbientCommuters(stopRoot.transform, totemPos, stopIndex);
+    }
+
+    /// <summary>
+    /// Pushes a poster totem outward from the kerb until its whole base clears the
+    /// asphalt. The stop root is deliberately inset so the bus door can reach the
+    /// trigger; on a narrow downloaded street that puts a 1.15 m-wide totem base
+    /// partly in the running lane. Moving only the furniture keeps docking intact.
+    /// </summary>
+    static void KeepTotemClearOfRoad(GameObject totem, Transform stopRoot, float sideSign)
+    {
+        if (totem == null || stopRoot == null) return;
+        var roads = OSMRoadMeshBuilder.Instance != null ? OSMRoadMeshBuilder.Instance.SurfaceIndex : null;
+        if (roads == null) return;
+
+        Vector3 outward = stopRoot.rotation * Vector3.right * sideSign;
+        for (int attempt = 0; attempt < 20; attempt++)
+        {
+            // The totem is built from primitives, so its renderer and collider
+            // bounds can lag the transforms set immediately above. Sync before
+            // measuring or the first iteration tests the previous position.
+            Physics.SyncTransforms();
+            var renderers = totem.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0) return;
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+            foreach (var collider in totem.GetComponentsInChildren<Collider>())
+                if (collider.enabled && !collider.isTrigger) bounds.Encapsulate(collider.bounds);
+
+            var footprint = new[]
+            {
+                new Vector3(bounds.min.x, 0f, bounds.min.z),
+                new Vector3(bounds.max.x, 0f, bounds.min.z),
+                new Vector3(bounds.max.x, 0f, bounds.max.z),
+                new Vector3(bounds.min.x, 0f, bounds.max.z)
+            };
+            // Leave a shoulder gap, not just zero overlap: a totem flush against
+            // the asphalt still reads as an obstacle and can catch a wing mirror.
+            if (!roads.OverlapsFootprint(footprint, .65f)) return;
+            totem.transform.position += outward * .5f;
+            Physics.SyncTransforms();
+        }
+
+        // A totem that still cannot find pavement would stand in a lane. The
+        // shelter or stop marker remains; losing one poster is better than
+        // blocking the running lane on a narrow downloaded street.
+        Debug.LogWarning($"[BusStopPosterBuilder] Poster totem at '{stopRoot.name}' has no clear pavement; removing it instead of blocking the road.");
+        Object.Destroy(totem);
     }
 
     /// <summary>Builds a modern illuminated City-Light-Poster totem (double-sided).</summary>
@@ -250,15 +319,21 @@ public static class BusStopPosterBuilder
         return totem;
     }
 
-    /// <summary>Attaches a poster display pane to the glass wall of an existing shelter model.</summary>
-    public static void AttachShelterWallPoster(GameObject shelterModel, int posterIndex)
+    /// <summary>
+    /// Attaches a poster display pane to the pavement-facing wall of an existing
+    /// shelter model. <paramref name="sideSign"/> is negative when the pavement is
+    /// on local -X (left-hand traffic) and positive when it is on local +X; the
+    /// old fixed -X position put the pane toward the carriageway on right-hand
+    /// routes, where its corners could overhang the kerb.
+    /// </summary>
+    public static void AttachShelterWallPoster(GameObject shelterModel, int posterIndex, float sideSign = -1f)
     {
         if (shelterModel == null) return;
 
         var wallPoster = GameObject.CreatePrimitive(PrimitiveType.Quad);
         wallPoster.name = "Shelter_WallPoster";
         wallPoster.transform.SetParent(shelterModel.transform, false);
-        wallPoster.transform.localPosition = new Vector3(-0.55f, 1.25f, 0.1f);
+        wallPoster.transform.localPosition = new Vector3(Mathf.Sign(sideSign) * 0.55f, 1.25f, 0.1f);
         wallPoster.transform.localRotation = Quaternion.Euler(0, 90f, 0);
         wallPoster.transform.localScale = new Vector3(0.85f, 1.35f, 1f);
         wallPoster.GetComponent<Renderer>().sharedMaterial = GetPosterMaterial(posterIndex);
@@ -585,12 +660,17 @@ public static class BusStopPosterBuilder
         c.DrawText("UNLIMITED COMMUTER DATA", 24, 32, 2, new Color32(255, 255, 255, 255));
     }
 
-    // Drawing context helper class
-    class CanvasContext
+    // Drawing context helper class. Internal rather than private so the street
+    // advertisement library can use the same pixel font and drawing primitives
+    // without carrying a second copy of the glyph table.
+    internal class CanvasContext
     {
         readonly Color32[] pixels;
         readonly int width;
         readonly int height;
+
+        public int Width => width;
+        public int Height => height;
 
         public CanvasContext(Color32[] pixels, int width, int height)
         {
@@ -704,6 +784,38 @@ public static class BusStopPosterBuilder
                 }
                 curX += 6 * scale;
             }
+        }
+
+        /// <summary>Width of a line in pixels at a given 5x7 font scale.</summary>
+        public int TextWidth(string text, int scale)
+        {
+            if (string.IsNullOrEmpty(text) || scale <= 0) return 0;
+            return Mathf.Max(0, text.Length * 6 * scale - scale);
+        }
+
+        /// <summary>Largest integer font scale that keeps a line inside a width.</summary>
+        public int FitScale(string text, int maxWidth, int maxScale)
+        {
+            int scale = Mathf.Max(1, maxScale);
+            while (scale > 1 && TextWidth(text, scale) > maxWidth)
+                scale--;
+            return scale;
+        }
+
+        public void DrawTextCentered(string text, int centerX, int y, int scale, Color32 c)
+        {
+            DrawText(text, centerX - TextWidth(text, scale) / 2, y, scale, c);
+        }
+
+        public void DrawTextFit(string text, int x, int y, int maxWidth, int maxScale, Color32 c)
+        {
+            DrawText(text, x, y, FitScale(text, maxWidth, maxScale), c);
+        }
+
+        public void DrawTextCenteredFit(string text, int centerX, int y, int maxWidth, int maxScale, Color32 c)
+        {
+            int scale = FitScale(text, maxWidth, maxScale);
+            DrawText(text, centerX - TextWidth(text, scale) / 2, y, scale, c);
         }
 
         public void DrawQrCode(int x, int y, int size, Color32 c)

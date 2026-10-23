@@ -43,9 +43,14 @@ public class RuntimeSpawnLogger : MonoBehaviour
 
         var passengerManager = FindAnyObjectByType<PassengerManager>();
         var passengerSpawner = FindAnyObjectByType<PassengerSpawner>();
-        var roadGraph = FindAnyObjectByType<AIRoadGraph>();
         var vehiclePool = FindAnyObjectByType<VehiclePool>();
         var pedestrianSpawner = FindAnyObjectByType<PedestrianSpawner>();
+        // Report the graph traffic actually uses. FindAnyObjectByType can return
+        // the depot's eight-node private circuit even when the city pool is bound
+        // to a 14,000-node public graph.
+        var roadGraph = vehiclePool != null && vehiclePool.roadGraph != null
+            ? vehiclePool.roadGraph
+            : AIRoadGraph.FindCityGraph();
 
         string trafficSummary = "n/a";
         if (vehiclePool != null)

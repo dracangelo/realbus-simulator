@@ -55,6 +55,160 @@ public class BusRoute : ScriptableObject
 
         if (estimatedTimeMinutes <= 0.001f && distanceKm > 0f)
             estimatedTimeMinutes = distanceKm / 24f * 60f + GetStopCount() * 0.35f;
+
+        // Some imported route assets carry pathPoints generated in a different
+        // world origin (Web-Mercator metres, another city's map, an old scene).
+        // Rebuild them from WGS84 geometry whenever the current map can provide
+        // a trustworthy conversion. Consumers that run before GPS exists leave
+        // this alone and retry later.
+        EnsureWorldPathPoints();
+    }
+
+    /// <summary>
+    /// True when the serialized <see cref="pathPoints"/> belong to this route on
+    /// the current map. A stale path can be metres away from the city or millions
+    /// of metres away; both make the minimap and off-route checks unusable.
+    /// </summary>
+    public bool HasUsableWorldPath(float maxAnchorErrorMeters = 500f)
+    {
+        if (pathPoints == null || pathPoints.Length < 2)
+            return false;
+
+        // A local route is inside a city, never a thousand kilometres from the
+        // world origin. This also catches foreign-origin points before any GPS
+        // lookup is available.
+        if (pathPoints[0].sqrMagnitude > 1e10f || pathPoints[pathPoints.Length - 1].sqrMagnitude > 1e10f)
+            return false;
+
+        if (!TryGetRouteEndpoint(true, out Vector3 expectedStart) ||
+            !TryGetRouteEndpoint(false, out Vector3 expectedEnd))
+        {
+            // Without a converter we cannot prove the path is stale, so keep it.
+            return true;
+        }
+
+        return IsWorldPathNear(pathPoints, expectedStart, expectedEnd, maxAnchorErrorMeters);
+    }
+
+    /// <summary>
+    /// Pure endpoint check used by the runtime validator and by tests. A route
+    /// path must begin and end where its WGS84 geometry/stops say they should.
+    /// </summary>
+    public static bool IsWorldPathNear(Vector3[] points, Vector3 expectedStart, Vector3 expectedEnd,
+        float toleranceMeters = 500f)
+    {
+        if (points == null || points.Length < 2)
+            return false;
+
+        if (points[0].sqrMagnitude > 1e10f || points[points.Length - 1].sqrMagnitude > 1e10f)
+            return false;
+
+        float tolerance = Mathf.Max(50f, toleranceMeters);
+        return (points[0] - expectedStart).sqrMagnitude <= tolerance * tolerance &&
+               (points[points.Length - 1] - expectedEnd).sqrMagnitude <= tolerance * tolerance;
+    }
+
+    /// <summary>
+    /// Rebuilds the runtime world path from the route's WGS84 geometry (or stops)
+    /// when the serialized one is missing or belongs to another origin. Returns
+    /// true when a usable path is available afterwards.
+    /// </summary>
+    public bool EnsureWorldPathPoints(bool forceRebuild = false)
+    {
+        if (!forceRebuild && HasUsableWorldPath())
+            return true;
+
+        Vector3[] rebuilt = BuildWorldPathFromGeodata();
+        if (rebuilt == null || rebuilt.Length < 2)
+            return false;
+
+        pathPoints = rebuilt;
+        return true;
+    }
+
+    Vector3[] BuildWorldPathFromGeodata()
+    {
+        if (geometryLatLonFlat != null && geometryLatLonFlat.Length >= 4)
+        {
+            int count = geometryLatLonFlat.Length / 2;
+            var points = new Vector3[count];
+            for (int i = 0; i < count; i++)
+            {
+                if (!TryGpsToWorld(geometryLatLonFlat[i * 2], geometryLatLonFlat[i * 2 + 1], out points[i]))
+                    return null;
+                points[i].y = 0.1f;
+            }
+            return points;
+        }
+
+        if (stops != null && stops.Length >= 2)
+        {
+            var points = new Vector3[stops.Length];
+            for (int i = 0; i < stops.Length; i++)
+            {
+                BusStopData stop = stops[i];
+                if (stop == null || !TryGpsToWorld(stop.latitude, stop.longitude, out points[i]))
+                    return null;
+                points[i].y = 0.1f;
+            }
+            return points;
+        }
+
+        return null;
+    }
+
+    bool TryGetRouteEndpoint(bool start, out Vector3 world)
+    {
+        world = default;
+        if (geometryLatLonFlat != null && geometryLatLonFlat.Length >= 4)
+        {
+            int pair = start ? 0 : geometryLatLonFlat.Length / 2 - 1;
+            return TryGpsToWorld(geometryLatLonFlat[pair * 2], geometryLatLonFlat[pair * 2 + 1], out world);
+        }
+
+        if (stops != null && stops.Length > 0)
+        {
+            BusStopData stop = stops[start ? 0 : stops.Length - 1];
+            return stop != null && TryGpsToWorld(stop.latitude, stop.longitude, out world);
+        }
+
+        return false;
+    }
+
+    static bool TryGpsToWorld(double latitude, double longitude, out Vector3 world)
+    {
+        world = default;
+        if (double.IsNaN(latitude) || double.IsNaN(longitude) ||
+            double.IsInfinity(latitude) || double.IsInfinity(longitude) ||
+            Mathf.Abs((float)latitude) > 90f || Mathf.Abs((float)longitude) > 180f)
+            return false;
+
+        // GPSManager is the gameplay conversion path and matches the road mesh
+        // and traffic graph. Fall back to the active city's local origin so the
+        // route still resolves during early menu/bootstrap work.
+        if (GPSManager.Instance != null)
+        {
+            world = GPSManager.Instance.GpsToWorld(latitude, longitude);
+            return true;
+        }
+
+        CoordinateConverter converter = CoordinateConverter.Instance;
+        if (converter != null && converter.mapOrigin != null && converter.mapOrigin.IsValid())
+        {
+            world = converter.GeoToWorldPosition(latitude, longitude);
+            return true;
+        }
+
+        var city = GameState.Instance != null && GameState.Instance.selectedCity != null
+            ? GameState.Instance.selectedCity
+            : CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        if (city != null)
+        {
+            world = CoordinateConverter.LocalOriginGeoToWorld(latitude, longitude, city.centreLat, city.centreLon);
+            return true;
+        }
+
+        return false;
     }
 
     float CalculateDistanceKm()

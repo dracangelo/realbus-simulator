@@ -80,6 +80,12 @@ public class SceneBootstrap : MonoBehaviour
         SeedCityManagerFromAssetsInEditor();
 #endif
 
+        // SaveManager is created before the first scene, when CityManager has no
+        // catalogue yet, so its initial selection restore is a no-op. This second
+        // pass also covers direct scene play, where Unity does not raise
+        // sceneLoaded for the scene that was already open in the editor.
+        SaveManager.Instance?.ApplySavedSelectionWhenReady();
+
         SyncSelectionStateFromManagers();
         var city = CityManager.Instance.activeCity;
         if (city != null)
@@ -146,6 +152,10 @@ public class SceneBootstrap : MonoBehaviour
         var missionManager = FindAnyObjectByType<MissionManager>();
         if (missionManager == null) return;
 
+        // The road ribbon, kerbs and lane markings must reserve the same lane
+        // envelope the traffic graph will use. Run before any graph or mesh build.
+        RoadWidthPolicy.ConfigureFromTrafficCatalog();
+
         EnsureRuntimeLogger();
 
         var selectedRoute = GameState.Instance?.selectedRoute;
@@ -209,7 +219,7 @@ public class SceneBootstrap : MonoBehaviour
         EnsureBusDepotManager();
         EnsureClearVisibility();
         ApplyBusScaleFromMap();
-        ConfigureSelectedRouteStart(missionManager, selectedRoute != null ? routeToUse : null);
+        ConfigureSelectedRouteStart(missionManager, routeToUse);
     }
 
     void ConfigureSelectedRouteStart(MissionManager missionManager, BusRoute selectedRoute)
@@ -544,7 +554,7 @@ public class SceneBootstrap : MonoBehaviour
             {
                 new AIBusScheduleSpawner.ScheduledAIBusRoute
                 {
-                    routeName = "Ambient Service",
+                    routeName = "NBO Ambient Service",
                     graph = graph,
                     useRandomGeneratedNodes = true,
                     randomNodeCount = 10,
@@ -595,6 +605,12 @@ public class SceneBootstrap : MonoBehaviour
             timeSystem = go.AddComponent<TimeOfDaySystem>();
             timeSystem.skyController = skyController;
             timeSystem.directionalSun = RenderSettings.sun != null ? RenderSettings.sun : FindDirectionalSun();
+            // A 1:1 mission clock makes a 24-hour day last 24 real hours, so the sky
+            // looked pinned for an entire session. The world clock now runs a visible
+            // compressed day from the timetable's opening hour; the timetable itself
+            // is untouched and still owns stop punctuality.
+            timeSystem.followScheduleManager = false;
+            timeSystem.dayLengthRealMinutes = 30f;
         }
         fogController.timeOfDay = timeSystem;
 
@@ -611,6 +627,16 @@ public class SceneBootstrap : MonoBehaviour
         weatherSystem.fogController = fogController;
         weatherSystem.snowController = snowController;
         weatherSystem.skyEnvironmentController = skyEnvironment;
+
+        // Wind is the one part of the weather nothing owned: the clouds drifted on a
+        // constant vector and the precipitation fell straight down, so a storm and a
+        // calm afternoon moved through the air identically.
+        var wind = FindAnyObjectByType<WindSystem>();
+        if (wind == null)
+            wind = new GameObject("WindSystem").AddComponent<WindSystem>();
+        wind.sky = skyEnvironment;
+        wind.rain = rainController;
+        wind.snow = snowController;
 
         // Precipitation has to exist before a state can show it, and it has to follow
         // the bus rather than sit over one patch of city. The shower resolves the bus
@@ -735,6 +761,7 @@ public class SceneBootstrap : MonoBehaviour
         runtimeRoute.baseFare = route != null ? route.baseFare : 50f;
         runtimeRoute.difficulty = route != null ? route.difficulty : 3;
         runtimeRoute.stops = parsedStops;
+        RouteNaming.Apply(runtimeRoute);
         runtimeRoute.EnsureRuntimeData();
 
         Debug.Log($"SceneBootstrap: Built runtime fallback route '{runtimeRoute.routeName}' from {parsedStops.Length} downloaded OSM stops.");
@@ -1296,7 +1323,7 @@ public class SceneBootstrap : MonoBehaviour
             if (roadGraph == null || roadGraph.nodes == null || roadGraph.nodes.Count == 0)
                 return null;
 
-            var airGraph = FindAnyObjectByType<AIRoadGraph>();
+            var airGraph = AIRoadGraph.FindCityGraph();
             if (airGraph == null)
             {
                 var graphGo = new GameObject("AIRoadGraph");
@@ -1431,9 +1458,17 @@ public class SceneBootstrap : MonoBehaviour
         if (route != null && route.stops != null && route.stops.Length > 0)
             referenceStop = route.stops[0];
 
-        Vector3 referenceWorld = referenceStop != null
-            ? CoordinateConverter.LocalOriginGeoToWorld(referenceStop.latitude, referenceStop.longitude, city.centreLat, city.centreLon)
-            : CoordinateConverter.LocalOriginGeoToWorld(city.spawnLat, city.spawnLon, city.centreLat, city.centreLon);
+        // Use the same conversion the road graph and mesh were built with. Mixing
+        // a Mapbox bridge with a local-origin projection makes an aligned graph
+        // look hundreds of metres away.
+        Vector3 referenceWorld = GPSManager.Instance != null
+            ? GPSManager.Instance.GpsToWorld(
+                referenceStop != null ? referenceStop.latitude : city.spawnLat,
+                referenceStop != null ? referenceStop.longitude : city.spawnLon)
+            : CoordinateConverter.LocalOriginGeoToWorld(
+                referenceStop != null ? referenceStop.latitude : city.spawnLat,
+                referenceStop != null ? referenceStop.longitude : city.spawnLon,
+                city.centreLat, city.centreLon);
 
         AIRoadGraph bestGraph = null;
         float bestDistance = float.MaxValue;

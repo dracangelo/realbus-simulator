@@ -6,7 +6,7 @@ public class AIBusScheduleSpawner : MonoBehaviour
     [System.Serializable]
     public class ScheduledAIBusRoute
     {
-        public string routeName = "Route";
+        public string routeName = "NBO Ambient Service";
         public AIRoadGraph graph;
         public int[] nodeSequence;
         public bool useRandomGeneratedNodes = false;
@@ -37,15 +37,23 @@ public class AIBusScheduleSpawner : MonoBehaviour
     readonly Dictionary<int, float> retryAfterRealtime = new Dictionary<int, float>();
     readonly Dictionary<int, int> activeByRoute = new Dictionary<int, int>();
     Transform playerBus;
+    Vector2 aiBusSize = new Vector2(2.5f, 12f);
 
     void Start()
     {
         if (routes == null || routes.Length == 0) return;
 
+        if (aiBusPrefab != null)
+            aiBusSize = VehiclePool.MeasurePrefabSize(aiBusPrefab);
+
         // Freeze the side of the road before any bus is placed.
         for (int i = 0; i < routes.Length; i++)
-            if (routes[i] != null && routes[i].graph != null)
+        {
+            if (routes[i] == null) continue;
+            routes[i].routeName = RouteNaming.NormalizeName(routes[i].routeName);
+            if (routes[i].graph != null)
                 routes[i].graph.SyncDrivingSide();
+        }
 
         ResolvePlayerBus();
 
@@ -113,11 +121,17 @@ public class AIBusScheduleSpawner : MonoBehaviour
 
         var ai = go.GetComponent<AIVehicleController>();
         if (ai == null) ai = go.AddComponent<AIVehicleController>();
+        ai.vehicleWidth = aiBusSize.x;
+        ai.vehicleLength = aiBusSize.y;
         var spline = go.GetComponent<SplineVehicle>();
         if (spline == null) spline = go.AddComponent<SplineVehicle>();
+        spline.vehicleWidth = aiBusSize.x;
         var rb = go.GetComponent<Rigidbody>();
         if (rb == null) rb = go.AddComponent<Rigidbody>();
-        if (go.GetComponent<TrafficParticipant>() == null) go.AddComponent<TrafficParticipant>();
+        var participant = go.GetComponent<TrafficParticipant>();
+        if (participant == null) participant = go.AddComponent<TrafficParticipant>();
+        participant.width = aiBusSize.x;
+        participant.length = aiBusSize.y;
         if (go.GetComponent<ScheduledTrafficTier>() == null) go.AddComponent<ScheduledTrafficTier>();
 
         int startNode = sequence[startIndex];

@@ -185,6 +185,140 @@ public class EnvironmentSystemsTests
     }
 
     [Test]
+    public void TimeOfDaySystem_DayCycleAdvancesAtTheConfiguredRateAndWraps()
+    {
+        // A 30 real-minute day is 0.8 game minutes per real second, or 1.25 real
+        // seconds per game minute. That is the difference between a visible sunset
+        // and a clock that matches the wall clock for the whole session.
+        float rate = TimeOfDaySystem.SecondsPerGameMinuteFor(30f, 60f);
+        Assert.That(rate, Is.EqualTo(1.25f).Within(0.001f));
+
+        float noonish = TimeOfDaySystem.AdvanceMinutes(480f, 15f * 60f, 30f, 60f);
+        Assert.That(noonish, Is.EqualTo(1200f).Within(0.01f),
+            "half a compressed day after 08:00 is 20:00");
+
+        float wrapped = TimeOfDaySystem.AdvanceMinutes(1380f, 10f * 60f, 30f, 60f);
+        Assert.That(wrapped, Is.EqualTo(420f).Within(0.01f),
+            "the clock wraps past midnight instead of running off the end of the day");
+
+        Assert.That(TimeOfDaySystem.SecondsPerGameMinuteFor(0f, 60f), Is.EqualTo(60f),
+            "a zero day length keeps the authored legacy rate");
+        Assert.That(TimeOfDaySystem.AdvanceMinutes(0f, 60f, 0f, 60f), Is.EqualTo(1f).Within(0.001f),
+            "the legacy rate still advances one game minute per real minute");
+    }
+
+    [Test]
+    public void TimeOfDaySystem_CanPinTheWorldClockWithoutStoppingTheMissionTimetable()
+    {
+        var go = new GameObject("PinnedClockTest");
+        var clock = go.AddComponent<TimeOfDaySystem>();
+        try
+        {
+            clock.followScheduleManager = false;
+            clock.SetTimeOfDay(1080f); // 18:00, sunset on the default arc
+            Assert.That(clock.IsNight, Is.True, "sunset is the end of the lit day");
+            Assert.That(clock.SunElevationDegrees, Is.EqualTo(0f).Within(0.01f));
+
+            clock.SetTimeOfDay(720f);
+            Assert.That(clock.IsNight, Is.False);
+            Assert.That(clock.SunElevationDegrees, Is.EqualTo(clock.noonSunElevation).Within(0.01f));
+            Assert.That(clock.GetSunDirection().y, Is.GreaterThan(0.8f));
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
+    [Test]
+    public void WeatherSystem_WindyIsABrokenCloudDeckWithStrongerWindThanOvercast()
+    {
+        float partlyCover = SkyEnvironmentController.CloudCoverageFor(WeatherState.PartlyCloudy, 0.2f);
+        float windyCover = SkyEnvironmentController.CloudCoverageFor(WeatherState.Windy, 0.45f);
+        float overcastCover = SkyEnvironmentController.CloudCoverageFor(WeatherState.Overcast, 0.4f);
+
+        Assert.That(windyCover, Is.GreaterThan(partlyCover), "a windy sky is more than a few clouds");
+        Assert.That(windyCover, Is.LessThan(overcastCover), "but it is not a solid ceiling");
+
+        const float calm = 1.4f, breeze = 4.6f, windy = 9.2f, storm = 17.5f;
+        float windySpeed = WindSystem.BaseSpeedFor(WeatherState.Windy, 0.45f, calm, breeze, windy, storm);
+        float overcastSpeed = WindSystem.BaseSpeedFor(WeatherState.Overcast, 0.4f, calm, breeze, windy, storm);
+        Assert.That(windySpeed, Is.GreaterThan(overcastSpeed),
+            "the state is called Windy because it is windier than an overcast");
+        Assert.That(windySpeed, Is.LessThan(WindSystem.BaseSpeedFor(WeatherState.Thunderstorm, 1f, calm, breeze, windy, storm)),
+            "but it is not a storm");
+    }
+
+    [Test]
+    public void FogController_WindySitsBetweenClearAirAndAnOvercastCeiling()
+    {
+        var go = new GameObject("FogWindyTest");
+        var fog = go.AddComponent<FogController>();
+        try
+        {
+            fog.SetFog(WeatherState.Clear, 0f);
+            float clear = fog.TargetVisibility;
+            fog.SetFog(WeatherState.Windy, 0.45f);
+            float windy = fog.TargetVisibility;
+            fog.SetFog(WeatherState.Overcast, 0.4f);
+            float overcast = fog.TargetVisibility;
+
+            Assert.That(windy, Is.LessThan(clear), "a windy day still has distance haze");
+            Assert.That(windy, Is.GreaterThan(overcast), "but you can see further than under a solid overcast");
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
+    [Test]
+    public void WeatherSystem_ProceduralTransitionsTakeTheNeighbouringStateInsteadOfTeleporting()
+    {
+        Assert.That(WeatherSystem.SoftenTransition(WeatherState.Clear, WeatherState.Thunderstorm),
+            Is.EqualTo(WeatherState.HeavyRain), "a storm has to pass through rain");
+        Assert.That(WeatherSystem.SoftenTransition(WeatherState.Clear, WeatherState.HeavyRain),
+            Is.EqualTo(WeatherState.Overcast), "a downpour cannot appear out of a clear sky");
+        Assert.That(WeatherSystem.SoftenTransition(WeatherState.Clear, WeatherState.LightRain),
+            Is.EqualTo(WeatherState.Overcast), "rain needs cloud first");
+        Assert.That(WeatherSystem.SoftenTransition(WeatherState.Windy, WeatherState.Fog),
+            Is.EqualTo(WeatherState.Overcast), "fog forms under a ceiling, not out of broken cloud");
+        Assert.That(WeatherSystem.SoftenTransition(WeatherState.Windy, WeatherState.Snow),
+            Is.EqualTo(WeatherState.Overcast), "snow needs cloud before it needs snow");
+        Assert.That(WeatherSystem.SoftenTransition(WeatherState.HeavyRain, WeatherState.Thunderstorm),
+            Is.EqualTo(WeatherState.Thunderstorm), "rain is allowed to become a storm");
+
+        Assert.That(WeatherSystem.AdjacentWeather(WeatherState.Clear, 0f), Is.EqualTo(WeatherState.PartlyCloudy));
+        Assert.That(WeatherSystem.AdjacentWeather(WeatherState.Clear, 0.99f), Is.EqualTo(WeatherState.Overcast));
+
+        for (int step = 0; step < 16; step++)
+        {
+            float roll = step / 16f;
+            WeatherState next = WeatherSystem.ChooseNextWeather(WeatherState.Windy, WeatherState.Windy, roll);
+            Assert.That(next, Is.Not.EqualTo(WeatherState.Windy),
+                "the cycle has to actually change the state, not re-announce it");
+        }
+    }
+
+    [Test]
+    public void WeatherSystem_RealObservationsPromoteDryCloudAndRejectOutOfSeasonSnow()
+    {
+        Assert.That(WeatherSystem.StateForWmoCode(0), Is.EqualTo(WeatherState.Clear));
+        Assert.That(WeatherSystem.StateForWmoCode(3), Is.EqualTo(WeatherState.Overcast));
+        Assert.That(WeatherSystem.StateForWmoCode(85), Is.EqualTo(WeatherState.Snow));
+        Assert.That(WeatherSystem.StateForWmoCode(95), Is.EqualTo(WeatherState.Thunderstorm));
+
+        Assert.That(WeatherSystem.ApplyObservedConditions(WeatherState.Overcast, 42f, false),
+            Is.EqualTo(WeatherState.Windy), "a strong dry wind turns a cloudy sky into the windy state");
+        Assert.That(WeatherSystem.ApplyObservedConditions(WeatherState.Overcast, 8f, false),
+            Is.EqualTo(WeatherState.Overcast), "a light breeze leaves the cloud deck alone");
+        Assert.That(WeatherSystem.ApplyObservedConditions(WeatherState.Snow, 5f, false),
+            Is.EqualTo(WeatherState.HeavyRain), "snow outside the snow season falls as rain");
+        Assert.That(WeatherSystem.ApplyObservedConditions(WeatherState.Snow, 5f, true),
+            Is.EqualTo(WeatherState.Snow));
+    }
+
+    [Test]
+    public void HUDManager_WindyHasAReadableLabel()
+    {
+        Assert.That(HUDManager.WeatherLabel(WeatherState.Windy), Is.EqualTo("WINDY"));
+    }
+
+    [Test]
     public void TimeOfDaySystem_SunFollowsAContinuousArcAndSetsBelowTheHorizon()
     {
         const float sunrise = 360f;
@@ -229,6 +363,37 @@ public class EnvironmentSystemsTests
             Assert.That(clock.GetDaylightFactor(), Is.EqualTo(0f));
         }
         finally { Object.DestroyImmediate(go); }
+    }
+
+    [Test]
+    public void TimeOfDaySystem_SkyIsWarmAtSunriseAndBlueByMidMorning()
+    {
+        Gradient sky = TimeOfDaySystem.CreateDefaultSkyGradient();
+        Assert.That(sky.colorKeys.Length, Is.InRange(3, 8),
+            "Unity rejects a gradient with more than eight colour keys and silently keeps the white default");
+
+        // The clock's day phase: 0 at sunrise, 1 at sunset. 385 / 480 / 720 minutes
+        // are 06:25, 08:00 and noon on the default 06:00-18:00 arc.
+        Color dawn = sky.Evaluate((385f - 360f) / 720f);
+        Color morning = sky.Evaluate((480f - 360f) / 720f);
+        Color noon = sky.Evaluate((720f - 360f) / 720f);
+
+        Assert.That(dawn.r - dawn.b, Is.GreaterThan(0.3f), "the sunrise sky is warm");
+        Assert.That(noon.b, Is.GreaterThan(noon.r), "the noon sky is blue");
+        Assert.That(morning.b - morning.r, Is.GreaterThan(0.1f),
+            "by mid-morning the daylight has taken over the warm horizon, instead of the sky staying \"dawn\" until lunch");
+        Assert.That(morning.r - morning.b, Is.LessThan(dawn.r - dawn.b), "and it is cooler than sunrise");
+    }
+
+    [Test]
+    public void TimeOfDaySystem_OnlyAGradientWithRealColoursCountsAsAuthored()
+    {
+        Assert.IsFalse(TimeOfDaySystem.IsAuthoredSkyGradient(null),
+            "a missing gradient is not authored");
+        Assert.IsFalse(TimeOfDaySystem.IsAuthoredSkyGradient(new Gradient()),
+            "Unity's built-in two-key white gradient is what a run-time-added clock starts on, and it must be replaced");
+        Assert.IsTrue(TimeOfDaySystem.IsAuthoredSkyGradient(TimeOfDaySystem.CreateDefaultSkyGradient()),
+            "the installed default is authored, so it survives a reload");
     }
 
     [Test]
@@ -323,6 +488,120 @@ public class EnvironmentSystemsTests
             Object.DestroyImmediate(weatherFogGo);
             Object.DestroyImmediate(hazeGo);
         }
+    }
+
+    [Test]
+    public void WindSystem_RisesWithTheWeatherAndNeverDropsBelowStillAir()
+    {
+        const float calm = 1.4f, breeze = 4.6f, windy = 9.2f, storm = 17.5f;
+
+        float clear = WindSystem.BaseSpeedFor(WeatherState.Clear, 0f, calm, breeze, windy, storm);
+        float cloudy = WindSystem.BaseSpeedFor(WeatherState.Overcast, 0.4f, calm, breeze, windy, storm);
+        float rain = WindSystem.BaseSpeedFor(WeatherState.HeavyRain, 1f, calm, breeze, windy, storm);
+        float gale = WindSystem.BaseSpeedFor(WeatherState.Thunderstorm, 1f, calm, breeze, windy, storm);
+
+        Assert.That(clear, Is.EqualTo(calm).Within(0.01f), "a clear sky is still air");
+        Assert.That(cloudy, Is.GreaterThan(clear), "a windy overcast is the whole point of an overcast");
+        Assert.That(rain, Is.GreaterThan(cloudy), "rain travels with more wind than cloud does");
+        Assert.That(gale, Is.GreaterThan(rain), "a thunderstorm is the windiest state");
+        Assert.That(WindSystem.BaseSpeedFor(WeatherState.Fog, 0.7f, calm, breeze, windy, storm), Is.LessThan(cloudy),
+            "fog only forms in air that has stopped moving");
+
+        for (int step = 0; step <= 10; step++)
+        {
+            float intensity = step / 10f;
+            float speed = WindSystem.BaseSpeedFor(WeatherState.Drizzle, intensity, calm, breeze, windy, storm);
+            Assert.That(speed, Is.GreaterThanOrEqualTo(clear - 0.001f),
+                "no state may fall below the still-air floor");
+        }
+    }
+
+    [Test]
+    public void WindSystem_GustsRideOnTopOfTheBaseAndStayBounded()
+    {
+        Vector2 lull = WindSystem.WindFor(10f, 90f, 0f, 0.5f);
+        Vector2 peak = WindSystem.WindFor(10f, 90f, 1f, 0.5f);
+
+        Assert.That(lull.magnitude, Is.EqualTo(10f).Within(0.01f), "a lull is the base speed");
+        Assert.That(peak.magnitude, Is.EqualTo(15f).Within(0.01f), "a full gust adds its strength to the base");
+        Assert.That(peak.x, Is.EqualTo(15f).Within(0.01f), "bearing 90 blows east");
+        Assert.That(peak.y, Is.EqualTo(0f).Within(0.01f));
+
+        float lowest = 1f, highest = 0f;
+        for (int step = 0; step < 64; step++)
+        {
+            float gust = WindSystem.GustAt(step / 64f, 1f);
+            Assert.That(gust, Is.InRange(0f, 1f));
+            lowest = Mathf.Min(lowest, gust);
+            highest = Mathf.Max(highest, gust);
+        }
+        Assert.That(lowest, Is.LessThan(0.25f), "the gust envelope has to pass through lulls");
+        Assert.That(highest, Is.GreaterThan(0.75f), "and through real peaks, not a constant breeze");
+    }
+
+    [Test]
+    public void RainController_LeansTheShowerWithTheWindInsteadOfFallingAlongTheEmitter()
+    {
+        var go = new GameObject("RainWindTest");
+        var controller = go.AddComponent<RainController>();
+        try
+        {
+            controller.EnsureEffects();
+            controller.ApplyWind(new Vector2(12f, -4f));
+
+            var velocity = controller.rainParticles.velocityOverLifetime;
+            Assert.That(velocity.enabled, Is.True, "rain needs a world-space velocity to lean with");
+            Assert.That(velocity.space, Is.EqualTo(ParticleSystemSimulationSpace.World));
+            Assert.That(velocity.y.constant, Is.LessThan(0f), "rain must fall, not travel along the emitter's forward axis");
+            Assert.That(velocity.x.constant, Is.EqualTo(12f).Within(0.01f), "east wind pushes the streaks east");
+            Assert.That(velocity.z.constant, Is.EqualTo(-4f).Within(0.01f), "north wind pushes them north");
+        }
+        finally { Object.DestroyImmediate(go); }
+    }
+
+    [Test]
+    public void Precipitation_FadesWithTheLightInsteadOfGlowingAtNight()
+    {
+        Color day = new Color(0.72f, 0.78f, 0.86f, 0.55f);
+        Color night = new Color(0.28f, 0.33f, 0.44f, 0.42f);
+
+        Color lit = RainController.TintForLight(day, night, 1f);
+        Color dark = RainController.TintForLight(day, night, 0f);
+
+        Assert.That(lit, Is.EqualTo(day), "daylight rain keeps the streak colour");
+        Assert.That(dark, Is.EqualTo(night), "after dark it drops to the night floor");
+        Assert.That(Luminance(dark), Is.LessThan(Luminance(lit) * 0.6f),
+            "unlit streaks must not read as white against a midnight sky");
+    }
+
+    [Test]
+    public void TimeOfDaySystem_SunlightIsWarmAtTheHorizonAndNeutralOverhead()
+    {
+        Color horizon = new Color(1f, 0.46f, 0.2f);
+        Color low = new Color(1f, 0.8f, 0.58f);
+        Color noon = new Color(1f, 0.97f, 0.91f);
+
+        Color atHorizon = TimeOfDaySystem.SunTintFor(0f, horizon, low, noon);
+        Color atSix = TimeOfDaySystem.SunTintFor(6f, horizon, low, noon);
+        Color high = TimeOfDaySystem.SunTintFor(60f, horizon, low, noon);
+
+        Assert.That(atHorizon.r - atHorizon.b, Is.GreaterThan(high.r - high.b),
+            "the setting sun has to be warmer than the noon sun");
+        Assert.That(atSix.r - atSix.b, Is.LessThan(atHorizon.r - atHorizon.b), "warmth fades as the sun climbs");
+        Assert.That(atSix.r - atSix.b, Is.GreaterThan(high.r - high.b), "but six degrees up is still golden");
+        Assert.That(high, Is.EqualTo(noon), "noon light is neutral");
+        Assert.That(TimeOfDaySystem.SunTintFor(-10f, horizon, low, noon), Is.EqualTo(horizon),
+            "below the horizon the sun keeps the last colour it had");
+    }
+
+    [Test]
+    public void TimeOfDaySystem_DirectSunDisappearsBelowTheHorizon()
+    {
+        Assert.That(TimeOfDaySystem.SunVisibilityFor(20f), Is.EqualTo(1f).Within(0.001f));
+        Assert.That(TimeOfDaySystem.SunVisibilityFor(-20f), Is.EqualTo(0f).Within(0.001f),
+            "a set sun must not light the city from underneath");
+        Assert.That(TimeOfDaySystem.SunVisibilityFor(0f), Is.InRange(0.05f, 0.95f),
+            "the sun fades through the horizon rather than switching off");
     }
 
     static float Luminance(Color color) => color.r * 0.299f + color.g * 0.587f + color.b * 0.114f;

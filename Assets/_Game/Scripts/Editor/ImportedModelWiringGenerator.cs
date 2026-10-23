@@ -14,6 +14,22 @@ public static class ImportedModelWiringGenerator
     const string GasStationSources = "Assets/unity models/gasstation";
     const string RoadSources = "Assets/unity models/roads";
     const string DepotSources = "Assets/unity models/parking lot";
+
+    // The parking-lot packs contain complete shelters as well as depot props.
+    // They are wired as stop prefabs, not as depot scenery, so the mission stop
+    // spawner can use them without blocking a traffic lane with a large prop.
+    static readonly string[] ParkingStopSources =
+    {
+        "Assets/unity models/parking lot/Bus Stop free",
+        "Assets/unity models/parking lot/Old bus stop",
+        "Assets/unity models/parking lot/Bus Stand Waiting Area",
+        "Assets/unity models/parking lot/Bus Stop/FBX",
+    };
+
+    static readonly string[] TextureExtensions =
+    {
+        ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".psd", ".exr", ".tif", ".tiff"
+    };
     const string BusVisuals = "Assets/_Game/Generated/Models/Buses";
     const string BusPrefabs = "Assets/_Game/Generated/Prefabs/Buses";
     const string StopPrefabs = "Assets/_Game/Resources/BusStopsGenerated";
@@ -43,6 +59,14 @@ public static class ImportedModelWiringGenerator
     public static void GenerateFromBatch()
     {
         GenerateAll(false);
+        RouteAssetRegistry.RepairImportedRoutes(true);
+    }
+
+    /// <summary>Rebuilds every imported model family in one batch invocation.</summary>
+    public static void GenerateContentFromBatch()
+    {
+        GenerateAll(false);
+        LiveCityModelImporter.Build();
         RouteAssetRegistry.RepairImportedRoutes(true);
     }
 
@@ -80,21 +104,23 @@ public static class ImportedModelWiringGenerator
             EnsureFolders();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-            string[] busPaths = FindFbxFiles(BusSources);
-            string[] stopPaths = FindFbxFiles(StopSources);
+            BusSource[] busSources = FindBusSources();
+            string[] stopPaths = FindStopSources();
             string[] gasStationPaths = FindFbxFiles(GasStationSources);
             string[] roadPaths = FindFbxFiles(RoadSources);
             string[] depotPaths = FindFbxFiles(DepotSources);
+            ImportedModelImportSettings.EnsureStandard(
+                busSources.Select(source => source.assetPath).Concat(stopPaths));
             var report = new StringBuilder("# Imported model wiring\n\n");
             report.AppendLine("Generated from `Assets/unity models`. Re-run `Tools > RealBus > Setup > Wire All Imported Bus and Stop Models` after replacing a source FBX.\n");
             report.AppendLine("## Drivable buses\n");
 
-            for (int i = 0; i < busPaths.Length; i++)
+            for (int i = 0; i < busSources.Length; i++)
             {
-                WiredBusResult result = GenerateBus(busPaths[i], i);
+                WiredBusResult result = GenerateBus(busSources[i].assetPath, busSources[i].identityPath, i);
                 report.AppendLine(result.success
-                    ? $"- **{result.displayName}** — `{result.prefabPath}`; garage spec `{result.specPath}`"
-                    : $"- **{Path.GetFileName(busPaths[i])}** — skipped: {result.message}");
+                    ? $"- **{result.displayName}** — `{result.prefabPath}`; garage spec `{result.specPath}` (source `{busSources[i].assetPath}`)"
+                    : $"- **{Path.GetFileName(busSources[i].assetPath)}** — skipped: {result.message}");
             }
 
             report.AppendLine("\n## Bus-stop props\n");
@@ -137,9 +163,9 @@ public static class ImportedModelWiringGenerator
             AssetDatabase.ImportAsset(ReportPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[RealBus] Wired {busPaths.Length} buses, {stopPaths.Length} bus stops, {gasStationPaths.Length} gas stations, {roadPaths.Length} road packs, and {depotPaths.Length} depot props. See {ReportPath}.");
+            Debug.Log($"[RealBus] Wired {busSources.Length} buses, {stopPaths.Length} bus stops, {gasStationPaths.Length} gas stations, {roadPaths.Length} road packs, and {depotPaths.Length} depot props. See {ReportPath}.");
             if (showDialog)
-                EditorUtility.DisplayDialog("RealBus model wiring", $"Processed {busPaths.Length} buses, {stopPaths.Length} stop props, {gasStationPaths.Length} gas stations, {roadPaths.Length} road packs, and {depotPaths.Length} depot props.\n\nSee {ReportPath} for the generated asset paths.", "OK");
+                EditorUtility.DisplayDialog("RealBus model wiring", $"Processed {busSources.Length} buses, {stopPaths.Length} stop props, {gasStationPaths.Length} gas stations, {roadPaths.Length} road packs, and {depotPaths.Length} depot props.\n\nSee {ReportPath} for the generated asset paths.", "OK");
         }
         catch (Exception exception)
         {
@@ -154,9 +180,9 @@ public static class ImportedModelWiringGenerator
 
     static bool NeedsGeneration()
     {
-        if (!Directory.Exists(BusSources) || !Directory.Exists(StopSources)) return false;
-        int busCount = FindFbxFiles(BusSources).Length;
-        int stopCount = FindFbxFiles(StopSources).Length;
+        if (!Directory.Exists(BusSources)) return false;
+        BusSource[] busSources = FindBusSources();
+        int stopCount = FindStopSources().Length;
         int gasStationCount = FindFbxFiles(GasStationSources).Length;
         int roadCount = FindFbxFiles(RoadSources).Length;
         int depotCount = FindFbxFiles(DepotSources).Length;
@@ -165,23 +191,23 @@ public static class ImportedModelWiringGenerator
         int wiredGasStations = Directory.Exists(GasStationPrefabs) ? Directory.GetFiles(GasStationPrefabs, "*.prefab").Length : 0;
         int wiredRoads = Directory.Exists(RoadPrefabs) ? Directory.GetFiles(RoadPrefabs, "*.prefab").Length : 0;
         int wiredDepots = Directory.Exists(DepotPrefabs) ? Directory.GetFiles(DepotPrefabs, "*.prefab").Length : 0;
-        if (busCount > wiredBuses || stopCount > wiredStops || gasStationCount > wiredGasStations || roadCount > wiredRoads || depotCount > wiredDepots || !File.Exists(ReportPath)) return true;
-        foreach (string sourcePath in FindFbxFiles(BusSources))
+        if (busSources.Length > wiredBuses || stopCount > wiredStops || gasStationCount > wiredGasStations || roadCount > wiredRoads || depotCount > wiredDepots || !File.Exists(ReportPath)) return true;
+        foreach (BusSource source in busSources)
         {
-            string specPath = $"{BusSpecs}/{UniqueStem(sourcePath)}.asset";
+            string specPath = $"{BusSpecs}/{UniqueStem(source.identityPath)}.asset";
             BusSpec spec = AssetDatabase.LoadAssetAtPath<BusSpec>(specPath);
             if (spec == null || spec.drivablePrefab == null) return true;
         }
         return false;
     }
 
-    static WiredBusResult GenerateBus(string sourcePath, int index)
+    static WiredBusResult GenerateBus(string sourcePath, string identityPath, int index)
     {
         GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
         if (source == null) return WiredBusResult.Failed("Unity did not import this FBX as a GameObject.");
 
-        string displayName = ObjectNames.NicifyVariableName(Path.GetFileNameWithoutExtension(sourcePath));
-        string stem = UniqueStem(sourcePath);
+        string displayName = ObjectNames.NicifyVariableName(Path.GetFileNameWithoutExtension(identityPath));
+        string stem = UniqueStem(identityPath);
         string visualPath = $"{BusVisuals}/{stem}_Visual.prefab";
         string prefabPath = $"{BusPrefabs}/{stem}_Drivable.prefab";
         string specPath = $"{BusSpecs}/{stem}.asset";
@@ -197,6 +223,7 @@ public static class ImportedModelWiringGenerator
         model.name = "Model";
         model.transform.SetParent(visualRoot.transform, false);
         StripImportedPhysics(model);
+        ImportedModelTextureBinder.Bind(model, sourcePath, "Assets/_Game/Generated/Materials/Buses", stem);
         float targetLength = TargetBusLength(displayName);
         if (!NormalizeBusVisual(visualRoot, model.transform, targetLength, out Bounds visualBounds))
         {
@@ -276,7 +303,7 @@ public static class ImportedModelWiringGenerator
             AssetDatabase.CreateAsset(spec, specPath);
         }
         spec.name = displayName;
-        string sourceGuid = AssetDatabase.AssetPathToGUID(sourcePath);
+        string sourceGuid = AssetDatabase.AssetPathToGUID(identityPath);
         spec.busId = "fleet.imported." + (string.IsNullOrEmpty(sourceGuid) ? stem.ToLowerInvariant() : sourceGuid.Substring(0, 12).ToLowerInvariant());
         spec.displayName = displayName;
         spec.description = "Imported, game-ready bus model.";
@@ -300,13 +327,15 @@ public static class ImportedModelWiringGenerator
         GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
         if (source == null) { message = "Unity did not import this FBX as a GameObject."; return string.Empty; }
         string displayName = ObjectNames.NicifyVariableName(Path.GetFileNameWithoutExtension(sourcePath));
-        string output = $"{StopPrefabs}/{UniqueStem(sourcePath)}.prefab";
+        string stem = UniqueStem(sourcePath);
+        string output = $"{StopPrefabs}/{stem}.prefab";
         GameObject root = new GameObject(displayName);
         GameObject model = PrefabUtility.InstantiatePrefab(source) as GameObject;
         if (model == null) { UnityEngine.Object.DestroyImmediate(root); message = "The model could not be instantiated."; return string.Empty; }
         model.name = "Model";
         model.transform.SetParent(root.transform, false);
         StripImportedPhysics(model);
+        ImportedModelTextureBinder.Bind(model, sourcePath, "Assets/_Game/Generated/Materials/Stops", stem);
         if (!NormalizeStopVisual(root, model.transform, displayName, out Bounds bounds))
         {
             UnityEngine.Object.DestroyImmediate(root); message = "No renderable mesh was found."; return string.Empty;
@@ -552,14 +581,126 @@ public static class ImportedModelWiringGenerator
         return 12f;
     }
 
-    static string[] FindFbxFiles(string folder)
+    static string[] FindFbxFiles(string folder, SearchOption searchOption = SearchOption.TopDirectoryOnly)
     {
         if (!Directory.Exists(folder)) return Array.Empty<string>();
-        return Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly)
+        return Directory.GetFiles(folder, "*", searchOption)
             .Where(path => string.Equals(Path.GetExtension(path), ".fbx", StringComparison.OrdinalIgnoreCase))
             .Select(path => path.Replace('\\', '/'))
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    static string[] FindStopSources()
+    {
+        var paths = new List<string>();
+        paths.AddRange(FindFbxFiles(StopSources));
+        foreach (string folder in ParkingStopSources)
+            paths.AddRange(FindFbxFiles(folder));
+        return paths
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Finds every bus FBX, including the textured nested packs, and collapses
+    /// duplicate copies of the same model to one source. The nested copy wins when
+    /// it has more nearby textures; the top-level path remains the identity so the
+    /// existing prefab and garage-spec names do not churn when artwork is added.
+    /// </summary>
+    static BusSource[] FindBusSources()
+    {
+        var groups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (string path in FindFbxFiles(BusSources, SearchOption.AllDirectories))
+        {
+            string key = CanonicalModelKey(path);
+            if (!groups.TryGetValue(key, out var list))
+            {
+                list = new List<string>();
+                groups[key] = list;
+            }
+            list.Add(path);
+        }
+
+        var sources = new List<BusSource>(groups.Count);
+        foreach (var pair in groups)
+        {
+            string chosen = pair.Value
+                .OrderByDescending(TextureCount)
+                .ThenByDescending(PathDepth)
+                .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+                .First();
+            sources.Add(new BusSource(chosen, IdentityPath(BusSources, chosen)));
+        }
+        return sources
+            .OrderBy(source => source.identityPath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    static string IdentityPath(string root, string sourcePath)
+    {
+        string directory = Path.GetDirectoryName(sourcePath)?.Replace('\\', '/');
+        string rootPath = root.Replace('\\', '/');
+        if (string.Equals(directory, rootPath, StringComparison.OrdinalIgnoreCase))
+            return sourcePath;
+
+        string rootCandidate = $"{rootPath}/{Path.GetFileName(sourcePath)}";
+        return File.Exists(rootCandidate) ? rootCandidate : sourcePath;
+    }
+
+    static int TextureCount(string sourcePath)
+    {
+        string directory = Path.GetDirectoryName(sourcePath);
+        if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory)) return 0;
+
+        int count = CountTextures(directory, SearchOption.TopDirectoryOnly);
+        // Some packs keep their maps in a sibling art folder (LUXURY BUS/BUSTEXTURE).
+        // A sibling that contains another FBX is a different model pack, so it must
+        // not inflate the texture score of a top-level model.
+        foreach (string child in Directory.GetDirectories(directory))
+        {
+            if (Directory.GetFiles(child, "*.fbx", SearchOption.AllDirectories).Length > 0) continue;
+            count += CountTextures(child, SearchOption.AllDirectories);
+        }
+        return count;
+    }
+
+    static int CountTextures(string folder, SearchOption searchOption)
+    {
+        int count = 0;
+        foreach (string path in Directory.GetFiles(folder, "*", searchOption))
+        {
+            string extension = Path.GetExtension(path);
+            if (TextureExtensions.Any(ext => string.Equals(ext, extension, StringComparison.OrdinalIgnoreCase)))
+                count++;
+        }
+        return count;
+    }
+
+    static int PathDepth(string path)
+    {
+        int depth = 0;
+        foreach (char c in path) if (c == '/' || c == '\\') depth++;
+        return depth;
+    }
+
+    /// <summary>
+    /// The same bus appears at the bus root and inside a livery folder. Remove
+    /// separators and material-library suffixes so the two copies form one group.
+    /// </summary>
+    static string CanonicalModelKey(string path)
+    {
+        string name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
+        foreach (string suffix in new[] { " corona", " vray", " standard", " obj mtl", " obj" })
+        {
+            if (name.EndsWith(suffix, StringComparison.Ordinal))
+            {
+                name = name.Substring(0, name.Length - suffix.Length);
+                break;
+            }
+        }
+        return new string(name.Where(char.IsLetterOrDigit).ToArray());
     }
 
     static string UniqueStem(string sourcePath)
@@ -579,6 +720,18 @@ public static class ImportedModelWiringGenerator
         Directory.CreateDirectory(RoadPrefabs);
         Directory.CreateDirectory(DepotPrefabs);
         Directory.CreateDirectory(BusSpecs);
+    }
+
+    readonly struct BusSource
+    {
+        public readonly string assetPath;
+        public readonly string identityPath;
+
+        public BusSource(string assetPath, string identityPath)
+        {
+            this.assetPath = assetPath;
+            this.identityPath = identityPath;
+        }
     }
 
     readonly struct WiredBusResult

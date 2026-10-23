@@ -196,6 +196,26 @@ public class SaveManager : MonoBehaviour
                 ? gameState.selectedCountry.countryCode
                 : gameState.selectedCountry.countryName;
 
+        string selectedCityCode = gameState.selectedCity != null ? gameState.selectedCity.cityCode : string.Empty;
+        string selectedRouteId = gameState.selectedRoute != null
+            ? gameState.selectedRoute.GetProgressionId(gameState.selectedCity != null ? gameState.selectedCity.cityCode : null)
+            : string.Empty;
+
+        // SaveManager restores the local save before the scene (and therefore
+        // CityManager's catalogue) exists, so an early focus/background autosave can
+        // run while GameState is still empty. Keep the saved selection in that window;
+        // otherwise the first autosave overwrites the player's city and route with
+        // blanks before SceneBootstrap gets a chance to restore them.
+        if (gameState.selectedCountry == null &&
+            gameState.selectedCity == null &&
+            gameState.selectedRoute == null &&
+            lastAppliedSave != null)
+        {
+            selectedCountry = lastAppliedSave.selectedCountry ?? string.Empty;
+            selectedCityCode = lastAppliedSave.selectedCityCode ?? string.Empty;
+            selectedRouteId = lastAppliedSave.selectedRouteId ?? string.Empty;
+        }
+
         return new SaveData
         {
             saveVersion = 1,
@@ -209,8 +229,8 @@ public class SaveManager : MonoBehaviour
             missionHistory = missionHistory.ToArray(),
             completedRouteKeys = unlockManager.GetCompletedRouteKeys(),
             selectedCountry = selectedCountry ?? string.Empty,
-            selectedCityCode = gameState.selectedCity != null ? gameState.selectedCity.cityCode : string.Empty,
-            selectedRouteId = gameState.selectedRoute != null ? gameState.selectedRoute.GetProgressionId(gameState.selectedCity != null ? gameState.selectedCity.cityCode : null) : string.Empty,
+            selectedCityCode = selectedCityCode ?? string.Empty,
+            selectedRouteId = selectedRouteId ?? string.Empty,
             selectedBusId = fleetManager.GetSelectedBusId(),
             economy = CloneEconomy(gameState.economy),
             vehicleState = CloneVehicleState(gameState.vehicleState),
@@ -416,8 +436,23 @@ public class SaveManager : MonoBehaviour
         // used to overwrite a country the player had just selected with the country
         // from the previous save (usually Kenya). Only restore when a newly-created
         // GameState genuinely has no selection yet.
-        if (lastAppliedSave != null && GameState.Instance != null && GameState.Instance.selectedCountry == null)
-            ApplySelectionState(lastAppliedSave);
+        ApplySavedSelectionWhenReady();
+    }
+
+    /// <summary>
+    /// Restores the saved city/route once the runtime <see cref="CityManager"/> has
+    /// its catalogue. SaveManager initialises before the first scene exists, so the
+    /// initial ApplySaveData cannot resolve a city code and leaves GameState empty.
+    /// Direct scene play also never receives a sceneLoaded callback for the scene
+    /// that was already open, so SceneBootstrap calls this after seeding the manager.
+    /// </summary>
+    public void ApplySavedSelectionWhenReady()
+    {
+        if (lastAppliedSave == null || GameState.Instance == null)
+            return;
+        if (GameState.Instance.selectedCountry != null)
+            return;
+        ApplySelectionState(lastAppliedSave);
     }
 
     void SubscribeToRuntimeEvents()

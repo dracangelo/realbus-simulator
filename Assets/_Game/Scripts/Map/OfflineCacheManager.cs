@@ -18,7 +18,28 @@ using System.IO;
 /// </summary>
 public class OfflineCacheManager : MonoBehaviour
 {
-    public static OfflineCacheManager Instance { get; private set; }
+    static OfflineCacheManager _instance;
+
+    /// <summary>
+    /// The live cache, or null.
+    ///
+    /// A destroyed component keeps its managed wrapper alive for as long as something
+    /// references it, and only Unity's overloaded <c>==</c> knows that wrapper is gone. A
+    /// plain reference comparison - the download UI, a non-MonoBehaviour helper, a test -
+    /// would otherwise be handed a cache whose native object no longer exists. The getter
+    /// drops that wrapper the first time it is seen, so "destroyed" reads as null to every
+    /// caller rather than only to Unity's operator.
+    /// </summary>
+    public static OfflineCacheManager Instance
+    {
+        get
+        {
+            if (!ReferenceEquals(_instance, null) && _instance == null)
+                _instance = null;
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     // ── Inspector ──────────────────────────────────────────────────────
 

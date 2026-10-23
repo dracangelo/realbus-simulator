@@ -160,6 +160,136 @@ public class RoadGraphTests
     }
 
     [Test]
+    public void RoadWidthPolicy_WidensAsphaltToFitTheWidestDirectionalLaneEnvelope()
+    {
+        RoadWidthPolicy.ResetForTests();
+        try
+        {
+            RoadWidthPolicy.Request(4.32f);
+
+            var way = new OSMWay
+            {
+                id = 250,
+                tags = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    { "highway", "primary" },
+                    { "lanes:forward", "2" },
+                    { "lanes:backward", "1" }
+                }
+            };
+
+            float laneWidth = way.GetLaneWidthMeters();
+            float roadWidth = way.GetRoadWidth();
+            Assert.That(laneWidth, Is.EqualTo(4.32f).Within(.01f));
+            Assert.That(roadWidth, Is.GreaterThanOrEqualTo(laneWidth * 4f - .01f),
+                "the two-lane direction needs two full lanes either side of the centreline");
+
+            // The outermost forward lane centre plus half a wide imported bus must
+            // still be inside the rendered asphalt.
+            float widestBodyHalf = 3.77f * .5f;
+            Assert.That(1.5f * laneWidth + widestBodyHalf,
+                Is.LessThanOrEqualTo(roadWidth * .5f + .001f));
+
+            var narrow = new OSMWay
+            {
+                id = 251,
+                tags = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    { "highway", "secondary" },
+                    { "lanes", "2" },
+                    { "width", "8" }
+                }
+            };
+            Assert.That(narrow.GetLaneWidthMeters(), Is.EqualTo(4.32f).Within(.01f),
+                "a narrow OSM width tag must not leave traffic hanging over the kerb");
+            Assert.That(narrow.GetRoadWidth(), Is.EqualTo(8.64f).Within(.01f));
+
+            var shared = new OSMWay
+            {
+                id = 252,
+                tags = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    { "highway", "service" },
+                    { "lanes", "1" }
+                }
+            };
+            Assert.That(shared.GetRoadWidth(), Is.GreaterThanOrEqualTo(4f),
+                "a shared single lane still needs a drivable ribbon");
+        }
+        finally
+        {
+            RoadWidthPolicy.ResetForTests();
+        }
+    }
+
+    [Test]
+    public void AirRoadGraph_LikelyTurnAngleIgnoresTheReverseLinkAndFindsTheTurn()
+    {
+        var root = new GameObject("Turn angle graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var a = new GameObject("A").transform;
+        var b = new GameObject("B").transform; b.position = Vector3.forward * 20f;
+        var c = new GameObject("C").transform; c.position = new Vector3(20f, 0f, 20f);
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = a },
+            new AIRoadGraph.RoadNode { point = b, nextNodeIndices = new[] { 0, 2 } },
+            new AIRoadGraph.RoadNode { point = c }
+        };
+
+        // Coming from A towards B, the reverse link to A is excluded and the
+        // right-angle exit to C is the only legal continuation.
+        Assert.That(graph.GetLikelyTurnAngle(1, Vector3.forward, 0),
+            Is.EqualTo(90f).Within(.5f));
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(a.gameObject);
+        Object.DestroyImmediate(b.gameObject);
+        Object.DestroyImmediate(c.gameObject);
+    }
+
+    [Test]
+    public void AirRoadGraph_RoadHalfWidthUsesTheWiderDirectionalEnvelopeAndSharedLane()
+    {
+        var root = new GameObject("Road half-width graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var a = new GameObject("A").transform;
+        var b = new GameObject("B").transform; b.position = Vector3.forward * 20f;
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode
+            {
+                point = a, nextNodeIndices = new[] { 1 },
+                outgoingLaneCounts = new[] { 2 }, outgoingLaneWidths = new[] { 4.32f },
+                outgoingOneWays = new[] { false }, outgoingSharedLanes = new[] { false }
+            },
+            new AIRoadGraph.RoadNode
+            {
+                point = b, nextNodeIndices = new[] { 0 },
+                outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 4.32f },
+                outgoingOneWays = new[] { false }, outgoingSharedLanes = new[] { false }
+            }
+        };
+
+        // A 2+1 road is rendered with the two-lane envelope on both sides.
+        Assert.That(graph.GetRoadHalfWidth(0, 1), Is.EqualTo(8.64f).Within(.01f));
+        Assert.That(graph.GetRoadHalfWidth(1, 0), Is.EqualTo(8.64f).Within(.01f));
+
+        // A one-way carriageway only needs its own lanes.
+        graph.nodes[0].outgoingOneWays = new[] { true };
+        Assert.That(graph.GetRoadHalfWidth(0, 1), Is.EqualTo(4.32f).Within(.01f));
+
+        // A shared single lane is exactly one lane wide.
+        graph.nodes[0].outgoingOneWays = new[] { false };
+        graph.nodes[0].outgoingSharedLanes = new[] { true };
+        Assert.That(graph.GetRoadHalfWidth(0, 1), Is.EqualTo(2.16f).Within(.01f));
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(a.gameObject);
+        Object.DestroyImmediate(b.gameObject);
+    }
+
+    [Test]
     public void OSMRoadMeshBuilder_BuildRoadSegmentMesh_GeneratesCorrectColumnsForLanes()
     {
         var go = new GameObject("MeshBuilderHolder");
@@ -302,5 +432,100 @@ public class RoadGraphTests
         Object.DestroyImmediate(root);
         Object.DestroyImmediate(a.gameObject);
         Object.DestroyImmediate(b.gameObject);
+    }
+
+    [Test]
+    public void AirRoadGraph_SetMinimumLaneWidth_ExpandsNarrowLinksForWideVehicles()
+    {
+        var root = new GameObject("Wide vehicle lane graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var a = new GameObject("A").transform;
+        var b = new GameObject("B").transform; b.position = Vector3.forward * 20f;
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = a, nextNodeIndices = new[] { 1 }, laneWidth = 2.4f, outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 2.4f }, outgoingOneWays = new[] { false } },
+            new AIRoadGraph.RoadNode { point = b, nextNodeIndices = new[] { 0 }, laneWidth = 2.4f, outgoingLaneCounts = new[] { 1 }, outgoingLaneWidths = new[] { 2.4f }, outgoingOneWays = new[] { false } }
+        };
+
+        // A narrow OSM lane is still driven, but a wide traffic model would
+        // overhang it. The pool raises the floor before spawning anything.
+        Assert.That(graph.GetLaneWidth(0, 1), Is.EqualTo(AIRoadGraph.MinLaneWidth).Within(.01f));
+        Assert.That(Mathf.Abs(graph.GetLaneOffset(0, 1, 0)), Is.EqualTo(AIRoadGraph.MinLaneWidth * .5f).Within(.01f));
+
+        graph.SetMinimumLaneWidth(4.1f);
+
+        Assert.That(graph.MinimumLaneWidth, Is.EqualTo(4.1f).Within(.01f));
+        Assert.That(graph.GetLaneWidth(0, 1), Is.EqualTo(4.1f).Within(.01f));
+        Assert.That(Mathf.Abs(graph.GetLaneOffset(0, 1, 0)), Is.EqualTo(2.05f).Within(.01f));
+        Assert.That(graph.nodes[0].laneWidth, Is.EqualTo(4.1f).Within(.01f));
+        Assert.That(graph.nodes[0].outgoingLaneWidths[0], Is.EqualTo(4.1f).Within(.01f),
+            "the per-link width must be raised too, not just the node fallback");
+        Assert.That(graph.nodes[1].outgoingLaneWidths[0], Is.EqualTo(4.1f).Within(.01f));
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(a.gameObject);
+        Object.DestroyImmediate(b.gameObject);
+    }
+
+    [Test]
+    public void AIVehicleController_OvertakeDecisionRequiresASlowerLeaderAndAClearLane()
+    {
+        Assert.That(AIVehicleController.ShouldStartOvertake(50f, 20f, 18f, 9f, true), Is.True);
+        Assert.That(AIVehicleController.ShouldStartOvertake(50f, 20f, 18f, 9f, false), Is.False,
+            "a single-lane link has nowhere to pass");
+        Assert.That(AIVehicleController.ShouldStartOvertake(50f, 48f, 18f, 9f, true), Is.False,
+            "do not pull out for a leader that is already keeping up");
+        Assert.That(AIVehicleController.ShouldStartOvertake(50f, 0f, 60f, 9f, true), Is.False,
+            "a leader sixty metres ahead is not a pass yet");
+    }
+
+    [Test]
+    public void AIVehicleController_OvertakeSpeedIsQuickButNeverOverTheLimit()
+    {
+        Assert.That(AIVehicleController.OvertakeSpeedKmh(50f, 0f), Is.EqualTo(24f).Within(.01f));
+        Assert.That(AIVehicleController.OvertakeSpeedKmh(50f, 30f), Is.EqualTo(42f).Within(.01f));
+        Assert.That(AIVehicleController.OvertakeSpeedKmh(30f, 0f), Is.EqualTo(24f).Within(.01f),
+            "the pass still respects a low road limit");
+        Assert.That(AIVehicleController.OvertakeSpeedKmh(80f, 50f), Is.EqualTo(62f).Within(.01f));
+        Assert.That(AIVehicleController.OvertakeSpeedKmh(80f, 75f), Is.EqualTo(80f).Within(.01f),
+            "a pass must not clamp below the leader when the limit is generous");
+    }
+
+    [Test]
+    public void AIVehicleController_LaneChangeCrossesAWidenedLaneInFiniteTime()
+    {
+        float quarter = AIVehicleController.StepLaneChange(0f, 4.32f, 3f, .25f);
+        float half = AIVehicleController.StepLaneChange(quarter, 4.32f, 3f, .5f);
+        float done = AIVehicleController.StepLaneChange(half, 4.32f, 3f, 1f);
+
+        Assert.That(quarter, Is.EqualTo(.75f).Within(.01f));
+        Assert.That(half, Is.EqualTo(2.25f).Within(.01f));
+        Assert.That(done, Is.EqualTo(4.32f).Within(.01f),
+            "a 4.32 m lane change should complete in about 1.4 s at 3 m/s");
+        Assert.That(AIVehicleController.StepLaneChange(4.32f, 0f, 3f, .25f),
+            Is.EqualTo(3.57f).Within(.01f), "returning to lane must also ease, not snap");
+    }
+
+    [Test]
+    public void TrafficParticipant_LateralClearanceUsesBothBodyWidths()
+    {
+        var self = new GameObject("self");
+        var other = new GameObject("other");
+        try
+        {
+            self.AddComponent<TrafficParticipant>().width = 3.77f;
+            other.AddComponent<TrafficParticipant>().width = 1.8f;
+            other.transform.position = new Vector3(3f, 0f, 0f);
+            Assert.That(TrafficParticipant.IsLateralClear(self.transform, other.transform), Is.False,
+                "a wide body still overlaps its own lane at 3 m of separation");
+            other.transform.position = new Vector3(3.2f, 0f, 0f);
+            Assert.That(TrafficParticipant.IsLateralClear(self.transform, other.transform), Is.True,
+                "once both full widths and the mirror gap clear, the pass can release the target");
+        }
+        finally
+        {
+            Object.DestroyImmediate(self);
+            Object.DestroyImmediate(other);
+        }
     }
 }

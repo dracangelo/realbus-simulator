@@ -992,6 +992,15 @@ public class Phase7MenuController : MonoBehaviour
             if (importer == null) importer = new GameObject("OSMRouteImporter").AddComponent<OSMRouteImporter>();
             importer.TriggerImport(city);
         }
+        else
+        {
+            // The route file is saved and will be merged when the city is next
+            // selected (CitySelector imports any downloaded routes.json). Say so
+            // here instead of leaving the player wondering whether the download
+            // applied to the city they are currently driving.
+            HandleContentDownloadChanged(
+                $"{city.cityName} is ready. Select it in City Select to use its downloaded routes.", 1f);
+        }
     }
 
     void UnsubscribeContentDownloader()

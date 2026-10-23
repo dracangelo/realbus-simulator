@@ -67,6 +67,24 @@ public class BusRouteDataTests
     }
 
     [Test]
+    public void BusRoute_WorldPathValidation_RejectsForeignOriginPoints()
+    {
+        var start = new UnityEngine.Vector3(2351.23f, 0.1f, -2661.23f);
+        var end = new UnityEngine.Vector3(1382.70f, 0.1f, -2616.77f);
+
+        var valid = new[] { start, UnityEngine.Vector3.Lerp(start, end, 0.5f), end };
+        var foreign = new[]
+        {
+            new UnityEngine.Vector3(-12887989f, 0.1f, 3883117f),
+            new UnityEngine.Vector3(-12887937f, 0.1f, 3883034.8f)
+        };
+
+        Assert.That(BusRoute.IsWorldPathNear(valid, start, end), Is.True);
+        Assert.That(BusRoute.IsWorldPathNear(foreign, start, end), Is.False);
+        Assert.That(BusRoute.IsWorldPathNear(null, start, end), Is.False);
+    }
+
+    [Test]
     public void CityConfig_CreateRuntimeCityDefinition_ComputesBoundingBoxAndCopiesRoutes()
     {
         var route = UnityEngine.ScriptableObject.CreateInstance<BusRoute>();
@@ -90,5 +108,7 @@ public class BusRouteDataTests
         Assert.That(runtimeCity.maxLon, Is.GreaterThan(runtimeCity.minLon));
         Assert.That(runtimeCity.availableRoutes, Has.Length.EqualTo(1));
         Assert.That(runtimeCity.availableRoutes[0], Is.EqualTo(route));
+        Assert.That(runtimeCity.availableRoutes[0].routeName, Does.StartWith("NBO "));
+        Assert.That(runtimeCity.availableRoutes[0].routeNumber, Does.StartWith("NBO-"));
     }
 }

@@ -46,7 +46,9 @@ public class PassengerSpawner : MonoBehaviour
 
     public BusStopData[] BuildRandomStopsFromRoadGraph(int desiredCount = -1, int startNodeIndex = -1)
     {
-        var graph = roadGraph != null ? roadGraph : FindAnyObjectByType<AIRoadGraph>();
+        var graph = roadGraph != null && !roadGraph.privateLaneCircuit
+            ? roadGraph
+            : AIRoadGraph.FindCityGraph();
         if (graph == null || graph.NodeCount == 0)
         {
             Debug.LogWarning("[PassengerSpawner] Cannot generate stops because AIRoadGraph is missing or empty.");

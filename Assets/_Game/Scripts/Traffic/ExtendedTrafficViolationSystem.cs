@@ -68,14 +68,21 @@ public class ExtendedTrafficViolationSystem : MonoBehaviour
     {
         if (busController == null)
             busController = FindAnyObjectByType<BusController>();
-        if (roadGraph == null)
-            roadGraph = FindAnyObjectByType<AIRoadGraph>();
+        if (roadGraph == null || roadGraph.privateLaneCircuit)
+            roadGraph = busController != null
+                ? AIRoadGraph.ResolveCityGraph(busController.transform.position, 2500f)
+                : AIRoadGraph.FindCityGraph();
     }
 
     void Update()
     {
         if (busController == null)
             return;
+
+        // A depot is built after the city graph exists and adds a private yard
+        // circuit. Never let that eight-node loop replace the public road graph.
+        if (roadGraph == null || roadGraph.privateLaneCircuit)
+            roadGraph = AIRoadGraph.ResolveCityGraph(busController.transform.position, 2500f);
 
         TrackSpeeding();
         TrackIllegalTurns();

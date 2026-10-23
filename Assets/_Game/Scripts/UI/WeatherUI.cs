@@ -27,6 +27,7 @@ public class WeatherUI : MonoBehaviour
         switch (state)
         {
             case WeatherState.Overcast: return "☁";
+            case WeatherState.Windy: return "🌬";
             case WeatherState.Fog: return "〰";
             case WeatherState.Drizzle: return "☂";
             case WeatherState.LightRain: return "☔";
@@ -51,6 +52,8 @@ public class WeatherUI : MonoBehaviour
                 return new Color(0.84f, 0.86f, 0.88f, 0.88f);
             case WeatherState.Overcast:
                 return new Color(0.72f, 0.76f, 0.82f, 0.9f);
+            case WeatherState.Windy:
+                return new Color(0.70f, 0.80f, 0.86f, 0.9f);
             case WeatherState.Snow:
             case WeatherState.Blizzard:
                 return new Color(0.9f, 0.95f, 1f, 0.9f);

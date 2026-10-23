@@ -6,7 +6,10 @@ public class SkyController : MonoBehaviour
     public Light sunLight;
 
     [Header("Sun Colors")]
-    public Color clearSunColor     = new Color(1.00f, 0.96f, 0.84f); // warm daylight
+    // Slightly warm near-white, not a yellow filter. The low-sun colours in
+    // TimeOfDaySystem supply golden hour; this is the clear midday palette, so
+    // keeping it close to white preserves the contrast between sun and shade.
+    public Color clearSunColor     = new Color(1.00f, 0.975f, 0.935f);
     public Color overcastSunColor  = new Color(0.80f, 0.82f, 0.85f); // cool grey
     public Color rainSunColor      = new Color(0.55f, 0.58f, 0.65f); // dark blue-grey
     public Color thunderSunColor   = new Color(0.25f, 0.25f, 0.30f); // near black
@@ -73,20 +76,37 @@ public class SkyController : MonoBehaviour
     {
         if (_isFlashing) return;
 
-        float timeSunMultiplier = TimeOfDaySystem.Instance != null ? TimeOfDaySystem.Instance.GetSunIntensityMultiplier() : 1f;
-        float timeAmbientMultiplier = TimeOfDaySystem.Instance != null ? TimeOfDaySystem.Instance.GetAmbientIntensityMultiplier() : 1f;
-        Color skyTint = TimeOfDaySystem.Instance != null ? TimeOfDaySystem.Instance.GetSkyTint() : Color.white;
+        TimeOfDaySystem clock = TimeOfDaySystem.Instance;
+        float timeSunMultiplier = clock != null ? clock.GetSunIntensityMultiplier() : 1f;
+        float timeAmbientMultiplier = clock != null ? clock.GetAmbientIntensityMultiplier() : 1f;
+        Color skyTint = clock != null ? clock.GetSkyTint() : Color.white;
+        // Weather owns the colour of the light, the sun's height owns its temperature,
+        // and its disappearance below the horizon owns how much of it survives.
+        Color sunTint = clock != null ? clock.GetSunTint() : Color.white;
+        float sunVisibility = clock != null ? clock.GetSunVisibilityFactor() : 1f;
+        // Cloud is the continuous dimmer. The per-state palette picks the band, and
+        // this covers the part of the sky in between, so a half-covered sky gives
+        // half the direct sun instead of snapping at the state boundary.
+        SkyEnvironmentController sky = SkyEnvironmentController.Instance;
+        float cloudDimming = sky != null ? WeatherLighting.SunScale(sky.cloudCoverage) : 1f;
+        float cloudAmbient = sky != null ? WeatherLighting.AmbientScale(sky.cloudCoverage) : 1f;
 
         if (sunLight != null)
         {
-            sunLight.color     = Color.Lerp(sunLight.color,     _targetSunColor,      Time.deltaTime * lerpSpeed);
-            sunLight.intensity = Mathf.Lerp(sunLight.intensity, targetSunIntensity * timeSunMultiplier,  Time.deltaTime * lerpSpeed);
+            sunLight.color     = Color.Lerp(sunLight.color,     _targetSunColor * sunTint, Time.deltaTime * lerpSpeed);
+            sunLight.intensity = Mathf.Lerp(sunLight.intensity,
+                targetSunIntensity * timeSunMultiplier * sunVisibility * cloudDimming, Time.deltaTime * lerpSpeed);
         }
 
-        Color ambientTarget = _targetAmbient * timeAmbientMultiplier;
+        Color ambientTarget = _targetAmbient * timeAmbientMultiplier * cloudAmbient;
         RenderSettings.ambientLight = Color.Lerp(
             RenderSettings.ambientLight, ambientTarget, Time.deltaTime * lerpSpeed * 0.5f);
-        RenderSettings.ambientSkyColor = Color.Lerp(RenderSettings.ambientSkyColor, targetSkyColor * skyTint, Time.deltaTime * lerpSpeed * 0.4f);
+        // Cloud scatters neutral light, so the sky term loses its blue cast as cover
+        // thickens. The intensity/dimming itself is owned by the cinematic atmosphere
+        // when it is present; this is the colour half of the same rule.
+        Color skyAmbient = targetSkyColor * skyTint;
+        if (sky != null) skyAmbient = WeatherLighting.Desaturate(skyAmbient, sky.cloudCoverage, 0.35f);
+        RenderSettings.ambientSkyColor = Color.Lerp(RenderSettings.ambientSkyColor, skyAmbient, Time.deltaTime * lerpSpeed * 0.4f);
     }
 
     // ── Public API ───────────────────────────────────────────────────
@@ -117,6 +137,16 @@ public class SkyController : MonoBehaviour
                 _targetAmbient        = overcastAmbient;
                 targetAmbientIntensity = 0.40f;
                 targetSkyColor        = overcastSunColor;
+                break;
+
+            case WeatherState.Windy:
+                // Dry, broken cloud: brighter than a solid overcast, but the light
+                // is already grey and the sky has lost its deep blue.
+                _targetSunColor       = Color.Lerp(clearSunColor, overcastSunColor, 0.45f);
+                targetSunIntensity   = Mathf.Lerp(clearIntensity, overcastIntensity, 0.55f);
+                _targetAmbient        = Color.Lerp(clearAmbient, overcastAmbient, 0.55f);
+                targetAmbientIntensity = Mathf.Lerp(clearAmbientIntensity, 0.40f, 0.55f);
+                targetSkyColor        = Color.Lerp(clearSkyColor, overcastSunColor, 0.55f);
                 break;
 
             case WeatherState.Fog:

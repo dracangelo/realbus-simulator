@@ -38,11 +38,27 @@ public class RainController : MonoBehaviour
     [Tooltip("Side of the square the rain falls through, in metres, centred on the emitter.")]
     public float effectFieldSize = 60f;
 
+    [Header("Wind")]
+    [Tooltip("Wind in metres per second (X = east, Y = north), pushed in by the wind system. Rain leans with it.")]
+    public Vector2 windXZ;
+
+    [Header("Night Light")]
+    [Tooltip("Streak colour in daylight.")]
+    public Color dayRainColor = new Color(0.72f, 0.78f, 0.86f, 0.55f);
+    [Tooltip("Streak colour after dark. Rain is drawn unlit, so without this the same streaks glow white at midnight.")]
+    public Color nightRainColor = new Color(0.28f, 0.33f, 0.44f, 0.42f);
+
     Texture2D streakTexture;
     Material rainMaterial;
 
+    // Fall speed per generated system. It is no longer the emitter's start speed:
+    // fall is applied as world-space velocity so the wind can lean it.
+    readonly System.Collections.Generic.Dictionary<ParticleSystem, float> fallSpeedBySystem =
+        new System.Collections.Generic.Dictionary<ParticleSystem, float>();
+
     private float currentWetness = 0f;
     float lastAppliedWetness = -1f;
+    Color lastRainTint = Color.clear;
     private WeatherState currentRainState = WeatherState.Clear;
     private Coroutine dryRoadRoutine;
     private Coroutine thunderRoutine;
@@ -59,7 +75,30 @@ public class RainController : MonoBehaviour
     void Update()
     {
         FollowTarget();
+        UpdateTint();
     }
+
+    /// <summary>
+    /// Fades the shower with the sky. The streak material is unlit - it has to be,
+    /// or rain would be invisible at night - so it needs to be tinted by the light
+    /// that is actually available instead of always being drawn at noon brightness.
+    /// </summary>
+    void UpdateTint()
+    {
+        if (rainMaterial == null) return;
+
+        TimeOfDaySystem clock = TimeOfDaySystem.Instance;
+        float light = clock != null ? SkyEnvironmentController.SkyLightLevelFor(clock.SunElevationDegrees) : 1f;
+        Color tint = TintForLight(dayRainColor, nightRainColor, light);
+        if (tint == lastRainTint) return;
+
+        lastRainTint = tint;
+        if (rainMaterial.HasProperty("_Color")) rainMaterial.SetColor("_Color", tint);
+    }
+
+    /// <summary>Precipitation colour for a light level. Pure, so the night floor is testable.</summary>
+    public static Color TintForLight(Color day, Color night, float lightLevel01)
+        => Color.Lerp(night, day, Mathf.Clamp01(lightLevel01));
 
     /// <summary>
     /// Creates the drizzle, rain and thunderstorm systems when they were not
@@ -85,7 +124,11 @@ public class RainController : MonoBehaviour
         main.loop = true;
         main.playOnAwake = false;
         main.startLifetime = Mathf.Lerp(0.8f, 1.5f, densityScale);
-        main.startSpeed = fallSpeed;
+        // A box emitter throws its particles along its own forward axis, so a start
+        // speed here sent the rain sideways. Fall is applied as world-space velocity
+        // instead, which also lets the wind lean the streaks without touching the
+        // emitter's rotation.
+        main.startSpeed = 0f;
         main.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.03f);
         main.gravityModifier = 0f;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
@@ -104,6 +147,14 @@ public class RainController : MonoBehaviour
         shape.scale = new Vector3(Mathf.Max(10f, effectFieldSize), 1f, Mathf.Max(10f, effectFieldSize));
         shape.position = new Vector3(0f, followHeight, 0f);
 
+        var velocity = ps.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        velocity.x = new ParticleSystem.MinMaxCurve(windXZ.x);
+        velocity.y = new ParticleSystem.MinMaxCurve(-fallSpeed);
+        velocity.z = new ParticleSystem.MinMaxCurve(windXZ.y);
+        fallSpeedBySystem[ps] = fallSpeed;
+
         var renderer = ps.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Stretch;
         renderer.lengthScale = Mathf.Lerp(2f, 3.5f, densityScale);
@@ -119,6 +170,52 @@ public class RainController : MonoBehaviour
 
     static bool LowQuality => QualitySettings.GetQualityLevel() == 0;
 
+    /// <summary>
+    /// Leans the shower with the wind. Rain is a light particle inside a moving air
+    /// mass, so the streak angle is the wind vector against the fall speed; without
+    /// this every state fell dead vertical and the wind only moved the clouds.
+    /// </summary>
+    public void ApplyWind(Vector2 wind)
+    {
+        if ((wind - windXZ).sqrMagnitude < 0.0004f) return;
+        windXZ = wind;
+        ApplyWindTo(drizzleParticles);
+        ApplyWindTo(rainParticles);
+        ApplyWindTo(thunderstormParticles);
+    }
+
+    /// <summary>
+    /// Converts an authored system to world-space fall the first time the wind
+    /// touches it, so a scene-built shower leans just like a generated one.
+    /// </summary>
+    void EnsureWindDriven(ParticleSystem ps)
+    {
+        if (ps == null || fallSpeedBySystem.ContainsKey(ps)) return;
+
+        float fall = ps.main.startSpeed.constant;
+        if (fall <= 0f) fall = 18f;
+
+        var main = ps.main;
+        main.startSpeed = 0f;
+
+        var velocity = ps.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        velocity.y = new ParticleSystem.MinMaxCurve(-fall);
+        fallSpeedBySystem[ps] = fall;
+    }
+
+    void ApplyWindTo(ParticleSystem ps)
+    {
+        if (ps == null) return;
+        EnsureWindDriven(ps);
+
+        var velocity = ps.velocityOverLifetime;
+        if (!velocity.enabled) return;
+        velocity.x = new ParticleSystem.MinMaxCurve(windXZ.x);
+        velocity.z = new ParticleSystem.MinMaxCurve(windXZ.y);
+    }
+
     Material RainMaterial()
     {
         if (rainMaterial != null) return rainMaterial;
@@ -127,7 +224,7 @@ public class RainController : MonoBehaviour
         if (streakTexture == null) streakTexture = BuildStreakTexture();
         rainMaterial = new Material(shader) { name = "RainController_Streak_Mat" };
         if (rainMaterial.HasProperty("_MainTex")) rainMaterial.SetTexture("_MainTex", streakTexture);
-        if (rainMaterial.HasProperty("_Color")) rainMaterial.SetColor("_Color", new Color(0.72f, 0.78f, 0.86f, 0.55f));
+        if (rainMaterial.HasProperty("_Color")) rainMaterial.SetColor("_Color", dayRainColor);
         return rainMaterial;
     }
 

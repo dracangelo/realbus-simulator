@@ -116,6 +116,8 @@ public static class RuntimeUiShapes
 {
     static Sprite roundedRectangle;
     static Sprite circle;
+    static Sprite vignette;
+    static Sprite glow;
 
     public static void Rounded(Image image)
     {
@@ -140,6 +142,50 @@ public static class RuntimeUiShapes
         shadow.effectColor = new Color(0f, 0f, 0f, alpha);
         shadow.effectDistance = new Vector2(0f, -distance);
         shadow.useGraphicAlpha = true;
+    }
+
+    /// <summary>
+    /// A black screen-edge falloff. Stretched over the frame it darkens the corners
+    /// without touching the middle, which is the whole difference between a flat
+    /// panel and a photographed frame.
+    /// </summary>
+    public static Sprite Vignette()
+    {
+        return vignette != null ? vignette : vignette = BuildRadial("Runtime Vignette", true);
+    }
+
+    /// <summary>Soft radial hotspot, tinted by the caller. Used as a title-card glow.</summary>
+    public static Sprite Glow()
+    {
+        return glow != null ? glow : glow = BuildRadial("Runtime Glow", false);
+    }
+
+    static Sprite BuildRadial(string name, bool inverted)
+    {
+        const int size = 256;
+        Texture2D texture = NewTexture(name, size);
+        Color32[] pixels = new Color32[size * size];
+        Vector2 center = new Vector2(size * .5f, size * .5f);
+        float maxRadius = size * .5f;
+
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float distance = Vector2.Distance(new Vector2(x + .5f, y + .5f), center) / maxRadius;
+            // Smoothstep rather than a linear ramp: a linear falloff shows its own
+            // edge as a ring once the image is stretched to 1080p.
+            float falloff = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(distance));
+            float alpha = inverted ? falloff * falloff * .85f : 1f - falloff;
+            pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+        }
+
+        texture.SetPixels32(pixels);
+        texture.Apply(false, true);
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100f, 0,
+            SpriteMeshType.FullRect);
+        sprite.name = name;
+        sprite.hideFlags = HideFlags.HideAndDontSave;
+        return sprite;
     }
 
     static Sprite BuildRoundedRectangle()

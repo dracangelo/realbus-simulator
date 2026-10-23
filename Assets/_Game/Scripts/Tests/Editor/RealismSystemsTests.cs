@@ -36,6 +36,60 @@ public class RealismSystemsTests
         Assert.AreEqual(1, RealismRules.TileTier(500));
         Assert.AreEqual(2, RealismRules.TileTier(500.01f));
     }
+
+    [Test]
+    public void FollowingSpeedKeepsPaceWithAMovingLeaderButStopsForAStationaryOne()
+    {
+        float stopped = RealismRules.SafeFollowingSpeedKmh(50f, 0f, 20f, 5f, 6f);
+        float moving = RealismRules.SafeFollowingSpeedKmh(50f, 30f, 20f, 5f, 6f);
+
+        Assert.Less(stopped, 50f, "a stopped leader must pull the follower below its cruise speed");
+        Assert.AreEqual(50f, moving, .5f, "a moving leader should not force unnecessary braking");
+        Assert.Greater(moving, stopped);
+        Assert.AreEqual(0f, RealismRules.SafeFollowingSpeedKmh(50f, 0f, 5f, 5f, 6f),
+            "at the clearance the follower must stop");
+        Assert.AreEqual(0f, RealismRules.SafeFollowingSpeedKmh(50f, 30f, 4f, 5f, 6f),
+            "a moving leader must not let an overlapping follower keep pace");
+    }
+
+    [Test]
+    public void JunctionApproachSlowsForTurnsAndRestoresSpeedOnTheOpenRoad()
+    {
+        Assert.AreEqual(1f, RealismRules.TurnSpeedFactor(0f), .001f);
+        Assert.Less(RealismRules.TurnSpeedFactor(90f), .55f,
+            "a right-angle turn should need a real speed reduction");
+        Assert.Less(RealismRules.TurnSpeedFactor(135f), RealismRules.TurnSpeedFactor(30f));
+
+        Assert.AreEqual(50f, RealismRules.ApproachSpeedKmh(50f, 20f, 40f, 30f), .01f);
+        Assert.AreEqual(20f, RealismRules.ApproachSpeedKmh(50f, 20f, 0f, 30f), .01f);
+        Assert.That(RealismRules.ApproachSpeedKmh(50f, 20f, 15f, 30f), Is.InRange(20f, 50f));
+    }
+
+    [Test]
+    public void OvertakeRunwayScalesWithSpeedAndBlocksShortBlocks()
+    {
+        Assert.IsTrue(RealismRules.HasOvertakeRunway(40f, 30f));
+        Assert.IsFalse(RealismRules.HasOvertakeRunway(15f, 30f));
+        Assert.IsFalse(RealismRules.HasOvertakeRunway(30f, 70f),
+            "a fast car needs more than a short city block before it pulls out");
+    }
+
+    [Test]
+    public void DriverSpeedVariationIsSmallDeterministicAndNotUniform()
+    {
+        float first = RealismRules.SpeedFactor(12);
+        Assert.AreEqual(first, RealismRules.SpeedFactor(12), .0001f);
+        bool sawFast = false;
+        bool sawSlow = false;
+        for (int i = 0; i < 120; i++)
+        {
+            float factor = RealismRules.SpeedFactor(i);
+            Assert.That(factor, Is.InRange(.92f, 1.06f));
+            sawFast |= factor > 1.02f;
+            sawSlow |= factor < .96f;
+        }
+        Assert.IsTrue(sawFast && sawSlow, "the pool should contain both quicker and slower drivers");
+    }
     [Test]
     public void PassengerReactionsAreIndependentOfPhysicsStepSize()
     {

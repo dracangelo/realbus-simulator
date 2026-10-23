@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class RuntimeEnvironmentSpawner : MonoBehaviour
@@ -17,10 +19,43 @@ public class RuntimeEnvironmentSpawner : MonoBehaviour
     public float globalScale = 1f;
     public SpawnSpec[] spawnList;
 
+    /// <summary>True once every configured prop has been placed or found unavailable.</summary>
+    public bool SpawnComplete { get; private set; }
+
     void Start()
     {
-        if (!spawnOnStart) return;
+        if (!spawnOnStart)
+        {
+            SpawnComplete = true;
+            return;
+        }
+        StartCoroutine(PreloadThenSpawn());
+    }
+
+    /// <summary>
+    /// Resolves the handful of environment prefabs asynchronously first. These are
+    /// optional imported packs; loading them synchronously in Start used to hold
+    /// the first gameplay frame while the loading card was still up.
+    /// </summary>
+    IEnumerator PreloadThenSpawn()
+    {
+        var specs = spawnList != null && spawnList.Length > 0 ? spawnList : GetDefaultSpawns();
+        var requests = new List<ResourceRequest>();
+        var seen = new HashSet<string>();
+        for (int i = 0; i < specs.Length; i++)
+        {
+            string path = specs[i].resourcePath;
+            if (string.IsNullOrWhiteSpace(path) || !seen.Add(path)) continue;
+            ResourceRequest request = Resources.LoadAsync<GameObject>(path);
+            if (request != null) requests.Add(request);
+        }
+
+        for (int i = 0; i < requests.Count; i++)
+            while (requests[i] != null && !requests[i].isDone)
+                yield return null;
+
         SpawnAll();
+        SpawnComplete = true;
     }
 
     public void SpawnAll()
@@ -60,6 +95,18 @@ public class RuntimeEnvironmentSpawner : MonoBehaviour
 
         if (logSpawns && !usingCustomList)
             Debug.Log($"[RuntimeEnvironmentSpawner] Spawned {spawned} available environment props; skipped {skipped} optional asset categories that are not installed.");
+
+        SpawnComplete = true;
+    }
+
+    /// <summary>Resource paths used by the default set, for the loading-card prewarm.</summary>
+    public static string[] DefaultResourcePaths()
+    {
+        SpawnSpec[] specs = GetDefaultSpawns();
+        var paths = new List<string>(specs.Length);
+        for (int i = 0; i < specs.Length; i++)
+            if (!string.IsNullOrWhiteSpace(specs[i].resourcePath)) paths.Add(specs[i].resourcePath);
+        return paths.ToArray();
     }
 
     static GameObject ResolvePrefab(string resourcePath)
@@ -89,7 +136,7 @@ public class RuntimeEnvironmentSpawner : MonoBehaviour
         return bus != null ? bus.transform.position : Vector3.zero;
     }
 
-    SpawnSpec[] GetDefaultSpawns()
+    static SpawnSpec[] GetDefaultSpawns()
     {
         return new[]
         {

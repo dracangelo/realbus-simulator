@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -14,12 +15,24 @@ public static class LiveCityModelImporter
     const string CatalogPath = "Assets/_Game/Resources/LiveCityCatalog.asset";
     const string Person = "Assets/_Game/Resources/BussimAssets/passenger/uploads_files_6231172_woman+3d+fbx.Fbx";
 
+    static readonly string[] SourceRoots =
+    {
+        "Assets/unity models/environment",
+        "Assets/unity models/billboard",
+        "Assets/unity models/busstop",
+    };
+
+    static readonly string[] TextureExtensions =
+    {
+        ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".psd", ".exr", ".tif", ".tiff"
+    };
+
     [InitializeOnLoadMethod]
     static void QueueInitialImport()
     {
         EditorApplication.delayCall += () =>
         {
-            if (!EditorApplication.isPlayingOrWillChangePlaymode && !File.Exists(CatalogPath)) Build();
+            if (!EditorApplication.isPlayingOrWillChangePlaymode && NeedsBuild()) Build();
         };
     }
 
@@ -28,20 +41,19 @@ public static class LiveCityModelImporter
     {
         Directory.CreateDirectory(Output);
         AssetDatabase.Refresh();
+        List<SourceModel> models = CollectSources();
+        ImportedModelImportSettings.EnsureStandard(models.Select(model => model.assetPath));
         var entries = new List<LiveCityCatalog.Entry>();
-        var paths = new List<string>();
-        foreach (string folder in new[] { "Assets/unity models/environment", "Assets/unity models/billboard", "Assets/unity models/busstop" })
-            if (Directory.Exists(folder))
-                foreach (string path in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
-                    if (Path.GetExtension(path).Equals(".fbx", StringComparison.OrdinalIgnoreCase)) paths.Add(path.Replace('\\', '/'));
-        if (File.Exists(Person)) paths.Add(Person);
-        paths.Sort(StringComparer.Ordinal);
-        foreach (string path in paths)
+        foreach (SourceModel model in models)
         {
+            string path = model.assetPath;
             if (!Classify(path, out var kind, out float height)) continue;
             GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (source == null) continue;
-            string stem = AssetDatabase.AssetPathToGUID(path);
+            // Keep the original top-level GUID when a textured nested copy replaces
+            // an older untextured model. Existing catalog entries and prefabs then
+            // update in place instead of leaving duplicate scenery behind.
+            string stem = AssetDatabase.AssetPathToGUID(model.identityPath);
             GameObject root = new GameObject(Path.GetFileNameWithoutExtension(path));
             try
             {
@@ -53,6 +65,7 @@ public static class LiveCityModelImporter
                 foreach (var body in visual.GetComponentsInChildren<Rigidbody>(true)) Object.DestroyImmediate(body);
                 foreach (var light in visual.GetComponentsInChildren<Light>(true)) Object.DestroyImmediate(light);
                 foreach (var animator in visual.GetComponentsInChildren<Animator>(true)) animator.enabled = animator.runtimeAnimatorController != null;
+                StripHelperGeometry(visual, kind);
                 var renderers = root.GetComponentsInChildren<Renderer>(true);
                 if (renderers.Length == 0) continue;
                 Bounds bounds = BoundsOf(renderers);
@@ -81,7 +94,7 @@ public static class LiveCityModelImporter
                     {
                         Material original = materials[i];
                         if (original != null && materialMap.TryGetValue(original, out var existing)) { materials[i] = existing; continue; }
-                        Material converted = MakeMaterial(original, kind);
+                        Material converted = MakeMaterial(original, kind, path);
                         string materialPath = $"{Output}/{stem}_{materialIndex++}.mat";
                         var saved = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
                         if (saved == null) { AssetDatabase.CreateAsset(converted, materialPath); saved = converted; }
@@ -105,19 +118,155 @@ public static class LiveCityModelImporter
         Debug.Log($"[LiveCity] Prepared {entries.Count} imported scenery models. Sources and bus prefabs were not modified.");
     }
 
+    static bool NeedsBuild()
+    {
+        if (!File.Exists(CatalogPath)) return true;
+        DateTime builtAt = File.GetLastWriteTimeUtc(CatalogPath);
+        foreach (string path in EnumerateSourceFiles())
+            if (File.GetLastWriteTimeUtc(path) > builtAt) return true;
+        return false;
+    }
+
+    static IEnumerable<string> EnumerateSourceFiles()
+    {
+        foreach (string folder in SourceRoots)
+        {
+            if (!Directory.Exists(folder)) continue;
+            foreach (string path in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
+            {
+                string extension = Path.GetExtension(path);
+                if (extension.Equals(".fbx", StringComparison.OrdinalIgnoreCase) ||
+                    TextureExtensions.Any(ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase)))
+                    yield return path.Replace('\\', '/');
+            }
+        }
+        if (File.Exists(Person)) yield return Person;
+    }
+
+    /// <summary>
+    /// One source per logical model. The same tree or plant is often shipped at
+    /// the pack root and again inside a folder with its maps; prefer the copy with
+    /// more nearby textures but keep the root GUID as the output identity.
+    /// </summary>
+    static List<SourceModel> CollectSources()
+    {
+        var groups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (string path in EnumerateSourceFiles())
+        {
+            if (!Path.GetExtension(path).Equals(".fbx", StringComparison.OrdinalIgnoreCase)) continue;
+            string key = CanonicalModelKey(path);
+            if (!groups.TryGetValue(key, out var list))
+            {
+                list = new List<string>();
+                groups[key] = list;
+            }
+            list.Add(path);
+        }
+
+        var sources = new List<SourceModel>(groups.Count);
+        foreach (var pair in groups)
+        {
+            string chosen = pair.Value
+                .OrderByDescending(TextureCount)
+                .ThenByDescending(PathDepth)
+                .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+                .First();
+            sources.Add(new SourceModel(chosen, IdentityPath(chosen)));
+        }
+        sources.Sort((a, b) => string.Compare(a.identityPath, b.identityPath, StringComparison.OrdinalIgnoreCase));
+        return sources;
+    }
+
+    static string IdentityPath(string sourcePath)
+    {
+        foreach (string root in SourceRoots)
+        {
+            string rootPath = root.Replace('\\', '/');
+            if (!sourcePath.StartsWith(rootPath + "/", StringComparison.OrdinalIgnoreCase)) continue;
+            string candidate = $"{rootPath}/{Path.GetFileName(sourcePath)}";
+            if (File.Exists(candidate)) return candidate;
+        }
+        return sourcePath;
+    }
+
+    static int TextureCount(string sourcePath)
+    {
+        string directory = Path.GetDirectoryName(sourcePath);
+        if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory)) return 0;
+
+        int count = CountTextures(directory, SearchOption.TopDirectoryOnly);
+        foreach (string child in Directory.GetDirectories(directory))
+        {
+            if (Directory.GetFiles(child, "*.fbx", SearchOption.AllDirectories).Length > 0) continue;
+            count += CountTextures(child, SearchOption.AllDirectories);
+        }
+        return count;
+    }
+
+    static int CountTextures(string folder, SearchOption searchOption)
+    {
+        int count = 0;
+        foreach (string path in Directory.GetFiles(folder, "*", searchOption))
+        {
+            string extension = Path.GetExtension(path);
+            if (TextureExtensions.Any(ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase)))
+                count++;
+        }
+        return count;
+    }
+
+    static int PathDepth(string path)
+    {
+        int depth = 0;
+        foreach (char c in path) if (c == '/' || c == '\\') depth++;
+        return depth;
+    }
+
+    static string CanonicalModelKey(string path)
+    {
+        string name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
+        foreach (string suffix in new[] { " corona", " vray", " standard", " obj mtl", " obj" })
+        {
+            if (!name.EndsWith(suffix, StringComparison.Ordinal)) continue;
+            name = name.Substring(0, name.Length - suffix.Length);
+            break;
+        }
+        return new string(name.Where(char.IsLetterOrDigit).ToArray());
+    }
+
     static bool Classify(string path, out LiveCityCatalog.Kind kind, out float height)
     {
         string name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
         kind = LiveCityCatalog.Kind.Plant; height = 1f;
         if (path == Person) { kind = LiveCityCatalog.Kind.Pedestrian; height = 1.7f; }
+        else if (name.Contains("forestpack")) return false; // Multi-tree pack, not a single scenery prop.
         else if (name.Contains("barrier")) return false; // Road builder owns junction-safe barriers.
         else if (path.Contains("/billboard/")) { kind = LiveCityCatalog.Kind.Billboard; height = name.Contains("sign") ? 2.6f : 5f; }
         else if (name.Contains("bench")) { kind = LiveCityCatalog.Kind.Bench; height = .9f; }
         else if (path.Contains("/busstop/")) return false; // Mission spawner owns actual stops.
-        else if (name.Contains("tree") || name.Contains("cocos")) { kind = LiveCityCatalog.Kind.Tree; height = 7f; }
+        else if (name.Contains("tree") || name.Contains("cocos") || name.Contains("carpinus"))
+        {
+            kind = LiveCityCatalog.Kind.Tree;
+            height = name.Contains("carpinus") ? 8f : 7f;
+        }
         else if (name.Contains("rock")) { kind = LiveCityCatalog.Kind.Rock; height = name.Contains("cliff") ? 2f : .8f; }
-        else { height = name.Contains("banana") ? 2.7f : name.Contains("grass") ? .35f : 1.2f; }
+        else if (name.Contains("banana")) { kind = LiveCityCatalog.Kind.Plant; height = 2.7f; }
+        else if (name.Contains("pyrrosia")) { kind = LiveCityCatalog.Kind.Plant; height = .6f; }
+        else if (name.Contains("dipteris") || name.Contains("plant")) { kind = LiveCityCatalog.Kind.Plant; height = 1.2f; }
+        else { height = name.Contains("grass") ? .35f : 1.2f; }
         return true;
+    }
+
+    readonly struct SourceModel
+    {
+        public readonly string assetPath;
+        public readonly string identityPath;
+
+        public SourceModel(string assetPath, string identityPath)
+        {
+            this.assetPath = assetPath;
+            this.identityPath = identityPath;
+        }
     }
 
     static readonly Color[] ClothingPalette =
@@ -149,16 +298,76 @@ public static class LiveCityModelImporter
     static Bounds BoundsOf(Renderer[] renderers)
     { Bounds result = renderers[0].bounds; foreach (var r in renderers) result.Encapsulate(r.bounds); return result; }
 
-    static Material MakeMaterial(Material source, LiveCityCatalog.Kind kind)
+    /// <summary>
+    /// Game-ready plant packs ship LOD1-3, UCX collision meshes and camera-path or
+    /// ground helper renderers beside LOD0. Only LOD0 belongs in repeated street
+    /// scenery; leaving every copy visible caused overdraw and stray geometry.
+    /// </summary>
+    static void StripHelperGeometry(GameObject root, LiveCityCatalog.Kind kind)
+    {
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+        int lowestLod = int.MaxValue;
+        foreach (Renderer renderer in renderers)
+        {
+            int lod = LodIndex(renderer.name);
+            if (lod >= 0) lowestLod = Mathf.Min(lowestLod, lod);
+        }
+
+        foreach (Renderer renderer in renderers)
+        {
+            string name = renderer.name.ToLowerInvariant();
+            if (name.StartsWith("ucx_") || name.Contains("_ucx_") || name.Contains("camera_path") || name.Contains("camerapath"))
+            {
+                Object.DestroyImmediate(renderer.gameObject);
+                continue;
+            }
+            if ((kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant) &&
+                (name == "ground" || name.StartsWith("ground ") || name.Contains("_ground")))
+            {
+                Object.DestroyImmediate(renderer.gameObject);
+                continue;
+            }
+            int lod = LodIndex(renderer.name);
+            if (lod >= 0 && lowestLod != int.MaxValue && lod > lowestLod)
+                Object.DestroyImmediate(renderer.gameObject);
+        }
+    }
+
+    static int LodIndex(string name)
+    {
+        string lower = name.ToLowerInvariant();
+        int index = lower.IndexOf("lod", StringComparison.Ordinal);
+        while (index >= 0)
+        {
+            int cursor = index + 3;
+            if (cursor < lower.Length && (lower[cursor] == '_' || lower[cursor] == ' ' || lower[cursor] == '-')) cursor++;
+            if (cursor < lower.Length && char.IsDigit(lower[cursor])) return lower[cursor] - '0';
+            index = lower.IndexOf("lod", index + 3, StringComparison.Ordinal);
+        }
+        return -1;
+    }
+
+    static Material MakeMaterial(Material source, LiveCityCatalog.Kind kind, string sourcePath)
     {
         var result = new Material(BuiltInShaders.Lit);
         result.name = source != null ? source.name : kind.ToString();
+        string materialName = result.name;
         Texture texture = source != null && source.HasProperty("_MainTex") ? source.GetTexture("_MainTex") : null;
+        Texture bump = source != null && source.HasProperty("_BumpMap") ? source.GetTexture("_BumpMap") : null;
+        if (texture == null) texture = FindTexture(sourcePath, materialName, false);
+        if (bump == null) bump = FindTexture(sourcePath, materialName, true);
+
         Color color = source != null && source.HasProperty("_Color") ? source.color : Color.white;
         bool neutral = Mathf.Abs(color.r - color.g) < .03f && Mathf.Abs(color.g - color.b) < .03f;
-        if (texture == null && neutral)
+        if (texture != null)
         {
-            string name = result.name.ToLowerInvariant();
+            // The artwork already carries its own tone. Keep the material white so
+            // the source's placeholder grey does not darken the texture.
+            color = Color.white;
+        }
+        else if (neutral)
+        {
+            string name = materialName.ToLowerInvariant();
             // Pedestrians used to be skipped here, which left the untextured walker
             // model as a white mannequin. Skin, hair, shoes and clothing each get a
             // tone derived from the material name instead.
@@ -176,8 +385,8 @@ public static class LiveCityModelImporter
             result.SetTextureScale("_MainTex", source.GetTextureScale("_MainTex"));
             result.SetTextureOffset("_MainTex", source.GetTextureOffset("_MainTex"));
         }
-        if (source != null && source.HasProperty("_BumpMap"))
-        { result.SetTexture("_BumpMap", source.GetTexture("_BumpMap")); if (source.GetTexture("_BumpMap") != null) result.EnableKeyword("_NORMALMAP"); }
+        result.SetTexture("_BumpMap", bump);
+        if (bump != null) result.EnableKeyword("_NORMALMAP");
         if (kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant)
         {
             result.SetFloat("_Cutoff", .4f);
@@ -188,6 +397,139 @@ public static class LiveCityModelImporter
         }
         result.enableInstancing = true;
         return result;
+    }
+
+    internal static Texture FindTexture(string sourcePath, string materialName, bool normal)
+    {
+        string folder = Path.GetDirectoryName(sourcePath);
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return null;
+
+        string modelName = Path.GetFileNameWithoutExtension(sourcePath);
+        string best = null;
+        int bestScore = int.MinValue;
+        int candidates = 0;
+        foreach (string file in TextureFiles(sourcePath))
+        {
+            if (!IsTextureFile(file)) continue;
+            string fileName = Path.GetFileNameWithoutExtension(file);
+            if (normal != LooksNormal(fileName)) continue;
+            if (!normal && !LooksAlbedo(fileName)) continue;
+            candidates++;
+            int score = TextureScore(fileName, materialName, modelName, normal);
+            if (score <= bestScore) continue;
+            bestScore = score;
+            best = file;
+        }
+
+        bool defaultName = string.IsNullOrEmpty(materialName) ||
+            materialName.IndexOf("default", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            materialName.IndexOf("no name", StringComparison.OrdinalIgnoreCase) >= 0;
+        if (best == null || (bestScore <= 0 && !(defaultName && candidates == 1))) return null;
+        return AssetDatabase.LoadAssetAtPath<Texture>(best.Replace('\\', '/'));
+    }
+
+    /// <summary>
+    /// Textures that belong to this source model. A nested folder that contains
+    /// another FBX is a different model pack and must not leak its maps into a
+    /// top-level bus or tree.
+    /// </summary>
+    internal static IEnumerable<string> TextureFiles(string sourcePath)
+    {
+        string folder = Path.GetDirectoryName(sourcePath);
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) yield break;
+        foreach (string file in Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly))
+            if (IsTextureFile(file)) yield return file;
+        foreach (string child in Directory.GetDirectories(folder))
+        {
+            if (Directory.GetFiles(child, "*.fbx", SearchOption.AllDirectories).Length > 0) continue;
+            foreach (string file in Directory.GetFiles(child, "*", SearchOption.AllDirectories))
+                if (IsTextureFile(file)) yield return file;
+        }
+
+        // Some packs keep the FBX in a "FBX" subfolder and the maps in a sibling
+        // "textures" folder. Include sibling folders that do not contain another
+        // model, so that layout works without borrowing another bus or tree.
+        string parent = Path.GetDirectoryName(folder);
+        if (string.IsNullOrEmpty(parent) || !Directory.Exists(parent)) yield break;
+        string sourceFolder = Path.GetFullPath(folder);
+        foreach (string sibling in Directory.GetDirectories(parent))
+        {
+            if (string.Equals(Path.GetFullPath(sibling), sourceFolder, StringComparison.OrdinalIgnoreCase)) continue;
+            if (Directory.GetFiles(sibling, "*.fbx", SearchOption.AllDirectories).Length > 0) continue;
+            foreach (string file in Directory.GetFiles(sibling, "*", SearchOption.AllDirectories))
+                if (IsTextureFile(file)) yield return file;
+        }
+    }
+
+    internal static bool IsTextureFile(string path)
+    {
+        if (Path.GetFileName(path).StartsWith("._")) return false;
+        string extension = Path.GetExtension(path);
+        return TextureExtensions.Any(ext => ext.Equals(extension, StringComparison.OrdinalIgnoreCase));
+    }
+
+    static bool LooksNormal(string name)
+    {
+        string lower = name.ToLowerInvariant();
+        return lower.Contains("normal") || lower.Contains("_nor_") || lower.Contains("_nrm") || lower.Contains("bump");
+    }
+
+    static bool LooksAlbedo(string name)
+    {
+        string lower = name.ToLowerInvariant();
+        return !(lower.Contains("normal") || lower.Contains("_nor_") || lower.Contains("_nrm") ||
+                 lower.Contains("bump") || lower.Contains("rough") || lower.Contains("metal") ||
+                 lower.Contains("height") || lower.Contains("disp") || lower.Contains("opacity") ||
+                 lower.Contains("alpha") || lower.Contains("_sss") || lower.Contains("emissive") ||
+                 lower.Contains("emission") || lower.Contains("mask") || lower.Contains("_ao") ||
+                 lower.Contains("ambient") || lower.Contains("specular") || lower.Contains("gloss"));
+    }
+
+    static int TextureScore(string fileName, string materialName, string modelName, bool normal)
+    {
+        string texture = Compact(fileName);
+        string material = Compact(materialName);
+        string model = Compact(modelName);
+        int score = 0;
+        bool matched = false;
+        if (material.Length >= 4 && texture.Contains(material)) { score += 100; matched = true; }
+        else if (texture.Length >= 4 && material.Contains(texture)) { score += 60; matched = true; }
+        if (model.Length >= 4 && texture.Contains(model)) { score += 30; matched = true; }
+        foreach (string token in Tokens(materialName))
+            if (token.Length >= 3 && texture.Contains(token)) { score += 8; matched = true; }
+        foreach (string token in Tokens(modelName))
+            if (token.Length >= 3 && texture.Contains(token)) { score += 3; matched = true; }
+        if (!matched) return 0;
+        if (normal)
+        {
+            if (texture.Contains("opengl")) score += 4;
+            if (texture.Contains("directx")) score -= 4;
+        }
+        else
+        {
+            if (texture.Contains("basecolor") || texture.Contains("albedo") ||
+                texture.Contains("diffuse") || texture.Contains("diff")) score += 6;
+            if (texture.Contains("billboard") && !material.Contains("billboard")) score -= 40;
+        }
+        return score;
+    }
+
+    static string Compact(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        return new string(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+    }
+
+    static IEnumerable<string> Tokens(string value)
+    {
+        if (string.IsNullOrEmpty(value)) yield break;
+        var token = new System.Text.StringBuilder();
+        foreach (char c in value)
+        {
+            if (char.IsLetterOrDigit(c)) token.Append(char.ToLowerInvariant(c));
+            else if (token.Length > 0) { yield return token.ToString(); token.Clear(); }
+        }
+        if (token.Length > 0) yield return token.ToString();
     }
 }
 #endif

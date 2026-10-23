@@ -17,6 +17,13 @@ public class MobileCameraController : MonoBehaviour
 {
     public static MobileCameraController Instance { get; private set; }
     public BusCameraPreset CurrentPreset { get; private set; }
+
+    /// <summary>
+    /// True while a directed shot owns the camera. The driving rig stops writing the
+    /// pose entirely rather than fighting the shot frame by frame, and the mirror stays
+    /// off because it is parented to the bus, not to the camera.
+    /// </summary>
+    public bool CinematicOverride { get; private set; }
     [Tooltip("Optional rear-view inset. Off by default to keep cockpit a single viewport.")]
     public bool showRearViewInset = false;
 
@@ -112,6 +119,11 @@ public class MobileCameraController : MonoBehaviour
             return;
         }
         if (PhotoModeController.Instance != null && PhotoModeController.Instance.IsPhotoModeActive)
+        {
+            SetMirrorVisible(false);
+            return;
+        }
+        if (CinematicOverride)
         {
             SetMirrorVisible(false);
             return;
@@ -242,6 +254,23 @@ public class MobileCameraController : MonoBehaviour
             dynamicFov += speedRatio * 7f;
 
         targetCamera.fieldOfView = Mathf.Lerp(targetCamera.fieldOfView, dynamicFov, 1f - Mathf.Exp(-3.5f * dt));
+    }
+
+    /// <summary>Hands the camera to a directed shot. The pose is left exactly where it is.</summary>
+    public void BeginCinematicOverride()
+    {
+        CinematicOverride = true;
+        SetMirrorVisible(false);
+    }
+
+    /// <summary>
+    /// Takes the camera back. The shot is expected to have landed on the rig's own pose,
+    /// so re-applying the preset is a no-op rather than a jump.
+    /// </summary>
+    public void EndCinematicOverride()
+    {
+        CinematicOverride = false;
+        if (bus != null && targetCamera != null && bus.isActiveAndEnabled) ApplyPreset(true);
     }
 
     public void CycleCamera()

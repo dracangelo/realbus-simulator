@@ -13,24 +13,12 @@ MonoBehaviour:
   m_Name: LiveCityCatalog
   m_EditorClassIdentifier: GameScripts::LiveCityCatalog
   entries:
-  - prefab: {fileID: 2774185976468546968, guid: 4c42375986f12f2a8a9b2eebc75b118c, type: 3}
-    kind: 5
-    bounds:
-      m_Center: {x: 0, y: 0.84999996, z: 0}
-      m_Extent: {x: 0.6241448, y: 0.84999996, z: 0.49237913}
-    triangles: 84272
   - prefab: {fileID: 3481013512671204903, guid: ea4705b8bbec52010acc12d56acf995f, type: 3}
     kind: 3
     bounds:
       m_Center: {x: 0, y: 2.5000005, z: 0}
       m_Extent: {x: 1.9000001, y: 2.5000005, z: 0.17069802}
     triangles: 340
-  - prefab: {fileID: 798664222942767211, guid: ee7e93e509e21d37caa44fbfdecf1c5a, type: 3}
-    kind: 3
-    bounds:
-      m_Center: {x: 0, y: 1.3000008, z: 0}
-      m_Extent: {x: 1.64096, y: 1.3000002, z: 0.18775003}
-    triangles: 13244
   - prefab: {fileID: 3061627727769463539, guid: 0b02fcc956d50caf89c0f1112e927e24, type: 3}
     kind: 3
     bounds:
@@ -43,6 +31,12 @@ MonoBehaviour:
       m_Center: {x: -0.000000059604645, y: 2.5000002, z: 0.00000011920929}
       m_Extent: {x: 0.72588587, y: 2.5000002, z: 1.8020492}
     triangles: 760
+  - prefab: {fileID: 798664222942767211, guid: ee7e93e509e21d37caa44fbfdecf1c5a, type: 3}
+    kind: 3
+    bounds:
+      m_Center: {x: 0, y: 1.3000008, z: 0}
+      m_Extent: {x: 1.64096, y: 1.3000002, z: 0.18775003}
+    triangles: 13244
   - prefab: {fileID: 1440031919371747630, guid: d8c6e955ac75967e5aad433503517e91, type: 3}
     kind: 3
     bounds:
@@ -58,9 +52,9 @@ MonoBehaviour:
   - prefab: {fileID: 9202142232412951529, guid: 70d40a195d0c5aafca54193d92e692f0, type: 3}
     kind: 1
     bounds:
-      m_Center: {x: 0, y: 1.3499998, z: 0}
-      m_Extent: {x: 1.4409842, y: 1.3499999, z: 1.1838295}
-    triangles: 7731
+      m_Center: {x: 0, y: 1.3499999, z: 0}
+      m_Extent: {x: 1.4406163, y: 1.3499999, z: 1.1832495}
+    triangles: 4900
   - prefab: {fileID: 6341307597893125104, guid: 98d47853c9fb661daa22b795199b8125, type: 3}
     kind: 2
     bounds:
@@ -70,9 +64,15 @@ MonoBehaviour:
   - prefab: {fileID: 1032012038220268411, guid: 500a25ecfa5d7d147a9468d66f045e70, type: 3}
     kind: 0
     bounds:
-      m_Center: {x: 0, y: 3.5, z: 0}
-      m_Extent: {x: 0.6222333, y: 3.5, z: 3.4999993}
-    triangles: 3194
+      m_Center: {x: 0, y: 3.500001, z: 0}
+      m_Extent: {x: 2.2353487, y: 3.500001, z: 1.0090961}
+    triangles: 1944
+  - prefab: {fileID: 3779612491140384627, guid: d26d5b18f2f045630a4278c1063f2696, type: 3}
+    kind: 1
+    bounds:
+      m_Center: {x: 0, y: 0.175, z: 0}
+      m_Extent: {x: 0.17499995, y: 0.175, z: 0.17531721}
+    triangles: 58880
   - prefab: {fileID: 1093607101065831778, guid: b8afd0142275b6738998a735f7386b82, type: 3}
     kind: 2
     bounds:
@@ -103,3 +103,9 @@ MonoBehaviour:
       m_Center: {x: 0, y: 3.5, z: 0}
       m_Extent: {x: 2.5267174, y: 3.5, z: 2.5431247}
     triangles: 40640
+  - prefab: {fileID: 2774185976468546968, guid: 4c42375986f12f2a8a9b2eebc75b118c, type: 3}
+    kind: 5
+    bounds:
+      m_Center: {x: 0, y: 0.84999996, z: 0}
+      m_Extent: {x: 0.6241448, y: 0.84999996, z: 0.49237913}
+    triangles: 84272

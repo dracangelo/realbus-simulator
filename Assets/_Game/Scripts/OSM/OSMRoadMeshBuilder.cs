@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -173,6 +174,10 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     void BuildRoads(OSMData data)
     {
+        // Scenes without SceneBootstrap still need the same envelope. The policy
+        // only ever widens, so a second call after bootstrap is harmless.
+        RoadWidthPolicy.ConfigureFromTrafficCatalog();
+
         if (streamRoadsRoutine != null) StopCoroutine(streamRoadsRoutine);
         roadsBuilt = false;
         SurfaceIndex = RoadSurfaceIndex.Build(data, GPSManager.Instance.GpsToWorld);
@@ -200,6 +205,22 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 deferredRoads.Add(way);
         }
 
+        // Both the immediate batch and the background stream build what the camera
+        // can see first. A nearby road behind the depot still loads; it simply waits
+        // for the street in the windscreen to exist.
+        BusController playerBus = MissionManager.Instance != null
+            ? MissionManager.Instance.busController
+            : FindAnyObjectByType<BusController>();
+        Vector3 viewForward = ViewPriority.ResolveForward(playerBus != null ? playerBus.transform : null);
+        Comparison<OSMWay> byView = (a, b) =>
+        {
+            float scoreA = ApproximateWayViewScore(a, data, spawnFocus, viewForward);
+            float scoreB = ApproximateWayViewScore(b, data, spawnFocus, viewForward);
+            return scoreA.CompareTo(scoreB);
+        };
+        immediateRoads.Sort(byView);
+        deferredRoads.Sort(byView);
+
         int roadCount = 0;
         // 1. Build immediate roads around bus spawn instantly (Frame 1)
         for (int i = 0; i < immediateRoads.Count; i++)
@@ -212,10 +233,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         roadsBuilt = true;
         Debug.Log($"OSM: Immediate spawn roads ready ({roadCount} segments). Bus active! Streaming {deferredRoads.Count} remaining roads in background...");
 
-        // 2. Sort deferred roads by distance from spawn so roads along the driving path load first
-        deferredRoads.Sort((a, b) => ApproximateWayDistanceSq(a, data, spawnFocus).CompareTo(ApproximateWayDistanceSq(b, data, spawnFocus)));
-
-        // 3. Stream remaining city roads smoothly in background without dropping frames
+        // 2. Stream remaining city roads smoothly in background without dropping frames
         streamRoadsRoutine = StartCoroutine(StreamDeferredRoads(deferredRoads, data, colliderMaterial, roadCount));
     }
 
@@ -362,6 +380,21 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         float dx = pos.x - focus.x;
         float dz = pos.z - focus.z;
         return dx * dx + dz * dz;
+    }
+
+    float ApproximateWayViewScore(OSMWay way, OSMData data, Vector3 focus, Vector3 viewForward)
+    {
+        if (way == null || way.nodeRefs == null || way.nodeRefs.Count == 0 || GPSManager.Instance == null)
+            return float.MaxValue;
+
+        long nodeRef = way.nodeRefs[way.nodeRefs.Count / 2];
+        if (!data.nodeMap.TryGetValue(nodeRef, out var node))
+            nodeRef = way.nodeRefs[0];
+        if (!data.nodeMap.TryGetValue(nodeRef, out node))
+            return float.MaxValue;
+
+        Vector3 point = GPSManager.Instance.GpsToWorld(node.lat, node.lon);
+        return ViewPriority.Score(focus, viewForward, ViewPriority.DefaultFovDegrees, point);
     }
 
     PhysicsMaterial ResolveRoadPhysicsMaterial()
@@ -685,16 +718,29 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
         int lanes = Mathf.Max(1, way.GetLaneCount());
         bool isOneWay = way.IsOneWay();
-        int fwdLanes = way.GetForwardLaneCount();
-        float halfWidth = roadWidth * 0.5f;
-        float laneWidth = roadWidth / lanes;
+        int fwdLanes = Mathf.Max(1, way.GetForwardLaneCount());
+        int bwdLanes = Mathf.Max(1, way.GetBackwardLaneCount());
+        bool sharedLane = !isOneWay && lanes <= 1;
+        int maxSideLanes = Mathf.Max(1, Mathf.Max(fwdLanes, bwdLanes));
+        float laneWidth = way.GetLaneWidthMeters();
+        if (isOneWay)
+            laneWidth = Mathf.Min(laneWidth, roadWidth / lanes);
+        else if (!sharedLane)
+            laneWidth = Mathf.Min(laneWidth, roadWidth / (2f * maxSideLanes));
+        // Keep edge lines on the traffic envelope rather than out on a shoulder
+        // or median, so the painted lanes match the graph's lane centres.
+        float halfWidth = sharedLane ? roadWidth * 0.5f
+            : isOneWay ? lanes * laneWidth * 0.5f
+            : maxSideLanes * laneWidth;
         float markingsY = roadYOffset + (useRoadModelInstances ? roadModelSurfaceLift : 0f) + 0.06f;
 
         // The graph lays traffic on the country's driving side. Markings have to use
         // the same side, or a right-hand-drive city paints its forward lanes where
-        // the traffic does not drive.
+        // the traffic does not drive. For a two-way ribbon the centreline is at the
+        // road's geometric centre; asymmetric forward/backward counts simply leave
+        // more unused width on the side with fewer lanes.
         bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
-        float dividerSide = leftTraffic ? 1f : -1f;
+        float forwardSide = leftTraffic ? -1f : 1f;
 
         var whiteBuilder = new MarkingMeshBuilder();
         var yellowBuilder = new MarkingMeshBuilder();
@@ -710,47 +756,50 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             whiteBuilder.AddSolidStrip(rightEdge, laneMarkingWidth, SurfaceIndex, way.id, 0.4f, markingsY);
         }
 
-        // 2. Lane dividers
-        if (lanes >= 2)
+        // 2. Centre markings. A shared single-lane street has no centreline.
+        if (!isOneWay && !sharedLane)
         {
-            for (int divider = 1; divider < lanes; divider++)
+            if (maxSideLanes >= 2)
             {
-                float dividerOffset = dividerSide * (-halfWidth + laneWidth * divider);
-                bool isCenterDivider = !isOneWay && (divider == fwdLanes);
-
-                if (isCenterDivider)
-                {
-                    if (lanes >= 4)
-                    {
-                        // Double solid yellow line for multi-lane carriageway (4+ lanes)
-                        float stripeOffset = 0.12f;
-                        var centerLeft = GetShiftedPoints(points, dividerOffset - stripeOffset);
-                        var centerRight = GetShiftedPoints(points, dividerOffset + stripeOffset);
-                        yellowBuilder.AddSolidStrip(centerLeft, 0.12f, SurfaceIndex, way.id, 0.35f, markingsY);
-                        yellowBuilder.AddSolidStrip(centerRight, 0.12f, SurfaceIndex, way.id, 0.35f, markingsY);
-                    }
-                    else
-                    {
-                        // Single yellow centerline for 2 or 3 lane road
-                        var center = GetShiftedPoints(points, dividerOffset);
-                        bool isMainRoad = way.GetRoadType() == "primary" || way.GetRoadType() == "trunk" || way.GetRoadType() == "motorway";
-                        if (isMainRoad || lanes == 3)
-                        {
-                            yellowBuilder.AddSolidStrip(center, 0.16f, SurfaceIndex, way.id, 0.35f, markingsY);
-                        }
-                        else
-                        {
-                            // Dashed yellow line for secondary / residential 2-lane road
-                            yellowBuilder.AddDashedStrip(center, 0.16f, dashLengthMeters, dashGapMeters, SurfaceIndex, way.id, 0.35f, markingsY);
-                        }
-                    }
-                }
+                // Double solid yellow line for a multi-lane carriageway.
+                float stripeOffset = 0.12f;
+                var centerLeft = GetShiftedPoints(points, -stripeOffset);
+                var centerRight = GetShiftedPoints(points, stripeOffset);
+                yellowBuilder.AddSolidStrip(centerLeft, 0.12f, SurfaceIndex, way.id, 0.35f, markingsY);
+                yellowBuilder.AddSolidStrip(centerRight, 0.12f, SurfaceIndex, way.id, 0.35f, markingsY);
+            }
+            else
+            {
+                var center = GetShiftedPoints(points, 0f);
+                bool isMainRoad = way.GetRoadType() == "primary" || way.GetRoadType() == "trunk" || way.GetRoadType() == "motorway";
+                if (isMainRoad)
+                    yellowBuilder.AddSolidStrip(center, 0.16f, SurfaceIndex, way.id, 0.35f, markingsY);
                 else
+                    yellowBuilder.AddDashedStrip(center, 0.16f, dashLengthMeters, dashGapMeters, SurfaceIndex, way.id, 0.35f, markingsY);
+            }
+        }
+
+        // 3. Same-direction lane dividers. These follow the traffic graph's lane
+        // centres exactly, including asymmetric 2+1 roads and the empty shoulder
+        // left on the side with fewer lanes.
+        if (!sharedLane)
+        {
+            if (isOneWay)
+            {
+                for (int divider = 1; divider < lanes; divider++)
                 {
-                    // Dashed white lane line separating same-direction traffic
+                    float dividerOffset = -halfWidth + laneWidth * divider;
                     var lanePts = GetShiftedPoints(points, dividerOffset);
-                    whiteBuilder.AddDashedStrip(lanePts, laneMarkingWidth, dashLengthMeters, dashGapMeters, SurfaceIndex, way.id, 0.35f, markingsY);
+                    whiteBuilder.AddDashedStrip(lanePts, laneMarkingWidth, dashLengthMeters, dashGapMeters,
+                        SurfaceIndex, way.id, 0.35f, markingsY);
                 }
+            }
+            else
+            {
+                AddLaneDividers(whiteBuilder, points, way.id, forwardSide, laneWidth,
+                    fwdLanes, markingsY);
+                AddLaneDividers(whiteBuilder, points, way.id, -forwardSide, laneWidth,
+                    bwdLanes, markingsY);
             }
         }
 
@@ -828,6 +877,18 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         mesh.RecalculateBounds();
         mf.sharedMesh = mesh;
         return markingsObj;
+    }
+
+    void AddLaneDividers(MarkingMeshBuilder builder, List<Vector3> points, long wayId,
+        float side, float laneWidth, int lanes, float markingsY)
+    {
+        for (int divider = 1; divider < lanes; divider++)
+        {
+            float offset = side * divider * laneWidth;
+            var lanePoints = GetShiftedPoints(points, offset);
+            builder.AddDashedStrip(lanePoints, laneMarkingWidth, dashLengthMeters, dashGapMeters,
+                SurfaceIndex, wayId, 0.35f, markingsY);
+        }
     }
 
     private Material runtimeWhiteMarkingMaterial;

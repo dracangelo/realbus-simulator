@@ -90,6 +90,7 @@ public class WeatherPhysics : MonoBehaviour
             case WeatherState.Clear:        return clearGrip;
             case WeatherState.PartlyCloudy: return Mathf.Lerp(clearGrip, overcastGrip, 0.5f);
             case WeatherState.Overcast:     return overcastGrip;
+            case WeatherState.Windy:        return Mathf.Lerp(overcastGrip, clearGrip, 0.6f);
             case WeatherState.Fog:          return fogGrip;
             case WeatherState.Drizzle:      return drizzleGrip;
 

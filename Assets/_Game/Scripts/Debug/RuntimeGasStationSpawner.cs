@@ -19,6 +19,9 @@ public class RuntimeGasStationSpawner : MonoBehaviour
     [Tooltip("Applied only to untextured near-white materials on imported station models.")]
     public Color importedFallbackColor = new Color(0.72f, 0.73f, 0.70f, 1f);
 
+    /// <summary>True once the fuel-tag pass has finished, including the no-data case.</summary>
+    public bool SpawnComplete { get; private set; }
+
     void Start()
     {
         StartCoroutine(SpawnWhenReady());
@@ -30,6 +33,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             yield return null;
 
         SpawnFromOsmFuelTags();
+        SpawnComplete = true;
     }
 
     void SpawnFromOsmFuelTags()

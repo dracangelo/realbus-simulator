@@ -1,13 +1,17 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Shows a full-screen loading overlay inside the gameplay scene while
-/// the world is still warming up (map tiles downloading, OSM roads building,
-/// bus spawning). The SceneLoader loading bar only covers the
-/// Unity scene-load step; this covers the async asset-streaming phase that follows it.
+/// Shows a full-screen title card inside the gameplay scene while the world is still
+/// warming up (map tiles downloading, OSM roads building, bus spawning). The scene
+/// loading bar only covers Unity's scene activation; this covers the async
+/// asset-streaming phase that follows it, which is by far the longer wait.
+///
+/// The card itself is <see cref="CinematicLoadingCard"/>, shared with the scene-load
+/// screen so the two waits are visually the same shot rather than two different
+/// panels. This component owns only the wait: what to say, when the world is ready,
+/// and the dismiss.
 ///
 /// Auto-bootstrapped via RuntimeInitializeOnLoadMethod so it
 /// works even when the gameplay scene is played directly from the Editor.
@@ -19,15 +23,21 @@ public class WorldReadyLoadingScreen : MonoBehaviour
 
     [SerializeField] float holdAfterReadySeconds = 0.6f;
 
+    // Even a direct scene play or an extremely fast warm-up should show the card
+    // as a finished title, never as a one-frame flash between the scene loader
+    // disappearing and the cockpit appearing.
+    [SerializeField] float minimumVisibleSeconds = 0.9f;
+
     // The overlay has to outlast the async world warm-up (tiles, road meshes,
     // near-ring buildings, depot placement). Hiding early is what made the game
     // look frozen after loading, so the ceiling is generous.
     [SerializeField] float timeoutSeconds = 60f;
 
     Canvas canvas;
-    Image background, progressBar, spinner;
-    TextMeshProUGUI statusText, cityLabel, tipText, pctText;
-    float spinAngle;
+    CinematicLoadingCard card;
+    // -1 so the first NextTip() lands on Tips[0] rather than skipping it: the card
+    // swaps its copy at the dark point of the cycle, which is the first frame.
+    int tipIndex = -1;
 
     static readonly string[] Tips =
     {
@@ -57,6 +67,17 @@ public class WorldReadyLoadingScreen : MonoBehaviour
 
     void Start()
     {
+        // Show in Start rather than after a couple of frames. Start runs before
+        // Unity renders the first gameplay frame, so the scene-load card and the
+        // world-warm-up card overlap instead of leaving a visible empty frame.
+        Show();
+        if (card != null)
+        {
+            card.SetSubject();
+            card.SetEyebrow("PREPARING YOUR WORLD");
+            NextTip();
+            card.TipFadedOut += NextTip;
+        }
         StartCoroutine(WaitForWorldReady());
     }
 
@@ -68,43 +89,51 @@ public class WorldReadyLoadingScreen : MonoBehaviour
     public void Show()
     {
         if (canvas != null) canvas.gameObject.SetActive(true);
+        // The scene-load card was already fully revealed; animating the world
+        // card in again would read as a second screen rather than a hand-off.
+        if (card != null) card.Reveal(instant: true);
     }
 
+    /// <summary>Closes the card and hides the canvas once the bars have retracted.</summary>
     public void Hide()
     {
+        if (card == null || !isActiveAndEnabled) { HideImmediate(); return; }
+        card.Dismiss();
+        StartCoroutine(DeactivateWhenClosed());
+    }
+
+    void HideImmediate()
+    {
+        if (card != null) card.Dismiss(instant: true);
+        if (canvas != null) canvas.gameObject.SetActive(false);
+    }
+
+    IEnumerator DeactivateWhenClosed()
+    {
+        float waited = 0f;
+        while (!card.IsDismissed && waited < 2f)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
         if (canvas != null) canvas.gameObject.SetActive(false);
     }
 
     public void SetStatus(string message, float progress01)
     {
-        if (statusText != null) statusText.text = message;
-        if (progressBar != null) progressBar.fillAmount = Mathf.Clamp01(progress01);
-        if (pctText != null) pctText.text = Mathf.RoundToInt(progress01 * 100f) + "%";
+        if (card == null) return;
+        card.SetStatus(message);
+        card.SetProgress(progress01);
     }
 
     IEnumerator WaitForWorldReady()
     {
-        yield return null;
-        yield return null;
-
-        Show();
-
-        var city = GameState.Instance != null ? GameState.Instance.selectedCity : null;
-        if (cityLabel != null)
-            cityLabel.text = city != null ? city.cityName.ToUpperInvariant() : "REALBUS";
-        if (tipText != null)
-            tipText.text = Tips[Random.Range(0, Tips.Length)];
-
         float elapsed = 0f;
         bool worldReady = false;
 
         while (elapsed < timeoutSeconds)
         {
             elapsed += Time.unscaledDeltaTime;
-
-            spinAngle -= 220f * Time.unscaledDeltaTime;
-            if (spinner != null)
-                spinner.rectTransform.localEulerAngles = new Vector3(0f, 0f, spinAngle);
 
             var snapshot = WorldReadiness.Evaluate(WorldReadiness.Capture());
             SetStatus(snapshot.status, snapshot.progress);
@@ -113,6 +142,16 @@ public class WorldReadyLoadingScreen : MonoBehaviour
             {
                 worldReady = true;
                 SetStatus("WORLD READY", 1f);
+
+                // Hold the finished card for a deliberate beat. A short minimum
+                // duration also protects the no-streaming / editor direct-play
+                // case, where readiness can become true on the first frame.
+                if (elapsed < minimumVisibleSeconds)
+                {
+                    yield return null;
+                    continue;
+                }
+
                 yield return new WaitForSecondsRealtime(holdAfterReadySeconds);
                 break;
             }
@@ -136,24 +175,28 @@ public class WorldReadyLoadingScreen : MonoBehaviour
                 $"{WorldReadiness.DescribePending(WorldReadiness.Capture())}. Showing the scene anyway.");
         }
 
-        yield return FadeOut();
-        Hide();
+        if (card != null)
+        {
+            card.TipFadedOut -= NextTip;
+            card.Dismiss();
+        }
+
+        float waited = 0f;
+        while ((card == null || !card.IsDismissed) && waited < 2f)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (canvas != null) canvas.gameObject.SetActive(false);
         Destroy(gameObject);
     }
 
-    IEnumerator FadeOut()
+    void NextTip()
     {
-        if (canvas == null) yield break;
-        var group = canvas.GetComponent<CanvasGroup>();
-        if (group == null) group = canvas.gameObject.AddComponent<CanvasGroup>();
-        float t = 0f;
-        while (t < 0.35f)
-        {
-            t += Time.unscaledDeltaTime;
-            group.alpha = 1f - Mathf.Clamp01(t / 0.35f);
-            yield return null;
-        }
-        group.alpha = 0f;
+        if (card == null || Tips.Length == 0) return;
+        tipIndex = (tipIndex + 1) % Tips.Length;
+        card.SetTip(Tips[tipIndex]);
     }
 
     void Build()
@@ -162,6 +205,8 @@ public class WorldReadyLoadingScreen : MonoBehaviour
         canvasGo.transform.SetParent(transform, false);
         canvas = canvasGo.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        // Above the HUD and above the intro's letterbox, so the title card owns the
+        // frame until the world is up.
         canvas.sortingOrder = 490;
 
         var scaler = canvasGo.GetComponent<CanvasScaler>();
@@ -169,90 +214,10 @@ public class WorldReadyLoadingScreen : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
 
-        background = MakeImage("Background", canvasGo.transform, UITheme.Background);
-        StretchFull(background.rectTransform);
-
-        var topStrip = MakeImage("TopStrip", background.transform, UITheme.WithAlpha(UITheme.BusAmber, 0.22f));
-        topStrip.rectTransform.anchorMin = new Vector2(0f, 1f);
-        topStrip.rectTransform.anchorMax = new Vector2(1f, 1f);
-        topStrip.rectTransform.pivot = new Vector2(0.5f, 1f);
-        topStrip.rectTransform.sizeDelta = new Vector2(0f, 6f);
-
-        cityLabel = MakeText("CityLabel", background.transform, "REALBUS", 80f,
-            new Vector2(0f, 100f), new Vector2(1200f, 120f), UITheme.FontWeight.Bold);
-        cityLabel.color = UITheme.TextPrimary;
-
-        var subLabel = MakeText("SubLabel", background.transform, "PREPARING YOUR WORLD", 22f,
-            new Vector2(0f, 42f), new Vector2(900f, 36f), UITheme.FontWeight.Medium);
-        subLabel.color = UITheme.WithAlpha(UITheme.Accent, 0.85f);
-
-        tipText = MakeText("Tip", background.transform, "", 24f,
-            new Vector2(0f, -40f), new Vector2(1100f, 72f), UITheme.FontWeight.Regular);
-        tipText.color = UITheme.TextSecondary;
-
-        var track = MakeImage("ProgressTrack", background.transform, UITheme.SurfaceBright);
-        track.rectTransform.anchoredPosition = new Vector2(0f, -140f);
-        track.rectTransform.sizeDelta = new Vector2(860f, 10f);
-        RuntimeUiShapes.Rounded(track);
-
-        progressBar = MakeImage("ProgressFill", track.transform, UITheme.Accent);
-        StretchFull(progressBar.rectTransform);
-        progressBar.type = Image.Type.Filled;
-        progressBar.fillMethod = Image.FillMethod.Horizontal;
-        progressBar.fillOrigin = 0;
-        progressBar.fillAmount = 0f;
-        RuntimeUiShapes.Rounded(progressBar);
-
-        pctText = MakeText("Percent", background.transform, "0%", 26f,
-            new Vector2(0f, -172f), new Vector2(200f, 40f), UITheme.FontWeight.Medium);
-        pctText.color = UITheme.TextSecondary;
-
-        statusText = MakeText("Status", background.transform, "INITIALISING...", 20f,
-            new Vector2(0f, -208f), new Vector2(900f, 32f), UITheme.FontWeight.Regular);
-        statusText.color = UITheme.WithAlpha(UITheme.TextMuted, 0.8f);
-
-        spinner = MakeImage("Spinner", background.transform, UITheme.WithAlpha(UITheme.Accent, 0.7f));
-        spinner.rectTransform.anchoredPosition = new Vector2(0f, -290f);
-        spinner.rectTransform.sizeDelta = new Vector2(48f, 48f);
-        RuntimeUiShapes.Circle(spinner);
-
-        var hub = MakeImage("Hub", spinner.transform, UITheme.Background);
-        hub.rectTransform.anchorMin = hub.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        hub.rectTransform.sizeDelta = new Vector2(34f, 34f);
-        RuntimeUiShapes.Circle(hub);
-    }
-
-    static Image MakeImage(string name, Transform parent, Color color)
-    {
-        var go = new GameObject(name, typeof(RectTransform), typeof(Image));
-        go.transform.SetParent(parent, false);
-        var img = go.GetComponent<Image>();
-        img.color = color;
-        return img;
-    }
-
-    static TextMeshProUGUI MakeText(string name, Transform parent, string value,
-        float size, Vector2 position, Vector2 dimensions, UITheme.FontWeight weight)
-    {
-        var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-        go.transform.SetParent(parent, false);
-        var rt = go.GetComponent<RectTransform>();
-        rt.sizeDelta = dimensions;
-        rt.anchoredPosition = position;
-        var tmp = go.GetComponent<TextMeshProUGUI>();
-        tmp.text = value;
-        tmp.fontSize = size;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = UITheme.TextPrimary;
-        tmp.font = UITheme.GetFont(weight);
-        tmp.raycastTarget = false;
-        return tmp;
-    }
-
-    static void StretchFull(RectTransform r)
-    {
-        r.anchorMin = Vector2.zero;
-        r.anchorMax = Vector2.one;
-        r.offsetMin = r.offsetMax = Vector2.zero;
+        card = CinematicLoadingCard.Create(canvasGo.transform);
+        card.SetSubject();
+        card.SetStatus("INITIALISING...");
+        card.SetProgress(0f);
+        canvas.gameObject.SetActive(false);
     }
 }

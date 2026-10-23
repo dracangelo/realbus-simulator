@@ -23,7 +23,23 @@ public class SnowController : MonoBehaviour
     public float followHeight = 20f;
     public float effectFieldSize = 55f;
 
+    [Header("Wind")]
+    [Tooltip("Wind in metres per second (X = east, Y = north), pushed in by the wind system. Snow drifts with it.")]
+    public Vector2 windXZ;
+
+    [Header("Night Light")]
+    [Tooltip("Flake colour in daylight.")]
+    public Color dayFlakeColor = new Color(0.97f, 0.98f, 1f, 0.9f);
+    [Tooltip("Flake colour after dark. Flakes are drawn unlit, so night needs its own floor or the snow glows.")]
+    public Color nightFlakeColor = new Color(0.40f, 0.45f, 0.56f, 0.72f);
+
     Material flakeMaterial;
+    Color lastFlakeTint = Color.clear;
+
+    // Fall speed per generated system, kept out of startSpeed so world-space wind
+    // can carry the flakes sideways.
+    readonly System.Collections.Generic.Dictionary<ParticleSystem, float> fallSpeedBySystem =
+        new System.Collections.Generic.Dictionary<ParticleSystem, float>();
 
     void Start()
     {
@@ -34,6 +50,21 @@ public class SnowController : MonoBehaviour
     void Update()
     {
         FollowTarget();
+        UpdateTint();
+    }
+
+    /// <summary>Fades the flakes with the sky, so snow does not glow at midnight.</summary>
+    void UpdateTint()
+    {
+        if (flakeMaterial == null) return;
+
+        TimeOfDaySystem clock = TimeOfDaySystem.Instance;
+        float light = clock != null ? SkyEnvironmentController.SkyLightLevelFor(clock.SunElevationDegrees) : 1f;
+        Color tint = RainController.TintForLight(dayFlakeColor, nightFlakeColor, light);
+        if (tint == lastFlakeTint) return;
+
+        lastFlakeTint = tint;
+        if (flakeMaterial.HasProperty("_Color")) flakeMaterial.SetColor("_Color", tint);
     }
 
     /// <summary>Creates the snow and blizzard systems when the scene authored none.</summary>
@@ -54,7 +85,9 @@ public class SnowController : MonoBehaviour
         main.loop = true;
         main.playOnAwake = false;
         main.startLifetime = 8f;
-        main.startSpeed = fallSpeed;
+        // Box emitters throw along their own forward axis, so the fall lives in
+        // world-space velocity instead; the wind then drifts it sideways.
+        main.startSpeed = 0f;
         main.startSize = new ParticleSystem.MinMaxCurve(flakeSize * 0.5f, flakeSize);
         main.gravityModifier = 0.01f;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
@@ -78,6 +111,14 @@ public class SnowController : MonoBehaviour
         noise.frequency = 0.4f;
         noise.scrollSpeed = 0.25f;
 
+        var velocity = ps.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        velocity.x = new ParticleSystem.MinMaxCurve(windXZ.x);
+        velocity.y = new ParticleSystem.MinMaxCurve(-fallSpeed);
+        velocity.z = new ParticleSystem.MinMaxCurve(windXZ.y);
+        fallSpeedBySystem[ps] = fallSpeed;
+
         var renderer = ps.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
         renderer.sharedMaterial = FlakeMaterial();
@@ -95,7 +136,7 @@ public class SnowController : MonoBehaviour
         if (shader == null) return null;
         flakeMaterial = new Material(shader) { name = "SnowController_Flake_Mat" };
         if (flakeMaterial.HasProperty("_MainTex")) flakeMaterial.SetTexture("_MainTex", BuildFlakeTexture());
-        if (flakeMaterial.HasProperty("_Color")) flakeMaterial.SetColor("_Color", new Color(0.97f, 0.98f, 1f, 0.9f));
+        if (flakeMaterial.HasProperty("_Color")) flakeMaterial.SetColor("_Color", dayFlakeColor);
         return flakeMaterial;
     }
 
@@ -168,6 +209,48 @@ public class SnowController : MonoBehaviour
         var emission = ps.emission;
         emission.rateOverTime = Mathf.Lerp(0, 300, intensity);
         ps.Play();
+    }
+
+    /// <summary>
+    /// Carries the snowfall with the wind. Snow is the lightest thing in the scene,
+    /// so it drifts further than rain for the same speed and is the clearest sign of
+    /// a blizzard rather than a calm fall.
+    /// </summary>
+    public void ApplyWind(Vector2 wind)
+    {
+        if ((wind - windXZ).sqrMagnitude < 0.0004f) return;
+        windXZ = wind;
+        ApplyWindTo(snowParticles);
+        ApplyWindTo(blizzardParticles);
+    }
+
+    void EnsureWindDriven(ParticleSystem ps)
+    {
+        if (ps == null || fallSpeedBySystem.ContainsKey(ps)) return;
+
+        float fall = ps.main.startSpeed.constant;
+        if (fall <= 0f) fall = 1.4f;
+
+        var main = ps.main;
+        main.startSpeed = 0f;
+
+        var velocity = ps.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        velocity.y = new ParticleSystem.MinMaxCurve(-fall);
+        fallSpeedBySystem[ps] = fall;
+    }
+
+    void ApplyWindTo(ParticleSystem ps)
+    {
+        if (ps == null) return;
+        EnsureWindDriven(ps);
+
+        var velocity = ps.velocityOverLifetime;
+        if (!velocity.enabled) return;
+        // Flakes are much lighter than drops, so they lean further for the same air.
+        velocity.x = new ParticleSystem.MinMaxCurve(windXZ.x * 1.35f);
+        velocity.z = new ParticleSystem.MinMaxCurve(windXZ.y * 1.35f);
     }
 
     void SetAudio(AudioClip clip, float volume)

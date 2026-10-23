@@ -36,8 +36,8 @@ public class SkyEnvironmentController : MonoBehaviour
     public float cloudNoiseScale = 4f;
     [Tooltip("Offset that turns noise into clear sky: below it there are no clouds at all.")]
     public float cloudNoiseBias = 0.42f;
-    [Tooltip("How fast the layer drifts at full wind, in texture units per second.")]
-    public float cloudDriftSpeed = 0.006f;
+    [Tooltip("Texture units drifted per second at one metre per second of wind. The wind arrives in real metres per second, so this is the scale that turns a breeze into a slow drift and a storm into racing cloud.")]
+    public float cloudDriftSpeed = 0.0016f;
     public float minCloudAlpha = 0.0f;
     public float maxCloudAlpha = 0.95f;
     public Color dayCloudColor = new Color(0.99f, 0.99f, 1.00f);
@@ -60,9 +60,10 @@ public class SkyEnvironmentController : MonoBehaviour
 
     [Header("Skybox")]
     public bool applySkybox = true;
-    public float clearAtmosphereThickness = 0.85f;
-    public float stormAtmosphereThickness = 1.85f;
-    public float daySkyExposure = 1.15f;
+    [Tooltip("Unity's procedural sky is already thick at 1.0. Just under one keeps the zenith blue instead of washing the whole sky pale.")]
+    public float clearAtmosphereThickness = 0.62f;
+    public float stormAtmosphereThickness = 1.45f;
+    public float daySkyExposure = 1.3f;
     public float nightSkyExposure = 0.12f;
 
     [Header("Transition")]
@@ -135,6 +136,7 @@ public class SkyEnvironmentController : MonoBehaviour
             case WeatherState.Thunderstorm: baseline = 1.00f; break;
             case WeatherState.Snow:         baseline = 0.95f; break;
             case WeatherState.Blizzard:     baseline = 1.00f; break;
+            case WeatherState.Windy:        baseline = 0.55f; break;
             default:                        baseline = 0.10f; break;
         }
         // Intensity only ever thickens the layer: light rain is less covered than
@@ -157,6 +159,7 @@ public class SkyEnvironmentController : MonoBehaviour
             case WeatherState.Thunderstorm: return 0.85f;
             case WeatherState.Snow:         return 0.25f;
             case WeatherState.Blizzard:     return 0.75f;
+            case WeatherState.Windy:        return 0.12f;
             default:                        return 0f;
         }
     }
@@ -178,6 +181,16 @@ public class SkyEnvironmentController : MonoBehaviour
         float exposure = Mathf.Lerp(nightExposure, dayExposure, Mathf.Clamp01(daylight01));
         return exposure * Mathf.Lerp(1f, 0.55f, Mathf.Clamp01(cloudCoverage));
     }
+
+    /// <summary>
+    /// How lit the sky is, from the sun's height. Exposure used to follow the daylight
+    /// sine, which is a quarter of full at five in the afternoon - so golden hour
+    /// rendered as a dark brown sky. The light in the sky follows the sun's elevation:
+    /// it holds through the afternoon and only collapses once the sun is below the
+    /// horizon.
+    /// </summary>
+    public static float SkyLightLevelFor(float sunElevationDegrees)
+        => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-10f, 15f, sunElevationDegrees));
 
     /// <summary>Moonlight: only at night, and muted by thick cloud.</summary>
     public static float MoonIntensityFor(bool isNight, float cloudCoverage, float fullIntensity)
@@ -421,7 +434,7 @@ public class SkyEnvironmentController : MonoBehaviour
         starVisibility = Mathf.Lerp(starVisibility,
             StarVisibilityFor(sunElevation, starFadeSunElevation, cloudCoverage), blend);
         skyExposure = Mathf.Lerp(skyExposure,
-            SkyExposureFor(daylight, cloudCoverage, daySkyExposure, nightSkyExposure), blend);
+            SkyExposureFor(SkyLightLevelFor(sunElevation), cloudCoverage, daySkyExposure, nightSkyExposure), blend);
 
         // Clouds drift with the wind; the layer wraps, so the offset never runs out.
         cloudOffset += CloudDriftDelta(windXZ, cloudDriftSpeed, dt);

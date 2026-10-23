@@ -113,8 +113,12 @@ public class RuntimeMinimapGraphic : MaskableGraphic
         BusRoute activeRoute = (activeMission != null && activeMission.currentRoute != null)
             ? activeMission.currentRoute
             : route != null ? route : (GameState.Instance != null ? GameState.Instance.selectedRoute : null);
-        if (activeRoute != null && activeRoute.pathPoints != null && activeRoute.pathPoints.Length >= 2)
-            return activeRoute.pathPoints;
+        if (activeRoute != null)
+        {
+            activeRoute.EnsureWorldPathPoints();
+            if (activeRoute.HasUsableWorldPath() && activeRoute.pathPoints != null && activeRoute.pathPoints.Length >= 2)
+                return activeRoute.pathPoints;
+        }
 
         // Imported routes can arrive with geodata but no pre-built world points (or the
         // world points failed to build for the current map origin). Re-derive the line so

@@ -20,6 +20,79 @@ public static class RealismRules
     }
     public static float StoppingSpeedKmh(float distance, float clearance, float deceleration) =>
         (float)Math.Sqrt(2f * Math.Max(0.1f, deceleration) * Math.Max(0f, distance - clearance)) * 3.6f;
+
+    /// <summary>
+    /// Speed a follower may carry behind a moving leader. Unlike the old
+    /// gap-only clamp, a leader travelling at speed does not make a follower
+    /// brake to the leader's stopping distance; the follower may close at the
+    /// speed that can still be shed inside the remaining gap, after a short
+    /// reaction delay. This keeps traffic flowing while remaining conservative
+    /// enough for a stopped leader.
+    /// </summary>
+    public static float SafeFollowingSpeedKmh(float desiredKmh, float leaderKmh, float gap,
+        float clearance, float deceleration, float reactionSeconds = 0.55f)
+    {
+        float desired = Math.Max(0f, desiredKmh);
+        float leader = Math.Max(0f, leaderKmh);
+        float available = gap - clearance;
+        if (available <= 0f) return 0f;
+        float reaction = desired / 3.6f * Math.Max(0f, reactionSeconds);
+        float room = Math.Max(0f, available - reaction);
+        float closingBudget = (float)Math.Sqrt(2f * Math.Max(0.1f, deceleration) * room) * 3.6f;
+        return Math.Min(desired, leader + closingBudget);
+    }
+
+    /// <summary>
+    /// Fraction of the approach speed a driver may carry through a junction.
+    /// A ninety-degree turn is roughly 40%, while a shallow bend stays close to
+    /// the limit. Angles are in degrees.
+    /// </summary>
+    public static float TurnSpeedFactor(float angleDegrees)
+    {
+        float normalized = Clamp01(Math.Abs(angleDegrees) / 120f);
+        float eased = normalized * normalized * (3f - 2f * normalized);
+        return 1f - 0.72f * eased;
+    }
+
+    /// <summary>
+    /// Blends from the open-road speed down to a junction or turn cap as the
+    /// vehicle approaches it. At the junction the cap applies; one approach
+    /// length away the original speed is restored.
+    /// </summary>
+    public static float ApproachSpeedKmh(float desiredKmh, float capKmh, float distance, float approachDistance)
+    {
+        float desired = Math.Max(0f, desiredKmh);
+        float cap = Math.Min(desired, Math.Max(0f, capKmh));
+        float blend = Clamp01(distance / Math.Max(1f, approachDistance));
+        return cap + (desired - cap) * blend;
+    }
+
+    /// <summary>
+    /// A pass needs a minimum runway before the next junction, scaled with
+    /// speed, so a vehicle does not change lanes just as the road ends.
+    /// </summary>
+    public static bool HasOvertakeRunway(float metersToJunction, float speedKmh,
+        float minimumSeconds = 1.8f, float minimumMeters = 18f)
+    {
+        float required = Math.Max(minimumMeters,
+            Math.Max(0f, speedKmh) / 3.6f * Math.Max(0f, minimumSeconds) + 8f);
+        return metersToJunction > required;
+    }
+
+    /// <summary>
+    /// Small deterministic per-driver cruise variation. It prevents the whole
+    /// pool from travelling as one rigid convoy and gives overtaking a real
+    /// reason to happen without making any car exceed the road limit.
+    /// </summary>
+    public static float SpeedFactor(int seed)
+    {
+        uint value = unchecked((uint)seed + 0x9E3779B9u);
+        value ^= value >> 16;
+        value *= 0x7FEB352Du;
+        value ^= value >> 15;
+        return 0.92f + (value & 0xFFFF) / 65535f * 0.14f;
+    }
+
     public static int TileTier(float distance, float near = 200f, float medium = 500f) => distance <= near ? 0 : distance <= medium ? 1 : 2;
     static float Clamp01(float value) => Math.Max(0f, Math.Min(1f, value));
 }

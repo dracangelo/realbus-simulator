@@ -58,6 +58,15 @@ public class VehiclePool : MonoBehaviour
     public int maxRehomesPerTick = 40;
     public float rehomeIntervalSeconds = 0.5f;
 
+    [Header("Model Fit")]
+    [Tooltip("Extra clearance added to the widest traffic model before it is used as the lane-spacing floor.")]
+    public float laneWidthPaddingMeters = 0.55f;
+    [Tooltip("Upper bound for automatic lane expansion. Beyond this a city's lane tags are more likely wrong than the models are wide.")]
+    public float maxLaneWidthMeters = 5.2f;
+
+    /// <summary>The widest traffic prefab measured during warm-up, in metres.</summary>
+    public float WidestVehicleWidth { get; private set; }
+
     [Header("Spawn Safety")]
     [Tooltip("No vehicle is placed or re-homed closer than this to the player's bus.")]
     public float minSpawnDistanceFromPlayerMeters = 80f;
@@ -109,6 +118,8 @@ public class VehiclePool : MonoBehaviour
     readonly HashSet<PooledVehicle> reservedFull = new HashSet<PooledVehicle>();
     readonly List<(PooledVehicle vehicle, float distance)> candidates = new List<(PooledVehicle, float)>(50);
     readonly List<int> spawnNodeCandidates = new List<int>(512);
+    // x = width, y = length, measured once from the prefab bounds.
+    readonly Dictionary<GameObject, Vector2> prefabSizeCache = new Dictionary<GameObject, Vector2>();
     float spawnCandidateRefreshAt;
     float densityTick;
     float tierTick;
@@ -306,11 +317,16 @@ public class VehiclePool : MonoBehaviour
                 : 0.5f;
 
             float speedKmh = pv.tier == SimulationTier.Spline ? pv.spline.speedKmh : ai.currentSpeedKmh;
+            // The spline tier owns laneIndex while it is active; the disabled full
+            // controller's copy can be one junction behind after a turn.
+            int lane = pv.tier == SimulationTier.Spline ? pv.spline.laneIndex : ai.laneIndex;
             // Dormant bodies are inactive, so re-seating them is invisible and
             // saves them from activating later on the old carriageway.
-            ai.PlaceOnLane(ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex, ai.previousNodeIndex, along);
-            pv.spline.Init(roadGraph, ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex, speedKmh);
+            ai.PlaceOnLane(ai.currentNodeIndex, ai.targetNodeIndex, lane, ai.previousNodeIndex, along);
+            ai.ResetLaneChange();
+            pv.spline.Init(roadGraph, ai.currentNodeIndex, ai.targetNodeIndex, lane, speedKmh);
             ai.SetVelocityWorld(ai.transform.forward * (speedKmh / 3.6f));
+            pv.laneIndex = lane;
         }
     }
 
@@ -328,6 +344,8 @@ public class VehiclePool : MonoBehaviour
             loggedMissingRoadGraph = true;
             return;
         }
+
+        ApplyTrafficLaneWidth(roadGraph);
 
         int created = 0;
         for (int i = 0; i < poolSizePerScene; i++)
@@ -347,14 +365,26 @@ public class VehiclePool : MonoBehaviour
             // the street. The bodies still receive shadows and ambient light.
             foreach (var carRenderer in go.GetComponentsInChildren<Renderer>(true))
                 carRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            Vector2 modelSize = GetPrefabSize(picked.prefab);
+            float modelWidth = modelSize.x;
+
             var ai = go.GetComponent<AIVehicleController>();
             if (ai == null) ai = go.AddComponent<AIVehicleController>();
             ai.vehicleType = picked.type;
+            ai.vehicleWidth = modelWidth;
+            ai.vehicleLength = modelSize.y;
 
             var spline = go.GetComponent<SplineVehicle>();
             if (spline == null) spline = go.AddComponent<SplineVehicle>();
+            float driverFactor = RealismRules.SpeedFactor(i * 41 + (int)picked.type);
+            ai.desiredSpeedFactor = driverFactor;
+            spline.desiredSpeedFactor = driverFactor;
+            spline.vehicleWidth = modelWidth;
 
-            if (go.GetComponent<TrafficParticipant>() == null) go.AddComponent<TrafficParticipant>();
+            var participant = go.GetComponent<TrafficParticipant>();
+            if (participant == null) participant = go.AddComponent<TrafficParticipant>();
+            participant.width = modelWidth;
+            participant.length = modelSize.y;
             var rb = go.GetComponent<Rigidbody>();
             if (rb == null) rb = go.AddComponent<Rigidbody>();
             rb.isKinematic = true;
@@ -403,7 +433,110 @@ public class VehiclePool : MonoBehaviour
         }
 
         if (logSpawnEvents)
-            Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}).");
+            Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}, laneWidth={roadGraph.MinimumLaneWidth:0.00}m).");
+    }
+
+    /// <summary>
+    /// Measures the traffic models this pool will actually spawn and raises the
+    /// graph's lane spacing until the widest one fits. OSM lane tags are advisory:
+    /// a 2.75 m residential lane is common in the downloaded cities, and a bus or
+    /// a wide van placed in it visually overhangs the kerb and the centre line.
+    /// The measurement is cached per prefab, so the cost is paid once during the
+    /// loading card rather than every spawn.
+    /// </summary>
+    void ApplyTrafficLaneWidth(AIRoadGraph graph)
+    {
+        if (graph == null || prefabs == null || prefabs.Length == 0)
+            return;
+
+        float widest = 0f;
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            var entry = prefabs[i];
+            if (entry == null || entry.prefab == null)
+                continue;
+            widest = Mathf.Max(widest, GetPrefabSize(entry.prefab).x);
+        }
+
+        if (widest <= 0f)
+            return;
+
+        WidestVehicleWidth = widest;
+        float required = Mathf.Clamp(
+            widest + Mathf.Max(0f, laneWidthPaddingMeters),
+            AIRoadGraph.MinLaneWidth,
+            Mathf.Max(AIRoadGraph.MinLaneWidth, maxLaneWidthMeters));
+        graph.SetMinimumLaneWidth(required);
+        // Keep the rendered ribbon in step if a custom pool or a late catalog
+        // changes the graph floor before a road rebuild.
+        RoadWidthPolicy.Request(required);
+
+        if (logSpawnEvents)
+        {
+            Debug.Log($"[VehiclePool] Widest traffic model {widest:0.00}m; lane spacing floor is now " +
+                      $"{graph.MinimumLaneWidth:0.00}m (padding {laneWidthPaddingMeters:0.00}m).");
+        }
+    }
+
+    Vector2 GetPrefabSize(GameObject prefab)
+    {
+        if (prefab == null) return new Vector2(2f, 4.2f);
+        if (prefabSizeCache.TryGetValue(prefab, out Vector2 cached))
+            return cached;
+
+        Vector2 measured = MeasurePrefabSize(prefab);
+        prefabSizeCache[prefab] = measured;
+        return measured;
+    }
+
+    public static Vector2 MeasurePrefabSize(GameObject prefab)
+    {
+        if (prefab == null) return new Vector2(2f, 4.2f);
+
+        Bounds combined = default;
+        bool hasBounds = false;
+
+        var renderers = prefab.GetComponentsInChildren<Renderer>(true);
+        if (renderers != null)
+        {
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                if (!hasBounds) { combined = renderers[i].bounds; hasBounds = true; }
+                else combined.Encapsulate(renderers[i].bounds);
+            }
+        }
+
+        if (!hasBounds || (combined.size.x < .01f && combined.size.z < .01f))
+        {
+            var colliders = prefab.GetComponentsInChildren<Collider>(true);
+            if (colliders != null)
+            {
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    if (colliders[i] == null) continue;
+                    if (!hasBounds) { combined = colliders[i].bounds; hasBounds = true; }
+                    else combined.Encapsulate(colliders[i].bounds);
+                }
+            }
+        }
+
+        if (!hasBounds)
+            return new Vector2(2f, 4.2f);
+
+        // Vehicles are modelled with their length along X or Z depending on the
+        // export. The smaller horizontal extent is the width in both cases; the
+        // larger one is the body length used for following gaps.
+        Vector2 size = new Vector2(
+            Mathf.Clamp(Mathf.Min(combined.size.x, combined.size.z), 1.2f, 6f),
+            Mathf.Clamp(Mathf.Max(combined.size.x, combined.size.z), 2f, 18f));
+
+        // A bounds box that is still effectively a point (an unloaded skinned
+        // mesh, for example) is not a useful model measurement.
+        if (size.x <= 1.21f && size.y <= 2.01f)
+            return new Vector2(2f, 4.2f);
+
+        return size;
     }
 
     /// <summary>
@@ -751,6 +884,16 @@ public class VehiclePool : MonoBehaviour
 
         bool wasDormant = pv.tier == SimulationTier.Dormant;
         pv.go.SetActive(true);
+
+        // The outgoing tier owns the live lane index. Carrying the cached pool
+        // value into a promotion/demotion can drop a car back onto the lane it
+        // used before the last turn, which reads as a lane change at a junction.
+        int sourceLane = pv.laneIndex;
+        if (pv.tier == SimulationTier.Spline && pv.spline != null)
+            sourceLane = pv.spline.laneIndex;
+        else if (pv.tier == SimulationTier.FullAI && pv.full != null)
+            sourceLane = pv.full.laneIndex;
+        pv.laneIndex = Mathf.Max(0, sourceLane);
 
         if (desired == SimulationTier.FullAI)
         {

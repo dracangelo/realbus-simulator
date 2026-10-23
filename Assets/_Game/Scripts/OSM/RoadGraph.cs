@@ -448,11 +448,16 @@ public class RoadGraph
 
     static float ParseLaneWidth(Dictionary<string, string> tags, int lanes, RoadType type)
     {
+        float laneWidth;
         if (tags != null && tags.TryGetValue("width", out string raw) &&
             float.TryParse(raw.ToLowerInvariant().Replace("m", "").Trim(), System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture, out float width))
-            return Mathf.Clamp(width / Mathf.Max(1, lanes), 2.6f, 4.2f);
-        return type is RoadType.Motorway or RoadType.Trunk ? 3.6f : type is RoadType.Primary or RoadType.Secondary ? 3.3f : 3.1f;
+            laneWidth = Mathf.Clamp(width / Mathf.Max(1, lanes), 2.6f, 4.2f);
+        else
+            laneWidth = type is RoadType.Motorway or RoadType.Trunk ? 3.6f : type is RoadType.Primary or RoadType.Secondary ? 3.3f : 3.1f;
+
+        // Keep graph lane spacing equal to the asphalt the road builder draws.
+        return RoadWidthPolicy.Fit(laneWidth);
     }
 
     // ── Private: A* helpers ────────────────────────────────────────────

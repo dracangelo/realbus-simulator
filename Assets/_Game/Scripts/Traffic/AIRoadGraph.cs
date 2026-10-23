@@ -29,7 +29,47 @@ public class AIRoadGraph : MonoBehaviour
     [Tooltip("Which side of a two-way road this graph's traffic keeps to. Synced from the active city's country when the graph is bound; defaulted to left because the shipped scene opens in Kenya.")]
     public bool drivesOnLeft = true;
 
+    [Tooltip("Runtime floor for lane spacing. VehiclePool raises this to the widest traffic model it actually spawns, so a bus or wide car never hangs over the centre line or the pavement.")]
+    [SerializeField] float minimumLaneWidth = MinLaneWidth;
+
     public int NodeCount => nodes != null ? nodes.Length : 0;
+
+    /// <summary>The lane spacing currently enforced, including the model-fit floor.</summary>
+    public float MinimumLaneWidth => Mathf.Max(MinLaneWidth, minimumLaneWidth);
+
+    /// <summary>
+    /// Raises lane spacing so the widest spawned vehicle fits inside one lane.
+    /// Existing graph widths are only ever increased: narrowing a road again after
+    /// the player has driven it would make the traffic jump sideways.
+    /// </summary>
+    public void SetMinimumLaneWidth(float width)
+    {
+        float clamped = Mathf.Clamp(width, MinLaneWidth, 6f);
+        if (clamped <= MinimumLaneWidth)
+            return;
+
+        minimumLaneWidth = clamped;
+        if (nodes == null)
+            return;
+
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            RoadNode node = nodes[i];
+            if (node == null) continue;
+            if (node.laneWidth < clamped)
+                node.laneWidth = clamped;
+
+            // Per-link widths are what the graph actually reads for this directed
+            // edge. Raising only the node fallback left narrow links narrow, so a
+            // wide imported car still hung over the centre line on those roads.
+            if (node.outgoingLaneWidths == null) continue;
+            for (int link = 0; link < node.outgoingLaneWidths.Length; link++)
+            {
+                if (node.outgoingLaneWidths[link] < clamped)
+                    node.outgoingLaneWidths[link] = clamped;
+            }
+        }
+    }
 
     /// <summary>
     /// The side of the road traffic should use, resolved from the active city rather
@@ -57,6 +97,66 @@ public class AIRoadGraph : MonoBehaviour
         if (resolved == drivesOnLeft) return false;
         drivesOnLeft = resolved;
         return true;
+    }
+
+    /// <summary>
+    /// The largest public city graph in the scene. Depot yards create their own
+    /// tiny <see cref="privateLaneCircuit"/> graph, so an arbitrary
+    /// FindAnyObjectByType&lt;AIRoadGraph&gt; can return an eight-node yard loop while
+    /// the player is standing at the depot. Every consumer that needs the city
+    /// network should start here instead.
+    /// </summary>
+    public static AIRoadGraph FindCityGraph()
+    {
+        AIRoadGraph best = null;
+        int bestNodes = 0;
+        var graphs = Object.FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < graphs.Length; i++)
+        {
+            AIRoadGraph graph = graphs[i];
+            if (graph == null || graph.privateLaneCircuit || graph.NodeCount <= bestNodes)
+                continue;
+            best = graph;
+            bestNodes = graph.NodeCount;
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// The public city graph whose road network is nearest to <paramref name="worldPoint"/>.
+    /// Returns null when every public graph is farther away than
+    /// <paramref name="maxDistanceMeters"/>, which lets callers decide whether a
+    /// city spawn or route start is actually on a known road.
+    /// </summary>
+    public static AIRoadGraph FindCityGraphNear(Vector3 worldPoint, float maxDistanceMeters = 2500f)
+    {
+        AIRoadGraph best = null;
+        float bestDistance = Mathf.Max(0f, maxDistanceMeters);
+        var graphs = Object.FindObjectsByType<AIRoadGraph>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < graphs.Length; i++)
+        {
+            AIRoadGraph graph = graphs[i];
+            if (graph == null || graph.privateLaneCircuit || graph.NodeCount == 0)
+                continue;
+
+            int nearest = graph.GetNearestNodeIndex(worldPoint);
+            if (!graph.IsValidNode(nearest))
+                continue;
+
+            float distance = Vector3.Distance(worldPoint, graph.GetNodePosition(nearest));
+            if (distance <= bestDistance)
+            {
+                best = graph;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    /// <summary>Nearest public city graph, falling back to the largest city graph.</summary>
+    public static AIRoadGraph ResolveCityGraph(Vector3 worldPoint, float maxDistanceMeters = 2500f)
+    {
+        return FindCityGraphNear(worldPoint, maxDistanceMeters) ?? FindCityGraph();
     }
 
     public bool IsValidNode(int index)
@@ -256,7 +356,7 @@ public class AIRoadGraph : MonoBehaviour
         if (!IsValidNode(nodeIndex)) return 0f;
         int lanes = Mathf.Max(1, nodes[nodeIndex].laneCount);
         laneIndex = Mathf.Clamp(laneIndex, 0, lanes - 1);
-        float width = Mathf.Max(MinLaneWidth, nodes[nodeIndex].laneWidth);
+        float width = Mathf.Max(MinimumLaneWidth, nodes[nodeIndex].laneWidth);
 
         // Center lanes around road middle: e.g. 2 lanes -> -0.5,+0.5 multipliers.
         float centered = laneIndex - (lanes - 1) * 0.5f;
@@ -292,22 +392,104 @@ public class AIRoadGraph : MonoBehaviour
     public bool DrivesOnLeft => drivesOnLeft;
 
     /// <summary>
+    /// Angle of the most likely legal continuation at a junction, in degrees.
+    /// The next-node picker weights straight-ahead exits above turns, so this
+    /// gives the controller a useful pre-junction speed signal without slowing
+    /// every car for a side street it is not going to take. A dead end returns
+    /// 180 degrees so the approach is treated as a slow turnaround.
+    /// </summary>
+    public float GetLikelyTurnAngle(int nodeIndex, Vector3 incomingDirection, int previousNodeIndex = -1)
+    {
+        if (!IsValidNode(nodeIndex)) return 0f;
+        incomingDirection.y = 0f;
+        if (incomingDirection.sqrMagnitude < .0001f) return 0f;
+
+        var node = nodes[nodeIndex];
+        if (node.nextNodeIndices == null || node.nextNodeIndices.Length == 0)
+            return 180f;
+
+        Vector3 current = GetNodePosition(nodeIndex);
+        float shallowest = float.MaxValue;
+        for (int i = 0; i < node.nextNodeIndices.Length; i++)
+        {
+            int candidate = node.nextNodeIndices[i];
+            if (!IsValidNode(candidate) || candidate == nodeIndex || candidate == previousNodeIndex)
+                continue;
+
+            Vector3 outgoing = GetNodePosition(candidate) - current;
+            outgoing.y = 0f;
+            if (outgoing.sqrMagnitude < .0001f) continue;
+            float angle = Vector3.Angle(incomingDirection, outgoing);
+            if (angle < shallowest) shallowest = angle;
+        }
+
+        return shallowest < float.MaxValue ? shallowest : 180f;
+    }
+
+    /// <summary>
     /// Smallest lane the traffic geometry will place a vehicle in. OSM lane tags are
     /// advisory and a narrow residential street is still driven down its middle by a
     /// 2 m wide car, so the offset never collapses below this.
     /// </summary>
     public const float MinLaneWidth = 2.9f;
 
+    /// <summary>The resolved spacing of one directed link, including the model-fit floor.</summary>
+    public float GetLaneWidth(int fromNode, int toNode)
+    {
+        if (!IsValidNode(fromNode) || !IsValidNode(toNode)) return MinimumLaneWidth;
+        RoadNode node = nodes[fromNode];
+        int link = FindLinkIndex(node, toNode);
+        float width = link >= 0 && node.outgoingLaneWidths != null && link < node.outgoingLaneWidths.Length
+            ? node.outgoingLaneWidths[link] : node.laneWidth;
+        return Mathf.Max(MinimumLaneWidth, width);
+    }
+
+    /// <summary>
+    /// Half-width of the asphalt available to this directed link. OSM's
+    /// asymmetric lane counts are rendered with the wider side's envelope on
+    /// both sides, so the opposite direction's count is part of the fit.
+    /// Controllers use this as a hard rail when a collision or a sharp turn
+    /// leaves a body wide of its lane line.
+    /// </summary>
+    public float GetRoadHalfWidth(int fromNode, int toNode)
+    {
+        if (!IsValidNode(fromNode) || !IsValidNode(toNode)) return 0f;
+        float laneWidth = GetLaneWidth(fromNode, toNode);
+        int ownLanes = GetLaneCount(fromNode, toNode);
+        if (IsSharedLane(fromNode, toNode))
+            return laneWidth * .5f;
+        if (IsOneWay(fromNode, toNode))
+            return ownLanes * laneWidth * .5f;
+
+        int oppositeLanes = IsValidNode(toNode) ? GetLaneCount(toNode, fromNode) : ownLanes;
+        int sideLanes = Mathf.Max(1, Mathf.Max(ownLanes, oppositeLanes));
+        return sideLanes * laneWidth;
+    }
+
+    public bool IsSharedLane(int fromNode, int toNode)
+    {
+        if (!IsValidNode(fromNode)) return false;
+        var node = nodes[fromNode];
+        int link = FindLinkIndex(node, toNode);
+        return link >= 0 && node.outgoingSharedLanes != null &&
+               link < node.outgoingSharedLanes.Length && node.outgoingSharedLanes[link];
+    }
+
+    static int FindLinkIndex(RoadNode node, int toNode)
+    {
+        if (node == null || node.nextNodeIndices == null) return -1;
+        for (int i = 0; i < node.nextNodeIndices.Length; i++)
+            if (node.nextNodeIndices[i] == toNode) return i;
+        return -1;
+    }
+
     public float GetLaneOffset(int fromNode, int toNode, int laneIndex)
     {
         if (!IsValidNode(fromNode) || !IsValidNode(toNode)) return 0f;
         RoadNode node = nodes[fromNode];
-        int link = -1;
-        for (int i = 0; node.nextNodeIndices != null && i < node.nextNodeIndices.Length; i++) if (node.nextNodeIndices[i] == toNode) { link = i; break; }
+        int link = FindLinkIndex(node, toNode);
         int lanes = GetLaneCount(fromNode, toNode);
-        float width = link >= 0 && node.outgoingLaneWidths != null && link < node.outgoingLaneWidths.Length
-            ? node.outgoingLaneWidths[link] : node.laneWidth;
-        width = Mathf.Max(MinLaneWidth, width);
+        float width = GetLaneWidth(fromNode, toNode);
         bool oneWay = link >= 0 && node.outgoingOneWays != null && link < node.outgoingOneWays.Length && node.outgoingOneWays[link];
         bool shared = link >= 0 && node.outgoingSharedLanes != null && link < node.outgoingSharedLanes.Length && node.outgoingSharedLanes[link];
         laneIndex = Mathf.Clamp(laneIndex, 0, lanes - 1);

@@ -13,7 +13,13 @@ public enum WeatherState
     HeavyRain,
     Thunderstorm,
     Snow,
-    Blizzard
+    Blizzard,
+    /// <summary>
+    /// Dry, gusty cloud: the sky is mostly covered but it is not raining. This is
+    /// the state the old weather set could not describe, so a windy overcast had to
+    /// be called "Overcast" even while the clouds raced across the sky.
+    /// </summary>
+    Windy
 }
 
 public class WeatherSystem : MonoBehaviour
@@ -24,11 +30,24 @@ public class WeatherSystem : MonoBehaviour
     [SerializeField] WeatherState currentWeatherState = WeatherState.Clear;
     public float temperature = 20f;
     public float weatherIntensity = 0f; // 0-1
+    [Tooltip("Wind reported by the weather service, in km/h. Zero when the simulated fallback is in use.")]
+    public float realWindSpeedKmh = 0f;
+    [Tooltip("Cloud cover reported by the weather service, 0-100. Negative when unknown.")]
+    public float realCloudCover = -1f;
 
     [Header("Transition")]
     public float transitionSpeed = 0.5f; // legacy tuning value
-    public float transitionMinSeconds = 180f;
-    public float transitionMaxSeconds = 300f;
+    public float transitionMinSeconds = 45f;
+    public float transitionMaxSeconds = 90f;
+
+    [Header("Weather Cycle")]
+    [Tooltip("Keep the weather moving after the first state. Off pins it until something calls ApplyWeather/TransitionWeather.")]
+    public bool advanceWeatherAutomatically = true;
+    [Tooltip("How long a state holds before the next change, in real seconds.")]
+    public float weatherHoldMinSeconds = 90f;
+    public float weatherHoldMaxSeconds = 240f;
+    [Tooltip("The first change after an offline/simulated start. Short enough that a normal drive sees the sky move.")]
+    public float simulatedFirstChangeSeconds = 45f;
 
     [Header("Controllers — assign in Inspector")]
     public RainController rainController;
@@ -90,15 +109,18 @@ public class WeatherSystem : MonoBehaviour
 
         // Option C — try real weather first, fall back to simulated
         yield return StartCoroutine(TryFetchRealWeather());
+        if (forceWeather) yield break;
 
-        if (!weatherLoaded)
+        bool simulatedStart = !weatherLoaded;
+        if (simulatedStart)
         {
             Debug.Log("WeatherSystem: Using simulated weather");
             ApplySimulatedWeather();
         }
 
         // Start gradual weather change cycle
-        StartCoroutine(WeatherChangeCycle());
+        if (advanceWeatherAutomatically)
+            StartCoroutine(WeatherChangeCycle(simulatedStart ? simulatedFirstChangeSeconds : -1f));
     }
 
     // ── Real weather via Open-Meteo ──────────────────────────────────
@@ -110,7 +132,8 @@ public class WeatherSystem : MonoBehaviour
         string url = $"https://api.open-meteo.com/v1/forecast" +
                      $"?latitude={activeCity.centreLat:F4}" +
                      $"&longitude={activeCity.centreLon:F4}" +
-                     $"&current=weathercode,temperature_2m" +
+                     $"&current=weathercode,temperature_2m,wind_speed_10m,cloud_cover" +
+                     $"&wind_speed_unit=kmh" +
                      $"&timezone=auto";
 
         Debug.Log($"WeatherSystem: Fetching real weather for {activeCity.cityName}...");
@@ -135,34 +158,67 @@ public class WeatherSystem : MonoBehaviour
 
     void ParseAndApplyWeather(string json)
     {
+        // A forced state (smoke run, event, debug panel) must not be overwritten by
+        // a weather request that was already in flight when the state was forced.
+        if (forceWeather)
+            return;
+
         // Simple JSON parsing without external library
         int wmoCode = ExtractInt(json, "weathercode");
         float temp = ExtractFloat(json, "temperature_2m");
+        realWindSpeedKmh = ExtractFloat(json, "wind_speed_10m");
+        realCloudCover = ExtractFloat(json, "cloud_cover");
 
         temperature = temp;
-        WeatherState state = WMOCodeToWeatherState(wmoCode);
+        WeatherState state = StateForWmoCode(wmoCode);
 
-        // Override snow if city doesn't have it
-        if (state == WeatherState.Snow || state == WeatherState.Blizzard)
-            if (activeCity != null && !activeCity.IsSnowSeason())
-                state = WeatherState.HeavyRain;
+        // The WMO code says what is falling, not how hard the air is moving. A dry
+        // but gusty overcast is a real and very visible state, so promote a cloudy
+        // code to Windy when the service reports a strong breeze.
+        state = ApplyObservedConditions(state, realWindSpeedKmh,
+            activeCity == null || activeCity.IsSnowSeason());
 
         ApplyWeather(state, GetIntensityForState(state), temp);
     }
 
-    WeatherState WMOCodeToWeatherState(int code)
+    /// <summary>
+    /// WMO weather code to the state the simulator understands. Static and pure so
+    /// the mapping can be tested without a network call.
+    /// </summary>
+    public static WeatherState StateForWmoCode(int code)
     {
         if (code == 0)                          return WeatherState.Clear;
         if (code <= 2)                          return WeatherState.PartlyCloudy;
         if (code == 3)                          return WeatherState.Overcast;
         if (code == 45 || code == 48)           return WeatherState.Fog;
-        if (code >= 51 && code <= 55)           return WeatherState.Drizzle;
+        if (code == 51 || code == 53 || code == 55) return WeatherState.Drizzle;
+        if (code == 56 || code == 57)           return WeatherState.Drizzle;
         if (code >= 61 && code <= 63)           return WeatherState.LightRain;
         if (code == 65)                         return WeatherState.HeavyRain;
+        if (code == 66 || code == 67)           return WeatherState.LightRain;
         if (code >= 71 && code <= 75)           return WeatherState.Snow;
+        if (code == 77)                         return WeatherState.Snow;
         if (code >= 80 && code <= 82)           return WeatherState.LightRain;
+        if (code == 85 || code == 86)           return WeatherState.Snow;
         if (code >= 95 && code <= 99)           return WeatherState.Thunderstorm;
         return WeatherState.Clear;
+    }
+
+    /// <summary>
+    /// Applies the two observations the weather code cannot carry: a strong dry
+    /// wind makes a cloudy sky Windy, and snow is downgraded to rain outside a city's
+    /// snow season.
+    /// </summary>
+    public static WeatherState ApplyObservedConditions(WeatherState state, float windSpeedKmh, bool snowSeason)
+    {
+        if (windSpeedKmh >= 30f &&
+            (state == WeatherState.Clear || state == WeatherState.PartlyCloudy || state == WeatherState.Overcast))
+            state = WeatherState.Windy;
+
+        if ((state == WeatherState.Snow || state == WeatherState.Blizzard) && !snowSeason)
+            state = WeatherState.HeavyRain;
+
+        return state;
     }
 
     float GetIntensityForState(WeatherState state)
@@ -179,6 +235,7 @@ public class WeatherSystem : MonoBehaviour
             case WeatherState.Thunderstorm: return 1f;
             case WeatherState.Snow:         return 0.6f;
             case WeatherState.Blizzard:     return 1f;
+            case WeatherState.Windy:        return 0.45f;
             default:                        return 0f;
         }
     }
@@ -217,12 +274,14 @@ public class WeatherSystem : MonoBehaviour
                 else
                     return roll < 0.1f ? WeatherState.LightRain
                          : roll < 0.3f ? WeatherState.PartlyCloudy
+                         : roll < 0.45f ? WeatherState.Windy
                          : WeatherState.Clear;
 
             case ClimateZone.Desert:
                 return roll < 0.05f ? WeatherState.LightRain
                      : roll < 0.15f ? WeatherState.Fog
                      : roll < 0.35f ? WeatherState.PartlyCloudy
+                     : roll < 0.55f ? WeatherState.Windy
                      : WeatherState.Clear;
 
             case ClimateZone.Temperate:
@@ -234,7 +293,8 @@ public class WeatherSystem : MonoBehaviour
                 return roll < 0.2f ? WeatherState.HeavyRain
                      : roll < 0.4f ? WeatherState.LightRain
                      : roll < 0.6f ? WeatherState.Overcast
-                     : roll < 0.75f ? WeatherState.Fog
+                     : roll < 0.72f ? WeatherState.Fog
+                     : roll < 0.84f ? WeatherState.Windy
                      : WeatherState.Clear;
 
             case ClimateZone.Continental:
@@ -244,6 +304,7 @@ public class WeatherSystem : MonoBehaviour
                          : WeatherState.Overcast;
                 return roll < 0.3f ? WeatherState.LightRain
                      : roll < 0.5f ? WeatherState.Overcast
+                     : roll < 0.65f ? WeatherState.Windy
                      : WeatherState.Clear;
 
             case ClimateZone.Mediterranean:
@@ -253,6 +314,7 @@ public class WeatherSystem : MonoBehaviour
                          : WeatherState.Clear;
                 return roll < 0.05f ? WeatherState.LightRain
                      : roll < 0.2f ? WeatherState.PartlyCloudy
+                     : roll < 0.38f ? WeatherState.Windy
                      : WeatherState.Clear;
 
             case ClimateZone.Arid:
@@ -263,6 +325,7 @@ public class WeatherSystem : MonoBehaviour
                          : WeatherState.Overcast;
                 return roll < 0.1f ? WeatherState.Drizzle
                      : roll < 0.3f ? WeatherState.PartlyCloudy
+                     : roll < 0.45f ? WeatherState.Windy
                      : WeatherState.Clear;
 
             default:
@@ -305,31 +368,155 @@ public class WeatherSystem : MonoBehaviour
 
     // ── Gradual weather change cycle ─────────────────────────────────
 
-    IEnumerator WeatherChangeCycle()
+    IEnumerator WeatherChangeCycle(float firstHoldSeconds = -1f)
     {
+        float minHold = Mathf.Max(1f, Mathf.Min(weatherHoldMinSeconds, weatherHoldMaxSeconds));
+        float maxHold = Mathf.Max(minHold, Mathf.Max(weatherHoldMinSeconds, weatherHoldMaxSeconds));
+        float firstHold = firstHoldSeconds >= 0f
+            ? firstHoldSeconds
+            : Random.Range(minHold, maxHold);
+
+        yield return new WaitForSeconds(Mathf.Max(1f, firstHold));
+
         while (true)
         {
-            // Wait 3-8 real minutes between changes
-            yield return new WaitForSeconds(Random.Range(180f, 480f));
+            if (!forceWeather && advanceWeatherAutomatically && activeCity != null)
+            {
+                WeatherState newState = PickNextWeather();
 
-            if (forceWeather) continue;
-            if (activeCity == null) continue;
+                if (weatherTransitionRoutine != null)
+                    StopCoroutine(weatherTransitionRoutine);
 
-            WeatherState newState = SimulateWeatherForCity(activeCity);
+                weatherTransitionRoutine = StartCoroutine(TransitionToWeather(newState));
+                yield return weatherTransitionRoutine;
+                weatherTransitionRoutine = null;
+            }
 
-            // Don't jump too dramatically
-            if (newState == WeatherState.Blizzard && currentWeather == WeatherState.Clear)
-                newState = WeatherState.Snow;
-            if (newState == WeatherState.Thunderstorm && currentWeather == WeatherState.Clear)
-                newState = WeatherState.HeavyRain;
-
-            if (weatherTransitionRoutine != null)
-                StopCoroutine(weatherTransitionRoutine);
-
-            weatherTransitionRoutine = StartCoroutine(TransitionToWeather(newState));
-            yield return weatherTransitionRoutine;
-            weatherTransitionRoutine = null;
+            yield return new WaitForSeconds(Random.Range(minHold, maxHold));
         }
+    }
+
+    WeatherState PickNextWeather()
+    {
+        WeatherState suggestion = activeCity != null
+            ? SimulateWeatherForCity(activeCity)
+            : WeatherState.PartlyCloudy;
+        return ChooseNextWeather(currentWeather, suggestion, Random.value);
+    }
+
+    /// <summary>
+    /// The next state has to look like weather rather than a dice roll. The local
+    /// climate suggests a state; a little over half the time we follow that, and the
+    /// rest of the time we step to a neighbouring state so a clear morning can become
+    /// windy, then overcast, then rain, instead of teleporting between extremes.
+    /// Pure, so the sequence rules can be checked without waiting minutes for them.
+    /// </summary>
+    public static WeatherState ChooseNextWeather(WeatherState current, WeatherState climateSuggestion, float roll)
+    {
+        roll = Mathf.Repeat(roll, 1f);
+        WeatherState candidate = roll < 0.55f
+            ? climateSuggestion
+            : AdjacentWeather(current, roll);
+
+        WeatherState result = SoftenTransition(current, candidate);
+        if (result == current)
+            result = AdjacentWeather(current, Mathf.Repeat(roll + 0.37f, 1f));
+        return result;
+    }
+
+    /// <summary>A plausible one-step neighbour for a state, weighted so the common move is the gentlest one.</summary>
+    public static WeatherState AdjacentWeather(WeatherState current, float roll)
+    {
+        roll = Mathf.Repeat(roll, 1f);
+        switch (current)
+        {
+            case WeatherState.Clear:
+                return roll < 0.65f ? WeatherState.PartlyCloudy
+                     : roll < 0.90f ? WeatherState.Windy
+                     : WeatherState.Overcast;
+
+            case WeatherState.PartlyCloudy:
+                return roll < 0.40f ? WeatherState.Clear
+                     : roll < 0.70f ? WeatherState.Windy
+                     : WeatherState.Overcast;
+
+            case WeatherState.Windy:
+                return roll < 0.45f ? WeatherState.PartlyCloudy
+                     : roll < 0.80f ? WeatherState.Overcast
+                     : WeatherState.Clear;
+
+            case WeatherState.Overcast:
+                return roll < 0.30f ? WeatherState.Windy
+                     : roll < 0.55f ? WeatherState.Drizzle
+                     : roll < 0.80f ? WeatherState.LightRain
+                     : WeatherState.Fog;
+
+            case WeatherState.Fog:
+                return roll < 0.60f ? WeatherState.Overcast : WeatherState.PartlyCloudy;
+
+            case WeatherState.Drizzle:
+                return roll < 0.45f ? WeatherState.Overcast
+                     : roll < 0.85f ? WeatherState.LightRain
+                     : WeatherState.PartlyCloudy;
+
+            case WeatherState.LightRain:
+                return roll < 0.30f ? WeatherState.Drizzle
+                     : roll < 0.80f ? WeatherState.HeavyRain
+                     : WeatherState.Overcast;
+
+            case WeatherState.HeavyRain:
+                return roll < 0.40f ? WeatherState.LightRain
+                     : roll < 0.80f ? WeatherState.Thunderstorm
+                     : WeatherState.Overcast;
+
+            case WeatherState.Thunderstorm:
+                return roll < 0.60f ? WeatherState.HeavyRain : WeatherState.LightRain;
+
+            case WeatherState.Snow:
+                return roll < 0.40f ? WeatherState.Blizzard
+                     : roll < 0.75f ? WeatherState.Overcast
+                     : WeatherState.LightRain;
+
+            case WeatherState.Blizzard:
+                return roll < 0.60f ? WeatherState.Snow : WeatherState.Overcast;
+
+            default:
+                return WeatherState.PartlyCloudy;
+        }
+    }
+
+    /// <summary>
+    /// Removes the jumps that make procedural weather feel like a switch: no storm
+    /// out of a clear sky and no blizzard without snow already falling. The sky can
+    /// still reach every state, it just has to pass through the state next door.
+    /// </summary>
+    public static WeatherState SoftenTransition(WeatherState from, WeatherState to)
+    {
+        bool dryAndCalm = from == WeatherState.Clear || from == WeatherState.PartlyCloudy || from == WeatherState.Windy;
+
+        if (to == WeatherState.Thunderstorm && from != WeatherState.HeavyRain &&
+            from != WeatherState.LightRain && from != WeatherState.Thunderstorm)
+            return WeatherState.HeavyRain;
+
+        if (to == WeatherState.Blizzard && from != WeatherState.Snow && from != WeatherState.Blizzard)
+            return WeatherState.Snow;
+
+        if (to == WeatherState.HeavyRain && dryAndCalm)
+            return WeatherState.Overcast;
+
+        if ((to == WeatherState.Drizzle || to == WeatherState.LightRain) && dryAndCalm)
+            return WeatherState.Overcast;
+
+        if (to == WeatherState.Snow && dryAndCalm)
+            return WeatherState.Overcast;
+
+        if (to == WeatherState.Fog && dryAndCalm)
+            return WeatherState.Overcast;
+
+        if (to == WeatherState.Clear && (from == WeatherState.Thunderstorm || from == WeatherState.Blizzard))
+            return WeatherState.Overcast;
+
+        return to;
     }
 
     public void TransitionWeather(WeatherState state)
@@ -341,8 +528,10 @@ public class WeatherSystem : MonoBehaviour
     IEnumerator TransitionToWeather(WeatherState newState)
     {
         float targetInt = GetIntensityForState(newState);
+        float minDuration = Mathf.Max(1f, Mathf.Min(transitionMinSeconds, transitionMaxSeconds));
+        float maxDuration = Mathf.Max(minDuration, Mathf.Max(transitionMinSeconds, transitionMaxSeconds));
         float elapsed = 0f;
-        float duration = Random.Range(Mathf.Max(1f, transitionMinSeconds), Mathf.Max(transitionMinSeconds, transitionMaxSeconds));
+        float duration = Random.Range(minDuration, maxDuration);
         WeatherState oldState = currentWeather;
         float oldIntensity = weatherIntensity;
         float oldGrip = blendedGrip;
@@ -363,9 +552,20 @@ public class WeatherSystem : MonoBehaviour
             ResolveSkyEnvironment()?.ApplyEnvironment(currentWeather, weatherIntensity);
             yield return null;
         }
-        currentWeather = newState; weatherIntensity = targetInt;
+        currentWeather = newState;
+        weatherIntensity = targetInt;
         blendedGrip = GripFor(newState, targetInt);
-        TransitionProgress01 = 1f; weatherTransitionRoutine = null;
+        TransitionProgress01 = 1f;
+
+        // Land the controllers exactly on the destination state. The last frame of
+        // the loop is only as close as that frame's delta, and Clear needs its fog
+        // hand-back to start now rather than on a later state change.
+        rainController?.SetRain(newState, targetInt);
+        fogController?.SetFog(newState, targetInt);
+        snowController?.SetSnow(newState, targetInt);
+        skyController?.SetSky(newState, targetInt, temperature);
+        ResolveSkyEnvironment()?.ApplyEnvironment(newState, targetInt);
+        weatherTransitionRoutine = null;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
@@ -427,6 +627,7 @@ public class WeatherSystem : MonoBehaviour
             case WeatherState.Snow:         grip = 0.50f; break;
             case WeatherState.Blizzard:     grip = 0.35f; break;
             case WeatherState.Fog:          grip = 0.90f; break;
+            case WeatherState.Windy:        grip = 1.00f; break;
             default:                        grip = 1.0f; break;
         }
         return Mathf.Lerp(1f, grip, Mathf.Clamp01(intensity));
