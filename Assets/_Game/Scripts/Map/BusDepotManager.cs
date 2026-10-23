@@ -476,7 +476,7 @@ public class BusDepotManager : MonoBehaviour
             if (diff.sqrMagnitude > 1f) heading = diff.normalized;
         }
 
-        bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
+        bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
         Vector3 kerbPos = requestedStartPos;
         Quaternion roadFacing = Quaternion.LookRotation(heading, Vector3.up);
 
@@ -920,23 +920,27 @@ public class BusDepotManager : MonoBehaviour
         // structure, which would swallow the yard and the whole block around it).
         GameObject garagePrefab = LoadDepotModel("Parking+Garage");
         GameObject garage = garagePrefab != null
-            ? PlaceDepotStructure(parent, garagePrefab, "Depot_Service_Garage", garageLocal, Quaternion.Euler(0f, 90f, 0f), 1.5f)
+            ? PlaceDepotStructure(parent, garagePrefab, "Depot_Service_Garage", garageLocal, Quaternion.Euler(0f, 90f, 0f), 1.5f, away)
             : null;
-        if (garage == null) BuildProceduralGarageBuilding(parent, garageLocal);
+        if (garage == null) BuildProceduralGarageBuilding(parent, garageLocal, away);
 
         // 2. Parking structure prop, same size rule.
         GameObject parkingPrefab = LoadDepotModel("parking");
         if (parkingPrefab != null)
-            PlaceDepotStructure(parent, parkingPrefab, "Depot_Parking_Structure", parkingLocal, Quaternion.identity, 0.8f);
+            PlaceDepotStructure(parent, parkingPrefab, "Depot_Parking_Structure", parkingLocal, Quaternion.identity, 0.8f, away);
     }
 
     /// <summary>
     /// Instantiates an imported depot building and keeps it only when it fits the
     /// yard budget. Returns null when the prop is too large to stand beside a yard
     /// this size, which is the caller's cue to build its own.
+    ///
+    /// When the placed prop overlaps the street, it is slid further in the
+    /// away-from-street direction (up to 8 steps of 1.5 m) before being refused,
+    /// so a prop that barely clips the kerb is recovered rather than dropped.
     /// </summary>
     GameObject PlaceDepotStructure(Transform parent, GameObject prefab, string name, Vector3 localPosition,
-        Quaternion localRotation, float scale)
+        Quaternion localRotation, float scale, float awayLocalX = 0f)
     {
         GameObject instance = Instantiate(prefab, parent);
         instance.name = name;
@@ -964,11 +968,22 @@ public class BusDepotManager : MonoBehaviour
             return null;
         }
 
-        // Fitting the yard is not the same as staying off the street either.
+        // Fitting the yard is not the same as staying off the street. Try sliding
+        // the structure away from the street (in the local-X away direction) before
+        // refusing it, so a prop that barely clips the kerb is recovered.
+        if (PropReachesStreet(instance) && awayLocalX != 0f)
+        {
+            Vector3 slideWorld = parent.TransformDirection(new Vector3(awayLocalX, 0f, 0f)).normalized;
+            for (int slide = 0; slide < 8 && PropReachesStreet(instance); slide++)
+            {
+                instance.transform.position += slideWorld * 1.5f;
+                if (PropStandsInYardLane(instance)) break;
+            }
+        }
         if (PropReachesStreet(instance))
         {
             Debug.Log($"[BusDepotManager] Refused imported depot prop '{prefab.name}' ({size.x:F1}x{size.y:F1}x{size.z:F1} m): " +
-                "its footprint would reach the street carriageway.");
+                "its footprint would reach the street carriageway even after sliding.");
             DestroySafe(instance);
             return null;
         }
@@ -1006,11 +1021,14 @@ public class BusDepotManager : MonoBehaviour
     /// <summary>
     /// The workshop the yard raises when the imported garage is refused. It answers
     /// the same lane question as every other prop: the shed is walked outward until
-    /// it clears the aisles, and dropped rather than left standing in one.
+    /// it clears the aisles, and dropped rather than left standing in one. An
+    /// additional sweep walks it in the away-from-street direction when the
+    /// previous-cleared position still overlaps the carriageway.
     /// </summary>
-    void BuildProceduralGarageBuilding(Transform parent, Vector3 localPos)
+    void BuildProceduralGarageBuilding(Transform parent, Vector3 localPos, float awayLocalX = 0f)
     {
         GameObject garage = null;
+        // Primary walk: clear the yard's own lanes.
         float outward = Mathf.Sign(localPos.x == 0f ? 1f : localPos.x);
         for (int step = 0; step <= 8; step++)
         {
@@ -1029,6 +1047,31 @@ public class BusDepotManager : MonoBehaviour
             DestroySafe(garage);
             garage = null;
         }
+
+        // Secondary walk: lane-cleared position still overlaps the street. Walk
+        // in the away-from-street direction instead, which is always safe because
+        // it leads deeper into the yard / away from the carriageway.
+        if (awayLocalX != 0f)
+        {
+            float awaySign = Mathf.Sign(awayLocalX);
+            for (int step = 1; step <= 12; step++)
+            {
+                garage = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                garage.name = "Depot_Workshop_Building";
+                garage.transform.SetParent(parent, false);
+                garage.transform.localPosition = localPos + new Vector3(awaySign * step * 1.5f, 0f, 0f) + Vector3.up * 3.5f;
+                garage.transform.localScale = new Vector3(12f, 7f, 8f);
+                if (!PropStandsInYardLane(garage) && !PropReachesStreet(garage))
+                {
+                    Renderer rend = garage.GetComponent<Renderer>();
+                    if (rend != null && curbMaterial != null) rend.material = curbMaterial;
+                    return;
+                }
+                DestroySafe(garage);
+                garage = null;
+            }
+        }
+
         Debug.LogWarning("[BusDepotManager] The yard's lanes leave no clear ground for a workshop; the shed was dropped rather than left in an aisle.");
     }
 

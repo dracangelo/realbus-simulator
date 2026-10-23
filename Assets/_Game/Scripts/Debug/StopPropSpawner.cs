@@ -163,7 +163,7 @@ public class StopPropSpawner : MonoBehaviour
         }
         ClearSpawnedProps();
         ImportedMaterialPalette.RegisterImportedRoot(transform, importedPropFallbackColor);
-        bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
+        bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
 
         int stopCount = spawnOnlyFirstStopAtMissionStart ? Mathf.Min(1, route.stops.Length) : route.stops.Length;
         List<int> stopOrder = ResolveStopOrder(route, stopCount);

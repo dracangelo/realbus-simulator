@@ -27,7 +27,6 @@ public class HUDManager : MonoBehaviour
     TextMeshProUGUI destinationText, routeBadgeText, routeNameText, clockText, weatherText;
     Image speedNeedle, fuelNeedle, temperatureNeedle, progressFill, schedulePill, fuelBarFill;
     Image parkLamp, retarderLamp, doorLamp, alertLamp;
-    RuntimeMinimapGraphic minimap;
     BusController bus;
     EngineTemperatureSystem temperature;
     FuelSystem fuel;
@@ -103,7 +102,6 @@ public class HUDManager : MonoBehaviour
         temperature = bus.GetComponent<EngineTemperatureSystem>();
         if (temperature == null) temperature = bus.gameObject.AddComponent<EngineTemperatureSystem>();
         if (canvas == null) BuildHUD();
-        if (minimap != null) { minimap.bus = bus; minimap.mission = mission; }
         renderedStopCount = -1;
         SetVisible(true);
         binding = false;
@@ -254,7 +252,7 @@ public class HUDManager : MonoBehaviour
 
     public void ToggleMinimap()
     {
-        if (minimap != null) minimap.gameObject.SetActive(!minimap.gameObject.activeSelf);
+        // Minimap removed; route is shown via world-space RouteArrowOverlay instead.
     }
 
     public static string FormatGear(int gear) { return gear < 0 ? "R" : gear == 0 ? "D" : (gear + 1).ToString(); }
@@ -342,28 +340,23 @@ public class HUDManager : MonoBehaviour
         BuildVitalsPanel();
     }
 
-    // ── Left: route card with the live minimap ────────────────────────
+    // ── Left: compact route card (no minimap — navigation uses world arrows) ──
     void BuildNavigationCard()
     {
-        RectTransform mapPanel = Panel("NavigationCard", safeRoot.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(470f, 304f), new Vector2(20f, -20f));
+        RectTransform mapPanel = Panel("NavigationCard", safeRoot.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(470f, 96f), new Vector2(20f, -20f));
         Image navBorder = Box("NavBorder", mapPanel, Vector2.zero, new Vector2(0f, 4f), UITheme.BusAmber);
         navBorder.rectTransform.anchorMin = new Vector2(0f, 1f); navBorder.rectTransform.anchorMax = new Vector2(1f, 1f); navBorder.rectTransform.pivot = new Vector2(0.5f, 1f); navBorder.rectTransform.sizeDelta = new Vector2(0f, 4f);
 
-        Image roundel = Box("RouteRoundel", mapPanel, new Vector2(20f, -16f), new Vector2(48f, 48f), UITheme.BusAmber);
+        Image roundel = Box("RouteRoundel", mapPanel, new Vector2(20f, -24f), new Vector2(48f, 48f), UITheme.BusAmber);
         roundel.rectTransform.anchorMin = roundel.rectTransform.anchorMax = new Vector2(0f, 1f); roundel.rectTransform.pivot = new Vector2(0f, 1f);
         RuntimeUiShapes.Circle(roundel);
         routeBadgeText = Text("RouteNumber", roundel.transform, "1", 22, TextAlignmentOptions.Center, Vector2.zero, new Vector2(48f, 48f));
         routeBadgeText.color = UITheme.Background;
         routeBadgeText.rectTransform.anchorMin = Vector2.zero; routeBadgeText.rectTransform.anchorMax = Vector2.one; routeBadgeText.rectTransform.offsetMin = routeBadgeText.rectTransform.offsetMax = Vector2.zero;
-        routeNameText = Text("RouteName", mapPanel, "FREE DRIVE", 15, TextAlignmentOptions.Left, new Vector2(78f, -30f), new Vector2(374f, 26f));
+        routeNameText = Text("RouteName", mapPanel, "FREE DRIVE", 15, TextAlignmentOptions.Left, new Vector2(78f, -20f), new Vector2(374f, 26f));
         routeNameText.rectTransform.anchorMin = routeNameText.rectTransform.anchorMax = new Vector2(0f, 1f); routeNameText.rectTransform.pivot = new Vector2(0f, 0.5f);
         routeNameText.color = UITheme.TextSecondary;
         FitSingleLine(routeNameText);
-
-        GameObject mini = new GameObject("Minimap", typeof(RectTransform), typeof(RuntimeMinimapGraphic)); mini.transform.SetParent(mapPanel, false);
-        RectTransform miniRt = mini.GetComponent<RectTransform>();
-        miniRt.anchorMin = Vector2.zero; miniRt.anchorMax = Vector2.one; miniRt.offsetMin = new Vector2(12f, 40f); miniRt.offsetMax = new Vector2(-12f, -64f);
-        minimap = mini.GetComponent<RuntimeMinimapGraphic>(); minimap.color = new Color(0.03f, 0.048f, 0.055f, 0.95f); minimap.raycastTarget = false;
 
         Image schedulePillBg = Box("SchedulePill", mapPanel, new Vector2(14f, 12f), new Vector2(150f, 24f), UITheme.Secondary);
         schedulePill = schedulePillBg;
@@ -503,6 +496,7 @@ public class HUDManager : MonoBehaviour
         temperatureText.rectTransform.anchorMin = temperatureText.rectTransform.anchorMax = new Vector2(0f, 1f); temperatureText.rectTransform.pivot = new Vector2(0f, 0.5f);
         temperatureText.color = UITheme.TextSecondary;
     }
+
 
     void BuildStopMarkers(int count)
     {
