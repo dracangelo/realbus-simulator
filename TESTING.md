@@ -108,6 +108,36 @@ grep "SMOKE environment" /tmp/smoke-windy.log
 
 The assembled scene runs a compressed world clock: `TimeOfDaySystem` starts at the timetable's opening hour and covers a full 24 game hours in 30 real minutes, while `ScheduleManager` keeps its own one-game-minute-per-real-minute timetable for stop punctuality. A pinned `REALBUS_SMOKE_TIME` disables that advance so the sky holds still for the duration of a smoke run. The weather cycle starts after the real WeatherService lookup, or after a short 45-second hold when the offline simulated weather is used, then holds each state for 90–240 real seconds and cross-fades over 45–90 seconds.
 
+## Imported model wiring
+
+The bus, stop and environment packs under `Assets/unity models` are not wired by hand. Regenerate them in batch after replacing or adding a source FBX:
+
+```bash
+XML=/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/linux-x86_64/lib/libxml2.so.2
+UNITY=/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Unity
+
+# Buses, bus stops, gas stations, the road pack and depot props
+LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -quit -projectPath "$PWD" \
+  -executeMethod ImportedModelWiringGenerator.GenerateFromBatch \
+  -logFile /tmp/imported-models.log
+
+# Streamed environment catalog, prefabs and materials
+LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -quit -projectPath "$PWD" \
+  -executeMethod LiveCityModelImporter.Build \
+  -logFile /tmp/live-city-models.log
+
+# Both passes in one editor launch
+LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -quit -projectPath "$PWD" \
+  -executeMethod ImportedModelWiringGenerator.GenerateContentFromBatch \
+  -logFile /tmp/imported-content.log
+```
+
+`ImportedModelWiringGenerator` scans `Assets/unity models/bus`, `busstop` and the `parking lot` stop folders recursively, dedupes nested copies by normalised model stem, prefers the candidate with the most nearby textures, and keeps the top-level path as the stable prefab/spec identity. The pass generates **14 drivable buses, 9 bus stops, 2 gas stations, 1 road pack and 3 depot props**. `LiveCityModelImporter` dedupes the environment packs the same way, keeps LOD0, removes `UCX_`, camera-path and helper-ground renderers, and writes the **16-entry** `Assets/_Game/Resources/LiveCityCatalog.asset`. `ForestPack` and the dense sources above the 65k-triangle / 22 m thresholds are skipped.
+
+`ImportedModelImportSettings` forces the game-ready FBXs through Unity's Standard material importer. `ImportedModelTextureBinder` then binds maps by material/model filename, safe per-model texture folders, glass-slot exclusion, a livery fallback for `bodi`, and embedded `aiStandardSurface` base-colour pairs. Generated material overrides live in `Assets/_Game/Generated/Materials/Buses`, `Assets/_Game/Generated/Materials/Stops` and `Assets/_Game/Resources/LiveCityGenerated`; unreferenced generated materials should be removed after a regeneration.
+
+The generated content is exercised by the headless checks above. `GameplaySmokeCheck.Run` reports `SMOKE roadClearance stopModels=... blockedStops=0 crossingKerbs=0`, and `GameplaySmokeCheck.RunLiveCity` checks the streamed props and the unload path. Both need `REALBUS_SMOKE_SKIP_CAPTURE=1` under software rendering.
+
 ## Cinematic exposure and colour grade
 
 The grade is not a scene component and not a package. `CinematicAtmosphereController` attaches `CinematicColorGrade` to `Camera.main` on scene load and after a quality change; the component runs one `OnRenderImage` pass with `Assets/_Game/Resources/Shaders/RealBusCinematicGrade.shader` (also in `GraphicsSettings`' Always Included Shaders). It is disabled on the Very Low tier and reattached after scene reloads because the atmosphere controller is `DontDestroyOnLoad`.

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CoverageReport scope="Summary">
   <Summary>
-    <Generatedon>10/23/2026 - 8:55:26 AM</Generatedon>
+    <Generatedon>10/23/2026 - 9:57:07 AM</Generatedon>
     <Parser>MultiReportParser (4x OpenCoverParser)</Parser>
     <Assemblies>2</Assemblies>
     <Classes>276</Classes>
     <Files>373</Files>
-    <Coveredlines>14054</Coveredlines>
-    <Uncoveredlines>46447</Uncoveredlines>
-    <Coverablelines>60501</Coverablelines>
-    <Totallines>67291</Totallines>
+    <Coveredlines>14061</Coveredlines>
+    <Uncoveredlines>46446</Uncoveredlines>
+    <Coverablelines>60507</Coverablelines>
+    <Totallines>67309</Totallines>
     <Linecoverage>23.2</Linecoverage>
     <Coveredbranches>0</Coveredbranches>
     <Totalbranches>0</Totalbranches>
@@ -18,7 +18,7 @@
     <Methodcoverage>29.8</Methodcoverage>
   </Summary>
   <Coverage>
-    <Assembly name="GameScripts" classes="238" coverage="27.9" coveredlines="14051" coverablelines="50221" totallines="64150" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1714" totalmethods="5084" methodcoverage="33.7">
+    <Assembly name="GameScripts" classes="238" coverage="27.9" coveredlines="14058" coverablelines="50227" totallines="64168" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1714" totalmethods="5084" methodcoverage="33.7">
       <Class name="AccessibilityManager" coverage="24.3" coveredlines="10" coverablelines="41" totallines="82" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="11" methodcoverage="45.4" />
       <Class name="AerodynamicsSystem" coverage="23" coveredlines="3" coverablelines="13" totallines="29" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="4" methodcoverage="25" />
       <Class name="AIBusRouteRunner" coverage="0" coveredlines="0" coverablelines="62" totallines="380" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="9" methodcoverage="0" />
@@ -90,7 +90,7 @@
       <Class name="ImportedVehicleVisualRepair" coverage="90.6" coveredlines="184" coverablelines="203" totallines="337" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="10" totalmethods="12" methodcoverage="83.3" />
       <Class name="Json" coverage="82.2" coveredlines="589" coverablelines="716" totallines="688" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="48" totalmethods="48" methodcoverage="100" />
       <Class name="LiveCityCatalog" coverage="100" coveredlines="1" coverablelines="1" totallines="17" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="1" methodcoverage="100" />
-      <Class name="LiveCityStreamer" coverage="15.8" coveredlines="58" coverablelines="367" totallines="548" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="30" methodcoverage="30" />
+      <Class name="LiveCityStreamer" coverage="15.5" coveredlines="58" coverablelines="373" totallines="566" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="30" methodcoverage="30" />
       <Class name="LiveryCodeCodec" coverage="93.7" coveredlines="45" coverablelines="48" totallines="361" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="5" methodcoverage="100" />
       <Class name="LiveryData" coverage="100" coveredlines="11" coverablelines="11" totallines="361" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="2" methodcoverage="100" />
       <Class name="LiveryEditor" coverage="17.4" coveredlines="27" coverablelines="155" totallines="361" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="20" methodcoverage="25" />
@@ -137,7 +137,7 @@
       <Class name="PassengerData" coverage="100" coveredlines="14" coverablelines="14" totallines="18" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="4" totalmethods="4" methodcoverage="100" />
       <Class name="PassengerFeedbackSystem" coverage="3.3" coveredlines="2" coverablelines="60" totallines="90" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="16" methodcoverage="12.5" />
       <Class name="PassengerLoadDynamics" coverage="23" coveredlines="6" coverablelines="26" totallines="46" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="4" methodcoverage="50" />
-      <Class name="PassengerManager" coverage="43.3" coveredlines="502" coverablelines="1158" totallines="928" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="46" totalmethods="97" methodcoverage="47.4" />
+      <Class name="PassengerManager" coverage="43.9" coveredlines="509" coverablelines="1158" totallines="928" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="46" totalmethods="97" methodcoverage="47.4" />
       <Class name="PassengerReactionLibrary" coverage="0" coveredlines="0" coverablelines="7" totallines="26" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="1" methodcoverage="0" />
       <Class name="PassengerSpawner" coverage="71.7" coveredlines="89" coverablelines="124" totallines="103" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="11" methodcoverage="81.8" />
       <Class name="PassengerStoryManager" coverage="1.4" coveredlines="1" coverablelines="69" totallines="118" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="23" methodcoverage="4.3" />

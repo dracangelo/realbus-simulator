@@ -277,11 +277,11 @@ public class LiveCityStreamer : MonoBehaviour
             if (walking)
             {
                 bool clear = true;
-                // Dense kerbside planting leaves fewer uninterrupted 11 m runs than
-                // the old sparse streets did. Five metres is enough for the short
-                // ambient walk cycle and keeps a walker from being rejected by a
-                // tree two sample steps away.
-                for (int step = -1; step <= 1; step++)
+                // Dense kerbside planting leaves fewer uninterrupted runs than the
+                // old sparse streets did. A five-sample run along the pavement is
+                // enough for the short ambient walk cycle and keeps a walker from
+                // being rejected by a tree two sample steps away.
+                for (int step = -2; step <= 2; step++)
                     if (!Clear(position + candidate.direction * step, radius, buildings)) { clear = false; break; }
                 if (!clear)
                 {

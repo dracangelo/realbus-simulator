@@ -1,16 +1,16 @@
 ﻿# Summary
 |||
 |:---|:---|
-| Generated on: | 10/23/2026 - 8:55:26 AM |
+| Generated on: | 10/23/2026 - 9:57:07 AM |
 | Parser: | MultiReportParser (4x OpenCoverParser) |
 | Assemblies: | 2 |
 | Classes: | 276 |
 | Files: | 373 |
-| Covered lines: | 14054 |
-| Uncovered lines: | 46447 |
-| Coverable lines: | 60501 |
-| Total lines: | 67291 |
-| Line coverage: | 23.2% (14054 of 60501) |
+| Covered lines: | 14061 |
+| Uncovered lines: | 46446 |
+| Coverable lines: | 60507 |
+| Total lines: | 67309 |
+| Line coverage: | 23.2% (14061 of 60507) |
 | Covered branches: | 0 |
 | Total branches: | 0 |
 | Covered methods: | 1715 |
@@ -19,7 +19,7 @@
 
 |**Name**|**Covered**|**Uncovered**|**Coverable**|**Total**|**Line coverage**|**Covered**|**Total**|**Branch coverage**|**Covered**|**Total**|**Method coverage**|
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-|**GameScripts**|**14051**|**36170**|**50221**|**64150**|**27.9%**|**0**|**0**|****|**1714**|**5084**|**33.7%**|
+|**GameScripts**|**14058**|**36169**|**50227**|**64168**|**27.9%**|**0**|**0**|****|**1714**|**5084**|**33.7%**|
 |AccessibilityManager|10|31|41|82|24.3%|0|0||5|11|45.4%|
 |AerodynamicsSystem|3|10|13|29|23%|0|0||1|4|25%|
 |AIBusRouteRunner|0|62|62|380|0%|0|0||0|9|0%|
@@ -91,7 +91,7 @@
 |ImportedVehicleVisualRepair|184|19|203|337|90.6%|0|0||10|12|83.3%|
 |Json|589|127|716|688|82.2%|0|0||48|48|100%|
 |LiveCityCatalog|1|0|1|17|100%|0|0||1|1|100%|
-|LiveCityStreamer|58|309|367|548|15.8%|0|0||9|30|30%|
+|LiveCityStreamer|58|315|373|566|15.5%|0|0||9|30|30%|
 |LiveryCodeCodec|45|3|48|361|93.7%|0|0||5|5|100%|
 |LiveryData|11|0|11|361|100%|0|0||2|2|100%|
 |LiveryEditor|27|128|155|361|17.4%|0|0||5|20|25%|
@@ -138,7 +138,7 @@
 |PassengerData|14|0|14|18|100%|0|0||4|4|100%|
 |PassengerFeedbackSystem|2|58|60|90|3.3%|0|0||2|16|12.5%|
 |PassengerLoadDynamics|6|20|26|46|23%|0|0||2|4|50%|
-|PassengerManager|502|656|1158|928|43.3%|0|0||46|97|47.4%|
+|PassengerManager|509|649|1158|928|43.9%|0|0||46|97|47.4%|
 |PassengerReactionLibrary|0|7|7|26|0%|0|0||0|1|0%|
 |PassengerSpawner|89|35|124|103|71.7%|0|0||9|11|81.8%|
 |PassengerStoryManager|1|68|69|118|1.4%|0|0||1|23|4.3%|

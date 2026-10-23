@@ -617,6 +617,29 @@ The lighting stack is assembled at runtime rather than baked into `GameScene`:
 
 **No static lightmap or baked Light Probe Group is used.** The city is streamed procedurally and the same scene must render a clear noon, a cloudy afternoon and a night with a moving sun. A bake would freeze one time and one cloud state, and the moving bus would sample probes lit by the wrong hour. The runtime equivalents are the `Trilight` ambient (day/night and cloud scaled), the generated sky cubemap used as `RenderSettings.customReflectionTexture`, and the bus's realtime reflection probe. There is no `LightProbeGroup` in the scene; imported bus renderers therefore use the runtime ambient and the bus probe rather than baked probe data.
 
+### Imported models and generated content
+
+The source packs under `Assets/unity models` are editor inputs, not scene objects. The wiring tools generate stable prefabs, specs and materials under `_Game` so a scene reload never depends on an FBX's import settings:
+
+| Generated location | Contents |
+|--------------------|----------|
+| `Assets/_Game/Generated/Models/Buses/*_Visual.prefab` | Normalised visual roots for the 14 drivable buses |
+| `Assets/_Game/Generated/Prefabs/Buses/*_Drivable.prefab` | Drivable bus prefabs (body, wheels, colliders, controller) |
+| `Assets/_Game/Resources/BusSpecs/Imported/` | Garage/fleet specs with stable `busId`s |
+| `Assets/_Game/Resources/BusStopsGenerated/` | 9 stop/shelter prefabs, including the four parking-lot variants |
+| `Assets/_Game/Generated/Materials/Buses`, `.../Stops` | Material overrides with bound albedo/normal maps |
+| `Assets/_Game/Resources/LiveCityGenerated/` | Streamed environment prefabs and material overrides |
+| `Assets/_Game/Resources/LiveCityCatalog.asset` | 16-entry environment catalog used by `LiveCityStreamer` |
+| `Assets/_Game/Generated/IMPORTED_MODEL_WIRING.md` | Human-readable wiring report |
+
+`ImportedModelWiringGenerator` recursively scans the bus, bus-stop and parking-lot folders, dedupes nested copies by normalised model stem, prefers the copy with the most nearby textures, and keeps the top-level path as the stable identity. It also generates 2 gas stations, 1 road pack and 3 depot props. `LiveCityModelImporter` dedupes the environment packs, keeps only LOD0, strips `UCX_`, camera-path and helper-ground renderers, and skips `ForestPack` plus sources above the dense-prop thresholds. `ImportedModelImportSettings` forces the source FBXs through Unity's Standard material importer, and `ImportedModelTextureBinder` binds maps with safe per-model texture folders, glass-slot exclusion, a `bodi` livery fallback and embedded `aiStandardSurface` base-colour pairing.
+
+The catalog currently contains 16 entries: one pedestrian, five billboards, one bench, four trees, two plants and three rocks. New environment entries include Banana (4,900 triangles), Coconut (1,944), Grass (58,880) and Tree+1 (54,648). Dense sources such as `autumn_grass.fbx` (7.7M triangles), `Carpinus Betulus` (1.95M) and `Pyrrosia Lingua` (1.69M) remain skipped.
+
+Stop placement remains safety-first: `StopPropSpawner.MoveClearOfRoad` pushes a shelter, poster or commuter off the carriageway, removes a poster pane that still cannot clear, and falls back to the compact totem when the shelter cannot fit. The smoke probe must report `blockedStops=0` and `crossingKerbs=0`. `Bus_Stand`'s `BusStop` material and `bus_Stop`'s `Cube.014`/`No Name` material have no safe single map and use the runtime palette fallback; `Grass+and+Ground+Texture` also has no nearby map.
+
+Regeneration commands and the headless checks are in `TESTING.md`. The generator is editor-only; runtime code consumes the generated prefabs, specs, materials and `LiveCityCatalog`.
+
 ---
 
 ## ScriptableObjects Reference

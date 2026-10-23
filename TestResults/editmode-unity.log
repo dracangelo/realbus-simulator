@@ -8,12 +8,12 @@ Kernel version:          7.1.5+kali-amd64
 Architecture:            x86_64
 Window Protocol:         Wayland (XWayland)
 Available memory:        15852 MB
-Date:                    2026-10-23T05:53:58Z
-VBCSCompilerPreWarmer: ERROR: Couldn't pre-warm as failed to write stub code temporary file (/tmpUnityVBCSPreWarm_569939.cs)
-VBCSCompiler prewarm took 0.41 ms
+Date:                    2026-10-23T06:55:00Z
+VBCSCompilerPreWarmer: ERROR: Couldn't pre-warm as failed to write stub code temporary file (/tmpUnityVBCSPreWarm_622329.cs)
+VBCSCompiler prewarm took 0.91 ms
 [Licensing::Module] Trying to connect to existing licensing client channel...
 [Licensing::IpcConnector] Channel LicenseClient-drac doesn't exist
-[Licensing::Module] Successfully launched the LicensingClient (PId: 569957)
+[Licensing::Module] Successfully launched the LicensingClient (PId: 622341)
 Selected window backend: (null) 
 Desktop is 1280 x 1024 @ 60 Hz
 Initialize udev device monitor.
@@ -78,28 +78,28 @@ Successfully changed project path to: /home/drac/Documents/coding/realbus-simula
     "memorysetup-job-temp-allocator-block-size-background=1048576"
     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
 Logging is directed to a specific file, skipping project log.
-Player connection [140217899330560]  Target information:
+Player connection [140191562939392]  Target information:
 
-Player connection [140217899330560]  * "[IP] 192.168.100.13 [Port] 55504 [Flags] 2 [Guid] 1130814005 [EditorId] 1130814005 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.13) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+Player connection [140191562939392]  * "[IP] 192.168.100.13 [Port] 55504 [Flags] 2 [Guid] 2100865808 [EditorId] 2100865808 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.13) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
 
-Player connection [140217899330560]  * "[IP] 172.17.0.1 [Port] 55504 [Flags] 2 [Guid] 1130814005 [EditorId] 1130814005 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.13) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+Player connection [140191562939392]  * "[IP] 172.17.0.1 [Port] 55504 [Flags] 2 [Guid] 2100865808 [EditorId] 2100865808 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.13) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
 
-Player connection [140217899330560] Host joined multi-casting on [225.0.0.222:54997]...
-Player connection [140217899330560] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [140191562939392] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [140191562939392] Host joined alternative multi-casting on [225.0.0.222:34997]...
 Input System module state changed to: Initialized.
 [Physics::Module] Initialized fallback backend.
 [Physics::Module] Id: 0xdecafbad
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac" at "2026-10-23T05:53:59.339895Z"
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac" at "2026-10-23T06:55:01.296129Z"
 [SignatureVerifier] Application signature verification not supported on this platform.
 [Licensing::Client] Handshaking with LicensingClient:
   Version:                 1.18.3+d7ffd15
-  Session Id:              0a1a5a03c378453c8ab18f99452c2f9b
-  Correlation Id:          0cff2ee42a196d57a3f623169e7a0ca7
-  External correlation Id: 8941159805866039554
+  Session Id:              ef8270161a9140ceadeb353e136f2a9f
+  Correlation Id:          17cbf67bf11fb50a3742158a5eb8fcdf
+  External correlation Id: 6957959131677539906
   Machine Id:              o3y/Pwceucb8Ha7Dsv+8jcLZd2I=
-[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-drac" (connect: 0.38s, validation: 0.08s, handshake: 0.00s)
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac-notifications" at "2026-10-23T05:53:59.424876Z"
-[Licensing::Module] Connected to LicensingClient (PId: 569957, launch time: 0.00, total connection time: 0.46s)
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-drac" (connect: 0.57s, validation: 0.12s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac-notifications" at "2026-10-23T06:55:01.41196Z"
+[Licensing::Module] Connected to LicensingClient (PId: 622341, launch time: 0.00, total connection time: 0.68s)
 [Licensing::Module] Error: Access token is unavailable; failed to update
 [Licensing::Client] Successfully resolved entitlement details
 [Licensing::Module] License group:
@@ -108,7 +108,10 @@ Input System module state changed to: Initialized.
   Type: Assigned
   Expiration: Unlimited
 [Licensing::Client] Successfully updated license, isAsync: True, time: 0.02
-[Licensing::Module] Licensing Background thread has ended after 0.55s
+[Licensing::Module] Licensing Background thread has ended after 0.77s
+[Package Manager] Connected to IPC stream "Upm-622329" after 0.4 seconds.
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
 Initialising UDS system complete:
   - System type: Client
   - Resource namespace: 809e1407a05d52a82f37878b0cd6251b
@@ -117,9 +120,6 @@ Initialising UDS system complete:
   - Command buffer size: 8192
   - Hashmap size: 4194304
   - Service connected: false
-[Package Manager] Connected to IPC stream "Upm-569939" after 0.3 seconds.
-[Licensing::Client] Successfully resolved entitlement details
-Library Redirect Path: Library/
 Launching Unity Data Store - /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/Unity.DataStore 
 Unity Data Store artifact dir = Library/DataStore, working dir = /home/drac/Documents/coding/realbus-simulator[Physics::Module] Selected backend.
 [Physics::Module] Name: PhysX
@@ -128,7 +128,7 @@ Unity Data Store artifact dir = Library/DataStore, working dir = /home/drac/Docu
 [Physics::Module] Integration Version: 1.0.0
 [Physics::Module] Threading Mode: Multi-Threaded
 Unity Data Store running and initialised
-Refreshing native plugins compatible for Editor in 7.07 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 12.29 ms, found 0 plugins.
 Initialize engine version: 6000.6.0f1 (f7f8ed4d1e24)
 [EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
 [Subsystems] Discovering subsystems at path /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
@@ -147,13 +147,13 @@ exture_buffer_range GL_ARB_texture_compression_bptc GL_ARB_texture_compression_r
 pth_stencil GL_ATI_blend_equation_separate GL_ATI_meminfo GL_ATI_texture_float GL_ATI_texture_mirror_once GL_EXT_EGL_image_storage GL_EXT_EGL_image_storage_compression GL_EXT_EGL_sync GL_EXT_abgr GL_EXT_blend_equation_separate GL_EXT_debug_label GL_EXT_depth_bounds_test GL_EXT_draw_buffers2 GL_EXT_draw_instanced GL_EXT_framebuffer_blit GL_EXT_framebuffer_multisample GL_EXT_framebuffer_multisample_blit_scaled GL_EXT_framebuffer_object GL_EXT_framebuffer_sRGB GL_EXT_memory_object GL_EXT_memory_object_fd GL_EXT_mesh_shader GL_EXT_packed_depth_stencil GL_EXT_packed_float GL_EXT_pixel_buffer_object GL_EXT_polygon_offset_clamp GL_EXT_provoking_vertex GL_EXT_shader_clock GL_EXT_shader_framebuffer_fetch GL_EXT_shader_framebuffer_fetch_non_coherent GL_EXT_shader_image_load_formatted GL_EXT_shader_integer_mix GL_EXT_texture_array GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_compression_s3tc GL_EXT_texture_filter_anisotropic GL_EXT_texture_filter_minmax GL_EXT_texture_integer GL_EXT_te
 xture_mirror_clamp GL_EXT_texture_sRGB GL_EXT_texture_sRGB_R8 GL_EXT_texture_sRGB_RG8 GL_EXT_texture_sRGB_decode GL_EXT_texture_shadow_lod GL_EXT_texture_shared_exponent GL_EXT_texture_snorm GL_EXT_texture_storage GL_EXT_texture_swizzle GL_EXT_timer_query GL_EXT_transform_feedback GL_EXT_vertex_array_bgra GL_EXT_vertex_attrib_64bit GL_IBM_multimode_draw_arrays GL_INTEL_shader_atomic_float_minmax GL_KHR_blend_equation_advanced GL_KHR_blend_equation_advanced_coherent GL_KHR_context_flush_control GL_KHR_debug GL_KHR_no_error GL_KHR_parallel_shader_compile GL_KHR_robust_buffer_access_behavior GL_KHR_robustness GL_KHR_texture_compression_astc_ldr GL_KHR_texture_compression_astc_sliced_3d GL_MESA_framebuffer_flip_y GL_MESA_pack_invert GL_MESA_shader_integer_functions GL_MESA_texture_signed_rgba GL_NVX_gpu_memory_info GL_NV_alpha_to_coverage_dither_control GL_NV_conditional_render GL_NV_copy_image GL_NV_depth_clamp GL_NV_packed_depth_stencil GL_NV_sample_locations GL_NV_shader_atomic_float GL_NV_texture_barrier GL_
 OES_EGL_image GL_OVR_multiview GL_OVR_multiview2 GL_S3_s3tc
-OPENGL LOG: Creating OpenGL 4.6 graphics device ; Context level  <OpenGL 4.5> ; Context handle 554767776
+OPENGL LOG: Creating OpenGL 4.6 graphics device ; Context level  <OpenGL 4.5> ; Context handle -1503678464
 Initialize mono
 Mono path[0] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Managed'
 Mono path[1] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
 Mono path[2] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-linux'
 Mono config path = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56939
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56329
 Code Coverage is enabled. Note that Code Coverage can affect the performance.
 CodeReloadManager initialized
 ImportWorker Server TCP listen port: 0
@@ -165,7 +165,7 @@ Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/
 [Licensing::Client] Successfully resolved entitlement details
 Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
 Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
-Registered in 0.004639 seconds.
+Registered in 0.011037 seconds.
 [usbmuxd] Start listen thread
 [usbmuxd] Listen thread started
 Native extension for LinuxStandalone target not found
@@ -175,25 +175,26 @@ Package Manager log level set to [2]
 [Licensing::Client] Successfully resolved entitlement details
 ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Scripting: successfully reloaded assembly
-- Finished resetting the current domain, in  5.817 seconds
-Domain Reload Profiling: 6515ms
-	BeginReloadAssembly (111ms)
-		CreateAndSetChildDomain (11ms)
-	RebuildCommonClasses (5ms)
-	RebuildNativeTypeToScriptingClass (14ms)
-	initialDomainReloadingComplete (79ms)
-	LoadAllAssembliesAndSetupDomain (487ms)
-		LoadAssemblies (100ms)
-		TypeCache.Refresh (337ms)
-			TypeCache.ScanAssembly (317ms)
+- Finished resetting the current domain, in  8.542 seconds
+Domain Reload Profiling: 9744ms
+	BeginReloadAssembly (216ms)
+		CreateAndSetChildDomain (9ms)
+	RebuildCommonClasses (6ms)
+	RebuildNativeTypeToScriptingClass (19ms)
+	initialDomainReloadingComplete (111ms)
+	LoadAllAssembliesAndSetupDomain (848ms)
+		LoadAssemblies (210ms)
+		TypeCache.Refresh (517ms)
+			TypeCache.ScanAssembly (484ms)
 		AnalyzeDomain (1ms)
-	FinalizeReload (5819ms)
+	FinalizeReload (8544ms)
 		SetupLoadedEditorAssemblies (0ms)
-			LogAssemblyErrors (3ms)
-			InitializePlatformSupportModulesInManaged (14ms)
-			BeforeProcessingInitializeOnLoad (197ms)
-			ProcessInitializeOnLoadAttributes (155ms)
-			ProcessInitializeOnLoadMethodAttributes (5148ms)
+			LogAssemblyErrors (7ms)
+			InitializePlatformSupportModulesInManaged (35ms)
+			BeforeProcessingInitializeOnLoad (557ms)
+			ProcessInitializeOnLoadAttributes (410ms)
+			ProcessInitializeOnLoadMethodAttributes (6956ms)
+			EditorAssembliesLoaded (3ms)
 [Licensing::Client] Successfully resolved entitlement details
 Application.AssetDatabase Initial Refresh Start
 [Package Manager] Restoring resolved packages state from cache
@@ -269,188 +270,190 @@ Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInter
 Starting: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/BuildPipeline/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aEDbg.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
 WorkingDir: /home/drac/Documents/coding/realbus-simulator
 DisplayProgressbar: Compiling Scripts
-ExitCode: 4 Duration: 4s770ms
-[649/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.pdb
-[651/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.pdb
-[652/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll
-[654/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.dll
-[687/910    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
-[758/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.dll
-[759/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.dll
-[760/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.dll
-[761/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.dll
-[762/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.dll
-[763/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.dll
-[764/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.dll
-[765/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.dll
-[766/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.dll
-[767/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.dll
-[768/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.dll
-[769/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.dll
-[770/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.dll
-[771/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.dll
-[772/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.dll
-[773/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.dll
-[774/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.dll
-[775/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.dll
-[776/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.dll
-[777/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.dll
+ExitCode: 0 Duration: 17s
+[605/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.pdb
+[609/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll
+[623/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.pdb
+[635/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.dll
+[685/910    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[753/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.dll
+[755/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.dll
+[756/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.dll
+[757/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.dll
+[758/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.dll
+[759/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.dll
+[760/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.dll
+[761/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.dll
+[762/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.dll
+[763/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.dll
+[764/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.dll
+[765/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.dll
+[766/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.dll
+[767/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.dll
+[768/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.dll
+[769/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.dll
+[770/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.dll
+[771/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.dll
+[772/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.dll
+[773/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.dll
+[774/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.dll
+[775/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.dll
+[776/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.dll
+[777/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.dll
 [778/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Networking.dll
-[779/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.dll
-[780/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.dll
-[781/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.dll
-[782/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.dll
-[783/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.dll
-[784/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.dll
-[785/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.dll
-[786/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.dll
-[787/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.dll
-[788/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.dll
-[789/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.dll
-[790/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.dll
-[791/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.dll
-[792/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.pdb
-[793/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.pdb
-[794/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.dll
-[795/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.dll
-[796/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.pdb
-[797/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.pdb
-[798/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.dll
-[799/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.dll
-[800/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.dll
-[801/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.dll
-[802/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll
-[803/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.pdb
-[804/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.pdb
-[805/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.pdb
-[806/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.dll
-[807/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.pdb
-[808/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.dll
-[809/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.pdb
-[810/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.dll
-[811/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.pdb
-[812/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.pdb
-[813/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.dll
-[814/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Networking.pdb
-[815/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.pdb
-[816/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.pdb
-[817/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.pdb
-[818/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.pdb
-[819/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.pdb
-[820/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.pdb
-[821/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.pdb
-[822/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.pdb
-[823/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.dll
-[824/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.dll
-[825/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.dll
-[826/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.dll
-[827/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.pdb
-[828/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.pdb
-[829/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.dll
-[830/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.dll
-[831/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.dll
-[832/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.pdb
-[833/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.pdb
-[834/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.pdb
-[835/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.dll
-[836/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.pdb
-[837/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.pdb
-[838/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.pdb
-[839/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.pdb
-[840/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.pdb
-[841/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.pdb
-[842/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.pdb
-[843/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.dll
-[844/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.pdb
-[845/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.pdb
-[846/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.pdb
-[847/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.pdb
-[848/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.pdb
-[849/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.dll
-[850/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.dll
-[851/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.pdb
-[852/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.pdb
-[853/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.pdb
-[854/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.pdb
-[855/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.dll
-[856/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.pdb
-[857/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.dll
-[858/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.pdb
-[859/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.dll
-[860/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.dll
-[861/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.pdb
-[862/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.pdb
-[863/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.dll
-[864/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll
-[865/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.pdb
-[866/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.dll
-[867/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.dll
-[868/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.pdb
-[869/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.pdb
-[870/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.pdb
-[871/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.pdb
-[872/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.dll
-[873/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.pdb
-[874/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.pdb
-[875/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.pdb
-[876/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.pdb
-[877/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.pdb
-[878/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.pdb
-[879/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.pdb
-[880/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.pdb
-[881/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.dll
-[882/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.pdb
-[883/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.pdb
+[779/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.dll
+[780/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.dll
+[781/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.dll
+[782/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.dll
+[783/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.dll
+[784/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.dll
+[785/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.dll
+[786/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.dll
+[787/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.dll
+[788/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.dll
+[789/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.dll
+[790/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.pdb
+[791/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.pdb
+[792/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.pdb
+[793/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.pdb
+[794/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll
+[795/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.pdb
+[796/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.dll
+[797/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.pdb
+[798/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.pdb
+[799/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.pdb
+[800/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.pdb
+[801/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.dll
+[802/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.dll
+[803/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll
+[804/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.dll
+[805/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.dll
+[806/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Networking.pdb
+[807/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.pdb
+[808/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.pdb
+[809/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.pdb
+[810/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.pdb
+[811/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.dll
+[812/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.pdb
+[813/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.pdb
+[814/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.pdb
+[815/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.dll
+[816/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.pdb
+[817/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.dll
+[818/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.pdb
+[819/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.dll
+[820/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.pdb
+[821/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.pdb
+[822/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.dll
+[823/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.pdb
+[824/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.dll
+[825/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.dll
+[826/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.pdb
+[827/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.pdb
+[828/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.pdb
+[829/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.pdb
+[830/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.pdb
+[831/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.pdb
+[832/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.pdb
+[833/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.pdb
+[834/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.pdb
+[835/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.dll
+[836/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.pdb
+[837/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.pdb
+[838/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.pdb
+[839/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.dll
+[840/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.dll
+[841/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.pdb
+[842/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.pdb
+[843/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.pdb
+[844/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.dll
+[845/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.pdb
+[846/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.pdb
+[847/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.pdb
+[848/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.dll
+[849/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.pdb
+[850/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.pdb
+[851/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.pdb
+[852/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.pdb
+[853/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.pdb
+[854/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.dll
+[855/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.dll
+[856/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.pdb
+[857/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.dll
+[858/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.pdb
+[859/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.dll
+[860/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.dll
+[861/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.dll
+[862/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.dll
+[863/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.pdb
+[864/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.pdb
+[865/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.pdb
+[866/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.pdb
+[867/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.pdb
+[868/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.pdb
+[869/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.pdb
+[870/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.pdb
+[871/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.dll
+[872/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.pdb
+[873/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.pdb
+[874/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.dll
+[875/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.pdb
+[876/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.pdb
+[877/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.dll
+[878/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll
+[879/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.pdb
+[880/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.pdb
+[881/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.dll
+[882/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.pdb
+[883/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.pdb
 [884/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.pdb
-[885/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.pdb
-[886/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.dll
-[887/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.pdb
-[888/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.pdb
-[889/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.pdb
-[890/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.pdb
-[891/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.pdb
-[892/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.pdb
-[893/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.dll
-[894/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.pdb
-[895/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.dll
-[896/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.pdb
-[897/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll
-Rebuilding DAG because FileSignature timestamp changed: Library/Bee/2400b0aEDbg-inputdata.json
-*** Tundra requires additional run (4.74 seconds), 146 items updated, 897 evaluated
-Starting: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/DotNetSdk/dotnet "/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/2400b0aEDbg.dag.json" "Library/Bee/2400b0aEDbg-inputdata.json" "Library/Bee/buildprogram0.traceevents"
-WorkingDir: /home/drac/Documents/coding/realbus-simulator
-ExitCode: 0 Duration: 2s386ms
-Starting: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/BuildPipeline/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aEDbg.dag" --continue-on-failure --dagfilejson="Library/Bee/2400b0aEDbg.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
-WorkingDir: /home/drac/Documents/coding/realbus-simulator
-ExitCode: 0 Duration: 7s592ms
-Finished compiling graph: 913 nodes, 18598 flattened edges (16200 ToBuild, 150 ToUse), maximum node priority 897
-[479/910    0s] WriteText Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.Editor.rsp
-[610/910    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
-[898/910    1s] Csc Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.Editor.dll (+2 others)
-[899/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/GameScripts.Editor.dll (+pdb)
-Processing assembly Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.Editor.dll, with 137 defines and 329 references
+[885/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.pdb
+[886/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.pdb
+[887/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.pdb
+[888/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.pdb
+[889/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.dll
+[BUSY       6s] Csc Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.dll (+2 others)
+[BUSY      16s] Csc Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.dll (+2 others)
+[890/910   16s] Csc Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.dll (+2 others)
+Assets/_Game/Scripts/Map/BusDepotManager.cs(663,63): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets/_Game/Scripts/Map/BusDepotManager.cs(663,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+[895/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/GameScripts.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.dll, with 139 defines and 318 references
 processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
 1 processor(s) skipped this assembly
-[900/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.pdb
-[901/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.dll
-[902/910    3s] Csc Library/Bee/artifacts/2400b0aEDbg.dag/Assembly-CSharp.dll (+2 others)
-[903/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/Assembly-CSharp.dll (+pdb)
-Processing assembly Library/Bee/artifacts/2400b0aEDbg.dag/Assembly-CSharp.dll, with 139 defines and 350 references
+[896/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/GameScriptsTests.Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aEDbg.dag/GameScriptsTests.Editor.dll, with 137 defines and 308 references
 processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
 1 processor(s) skipped this assembly
-[904/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
-[905/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
-[906/910    1s] Csc Library/Bee/artifacts/2400b0aEDbg.dag/Assembly-CSharp-Editor.dll (+2 others)
-[907/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+[897/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
 Processing assembly Library/Bee/artifacts/2400b0aEDbg.dag/Assembly-CSharp-Editor.dll, with 137 defines and 376 references
 processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
 1 processor(s) skipped this assembly
-[908/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
-[909/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
-*** Tundra build success (7.55 seconds), 14 items updated, 910 evaluated
+[898/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/GameScripts.Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aEDbg.dag/GameScripts.Editor.dll, with 137 defines and 329 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[899/910    0s] ILPostProcess Library/Bee/artifacts/2400b0aEDbg.dag/post-processed/Assembly-CSharp.dll (+pdb)
+Processing assembly Library/Bee/artifacts/2400b0aEDbg.dag/Assembly-CSharp.dll, with 139 defines and 350 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[900/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.dll
+[901/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.pdb
+[902/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.dll
+[903/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.pdb
+[904/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
+[905/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.dll
+[906/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
+[907/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.pdb
+[908/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+[909/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+*** Tundra build success (16.99 seconds), 157 items updated, 910 evaluated
+Assets/_Game/Scripts/Map/BusDepotManager.cs(663,63): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets/_Game/Scripts/Map/BusDepotManager.cs(663,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+Assets/_Game/Scripts/Map/BusDepotManager.cs(663,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+AssetDatabase: script compilation time: 20.540040s
 Total cache size 77367884
-AssetDatabase: script compilation time: 16.237755s
-Total cache size after purge 77367884, took 00:00:00.2721117
+Total cache size after purge 77367884, took 00:00:01.7330698
 Begin MonoManager ReloadAssembly
 Symbol file LoadedFromMemory is not a mono symbol file
 Symbol file LoadedFromMemory is not a mono symbol file
@@ -458,136 +461,137 @@ Symbol file LoadedFromMemory is not a mono symbol file
 Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
 'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
 'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
-Refreshing native plugins compatible for Editor in 13.38 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 32.84 ms, found 0 plugins.
 Native extension for LinuxStandalone target not found
 Native extension for iOS target not found
 Native extension for Android target not found
-Refreshing native plugins compatible for Editor in 14.93 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 24.91 ms, found 0 plugins.
 ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
 Scripting: successfully reloaded assembly
-- Finished resetting the current domain, in  3.961 seconds
-Domain Reload Profiling: 7972ms
-	BeginReloadAssembly (699ms)
-		DisableScriptedObjects (73ms)
-		CreateAndSetChildDomain (154ms)
-	RebuildCommonClasses (40ms)
-	RebuildNativeTypeToScriptingClass (48ms)
-	initialDomainReloadingComplete (182ms)
-	LoadAllAssembliesAndSetupDomain (3037ms)
-		LoadAssemblies (1201ms)
-		TypeCache.Refresh (803ms)
-			TypeCache.ScanAssembly (724ms)
-		AnalyzeDomain (337ms)
-			BuildScriptInfoCaches (295ms)
-			ResolveRequiredComponents (34ms)
-	FinalizeReload (3965ms)
+- Finished resetting the current domain, in  6.696 seconds
+Domain Reload Profiling: 14578ms
+	BeginReloadAssembly (1772ms)
+		DisableScriptedObjects (183ms)
+		CreateAndSetChildDomain (528ms)
+	RebuildCommonClasses (62ms)
+	RebuildNativeTypeToScriptingClass (96ms)
+	initialDomainReloadingComplete (467ms)
+	LoadAllAssembliesAndSetupDomain (5478ms)
+		LoadAssemblies (2788ms)
+		TypeCache.Refresh (1351ms)
+			TypeCache.ScanAssembly (1269ms)
+		AnalyzeDomain (491ms)
+			BuildScriptInfoCaches (438ms)
+			ResolveRequiredComponents (43ms)
+	FinalizeReload (6703ms)
 		SetupLoadedEditorAssemblies (0ms)
-			LogAssemblyErrors (15ms)
-			InitializePlatformSupportModulesInManaged (33ms)
-			BeforeProcessingInitializeOnLoad (498ms)
-			ProcessInitializeOnLoadAttributes (2117ms)
-			ProcessInitializeOnLoadMethodAttributes (199ms)
-			AfterProcessingInitializeOnLoad (26ms)
-			EditorAssembliesLoaded (6ms)
-		AwakeInstancesAfterBackupRestoration (95ms)
+			LogAssemblyErrors (13ms)
+			InitializePlatformSupportModulesInManaged (78ms)
+			BeforeProcessingInitializeOnLoad (910ms)
+			ProcessInitializeOnLoadAttributes (3329ms)
+			ProcessInitializeOnLoadMethodAttributes (330ms)
+			AfterProcessingInitializeOnLoad (30ms)
+			EditorAssembliesLoaded (8ms)
+		AwakeInstancesAfterBackupRestoration (223ms)
 Starting new worker id: 0 with log in /home/drac/Documents/coding/realbus-simulator/Logs/AssetImportWorkerHW0.log
 
-Asset Pipeline Refresh (id=b270883ff4d0d1bf692c6f9ba5d6a513): Total: 27.284 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+Asset Pipeline Refresh (id=2c28f7b4329fe8ee5ab7594e10c8f06f): Total: 40.989 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
 	(Values over 0.05ms)
 	Summary:
 		Imports: total=0 (actual=0, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=6580 ms
-		Asset DB Callback time: managed=172 ms, native=8 ms
-		Scripting: domain reloads=1, domain reload time=4102 ms, compile time=16241 ms, other=178 ms
+		Asset DB Process Time: managed=0 ms, native=11795 ms
+		Asset DB Callback time: managed=203 ms, native=16 ms
+		Scripting: domain reloads=1, domain reload time=8142 ms, compile time=20546 ms, other=285 ms
 		Project Asset Count: scripts=1702, non-scripts=3858
 		Asset File Changes: new=0, changed=0, moved=0, deleted=0
 		Scan Filter Count: 1
-	InvokePackagesCallback: 9.591ms
-	ApplyChangesToAssetFolders: 1.019ms
-	Scan: 1498.441ms
-	Collect global state as custom dependencies: 9.806ms
-	CategorizeScriptCompilationAssets: 94.915ms
-	ProcessAssetsWithTransientArtifactChanges: 363.857ms
-	CategorizeAssets: 179.442ms
-	CompileScripts: 16240.850ms
-	ImportOutOfDateAssets: 4114.523ms (4052.850ms without children)
-		UnloadImportedAssets: 0.597ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 4.818ms
-		ImportSchedulerStart: 56.243ms
-	PostProcessAllAssets: 172.803ms
-		MonoPostProcessAllAssets: 172.621ms
-			SyncVS.PostprocessSyncProject 67.673ms
-			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 39.846ms
-			EditModeScopePostprocessor.OnPostprocessAllAssets 13.824ms
-			SpeedTree9Postprocessor.OnPostprocessAllAssets 2.851ms
-			CinemachineSettings.OnPostprocessAllAssets 1.562ms
-			InputActionAssetPostprocessor.OnPostprocessAllAssets 1.435ms
-			DomainReloadProcessor.OnPostprocessAllAssets 1.096ms
-			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.882ms
-			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.831ms
-			ReferencedClipsPostProcessor.OnPostprocessAllAssets 0.693ms
-			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.649ms
-			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.363ms
-	UnloadStreamsBegin: 3.027ms
-	PersistCurrentRevisions: 1.056ms
-	GenerateScriptTypeHashes: 11.526ms
-	GenerateScriptTypeSerializationHashes: 23.493ms
-	Untracked: 4582.485ms
+	InvokePackagesCallback: 18.500ms
+	ApplyChangesToAssetFolders: 1.643ms
+	Scan: 3093.960ms
+	Collect global state as custom dependencies: 18.589ms
+	CategorizeScriptCompilationAssets: 243.421ms
+	ProcessAssetsWithTransientArtifactChanges: 670.715ms
+	CategorizeAssets: 284.191ms
+	CompileScripts: 20545.827ms
+	ImportOutOfDateAssets: 7010.394ms (6926.355ms without children)
+		UnloadImportedAssets: 1.057ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 12.106ms
+		ImportSchedulerStart: 70.835ms
+	PostProcessAllAssets: 203.722ms
+		MonoPostProcessAllAssets: 203.475ms
+			SyncVS.PostprocessSyncProject 62.392ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 56.187ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 5.808ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 4.105ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 2.149ms
+			CinemachineSettings.OnPostprocessAllAssets 1.681ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 1.328ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 1.113ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 1.040ms
+			DomainReloadProcessor.OnPostprocessAllAssets 0.964ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.954ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.613ms
+	UnloadStreamsBegin: 5.815ms
+	PersistCurrentRevisions: 1.128ms
+	GenerateScriptTypeHashes: 17.750ms
+	GenerateScriptTypeSerializationHashes: 36.676ms
+	Untracked: 8883.145ms
 
 Application.AssetDatabase Initial Refresh End
-AutoLocale: current locale expects 'C' but got 'en_US.UTF-8'Launched and connected shader compiler UnityShaderCompiler after 0.03 seconds
-Scanning for USB devices : 14.498ms
+AutoLocale: current locale expects 'C' but got 'en_US.UTF-8'Launched and connected shader compiler UnityShaderCompiler after 0.09 seconds
+Scanning for USB devices : 20.787ms
 Initializing Unity extensions:
 UpdateMenuTitleForLanguage: 10
 [MODES] ModeService[none].Initialize
 [MODES] ModeService[none].LoadModes
 [MODES] Loading mode Default (0) for mode-current-id-My-project
+Worker ready: AssetImportWorkerHW0 0
 Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 6645 unused Assets / (5.9 MB). Loaded Objects now: 7360.
-Memory consumption went from 206.2 MB to 200.4 MB.
-Total: 50.821493 ms (FindLiveObjects: 2.361529 ms CreateObjectMapping: 2.013914 ms MarkObjects: 32.741054 ms  DeleteObjects: 12.729276 ms)
+Unloading 6645 unused Assets / (6.1 MB). Loaded Objects now: 7360.
+Memory consumption went from 206.4 MB to 200.3 MB.
+Total: 48.917161 ms (FindLiveObjects: 1.776014 ms CreateObjectMapping: 1.349349 ms MarkObjects: 30.082368 ms  DeleteObjects: 14.600355 ms)
 
 Disable old input system
-[Project] Loading completed in 40.064 seconds
-	Project init time: 				38.458 seconds
+[Project] Loading completed in 61.888 seconds
+	Project init time: 				57.194 seconds
 		Template init time: 		0.000 seconds
-		Package Manager init time: 		0.272 seconds
-		Asset Database init time: 		0.270 seconds
-		Global illumination init time: 	0.003 seconds
-		Assemblies load time: 			6.556 seconds
-		Unity extensions init time: 	0.121 seconds
-		Asset Database refresh time: 	27.284 seconds
-	Scene opening time: 			1.255 seconds
-##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1792734879018,"processId":569939,"projectLoad":40.063782171,"projectInit":38.458245006,"templateInit":0.0,"packageManagerInit":0.271969156,"assetDatabaseInit":0.270185355,"globalIlluminationInit":0.003046408,"assembliesLoad":6.556025016,"unityExtensionsInit":0.120627442,"assetDatabaseRefresh":27.284117004,"sceneOpening":1.255127333}
-##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1792734879018,"processId":569939,"editorVersion":"6000.6.0f1 (f7f8ed4d1e24)","branch":"6000.6/respin/6000.6.0f1-fa21a270ab12","buildType":"Release","platform":"Linux"}
+		Package Manager init time: 		0.373 seconds
+		Asset Database init time: 		0.143 seconds
+		Global illumination init time: 	0.004 seconds
+		Assemblies load time: 			9.944 seconds
+		Unity extensions init time: 	0.217 seconds
+		Asset Database refresh time: 	40.989 seconds
+	Scene opening time: 			4.312 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1792738562605,"processId":622329,"projectLoad":61.888423788999994,"projectInit":57.194120775,"templateInit":0.0,"packageManagerInit":0.37262734,"assetDatabaseInit":0.142574204,"globalIlluminationInit":0.003620297,"assembliesLoad":9.944054147,"unityExtensionsInit":0.217292116,"assetDatabaseRefresh":40.989202409,"sceneOpening":4.312146989}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1792738562605,"processId":622329,"editorVersion":"6000.6.0f1 (f7f8ed4d1e24)","branch":"6000.6/respin/6000.6.0f1-fa21a270ab12","buildType":"Release","platform":"Linux"}
+[Licensing::Client] Successfully resolved entitlement details
 
-Asset Pipeline Refresh (id=5a6ebfe0b89a630f9877ac64b649c887): Total: 0.572 seconds - Initiated by RefreshV2(ForceSynchronousImport)
+Asset Pipeline Refresh (id=82f7e65d6bc70cbbe98c03ccd307d207): Total: 0.743 seconds - Initiated by RefreshV2(ForceSynchronousImport)
 	(Values over 0.05ms)
 	Summary:
 		Imports: total=0 (actual=0, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=572 ms
+		Asset DB Process Time: managed=0 ms, native=742 ms
 		Asset DB Callback time: managed=0 ms, native=0 ms
 		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
 		Project Asset Count: scripts=1702, non-scripts=3858
 		Asset File Changes: new=0, changed=0, moved=0, deleted=0
 		Scan Filter Count: 1
-	InvokePackagesCallback: 0.670ms
-	ApplyChangesToAssetFolders: 0.388ms
-	Scan: 533.635ms
-	Collect global state as custom dependencies: 1.182ms
-	ProcessAssetsWithTransientArtifactChanges: 0.992ms
-	CategorizeAssets: 10.889ms
-	CompileScripts: 0.060ms
-	ImportOutOfDateAssets: 4.950ms (0.763ms without children)
-		UnloadImportedAssets: 0.335ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 2.787ms
-		ImportSchedulerStart: 1.058ms
-	GatherAllCurrentPrimaryImportResultRevisions: 1.025ms
-	UnloadStreamsBegin: 0.130ms
-	PersistCurrentRevisions: 0.690ms
-	Untracked: 14.895ms
+	InvokePackagesCallback: 1.063ms
+	ApplyChangesToAssetFolders: 0.726ms
+	Scan: 691.397ms
+	Collect global state as custom dependencies: 1.932ms
+	ProcessAssetsWithTransientArtifactChanges: 1.339ms
+	CategorizeAssets: 16.668ms
+	CompileScripts: 0.077ms
+	ImportOutOfDateAssets: 6.585ms (0.850ms without children)
+		UnloadImportedAssets: 0.495ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 4.138ms
+		ImportSchedulerStart: 1.093ms
+	GatherAllCurrentPrimaryImportResultRevisions: 1.325ms
+	UnloadStreamsBegin: 0.192ms
+	PersistCurrentRevisions: 0.865ms
+	Untracked: 17.108ms
 
-Worker ready: AssetImportWorkerHW0 0
 [Licensing::Client] Successfully resolved entitlement details
 [Licensing::Client] Successfully resolved entitlement details
 Running tests for ExecutionSettings with details:
@@ -618,19 +622,19 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 Start Indexing on Editor startup
 [Indexing] Starting Initial Indexing for Assets
-Request Asset Garbage Collect because used heap size increased from 200.2 MB to 0.63 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 200.0 MB to 0.63 GB, exceeding the threshold of 256.0 MB.
 [UnityConnectServicesConfig] config is NOT valid, switching to default
-Created GICache directory at /home/drac/.cache/unity3d/GiCache. Took: 0.010s, timestamps: [40.075 - 40.085]
+Created GICache directory at /home/drac/.cache/unity3d/GiCache. Took: 0.006s, timestamps: [61.906 - 61.912]
 Unloading 62 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 4848 unused Assets / (437.3 MB). Loaded Objects now: 7514.
-Memory consumption went from 0.62 GB to 200.4 MB.
-Total: 40.413129 ms (FindLiveObjects: 1.875552 ms CreateObjectMapping: 1.146821 ms MarkObjects: 27.562061 ms  DeleteObjects: 8.497543 ms)
-
 [Licensing::Client] Successfully resolved entitlement details
+Unloading 4848 unused Assets / (437.2 MB). Loaded Objects now: 7514.
+Memory consumption went from 0.62 GB to 200.1 MB.
+Total: 180.202854 ms (FindLiveObjects: 3.053544 ms CreateObjectMapping: 1.822603 ms MarkObjects: 45.626391 ms  DeleteObjects: 128.280941 ms)
+
 Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 0 unused Assets / (Unknown). Loaded Objects now: 7519.
-Memory consumption went from 200.1 MB to 200.1 MB.
-Total: 33.486971 ms (FindLiveObjects: 1.241930 ms CreateObjectMapping: 0.492538 ms MarkObjects: 30.534168 ms  DeleteObjects: 0.030524 ms)
+Unloading 0 unused Assets / (0 B). Loaded Objects now: 7519.
+Memory consumption went from 199.9 MB to 199.9 MB.
+Total: 34.056933 ms (FindLiveObjects: 1.361533 ms CreateObjectMapping: 0.535585 ms MarkObjects: 30.864246 ms  DeleteObjects: 0.034439 ms)
 
 [Code Coverage] Started OpenCover Session
 [Code Coverage] Processing assembly: gamescripts
@@ -1932,7 +1936,7 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/Map/ScoreTracker.cs Line: 231)
 
-Request Asset Garbage Collect because used heap size increased from 200.1 MB to 0.66 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 199.9 MB to 0.66 GB, exceeding the threshold of 256.0 MB.
 Unloading 78 Unused Serialized files (Serialized files now loaded: 0)
 Collision! Safety score: 85
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3203,9 +3207,9 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/Map/ScheduleManager.cs Line: 84)
 
-Unloading 5029 unused Assets / (441.5 MB). Loaded Objects now: 7616.
-Memory consumption went from 0.66 GB to 230.2 MB.
-Total: 65.176363 ms (FindLiveObjects: 1.290694 ms CreateObjectMapping: 0.841402 ms MarkObjects: 29.450461 ms  DeleteObjects: 32.776422 ms)
+Unloading 5029 unused Assets / (438.6 MB). Loaded Objects now: 7616.
+Memory consumption went from 0.66 GB to 232.8 MB.
+Total: 66.680058 ms (FindLiveObjects: 1.627453 ms CreateObjectMapping: 1.191222 ms MarkObjects: 40.197184 ms  DeleteObjects: 22.620356 ms)
 
 Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3748,12 +3752,11 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/OSM/OSMParser.cs Line: 104)
 
-[Warning] Evict-before-extend: reclaimed cold content for 116520461-byte alloc
-Request Asset Garbage Collect because used heap size increased from 230.3 MB to 0.67 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 230.1 MB to 0.67 GB, exceeding the threshold of 256.0 MB.
 Unloading 215 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 3437 unused Assets / (436.8 MB). Loaded Objects now: 7621.
-Memory consumption went from 0.65 GB to 230.9 MB.
-Total: 53.503085 ms (FindLiveObjects: 1.194269 ms CreateObjectMapping: 0.794646 ms MarkObjects: 29.719985 ms  DeleteObjects: 20.859780 ms)
+Unloading 3437 unused Assets / (436.7 MB). Loaded Objects now: 7621.
+Memory consumption went from 0.65 GB to 230.8 MB.
+Total: 163.389325 ms (FindLiveObjects: 2.629527 ms CreateObjectMapping: 1.647494 ms MarkObjects: 55.967353 ms  DeleteObjects: 101.636225 ms)
 
 [MapboxLive] GET https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/512/15/9949/13520@2x?access_token=(pk. user=realbussim authorization=cmmdeuage02b62qqujbqxlneu, 93 chars)
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3867,11 +3870,11 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 (Filename: Assets/_Game/Scripts/Tests/Editor/MapboxTokenRequestTests.cs Line: 395)
 
 [Warning] Evict-before-extend: reclaimed cold content for 236980108-byte alloc
-Request Asset Garbage Collect because used heap size increased from 230.9 MB to 0.66 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 230.7 MB to 0.66 GB, exceeding the threshold of 256.0 MB.
 Unloading 64 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 4865 unused Assets / (437.1 MB). Loaded Objects now: 7622.
-Memory consumption went from 0.65 GB to 231.5 MB.
-Total: 36.510544 ms (FindLiveObjects: 1.270518 ms CreateObjectMapping: 0.858636 ms MarkObjects: 27.660002 ms  DeleteObjects: 5.864256 ms)
+Unloading 4865 unused Assets / (437.3 MB). Loaded Objects now: 7622.
+Memory consumption went from 0.65 GB to 231.0 MB.
+Total: 43.384912 ms (FindLiveObjects: 1.338148 ms CreateObjectMapping: 0.799597 ms MarkObjects: 34.782142 ms  DeleteObjects: 5.518271 ms)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -6008,7 +6011,7 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/Passengers/PassengerManager.cs Line: 543)
 
-[PassengerBoarding] Stop 1/2: Station | Boarded=8, Alighted=0, LeftBehind=0, Onboard=8/10, Fare+=200, Dwell=13.0s, WheelchairBoarding=False
+[PassengerBoarding] Stop 1/2: Station | Boarded=10, Alighted=0, LeftBehind=1, Onboard=10/10, Fare+=250, Dwell=28.5s, WheelchairBoarding=True
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
 UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
 UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
@@ -6055,11 +6058,11 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/Passengers/PassengerManager.cs Line: 382)
 
-Request Asset Garbage Collect because used heap size increased from 231.2 MB to 0.68 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 231.0 MB to 0.68 GB, exceeding the threshold of 256.0 MB.
 Unloading 59 Unused Serialized files (Serialized files now loaded: 0)
 Unloading 2713 unused Assets / (428.0 MB). Loaded Objects now: 10507.
-Memory consumption went from 0.67 GB to 258.8 MB.
-Total: 48.737573 ms (FindLiveObjects: 1.325429 ms CreateObjectMapping: 0.680367 ms MarkObjects: 41.883775 ms  DeleteObjects: 3.951090 ms)
+Memory consumption went from 0.67 GB to 258.6 MB.
+Total: 44.352447 ms (FindLiveObjects: 1.731118 ms CreateObjectMapping: 0.893176 ms MarkObjects: 36.424540 ms  DeleteObjects: 4.220798 ms)
 
 [Code Coverage] Started OpenCover Session
 [Code Coverage] Processing assembly: gamescripts
@@ -6095,7 +6098,7 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 [Code Coverage] Finished parsing '/home/drac/Documents/coding/realbus-simulator/TestResults/Coverage/realbus-simulator-opencov/EditMode/TestCoverageResults_0000.xml' 3/4
 [Code Coverage] Finished parsing '/home/drac/Documents/coding/realbus-simulator/TestResults/Coverage/realbus-simulator-opencov/EditMode/TestCoverageResults_0001.xml' 4/4
 [Code Coverage] Parsing of 4 files completed
-[Code Coverage] Coverage report parsing took 8.4 seconds
+[Code Coverage] Coverage report parsing took 12.3 seconds
 [Code Coverage] Initializing report builders for report types: xmlSummary, MarkdownSummary, JsonSummary, Html, Badges
 [Code Coverage] Analyzing 276 classes
 [Code Coverage] File '/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Traffic/AIBusScheduleSpawner.cs' does not exist (any more).
@@ -6239,7 +6242,7 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 [Code Coverage] File '/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Editor/StreamingAssetsCityFolderGenerator.cs' does not exist (any more).
 [Code Coverage] File '/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Editor/TrafficStressTestSceneBuilder.cs' does not exist (any more).
 [Code Coverage] Error during rendering summary report (Report type: 'Badges'): Font 'Arial' is not available. Therefore only SVG badges can be generated. PNG files are omitted.
-[Code Coverage] Report generation took 17.1 seconds
+[Code Coverage] Report generation took 26.2 seconds
 [Code Coverage] Code Coverage Report was generated in /home/drac/Documents/coding/realbus-simulator/TestResults/Coverage/Report
 Included Assemblies: GameScripts,GameScripts.Editor
 Excluded Assemblies: GameScriptsTests.Editor
@@ -6270,9 +6273,9 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 Saving results to: /home/drac/Documents/coding/realbus-simulator/TestResults/editmode-results.xml
 TrimDiskCacheJob: Current cache size 0mb
 Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 73 unused Assets / (7.5 MB). Loaded Objects now: 7575.
-Memory consumption went from 230.6 MB to 223.0 MB.
-Total: 72.650399 ms (FindLiveObjects: 0.956451 ms CreateObjectMapping: 0.374057 ms MarkObjects: 70.124022 ms  DeleteObjects: 0.378705 ms)
+Unloading 73 unused Assets / (14.3 MB). Loaded Objects now: 7575.
+Memory consumption went from 230.6 MB to 216.3 MB.
+Total: 131.631612 ms (FindLiveObjects: 1.708887 ms CreateObjectMapping: 0.362365 ms MarkObjects: 124.621593 ms  DeleteObjects: 3.891061 ms)
 
 DisplayProgressbar: Undo
 Test run completed. Exiting with code 2 (Failed). One or more tests failed.
@@ -6288,9 +6291,9 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/CommandLineTest/Executer.cs Line: 81)
 
-MonoPathRemapper: Attempts to remap: 40880; Successful remaps: 242
+MonoPathRemapper: Attempts to remap: 40904; Successful remaps: 242
 Serialized file version minimum: 23, current 23
-Killing ADB server in 0.091618 seconds.
+Killing ADB server in 0.141942 seconds.
 Shutting down MSBuild server...
 Shutting down VB/C# compiler server...
 [Physics::Module] Cleanup current backend.
@@ -6300,8 +6303,8 @@ Input Polling Thread exited.
 Input System module state changed to: Shutdown.
 [Licensing::IpcConnector] LicenseClient-drac-notifications channel disconnected successfully.
 [Licensing::IpcConnector] LicenseClient-drac channel disconnected successfully.
-VB/C# compiler server shut down successfully.
 MSBuild server shut down successfully.
+VB/C# compiler server shut down successfully.
 Lingering sessions upon destruction of worker manager
 Unity Data Store service was successfully shut down
 UDS shutting down local client system
@@ -6315,4 +6318,4 @@ debugger-agent: Unable to listen on 70
 Checking for leaked weakptr:
   Found no leaked weakptrs.
 [Package Manager] Server process was shutdown
-##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1792734938213,"processId":569939,"allocatedMemory":16526298,"memoryLabels":[{"Default":263041},{"Permanent":16152},{"Thread":1051288},{"Manager":24665},{"VertexData":8},{"Geometry":408},{"Texture":24},{"Shader":851024},{"Material":24},{"GfxDevice":36104},{"Animation":1016},{"FreeType":8},{"FontEngine":736},{"Physics":4210},{"Physics2D":16},{"Serialization":32856},{"Input":60256},{"JobScheduler":256},{"TextLib":280},{"Mono":80},{"ScriptingNativeRuntime":155088},{"BaseObject":59856},{"Resource":1032},{"Renderer":2368},{"Transform":4717},{"File":4228},{"WebCam":80},{"Culling":32},{"Terrain":11346},{"Wind":24},{"String":1769263},{"StaticString":3808},{"Utility":2674352},{"Curl":2511},{"PoolAlloc":1960},{"AI":80},{"TypeTree":22053},{"ScriptManager":12640},{"CodeReload":448},{"RuntimeInitializeOnLoadManager":64},{"Sprites":102},{"SpriteAtlas":120},{"GI":7408},{"Director":8280},{"CloudService":288},{"WebRequest":552},{"VR":49554},{"SceneManager":640},{"Video":64},{"LazyScriptCache":32},{"NativeArray":540},{"Camera":729},{"Secure":10337},{"SerializationCache":9256},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57552},{"StaticSafetyDebugInfo":278528},{"Analytics":464},{"Hierarchy":1436},{"UIElements":40},{"CoreStats":14456},{"Identifiers":7152},{"Gui":160},{"EditorUtility":80976},{"VersionControl":8},{"Undo":963},{"AssetDatabase":8866499},{"AssetImporter":40},{"EditorGi":328},{"UnityConnect":40473},{"Upm":1760},{"UpmDiagnostics":8},{"AssetCompliance":96},{"DrivenProperties":72},{"LocalIPC":147},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2402},{"Windowing":480},{"Licensing":1128},{"AssetReference":32},{"IPCStream":32}]}
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1792738645006,"processId":622329,"allocatedMemory":16527514,"memoryLabels":[{"Default":263041},{"Permanent":16152},{"Thread":1051328},{"Manager":24665},{"VertexData":8},{"Geometry":408},{"Texture":24},{"Shader":851024},{"Material":24},{"GfxDevice":36104},{"Animation":1016},{"FreeType":8},{"FontEngine":736},{"Physics":4210},{"Physics2D":16},{"Serialization":32856},{"Input":60256},{"JobScheduler":256},{"TextLib":280},{"Mono":80},{"ScriptingNativeRuntime":155088},{"BaseObject":59856},{"Resource":1032},{"Renderer":2368},{"Transform":4717},{"File":4228},{"WebCam":80},{"Culling":32},{"Terrain":11346},{"Wind":24},{"String":1770399},{"StaticString":3808},{"Utility":2674352},{"Curl":2511},{"PoolAlloc":1960},{"AI":80},{"TypeTree":22053},{"ScriptManager":12640},{"CodeReload":448},{"RuntimeInitializeOnLoadManager":64},{"Sprites":102},{"SpriteAtlas":120},{"GI":7408},{"Director":8280},{"CloudService":288},{"WebRequest":592},{"VR":49554},{"SceneManager":640},{"Video":64},{"LazyScriptCache":32},{"NativeArray":540},{"Camera":729},{"Secure":10337},{"SerializationCache":9256},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57552},{"StaticSafetyDebugInfo":278528},{"Analytics":464},{"Hierarchy":1436},{"UIElements":40},{"CoreStats":14456},{"Identifiers":7152},{"Gui":160},{"EditorUtility":80976},{"VersionControl":8},{"Undo":963},{"AssetDatabase":8866499},{"AssetImporter":40},{"EditorGi":328},{"UnityConnect":40473},{"Upm":1760},{"UpmDiagnostics":8},{"AssetCompliance":96},{"DrivenProperties":72},{"LocalIPC":147},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2402},{"Windowing":480},{"Licensing":1128},{"AssetReference":32},{"IPCStream":32}]}

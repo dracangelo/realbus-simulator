@@ -295,7 +295,7 @@ var assemblies = [
       { "name": "ImportedVehicleVisualRepair", "rp": "GameScripts_ImportedVehicleVisualRepair.html", "cl": 184, "ucl": 19, "cal": 203, "tl": 337, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "Json", "rp": "GameScripts_Json.html", "cl": 589, "ucl": 127, "cal": 716, "tl": 688, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveCityCatalog", "rp": "GameScripts_LiveCityCatalog.html", "cl": 1, "ucl": 0, "cal": 1, "tl": 17, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "LiveCityStreamer", "rp": "GameScripts_LiveCityStreamer.html", "cl": 58, "ucl": 309, "cal": 367, "tl": 548, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "LiveCityStreamer", "rp": "GameScripts_LiveCityStreamer.html", "cl": 58, "ucl": 315, "cal": 373, "tl": 566, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveryCodeCodec", "rp": "GameScripts_LiveryCodeCodec.html", "cl": 45, "ucl": 3, "cal": 48, "tl": 361, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveryData", "rp": "GameScripts_LiveryData.html", "cl": 11, "ucl": 0, "cal": 11, "tl": 361, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveryEditor", "rp": "GameScripts_LiveryEditor.html", "cl": 27, "ucl": 128, "cal": 155, "tl": 361, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -342,7 +342,7 @@ var assemblies = [
       { "name": "PassengerData", "rp": "GameScripts_PassengerData.html", "cl": 14, "ucl": 0, "cal": 14, "tl": 18, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerFeedbackSystem", "rp": "GameScripts_PassengerFeedbackSystem.html", "cl": 2, "ucl": 58, "cal": 60, "tl": 90, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerLoadDynamics", "rp": "GameScripts_PassengerLoadDynamics.html", "cl": 6, "ucl": 20, "cal": 26, "tl": 46, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "PassengerManager", "rp": "GameScripts_PassengerManager.html", "cl": 502, "ucl": 656, "cal": 1158, "tl": 928, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "PassengerManager", "rp": "GameScripts_PassengerManager.html", "cl": 509, "ucl": 649, "cal": 1158, "tl": 928, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerReactionLibrary", "rp": "GameScripts_PassengerReactionLibrary.html", "cl": 0, "ucl": 7, "cal": 7, "tl": 26, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerSpawner", "rp": "GameScripts_PassengerSpawner.html", "cl": 89, "ucl": 35, "cal": 124, "tl": 103, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerStoryManager", "rp": "GameScripts_PassengerStoryManager.html", "cl": 1, "ucl": 68, "cal": 69, "tl": 118, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -561,9 +561,9 @@ var riskHotspots = [
   {
     "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "Refresh()", "methodShortName": "Refresh()", "fileIndex": 0, "line": 213,
     "metrics": [
-      { "value": 71, "exceeded": true },
+      { "value": 72, "exceeded": true },
       { "value": 0, "exceeded": false },
-      { "value": 5112, "exceeded": true },
+      { "value": 5256, "exceeded": true },
     ]},
   {
     "assembly": "GameScripts.Editor", "class": "GameplaySmokeCheck", "reportPath": "GameScripts.Editor_GameplaySmokeCheck.html", "methodName": "static System.Boolean GameplaySmokeCheck::CheckTraffic()", "methodShortName": "CheckTraffic()", "fileIndex": 0, "line": 453,
@@ -811,6 +811,13 @@ var riskHotspots = [
       { "value": 870, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "Scatter()", "methodShortName": "Scatter()", "fileIndex": 0, "line": 412,
+    "metrics": [
+      { "value": 29, "exceeded": true },
+      { "value": 0, "exceeded": false },
+      { "value": 870, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "OsmCityPopulationSystem", "reportPath": "GameScripts_OsmCityPopulationSystem.html", "methodName": "System.Boolean OsmCityPopulationSystem::TryResolvePoiCategory(OverpassResponse/Element, OsmCityPopulationSystem/PoiCategory&)", "methodShortName": "TryResolvePoiCategory(...)", "fileIndex": 0, "line": 407,
     "metrics": [
       { "value": 29, "exceeded": true },
@@ -865,13 +872,6 @@ var riskHotspots = [
       { "value": 53, "exceeded": true },
       { "value": 0, "exceeded": false },
       { "value": 738.79, "exceeded": true },
-    ]},
-  {
-    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "Scatter()", "methodShortName": "Scatter()", "fileIndex": 0, "line": 402,
-    "metrics": [
-      { "value": 26, "exceeded": true },
-      { "value": 0, "exceeded": false },
-      { "value": 702, "exceeded": true },
     ]},
   {
     "assembly": "GameScripts", "class": "MapTestBootstrap", "reportPath": "GameScripts_MapTestBootstrap.html", "methodName": "Start()", "methodShortName": "Start()", "fileIndex": 0, "line": 37,
@@ -2295,7 +2295,7 @@ var riskHotspots = [
       { "value": 182, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "System.Void LiveCityStreamer::Update()", "methodShortName": "Update()", "fileIndex": 0, "line": 482,
+    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "System.Void LiveCityStreamer::Update()", "methodShortName": "Update()", "fileIndex": 0, "line": 500,
     "metrics": [
       { "value": 13, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -5662,7 +5662,7 @@ var riskHotspots = [
       { "value": 56, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "LiveCityCatalog/Entry LiveCityStreamer::SelectEntry(System.UInt32)", "methodShortName": "SelectEntry(...)", "fileIndex": 0, "line": 372,
+    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "LiveCityCatalog/Entry LiveCityStreamer::SelectEntry(System.UInt32)", "methodShortName": "SelectEntry(...)", "fileIndex": 0, "line": 382,
     "metrics": [
       { "value": 7, "exceeded": false },
       { "value": 0, "exceeded": false },
