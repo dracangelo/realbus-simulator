@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CoverageReport scope="Summary">
   <Summary>
-    <Generatedon>10/23/2026 - 9:57:07 AM</Generatedon>
+    <Generatedon>10/23/2026 - 10:54:49 AM</Generatedon>
     <Parser>MultiReportParser (4x OpenCoverParser)</Parser>
     <Assemblies>2</Assemblies>
-    <Classes>276</Classes>
-    <Files>373</Files>
-    <Coveredlines>14061</Coveredlines>
-    <Uncoveredlines>46446</Uncoveredlines>
-    <Coverablelines>60507</Coverablelines>
-    <Totallines>67309</Totallines>
-    <Linecoverage>23.2</Linecoverage>
+    <Classes>277</Classes>
+    <Files>374</Files>
+    <Coveredlines>14080</Coveredlines>
+    <Uncoveredlines>46614</Uncoveredlines>
+    <Coverablelines>60694</Coverablelines>
+    <Totallines>67615</Totallines>
+    <Linecoverage>23.1</Linecoverage>
     <Coveredbranches>0</Coveredbranches>
     <Totalbranches>0</Totalbranches>
-    <Coveredmethods>1715</Coveredmethods>
-    <Totalmethods>5749</Totalmethods>
+    <Coveredmethods>1719</Coveredmethods>
+    <Totalmethods>5764</Totalmethods>
     <Methodcoverage>29.8</Methodcoverage>
   </Summary>
   <Coverage>
-    <Assembly name="GameScripts" classes="238" coverage="27.9" coveredlines="14058" coverablelines="50227" totallines="64168" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1714" totalmethods="5084" methodcoverage="33.7">
+    <Assembly name="GameScripts" classes="239" coverage="27.9" coveredlines="14077" coverablelines="50308" totallines="64313" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1718" totalmethods="5092" methodcoverage="33.7">
       <Class name="AccessibilityManager" coverage="24.3" coveredlines="10" coverablelines="41" totallines="82" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="11" methodcoverage="45.4" />
       <Class name="AerodynamicsSystem" coverage="23" coveredlines="3" coverablelines="13" totallines="29" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="4" methodcoverage="25" />
       <Class name="AIBusRouteRunner" coverage="0" coveredlines="0" coverablelines="62" totallines="380" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="9" methodcoverage="0" />
@@ -86,11 +86,12 @@
       <Class name="GpsTracker" coverage="0" coveredlines="0" coverablelines="172" totallines="188" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="30" methodcoverage="0" />
       <Class name="HUDManager" coverage="8.9" coveredlines="37" coverablelines="415" totallines="579" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="7" totalmethods="45" methodcoverage="15.5" />
       <Class name="HudSafeZoneFitter" coverage="20.8" coveredlines="10" coverablelines="48" totallines="140" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="7" methodcoverage="14.2" />
+      <Class name="ImportedFoliageVariation" coverage="21.4" coveredlines="12" coverablelines="56" totallines="103" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="3" totalmethods="6" methodcoverage="50" />
       <Class name="ImportedMaterialPalette" coverage="91.8" coveredlines="90" coverablelines="98" totallines="213" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="14" totalmethods="14" methodcoverage="100" />
       <Class name="ImportedVehicleVisualRepair" coverage="90.6" coveredlines="184" coverablelines="203" totallines="337" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="10" totalmethods="12" methodcoverage="83.3" />
       <Class name="Json" coverage="82.2" coveredlines="589" coverablelines="716" totallines="688" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="48" totalmethods="48" methodcoverage="100" />
       <Class name="LiveCityCatalog" coverage="100" coveredlines="1" coverablelines="1" totallines="17" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="1" methodcoverage="100" />
-      <Class name="LiveCityStreamer" coverage="15.5" coveredlines="58" coverablelines="373" totallines="566" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="30" methodcoverage="30" />
+      <Class name="LiveCityStreamer" coverage="15.4" coveredlines="58" coverablelines="376" totallines="571" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="30" methodcoverage="30" />
       <Class name="LiveryCodeCodec" coverage="93.7" coveredlines="45" coverablelines="48" totallines="361" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="5" methodcoverage="100" />
       <Class name="LiveryData" coverage="100" coveredlines="11" coverablelines="11" totallines="361" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="2" methodcoverage="100" />
       <Class name="LiveryEditor" coverage="17.4" coveredlines="27" coverablelines="155" totallines="361" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="20" methodcoverage="25" />
@@ -120,7 +121,7 @@
       <Class name="OfflineCacheManager" coverage="8.9" coveredlines="30" coverablelines="335" totallines="361" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="8" totalmethods="39" methodcoverage="20.5" />
       <Class name="OfflineMapsUI" coverage="0" coveredlines="0" coverablelines="154" totallines="147" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="16" methodcoverage="0" />
       <Class name="OSMBuildingLoader" coverage="5.9" coveredlines="7" coverablelines="118" totallines="115" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="19" methodcoverage="5.2" />
-      <Class name="OSMBuildingMeshBuilder" coverage="23.5" coveredlines="316" coverablelines="1344" totallines="1713" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="22" totalmethods="85" methodcoverage="25.8" />
+      <Class name="OSMBuildingMeshBuilder" coverage="23.6" coveredlines="323" coverablelines="1365" totallines="1749" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="23" totalmethods="87" methodcoverage="26.4" />
       <Class name="OsmCityPopulationSystem" coverage="0" coveredlines="0" coverablelines="368" totallines="564" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="21" methodcoverage="0" />
       <Class name="OSMData" coverage="39.4" coveredlines="30" coverablelines="76" totallines="315" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="3" totalmethods="10" methodcoverage="30" />
       <Class name="OSMLoader" coverage="0" coveredlines="0" coverablelines="61" totallines="76" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="12" methodcoverage="0" />
@@ -137,7 +138,7 @@
       <Class name="PassengerData" coverage="100" coveredlines="14" coverablelines="14" totallines="18" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="4" totalmethods="4" methodcoverage="100" />
       <Class name="PassengerFeedbackSystem" coverage="3.3" coveredlines="2" coverablelines="60" totallines="90" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="16" methodcoverage="12.5" />
       <Class name="PassengerLoadDynamics" coverage="23" coveredlines="6" coverablelines="26" totallines="46" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="4" methodcoverage="50" />
-      <Class name="PassengerManager" coverage="43.9" coveredlines="509" coverablelines="1158" totallines="928" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="46" totalmethods="97" methodcoverage="47.4" />
+      <Class name="PassengerManager" coverage="43.8" coveredlines="508" coverablelines="1158" totallines="928" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="46" totalmethods="97" methodcoverage="47.4" />
       <Class name="PassengerReactionLibrary" coverage="0" coveredlines="0" coverablelines="7" totallines="26" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="1" methodcoverage="0" />
       <Class name="PassengerSpawner" coverage="71.7" coveredlines="89" coverablelines="124" totallines="103" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="11" methodcoverage="81.8" />
       <Class name="PassengerStoryManager" coverage="1.4" coveredlines="1" coverablelines="69" totallines="118" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="23" methodcoverage="4.3" />
@@ -238,7 +239,7 @@
       <Class name="UnlockManager" coverage="56.4" coveredlines="369" coverablelines="654" totallines="468" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="44" totalmethods="60" methodcoverage="73.3" />
       <Class name="UpgradeDefinition" coverage="100" coveredlines="9" coverablelines="9" totallines="74" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="1" methodcoverage="100" />
       <Class name="UpgradeManager" coverage="54.8" coveredlines="90" coverablelines="164" totallines="238" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="15" totalmethods="21" methodcoverage="71.4" />
-      <Class name="UrbanMaterials" coverage="97.8" coveredlines="314" coverablelines="321" totallines="605" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="28" totalmethods="28" methodcoverage="100" />
+      <Class name="UrbanMaterials" coverage="97.8" coveredlines="315" coverablelines="322" totallines="606" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="28" totalmethods="28" methodcoverage="100" />
       <Class name="VehicleDistanceLod" coverage="0" coveredlines="0" coverablelines="17" totallines="29" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="3" methodcoverage="0" />
       <Class name="VehiclePersistentState" coverage="96.3" coveredlines="53" coverablelines="55" totallines="123" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="4" totalmethods="4" methodcoverage="100" />
       <Class name="VehiclePolishEffects" coverage="0" coveredlines="0" coverablelines="25" totallines="40" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="4" methodcoverage="0" />
@@ -258,10 +259,10 @@
       <Class name="XPBar" coverage="0" coveredlines="0" coverablelines="282" totallines="211" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="24" methodcoverage="0" />
       <Class name="XPSystem" coverage="60.5" coveredlines="190" coverablelines="314" totallines="430" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="36" totalmethods="52" methodcoverage="69.2" />
     </Assembly>
-    <Assembly name="GameScripts.Editor" classes="38" coverage="0" coveredlines="3" coverablelines="10280" totallines="14404" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="665" methodcoverage="0.1">
+    <Assembly name="GameScripts.Editor" classes="38" coverage="0" coveredlines="3" coverablelines="10386" totallines="14565" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="672" methodcoverage="0.1">
       <Class name="AIRoadGraphGenerator" coverage="0" coveredlines="0" coverablelines="350" totallines="257" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="26" methodcoverage="0" />
       <Class name="BuildingCatalogPreview" coverage="0" coveredlines="0" coverablelines="84" totallines="122" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="1" methodcoverage="0" />
-      <Class name="BuildingModelImporter" coverage="0" coveredlines="0" coverablelines="338" totallines="505" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="20" methodcoverage="0" />
+      <Class name="BuildingModelImporter" coverage="0" coveredlines="0" coverablelines="364" totallines="553" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="23" methodcoverage="0" />
       <Class name="BuildingsAndPoiDownloader" coverage="0" coveredlines="0" coverablelines="290" totallines="235" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="20" methodcoverage="0" />
       <Class name="CityCatalogGenerator" coverage="0" coveredlines="0" coverablelines="388" totallines="341" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="28" methodcoverage="0" />
       <Class name="CityJsonBulkDownloader" coverage="0" coveredlines="0" coverablelines="288" totallines="236" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="26" methodcoverage="0" />
@@ -278,7 +279,7 @@
       <Class name="ImportedModelWiringGenerator" coverage="0" coveredlines="0" coverablelines="551" totallines="757" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="37" methodcoverage="0" />
       <Class name="ImportedTextureSharpener" coverage="0" coveredlines="0" coverablelines="49" totallines="86" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="2" methodcoverage="0" />
       <Class name="LegacyPluginImporterUpgrader" coverage="0" coveredlines="0" coverablelines="48" totallines="81" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="5" methodcoverage="0" />
-      <Class name="LiveCityModelImporter" coverage="0" coveredlines="0" coverablelines="390" totallines="535" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="27" methodcoverage="0" />
+      <Class name="LiveCityModelImporter" coverage="0" coveredlines="0" coverablelines="470" totallines="648" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="31" methodcoverage="0" />
       <Class name="MainMenuBuilder" coverage="0" coveredlines="0" coverablelines="941" totallines="824" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="64" methodcoverage="0" />
       <Class name="MapboxTokenDiagnosticsTool" coverage="0" coveredlines="0" coverablelines="68" totallines="129" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="6" methodcoverage="0" />
       <Class name="OSMRouteImporterEditorTool" coverage="0" coveredlines="0" coverablelines="1315" totallines="1299" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="84" methodcoverage="0" />

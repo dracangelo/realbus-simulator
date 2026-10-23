@@ -102,9 +102,10 @@ public static class UrbanMaterials
                 sharedFacade.SetColor("_GlassColor", new Color(.09f, .115f, .15f));
                 sharedFacade.SetColor("_SkyColor", new Color(.42f, .52f, .65f));
                 sharedFacade.SetColor("_TrimColor", new Color(.46f, .45f, .42f));
-                sharedFacade.SetFloat("_Smoothness", .06f);
+                sharedFacade.SetFloat("_Smoothness", .18f);
                 sharedFacade.SetFloat("_AoHeight", 3.5f);
                 sharedFacade.SetFloat("_AoStrength", .5f);
+                sharedFacade.SetFloat("_GrimeStrength", .28f);
                 sharedFacade.SetFloat("_TopShade", .15f);
                 // A four-way wall atlas (brick, concrete panels, stucco, stone)
                 // selected per building from the same id hash as the window variant,

@@ -27,10 +27,11 @@ Shader "RealBus/Facade"
         _TrimColor ("Frame / Sill", Color) = (0.46, 0.45, 0.42, 1)
         _Variant ("Facade Variant (0-1)", Float) = 0.35
         _Shopfront ("Ground Floor Shopfront", Range(0, 1)) = 0
-        _Smoothness ("Smoothness", Range(0, 1)) = 0.06
+        _Smoothness ("Smoothness", Range(0, 1)) = 0.18
         _BaseY ("Building Base Y (world)", Float) = 0
         _AoHeight ("Base Shadow Height (metres)", Float) = 3.5
         _AoStrength ("Base Shadow Strength", Range(0, 1)) = 0.5
+        _GrimeStrength ("Ground Grime", Range(0, 1)) = 0.28
         _TopShade ("Eave Shade Strength", Range(0, 1)) = 0.15
         _WallTex ("Wall Detail Atlas", 2D) = "gray" {}
         _WallNormal ("Wall Detail Normal", 2D) = "bump" {}
@@ -61,6 +62,7 @@ Shader "RealBus/Facade"
         float _BaseY;
         float _AoHeight;
         float _AoStrength;
+        float _GrimeStrength;
         float _TopShade;
         float _WallTile;
         float _WallDetail;
@@ -179,7 +181,18 @@ Shader "RealBus/Facade"
             // factor is constant. (Reading worldNormal here would force INTERNAL_DATA
             // on the Input struct as soon as surf() writes o.Normal.)
             float vertical = 1.0;
-            albedo *= lerp(1.0, contact, vertical);
+            // Keep the contact shadow visible in the albedo but let the Standard
+            // lighting model darken only the indirect term through o.Occlusion, so
+            // the wall does not turn black where direct sunlight still reaches it.
+            albedo *= lerp(1.0, contact, 0.65);
+
+            // Dirt and splash-back collect in the first few metres of a wall. A
+            // little low-frequency noise breaks up the horizontal band, and tapering
+            // the effect upward keeps it from looking like a painted skirting board.
+            float grimeBand = 1.0 - saturate(heightAboveBase / max(1.0, _AoHeight * 2.8));
+            float grimeNoise = 0.55 + 0.45 * Hash21(floor(IN.worldPos.xz * 0.9));
+            float grime = saturate(grimeBand * grimeNoise * _GrimeStrength);
+            albedo *= lerp(1.0, 0.72, grime);
 
             float eave = saturate(heightAboveBase / max(1.0, _AoHeight * 8.0));
             albedo *= lerp(1.0 - _TopShade, 1.0, 1.0 - eave * 0.3);
@@ -188,10 +201,20 @@ Shader "RealBus/Facade"
             float relief = _WallNormalStrength * (1.0 - inner) * (1.0 - far);
             o.Normal = normalize(float3(wallNormal.xy * relief, max(0.2, wallNormal.z)));
 
+            // Masonry is matte, window frames are painted and slightly smoother, and
+            // glass gets enough smoothness to pick up the sky reflection probe. Grime
+            // dulls the base without making the whole facade look wet.
+            float smoothness = _Smoothness;
+            smoothness = lerp(smoothness, 0.34, outer * 0.65);
+            smoothness = lerp(smoothness, 0.84, inner);
+            // Dirt dulls masonry and painted trim; glass stays in the 0.8-1.0
+            // window-reflection range instead of reading as a dusty wall.
+            smoothness *= lerp(1.0, 0.72, grime * (1.0 - inner));
+
             o.Albedo = albedo;
-            o.Smoothness = lerp(_Smoothness, 0.55, inner * vertical);
+            o.Smoothness = smoothness;
             o.Metallic = 0;
-            o.Occlusion = 1;
+            o.Occlusion = saturate(contact);
         }
         ENDCG
     }

@@ -121,7 +121,12 @@ LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -quit -projectPath "$PWD" \
   -executeMethod ImportedModelWiringGenerator.GenerateFromBatch \
   -logFile /tmp/imported-models.log
 
-# Streamed environment catalog, prefabs and materials
+# Imported buildings: PBR surface profiles, normal/AO maps and prefab colliders
+LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -quit -projectPath "$PWD" \
+  -executeMethod BuildingModelImporter.Build \
+  -logFile /tmp/building-models.log
+
+# Streamed environment catalog, prefabs and materials (including LODGroups)
 LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -quit -projectPath "$PWD" \
   -executeMethod LiveCityModelImporter.Build \
   -logFile /tmp/live-city-models.log
@@ -132,11 +137,15 @@ LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -quit -projectPath "$PWD" \
   -logFile /tmp/imported-content.log
 ```
 
-`ImportedModelWiringGenerator` scans `Assets/unity models/bus`, `busstop` and the `parking lot` stop folders recursively, dedupes nested copies by normalised model stem, prefers the candidate with the most nearby textures, and keeps the top-level path as the stable prefab/spec identity. The pass generates **14 drivable buses, 9 bus stops, 2 gas stations, 1 road pack and 3 depot props**. `LiveCityModelImporter` dedupes the environment packs the same way, keeps LOD0, removes `UCX_`, camera-path and helper-ground renderers, and writes the **16-entry** `Assets/_Game/Resources/LiveCityCatalog.asset`. `ForestPack` and the dense sources above the 65k-triangle / 22 m thresholds are skipped.
+`ImportedModelWiringGenerator` scans `Assets/unity models/bus`, `busstop` and the `parking lot` stop folders recursively, dedupes nested copies by normalised model stem, prefers the candidate with the most nearby textures, and keeps the top-level path as the stable prefab/spec identity. The pass generates **14 drivable buses, 9 bus stops, 2 gas stations, 1 road pack and 3 depot props**. `LiveCityModelImporter` dedupes the environment packs the same way, removes `UCX_`, camera-path and helper-ground renderers, and writes the **16-entry** `Assets/_Game/Resources/LiveCityCatalog.asset`. For trees and plants it rebuilds a real `LODGroup` from the source `LOD0`–`LOD3` meshes; catalog bounds and the triangle budget use only `LOD0`, so the higher levels do not inflate the streamed budget. `ForestPack` and the dense sources above the 65k-triangle / 22 m thresholds are skipped.
 
-`ImportedModelImportSettings` forces the game-ready FBXs through Unity's Standard material importer. `ImportedModelTextureBinder` then binds maps by material/model filename, safe per-model texture folders, glass-slot exclusion, a livery fallback for `bodi`, and embedded `aiStandardSurface` base-colour pairs. Generated material overrides live in `Assets/_Game/Generated/Materials/Buses`, `Assets/_Game/Generated/Materials/Stops` and `Assets/_Game/Resources/LiveCityGenerated`; unreferenced generated materials should be removed after a regeneration.
+`ImportedModelImportSettings` forces the game-ready FBXs through Unity's Standard material importer. `ImportedModelTextureBinder` then binds maps by material/model filename, safe per-model texture folders, glass-slot exclusion, a livery fallback for `bodi`, and embedded `aiStandardSurface` base-colour pairs. Generated material overrides live in `Assets/_Game/Generated/Materials/Buses`, `Assets/_Game/Generated/Materials/Stops`, `Assets/_Game/Resources/LiveCityGenerated` and `Assets/_Game/Resources/BuildingGenerated`; unreferenced generated materials should be removed after a regeneration.
+
+The realism pass keeps the project on the **Built-in Render Pipeline** (there is no URP package or pipeline asset), so `Standard` is the equivalent of URP/Lit. `BuildingModelImporter` classifies masonry/concrete/plaster, glass, metal and wood and sets metallic/smoothness per surface (concrete ~0.22, glass ~0.86, metal 0.65 metallic / 0.55 smooth, wood ~0.34), binds normal/AO maps, raises occlusion strength, keeps instancing on, and applies a stable near-neutral per-instance tint at placement. `UrbanMaterials`/`RealBus/Facade` raise the wall smoothness from 0.06 to 0.18, add ground grime, and drive `o.Occlusion` from the contact shadow. `ImportedFoliageVariation` gives each spawned tree/plant one of four shared green material variants and keeps GPU instancing enabled; trunks, bark and branches are excluded.
 
 The generated content is exercised by the headless checks above. `GameplaySmokeCheck.Run` reports `SMOKE roadClearance stopModels=... blockedStops=0 crossingKerbs=0`, and `GameplaySmokeCheck.RunLiveCity` checks the streamed props and the unload path. Both need `REALBUS_SMOKE_SKIP_CAPTURE=1` under software rendering.
+
+**Latest content verification (2026-10-23):** both importers exited 0 after the realism pass (15 building prefabs, 16 scenery entries; Banana and Coconut now carry four-level LODGroups). `dotnet build GameScripts.csproj` and `GameScripts.Editor.csproj` report 0 errors. EditMode is **580 tests — 571 passed / 9 failed**, the same nine pre-existing failures. `GameplaySmokeCheck.Run` exits 0 on the latest run with `roadClearance stopModels=31 blockedStops=0 crossingKerbs=0 passed=True`, HUD bound/visible and traffic `offLane=0 worstLaneDeviation=1.24 worstSteadyLaneDeviation=0.05 passed=True`. Two earlier runs of the same build sampled a lane-changing `Jeep2` at 4.61 m and failed the probe's 2.5 m worst-steady threshold, while the road-clearance and HUD checks stayed green; the traffic lane probe is therefore timing-sensitive rather than a deterministic content failure. `RunLiveCity` passes startup and unload on the latest run (`props=104 walkers=1 triangles=1184528 roadOverlaps=0`, then `props=0 triangles=0`); one earlier run of the same build stalled at `walkers=0` and passed on rerun, so treat the walker minimum as a streaming-timing-sensitive smoke assertion. A real-display review of grime, glass reflections, green variation and LOD transitions is still pending.
 
 ## Cinematic exposure and colour grade
 

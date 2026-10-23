@@ -291,11 +291,12 @@ var assemblies = [
       { "name": "GpsTracker", "rp": "GameScripts_GpsTracker.html", "cl": 0, "ucl": 172, "cal": 172, "tl": 188, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "HUDManager", "rp": "GameScripts_HUDManager.html", "cl": 37, "ucl": 378, "cal": 415, "tl": 579, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "HudSafeZoneFitter", "rp": "GameScripts_HudSafeZoneFitter.html", "cl": 10, "ucl": 38, "cal": 48, "tl": 140, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "ImportedFoliageVariation", "rp": "GameScripts_ImportedFoliageVariation.html", "cl": 12, "ucl": 44, "cal": 56, "tl": 103, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "ImportedMaterialPalette", "rp": "GameScripts_ImportedMaterialPalette.html", "cl": 90, "ucl": 8, "cal": 98, "tl": 213, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "ImportedVehicleVisualRepair", "rp": "GameScripts_ImportedVehicleVisualRepair.html", "cl": 184, "ucl": 19, "cal": 203, "tl": 337, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "Json", "rp": "GameScripts_Json.html", "cl": 589, "ucl": 127, "cal": 716, "tl": 688, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveCityCatalog", "rp": "GameScripts_LiveCityCatalog.html", "cl": 1, "ucl": 0, "cal": 1, "tl": 17, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "LiveCityStreamer", "rp": "GameScripts_LiveCityStreamer.html", "cl": 58, "ucl": 315, "cal": 373, "tl": 566, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "LiveCityStreamer", "rp": "GameScripts_LiveCityStreamer.html", "cl": 58, "ucl": 318, "cal": 376, "tl": 571, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveryCodeCodec", "rp": "GameScripts_LiveryCodeCodec.html", "cl": 45, "ucl": 3, "cal": 48, "tl": 361, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveryData", "rp": "GameScripts_LiveryData.html", "cl": 11, "ucl": 0, "cal": 11, "tl": 361, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LiveryEditor", "rp": "GameScripts_LiveryEditor.html", "cl": 27, "ucl": 128, "cal": 155, "tl": 361, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -325,7 +326,7 @@ var assemblies = [
       { "name": "OfflineCacheManager", "rp": "GameScripts_OfflineCacheManager.html", "cl": 30, "ucl": 305, "cal": 335, "tl": 361, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OfflineMapsUI", "rp": "GameScripts_OfflineMapsUI.html", "cl": 0, "ucl": 154, "cal": 154, "tl": 147, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OSMBuildingLoader", "rp": "GameScripts_OSMBuildingLoader.html", "cl": 7, "ucl": 111, "cal": 118, "tl": 115, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "OSMBuildingMeshBuilder", "rp": "GameScripts_OSMBuildingMeshBuilder.html", "cl": 316, "ucl": 1028, "cal": 1344, "tl": 1713, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "OSMBuildingMeshBuilder", "rp": "GameScripts_OSMBuildingMeshBuilder.html", "cl": 323, "ucl": 1042, "cal": 1365, "tl": 1749, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OsmCityPopulationSystem", "rp": "GameScripts_OsmCityPopulationSystem.html", "cl": 0, "ucl": 368, "cal": 368, "tl": 564, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OSMData", "rp": "GameScripts_OSMData.html", "cl": 30, "ucl": 46, "cal": 76, "tl": 315, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OSMLoader", "rp": "GameScripts_OSMLoader.html", "cl": 0, "ucl": 61, "cal": 61, "tl": 76, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -342,7 +343,7 @@ var assemblies = [
       { "name": "PassengerData", "rp": "GameScripts_PassengerData.html", "cl": 14, "ucl": 0, "cal": 14, "tl": 18, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerFeedbackSystem", "rp": "GameScripts_PassengerFeedbackSystem.html", "cl": 2, "ucl": 58, "cal": 60, "tl": 90, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerLoadDynamics", "rp": "GameScripts_PassengerLoadDynamics.html", "cl": 6, "ucl": 20, "cal": 26, "tl": 46, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "PassengerManager", "rp": "GameScripts_PassengerManager.html", "cl": 509, "ucl": 649, "cal": 1158, "tl": 928, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "PassengerManager", "rp": "GameScripts_PassengerManager.html", "cl": 508, "ucl": 650, "cal": 1158, "tl": 928, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerReactionLibrary", "rp": "GameScripts_PassengerReactionLibrary.html", "cl": 0, "ucl": 7, "cal": 7, "tl": 26, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerSpawner", "rp": "GameScripts_PassengerSpawner.html", "cl": 89, "ucl": 35, "cal": 124, "tl": 103, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerStoryManager", "rp": "GameScripts_PassengerStoryManager.html", "cl": 1, "ucl": 68, "cal": 69, "tl": 118, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -443,7 +444,7 @@ var assemblies = [
       { "name": "UnlockManager", "rp": "GameScripts_UnlockManager.html", "cl": 369, "ucl": 285, "cal": 654, "tl": 468, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "UpgradeDefinition", "rp": "GameScripts_UpgradeDefinition.html", "cl": 9, "ucl": 0, "cal": 9, "tl": 74, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "UpgradeManager", "rp": "GameScripts_UpgradeManager.html", "cl": 90, "ucl": 74, "cal": 164, "tl": 238, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "UrbanMaterials", "rp": "GameScripts_UrbanMaterials.html", "cl": 314, "ucl": 7, "cal": 321, "tl": 605, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "UrbanMaterials", "rp": "GameScripts_UrbanMaterials.html", "cl": 315, "ucl": 7, "cal": 322, "tl": 606, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "VehicleDistanceLod", "rp": "GameScripts_VehicleDistanceLod.html", "cl": 0, "ucl": 17, "cal": 17, "tl": 29, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "VehiclePersistentState", "rp": "GameScripts_VehiclePersistentState.html", "cl": 53, "ucl": 2, "cal": 55, "tl": 123, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "VehiclePolishEffects", "rp": "GameScripts_VehiclePolishEffects.html", "cl": 0, "ucl": 25, "cal": 25, "tl": 40, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -468,7 +469,7 @@ var assemblies = [
     "classes": [
       { "name": "AIRoadGraphGenerator", "rp": "GameScripts.Editor_AIRoadGraphGenerator.html", "cl": 0, "ucl": 350, "cal": 350, "tl": 257, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BuildingCatalogPreview", "rp": "GameScripts.Editor_BuildingCatalogPreview.html", "cl": 0, "ucl": 84, "cal": 84, "tl": 122, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "BuildingModelImporter", "rp": "GameScripts.Editor_BuildingModelImporter.html", "cl": 0, "ucl": 338, "cal": 338, "tl": 505, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "BuildingModelImporter", "rp": "GameScripts.Editor_BuildingModelImporter.html", "cl": 0, "ucl": 364, "cal": 364, "tl": 553, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BuildingsAndPoiDownloader", "rp": "GameScripts.Editor_BuildingsAndPoiDownloader.html", "cl": 0, "ucl": 290, "cal": 290, "tl": 235, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "CityCatalogGenerator", "rp": "GameScripts.Editor_CityCatalogGenerator.html", "cl": 0, "ucl": 388, "cal": 388, "tl": 341, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "CityJsonBulkDownloader", "rp": "GameScripts.Editor_CityJsonBulkDownloader.html", "cl": 0, "ucl": 288, "cal": 288, "tl": 236, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -485,7 +486,7 @@ var assemblies = [
       { "name": "ImportedModelWiringGenerator", "rp": "GameScripts.Editor_ImportedModelWiringGenerator.html", "cl": 0, "ucl": 551, "cal": 551, "tl": 757, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "ImportedTextureSharpener", "rp": "GameScripts.Editor_ImportedTextureSharpener.html", "cl": 0, "ucl": 49, "cal": 49, "tl": 86, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "LegacyPluginImporterUpgrader", "rp": "GameScripts.Editor_LegacyPluginImporterUpgrader.html", "cl": 0, "ucl": 48, "cal": 48, "tl": 81, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "LiveCityModelImporter", "rp": "GameScripts.Editor_LiveCityModelImporter.html", "cl": 0, "ucl": 390, "cal": 390, "tl": 535, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "LiveCityModelImporter", "rp": "GameScripts.Editor_LiveCityModelImporter.html", "cl": 0, "ucl": 470, "cal": 470, "tl": 648, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "MainMenuBuilder", "rp": "GameScripts.Editor_MainMenuBuilder.html", "cl": 0, "ucl": 941, "cal": 941, "tl": 824, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "MapboxTokenDiagnosticsTool", "rp": "GameScripts.Editor_MapboxTokenDiagnosticsTool.html", "cl": 0, "ucl": 68, "cal": 68, "tl": 129, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OSMRouteImporterEditorTool", "rp": "GameScripts.Editor_OSMRouteImporterEditorTool.html", "cl": 0, "ucl": 1315, "cal": 1315, "tl": 1299, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -615,7 +616,7 @@ var riskHotspots = [
       { "value": 2162, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "OSMBuildingMeshBuilder/BuildingKind OSMBuildingMeshBuilder::ResolveBuildingKind(OSMWay)", "methodShortName": "ResolveBuildingKind(...)", "fileIndex": 0, "line": 1139,
+    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "OSMBuildingMeshBuilder/BuildingKind OSMBuildingMeshBuilder::ResolveBuildingKind(OSMWay)", "methodShortName": "ResolveBuildingKind(...)", "fileIndex": 0, "line": 1140,
     "metrics": [
       { "value": 44, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -664,20 +665,6 @@ var riskHotspots = [
       { "value": 1482, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "BuildingModelImporter", "reportPath": "GameScripts.Editor_BuildingModelImporter.html", "methodName": "static UnityEngine.Material BuildingModelImporter::MakeMaterial(UnityEngine.Material, System.String, System.Collections.Generic.Dictionary[String,String])", "methodShortName": "MakeMaterial(...)", "fileIndex": 0, "line": 349,
-    "metrics": [
-      { "value": 37, "exceeded": true },
-      { "value": 0, "exceeded": false },
-      { "value": 1406, "exceeded": true },
-    ]},
-  {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Void LiveCityModelImporter::Build()", "methodShortName": "Build()", "fileIndex": 0, "line": 41,
-    "metrics": [
-      { "value": 37, "exceeded": true },
-      { "value": 0, "exceeded": false },
-      { "value": 1406, "exceeded": true },
-    ]},
-  {
     "assembly": "GameScripts", "class": "DynamicEventSystem", "reportPath": "GameScripts_DynamicEventSystem.html", "methodName": "DynamicEventType DynamicEventSystem::PickWeightedEventType(System.Collections.Generic.HashSet[DynamicEventType])", "methodShortName": "PickWeightedEventType(...)", "fileIndex": 1, "line": 158,
     "metrics": [
       { "value": 36, "exceeded": true },
@@ -690,6 +677,13 @@ var riskHotspots = [
       { "value": 36, "exceeded": true },
       { "value": 0, "exceeded": false },
       { "value": 1332, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Void LiveCityModelImporter::Build()", "methodShortName": "Build()", "fileIndex": 0, "line": 41,
+    "metrics": [
+      { "value": 35, "exceeded": true },
+      { "value": 0, "exceeded": false },
+      { "value": 1260, "exceeded": true },
     ]},
   {
     "assembly": "GameScripts", "class": "SceneBootstrap", "reportPath": "GameScripts_SceneBootstrap.html", "methodName": "AIRoadGraph SceneBootstrap::FindUsableRoadGraph(BusRoute)", "methodShortName": "FindUsableRoadGraph(...)", "fileIndex": 0, "line": 1439,
@@ -769,6 +763,13 @@ var riskHotspots = [
       { "value": 992, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static UnityEngine.Material LiveCityModelImporter::MakeMaterial(UnityEngine.Material, LiveCityCatalog/Kind, System.String)", "methodShortName": "MakeMaterial(...)", "fileIndex": 0, "line": 437,
+    "metrics": [
+      { "value": 31, "exceeded": true },
+      { "value": 0, "exceeded": false },
+      { "value": 992, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "MissionBriefingUI", "reportPath": "GameScripts_MissionBriefingUI.html", "methodName": "System.Void MissionBriefingUI::ShowBriefing()", "methodShortName": "ShowBriefing()", "fileIndex": 1, "line": 134,
     "metrics": [
       { "value": 30, "exceeded": true },
@@ -811,7 +812,7 @@ var riskHotspots = [
       { "value": 870, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "Scatter()", "methodShortName": "Scatter()", "fileIndex": 0, "line": 412,
+    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "Scatter()", "methodShortName": "Scatter()", "fileIndex": 0, "line": 416,
     "metrics": [
       { "value": 29, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -860,7 +861,7 @@ var riskHotspots = [
       { "value": 756, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static UnityEngine.Material LiveCityModelImporter::MakeMaterial(UnityEngine.Material, LiveCityCatalog/Kind, System.String)", "methodShortName": "MakeMaterial(...)", "fileIndex": 0, "line": 351,
+    "assembly": "GameScripts.Editor", "class": "BuildingModelImporter", "reportPath": "GameScripts.Editor_BuildingModelImporter.html", "methodName": "static UnityEngine.Material BuildingModelImporter::MakeMaterial(UnityEngine.Material, System.String, System.Collections.Generic.Dictionary[String,String])", "methodShortName": "MakeMaterial(...)", "fileIndex": 0, "line": 349,
     "metrics": [
       { "value": 27, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -909,7 +910,7 @@ var riskHotspots = [
       { "value": 650, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Int32 LiveCityModelImporter::TextureScore(System.String, System.String, System.String, System.Boolean)", "methodShortName": "TextureScore(...)", "fileIndex": 0, "line": 489,
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Int32 LiveCityModelImporter::TextureScore(System.String, System.String, System.String, System.Boolean)", "methodShortName": "TextureScore(...)", "fileIndex": 0, "line": 602,
     "metrics": [
       { "value": 25, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -1091,6 +1092,13 @@ var riskHotspots = [
       { "value": 506, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts.Editor", "class": "BuildingModelImporter", "reportPath": "GameScripts.Editor_BuildingModelImporter.html", "methodName": "static BuildingModelImporter/SurfaceClass BuildingModelImporter::ClassifySurface(System.String)", "methodShortName": "ClassifySurface(...)", "fileIndex": 0, "line": 424,
+    "metrics": [
+      { "value": 22, "exceeded": true },
+      { "value": 0, "exceeded": false },
+      { "value": 506, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts.Editor", "class": "OSMRouteImporterEditorTool", "reportPath": "GameScripts.Editor_OSMRouteImporterEditorTool.html", "methodName": "PostOverpass()", "methodShortName": "PostOverpass()", "fileIndex": 0, "line": 222,
     "metrics": [
       { "value": 22, "exceeded": true },
@@ -1182,7 +1190,7 @@ var riskHotspots = [
       { "value": 462, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "TextureFiles()", "methodShortName": "TextureFiles()", "fileIndex": 0, "line": 437,
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "TextureFiles()", "methodShortName": "TextureFiles()", "fileIndex": 0, "line": 550,
     "metrics": [
       { "value": 21, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -1434,6 +1442,13 @@ var riskHotspots = [
       { "value": 380, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Void LiveCityModelImporter::StripHelperGeometry(UnityEngine.GameObject, LiveCityCatalog/Kind)", "methodShortName": "StripHelperGeometry(...)", "fileIndex": 0, "line": 310,
+    "metrics": [
+      { "value": 19, "exceeded": true },
+      { "value": 0, "exceeded": false },
+      { "value": 380, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "CinematicIntroSequence", "reportPath": "GameScripts_CinematicIntroSequence.html", "methodName": "PlayShot()", "methodShortName": "PlayShot()", "fileIndex": 0, "line": 254,
     "metrics": [
       { "value": 18, "exceeded": true },
@@ -1490,7 +1505,7 @@ var riskHotspots = [
       { "value": 342, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "static System.Collections.Generic.List[Int32] OSMBuildingMeshBuilder::AppendRoofProps(System.Collections.Generic.List[Vector3], System.Single, System.Int64, System.Collections.Generic.List[Vector3], System.Collections.Generic.List[Vector2])", "methodShortName": "AppendRoofProps(...)", "fileIndex": 0, "line": 1441,
+    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "static System.Collections.Generic.List[Int32] OSMBuildingMeshBuilder::AppendRoofProps(System.Collections.Generic.List[Vector3], System.Single, System.Int64, System.Collections.Generic.List[Vector3], System.Collections.Generic.List[Vector2])", "methodShortName": "AppendRoofProps(...)", "fileIndex": 0, "line": 1477,
     "metrics": [
       { "value": 18, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -1539,14 +1554,14 @@ var riskHotspots = [
       { "value": 342, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static UnityEngine.Texture LiveCityModelImporter::FindTexture(System.String, System.String, System.Boolean)", "methodShortName": "FindTexture(...)", "fileIndex": 0, "line": 403,
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static UnityEngine.Texture LiveCityModelImporter::FindTexture(System.String, System.String, System.Boolean)", "methodShortName": "FindTexture(...)", "fileIndex": 0, "line": 516,
     "metrics": [
       { "value": 18, "exceeded": true },
       { "value": 0, "exceeded": false },
       { "value": 342, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Boolean LiveCityModelImporter::LooksAlbedo(System.String)", "methodShortName": "LooksAlbedo(...)", "fileIndex": 0, "line": 478,
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Boolean LiveCityModelImporter::LooksAlbedo(System.String)", "methodShortName": "LooksAlbedo(...)", "fileIndex": 0, "line": 591,
     "metrics": [
       { "value": 18, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -1666,13 +1681,6 @@ var riskHotspots = [
     ]},
   {
     "assembly": "GameScripts", "class": "WorldReadyLoadingScreen", "reportPath": "GameScripts_WorldReadyLoadingScreen.html", "methodName": "WaitForWorldReady()", "methodShortName": "WaitForWorldReady()", "fileIndex": 0, "line": 130,
-    "metrics": [
-      { "value": 17, "exceeded": true },
-      { "value": 0, "exceeded": false },
-      { "value": 306, "exceeded": true },
-    ]},
-  {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Void LiveCityModelImporter::StripHelperGeometry(UnityEngine.GameObject, LiveCityCatalog/Kind)", "methodShortName": "StripHelperGeometry(...)", "fileIndex": 0, "line": 307,
     "metrics": [
       { "value": 17, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -2295,7 +2303,7 @@ var riskHotspots = [
       { "value": 182, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "System.Void LiveCityStreamer::Update()", "methodShortName": "Update()", "fileIndex": 0, "line": 500,
+    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "System.Void LiveCityStreamer::Update()", "methodShortName": "Update()", "fileIndex": 0, "line": 505,
     "metrics": [
       { "value": 13, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -2583,6 +2591,13 @@ var riskHotspots = [
     ]},
   {
     "assembly": "GameScripts", "class": "HUDManager", "reportPath": "GameScripts_HUDManager.html", "methodName": "BindWhenReady()", "methodShortName": "BindWhenReady()", "fileIndex": 0, "line": 77,
+    "metrics": [
+      { "value": 12, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 156, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts", "class": "ImportedFoliageVariation", "reportPath": "GameScripts_ImportedFoliageVariation.html", "methodName": "static System.Void ImportedFoliageVariation::Apply(UnityEngine.GameObject, LiveCityCatalog/Kind, System.UInt32)", "methodShortName": "Apply(...)", "fileIndex": 0, "line": 51,
     "metrics": [
       { "value": 12, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3436,7 +3451,7 @@ var riskHotspots = [
       { "value": 110, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "UnityEngine.Vector3 OSMBuildingMeshBuilder::ResolveInitialBuildFocus()", "methodShortName": "ResolveInitialBuildFocus()", "fileIndex": 0, "line": 1065,
+    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "UnityEngine.Vector3 OSMBuildingMeshBuilder::ResolveInitialBuildFocus()", "methodShortName": "ResolveInitialBuildFocus()", "fileIndex": 0, "line": 1066,
     "metrics": [
       { "value": 10, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3632,7 +3647,7 @@ var riskHotspots = [
       { "value": 110, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "BuildingModelImporter", "reportPath": "GameScripts.Editor_BuildingModelImporter.html", "methodName": "static UnityEngine.Color BuildingModelImporter::FallbackColor(System.String)", "methodShortName": "FallbackColor(...)", "fileIndex": 0, "line": 459,
+    "assembly": "GameScripts.Editor", "class": "BuildingModelImporter", "reportPath": "GameScripts.Editor_BuildingModelImporter.html", "methodName": "static UnityEngine.Color BuildingModelImporter::FallbackColor(System.String)", "methodShortName": "FallbackColor(...)", "fileIndex": 0, "line": 507,
     "metrics": [
       { "value": 10, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3688,7 +3703,21 @@ var riskHotspots = [
       { "value": 110, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "Tokens()", "methodShortName": "Tokens()", "fileIndex": 0, "line": 524,
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Void LiveCityModelImporter::BuildLodGroup(UnityEngine.GameObject, LiveCityCatalog/Kind)", "methodShortName": "BuildLodGroup(...)", "fileIndex": 0, "line": 346,
+    "metrics": [
+      { "value": 10, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 110, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Single LiveCityModelImporter::SurfaceSmoothness(LiveCityCatalog/Kind, System.String)", "methodShortName": "SurfaceSmoothness(...)", "fileIndex": 0, "line": 501,
+    "metrics": [
+      { "value": 10, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 110, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "Tokens()", "methodShortName": "Tokens()", "fileIndex": 0, "line": 637,
     "metrics": [
       { "value": 10, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3829,6 +3858,13 @@ var riskHotspots = [
     ]},
   {
     "assembly": "GameScripts", "class": "GarageProgressionPanel", "reportPath": "GameScripts_GarageProgressionPanel.html", "methodName": "System.Void GarageProgressionPanel::BuildUpgradeContent()", "methodShortName": "BuildUpgradeContent()", "fileIndex": 0, "line": 82,
+    "metrics": [
+      { "value": 9, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 90, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts", "class": "ImportedFoliageVariation", "reportPath": "GameScripts_ImportedFoliageVariation.html", "methodName": "static System.Boolean ImportedFoliageVariation::IsFoliage(UnityEngine.Material, System.String)", "methodShortName": "IsFoliage(...)", "fileIndex": 0, "line": 74,
     "metrics": [
       { "value": 9, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -4255,7 +4291,14 @@ var riskHotspots = [
       { "value": 90, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Int32 LiveCityModelImporter::LodIndex(System.String)", "methodShortName": "LodIndex(...)", "fileIndex": 0, "line": 337,
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static UnityEngine.Renderer[] LiveCityModelImporter::Lod0Renderers(UnityEngine.Renderer[])", "methodShortName": "Lod0Renderers(...)", "fileIndex": 0, "line": 386,
+    "metrics": [
+      { "value": 9, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 90, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts.Editor", "class": "LiveCityModelImporter", "reportPath": "GameScripts.Editor_LiveCityModelImporter.html", "methodName": "static System.Int32 LiveCityModelImporter::LodIndex(System.String)", "methodShortName": "LodIndex(...)", "fileIndex": 0, "line": 423,
     "metrics": [
       { "value": 9, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -4675,7 +4718,7 @@ var riskHotspots = [
       { "value": 72, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "System.Single OSMBuildingMeshBuilder::EstimateUntaggedHeight(OSMWay, OSMBuildingMeshBuilder/BuildingKind)", "methodShortName": "EstimateUntaggedHeight(...)", "fileIndex": 0, "line": 1118,
+    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "System.Single OSMBuildingMeshBuilder::EstimateUntaggedHeight(OSMWay, OSMBuildingMeshBuilder/BuildingKind)", "methodShortName": "EstimateUntaggedHeight(...)", "fileIndex": 0, "line": 1119,
     "metrics": [
       { "value": 8, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -5662,7 +5705,7 @@ var riskHotspots = [
       { "value": 56, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "LiveCityCatalog/Entry LiveCityStreamer::SelectEntry(System.UInt32)", "methodShortName": "SelectEntry(...)", "fileIndex": 0, "line": 382,
+    "assembly": "GameScripts", "class": "LiveCityStreamer", "reportPath": "GameScripts_LiveCityStreamer.html", "methodName": "LiveCityCatalog/Entry LiveCityStreamer::SelectEntry(System.UInt32)", "methodShortName": "SelectEntry(...)", "fileIndex": 0, "line": 386,
     "metrics": [
       { "value": 7, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -7104,14 +7147,14 @@ var riskHotspots = [
       { "value": 42, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "System.Void OSMBuildingMeshBuilder::ResolveStreamingTarget()", "methodShortName": "ResolveStreamingTarget()", "fileIndex": 0, "line": 1051,
+    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "System.Void OSMBuildingMeshBuilder::ResolveStreamingTarget()", "methodShortName": "ResolveStreamingTarget()", "fileIndex": 0, "line": 1052,
     "metrics": [
       { "value": 6, "exceeded": false },
       { "value": 0, "exceeded": false },
       { "value": 42, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "System.String OSMBuildingMeshBuilder::ResolveBuildingLabel(OSMWay, OSMBuildingMeshBuilder/BuildingKind)", "methodShortName": "ResolveBuildingLabel(...)", "fileIndex": 0, "line": 1181,
+    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "System.String OSMBuildingMeshBuilder::ResolveBuildingLabel(OSMWay, OSMBuildingMeshBuilder/BuildingKind)", "methodShortName": "ResolveBuildingLabel(...)", "fileIndex": 0, "line": 1182,
     "metrics": [
       { "value": 6, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -7811,6 +7854,13 @@ var riskHotspots = [
       { "value": 42, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts.Editor", "class": "BuildingModelImporter", "reportPath": "GameScripts.Editor_BuildingModelImporter.html", "methodName": "static System.Single BuildingModelImporter::SmoothnessFor(BuildingModelImporter/SurfaceClass)", "methodShortName": "SmoothnessFor(...)", "fileIndex": 0, "line": 447,
+    "metrics": [
+      { "value": 6, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 42, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts.Editor", "class": "CityCatalogGenerator", "reportPath": "GameScripts.Editor_CityCatalogGenerator.html", "methodName": "System.Void CityCatalogGenerator::OnGUI()", "methodShortName": "OnGUI()", "fileIndex": 0, "line": 25,
     "metrics": [
       { "value": 6, "exceeded": false },
@@ -8070,7 +8120,7 @@ var riskHotspots = [
       { "value": 23.19, "exceeded": false },
     ]},
   {
-    "assembly": "GameScripts", "class": "UrbanMaterials", "reportPath": "GameScripts_UrbanMaterials.html", "methodName": "static System.Void UrbanMaterials::FacadePattern(System.Int32, System.Single, System.Single, System.Single&, System.Single&)", "methodShortName": "FacadePattern(...)", "fileIndex": 0, "line": 499,
+    "assembly": "GameScripts", "class": "UrbanMaterials", "reportPath": "GameScripts_UrbanMaterials.html", "methodName": "static System.Void UrbanMaterials::FacadePattern(System.Int32, System.Single, System.Single, System.Single&, System.Single&)", "methodShortName": "FacadePattern(...)", "fileIndex": 0, "line": 500,
     "metrics": [
       { "value": 22, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -8119,7 +8169,7 @@ var riskHotspots = [
       { "value": 19.34, "exceeded": false },
     ]},
   {
-    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "static System.Boolean OSMBuildingMeshBuilder::AddHipRoof(System.Collections.Generic.List[Vector3], System.Single, System.Collections.Generic.List[Vector3], System.Collections.Generic.List[Vector2], System.Collections.Generic.List[Int32])", "methodShortName": "AddHipRoof(...)", "fileIndex": 0, "line": 1649,
+    "assembly": "GameScripts", "class": "OSMBuildingMeshBuilder", "reportPath": "GameScripts_OSMBuildingMeshBuilder.html", "methodName": "static System.Boolean OSMBuildingMeshBuilder::AddHipRoof(System.Collections.Generic.List[Vector3], System.Single, System.Collections.Generic.List[Vector3], System.Collections.Generic.List[Vector2], System.Collections.Generic.List[Int32])", "methodShortName": "AddHipRoof(...)", "fileIndex": 0, "line": 1685,
     "metrics": [
       { "value": 18, "exceeded": true },
       { "value": 0, "exceeded": false },

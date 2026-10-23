@@ -241,6 +241,7 @@
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerManager.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/VisualQualityController.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/RoadSurfaceDetector.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/ImportedFoliageVariation.cs" />
     <Compile Include="Assets/_Game/Scripts/Util/UrbanMaterials.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CityPredownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficModelRules.cs" />

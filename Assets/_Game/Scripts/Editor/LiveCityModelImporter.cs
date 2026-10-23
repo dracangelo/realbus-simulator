@@ -66,22 +66,22 @@ public static class LiveCityModelImporter
                 foreach (var light in visual.GetComponentsInChildren<Light>(true)) Object.DestroyImmediate(light);
                 foreach (var animator in visual.GetComponentsInChildren<Animator>(true)) animator.enabled = animator.runtimeAnimatorController != null;
                 StripHelperGeometry(visual, kind);
+                BuildLodGroup(visual, kind);
                 var renderers = root.GetComponentsInChildren<Renderer>(true);
                 if (renderers.Length == 0) continue;
-                Bounds bounds = BoundsOf(renderers);
+                Renderer[] lod0 = Lod0Renderers(renderers);
+                Bounds bounds = BoundsOf(lod0);
                 if (bounds.size.y < .001f || float.IsNaN(bounds.size.y) || float.IsInfinity(bounds.size.y)) continue;
                 if (kind == LiveCityCatalog.Kind.Tree && Mathf.Max(bounds.size.x, bounds.size.z) > bounds.size.y * 2f)
                 {
                     visual.transform.localRotation = Quaternion.Euler(bounds.size.z > bounds.size.x ? -90 : 0, 0, bounds.size.x >= bounds.size.z ? 90 : 0) * visual.transform.localRotation;
-                    bounds = BoundsOf(renderers);
+                    bounds = BoundsOf(lod0);
                 }
                 visual.transform.localScale *= height / bounds.size.y;
-                bounds = BoundsOf(renderers);
+                bounds = BoundsOf(lod0);
                 visual.transform.position -= new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
-                bounds = BoundsOf(renderers);
-                int triangles = 0;
-                foreach (var filter in root.GetComponentsInChildren<MeshFilter>(true)) triangles += Triangles(filter.sharedMesh);
-                foreach (var skin in root.GetComponentsInChildren<SkinnedMeshRenderer>(true)) triangles += Triangles(skin.sharedMesh);
+                bounds = BoundsOf(lod0);
+                int triangles = TrianglesOf(lod0);
                 // Dense hero/scanned assets remain untouched and are excluded from repeated scenery.
                 if (triangles > (kind == LiveCityCatalog.Kind.Pedestrian ? 100000 : 65000) || Mathf.Max(bounds.size.x, bounds.size.z) > 22f)
                 { Debug.Log($"[LiveCity] Skipped dense/oversized repeated prop: {path} ({triangles} triangles)"); continue; }
@@ -300,8 +300,11 @@ public static class LiveCityModelImporter
 
     /// <summary>
     /// Game-ready plant packs ship LOD1-3, UCX collision meshes and camera-path or
-    /// ground helper renderers beside LOD0. Only LOD0 belongs in repeated street
-    /// scenery; leaving every copy visible caused overdraw and stray geometry.
+    /// ground helper renderers beside LOD0. Helpers are always removed. For trees
+    /// and plants the higher-detail meshes become a real LODGroup instead of being
+    /// deleted: keeping every copy visible caused overdraw, but discarding them
+    /// made the whole city pay for LOD0 at every distance. Other prop kinds keep
+    /// only their lowest LOD because their extra levels are not reliable.
     /// </summary>
     static void StripHelperGeometry(GameObject root, LiveCityCatalog.Kind kind)
     {
@@ -313,6 +316,7 @@ public static class LiveCityModelImporter
             if (lod >= 0) lowestLod = Mathf.Min(lowestLod, lod);
         }
 
+        bool keepsLods = kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant;
         foreach (Renderer renderer in renderers)
         {
             string name = renderer.name.ToLowerInvariant();
@@ -328,9 +332,91 @@ public static class LiveCityModelImporter
                 continue;
             }
             int lod = LodIndex(renderer.name);
-            if (lod >= 0 && lowestLod != int.MaxValue && lod > lowestLod)
+            if (!keepsLods && lod >= 0 && lowestLod != int.MaxValue && lod > lowestLod)
                 Object.DestroyImmediate(renderer.gameObject);
         }
+    }
+
+    /// <summary>
+    /// Builds a LODGroup from the LOD-named renderers a plant pack ships. Only the
+    /// highest-detail level is used for catalog bounds and the triangle budget; the
+    /// lower levels are only drawn when the group's screen size falls.
+    /// </summary>
+    static void BuildLodGroup(GameObject visual, LiveCityCatalog.Kind kind)
+    {
+        if (kind != LiveCityCatalog.Kind.Tree && kind != LiveCityCatalog.Kind.Plant) return;
+
+        // Some source FBXs already ship a LODGroup whose levels reference helper or
+        // stripped objects. Rebuild it from the surviving renderers so the prefab
+        // cannot keep dangling LOD entries or gain a second group.
+        foreach (LODGroup old in visual.GetComponentsInChildren<LODGroup>(true))
+            Object.DestroyImmediate(old);
+
+        var levels = new SortedDictionary<int, List<Renderer>>();
+        foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
+        {
+            if (renderer == null) continue;
+            int lod = Mathf.Max(0, LodIndex(renderer.name));
+            if (!levels.TryGetValue(lod, out var list)) levels[lod] = list = new List<Renderer>();
+            list.Add(renderer);
+        }
+        if (levels.Count < 2) return;
+
+        var lods = new List<LOD>(levels.Count);
+        int index = 0;
+        foreach (var pair in levels)
+        {
+            // 50% screen height is full detail; each coarser level takes over at
+            // roughly half the remaining screen coverage. The exact height is not
+            // critical for street props, but a descending order is.
+            float screenHeight = index == 0 ? .5f : Mathf.Clamp(.5f * Mathf.Pow(.52f, index), .02f, .45f);
+            lods.Add(new LOD(screenHeight, pair.Value.ToArray()));
+            index++;
+        }
+
+        var group = visual.AddComponent<LODGroup>();
+        group.SetLODs(lods.ToArray());
+        group.RecalculateBounds();
+        group.fadeMode = LODFadeMode.None;
+        group.lastLODBillboard = false;
+    }
+
+    /// <summary>Renderers that make up the highest-detail level, used for bounds and budget.</summary>
+    static Renderer[] Lod0Renderers(Renderer[] renderers)
+    {
+        int lowest = int.MaxValue;
+        foreach (Renderer renderer in renderers)
+        {
+            int lod = LodIndex(renderer.name);
+            if (lod >= 0) lowest = Mathf.Min(lowest, lod);
+        }
+        if (lowest == int.MaxValue) return renderers;
+
+        var result = new List<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            int lod = LodIndex(renderer.name);
+            if (lod < 0 || lod == lowest) result.Add(renderer);
+        }
+        return result.Count > 0 ? result.ToArray() : renderers;
+    }
+
+    static int TrianglesOf(Renderer[] renderers)
+    {
+        int total = 0;
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer is MeshRenderer)
+            {
+                var filter = renderer.GetComponent<MeshFilter>();
+                if (filter != null) total += Triangles(filter.sharedMesh);
+            }
+            else if (renderer is SkinnedMeshRenderer skin)
+            {
+                total += Triangles(skin.sharedMesh);
+            }
+        }
+        return total;
     }
 
     static int LodIndex(string name)
@@ -356,7 +442,6 @@ public static class LiveCityModelImporter
         Texture bump = source != null && source.HasProperty("_BumpMap") ? source.GetTexture("_BumpMap") : null;
         if (texture == null) texture = FindTexture(sourcePath, materialName, false);
         if (bump == null) bump = FindTexture(sourcePath, materialName, true);
-
         Color color = source != null && source.HasProperty("_Color") ? source.color : Color.white;
         bool neutral = Mathf.Abs(color.r - color.g) < .03f && Mathf.Abs(color.g - color.b) < .03f;
         if (texture != null)
@@ -386,17 +471,45 @@ public static class LiveCityModelImporter
             result.SetTextureOffset("_MainTex", source.GetTextureOffset("_MainTex"));
         }
         result.SetTexture("_BumpMap", bump);
-        if (bump != null) result.EnableKeyword("_NORMALMAP");
+        if (bump != null)
+        {
+            result.EnableKeyword("_NORMALMAP");
+            result.SetFloat("_BumpScale", kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant ? .8f : 1f);
+        }
+        result.SetFloat("_Metallic", 0f);
+        result.SetFloat("_Glossiness", SurfaceSmoothness(kind, materialName));
+        if (result.HasProperty("_GlossyReflections")) result.SetFloat("_GlossyReflections", 1f);
         if (kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant)
         {
-            result.SetFloat("_Cutoff", .4f);
+            result.SetFloat("_Cutoff", .42f);
             result.EnableKeyword("_ALPHATEST_ON");
+            result.DisableKeyword("_ALPHABLEND_ON");
             result.SetOverrideTag("RenderType", "TransparentCutout");
             result.renderQueue = (int)RenderQueue.AlphaTest;
             result.SetFloat("_Mode", 1);
         }
         result.enableInstancing = true;
         return result;
+    }
+
+    /// <summary>
+    /// Leaf cards and bark are matte; a high smoothness on foliage is what makes
+    /// imported trees look like plastic. Rocks and painted street furniture keep a
+    /// little more response, but remain below a varnished surface.
+    /// </summary>
+    static float SurfaceSmoothness(LiveCityCatalog.Kind kind, string materialName)
+    {
+        string name = (materialName ?? string.Empty).ToLowerInvariant();
+        if (kind == LiveCityCatalog.Kind.Tree || kind == LiveCityCatalog.Kind.Plant)
+        {
+            if (name.Contains("bark") || name.Contains("trunk") || name.Contains("branch"))
+                return .3f;
+            return .22f;
+        }
+        if (kind == LiveCityCatalog.Kind.Rock) return .34f;
+        if (kind == LiveCityCatalog.Kind.Bench) return .38f;
+        if (kind == LiveCityCatalog.Kind.Billboard) return .3f;
+        return .4f;
     }
 
     internal static Texture FindTexture(string sourcePath, string materialName, bool normal)

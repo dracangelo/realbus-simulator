@@ -1,25 +1,25 @@
 ﻿# Summary
 |||
 |:---|:---|
-| Generated on: | 10/23/2026 - 9:57:07 AM |
+| Generated on: | 10/23/2026 - 10:54:48 AM |
 | Parser: | MultiReportParser (4x OpenCoverParser) |
 | Assemblies: | 2 |
-| Classes: | 276 |
-| Files: | 373 |
-| Covered lines: | 14061 |
-| Uncovered lines: | 46446 |
-| Coverable lines: | 60507 |
-| Total lines: | 67309 |
-| Line coverage: | 23.2% (14061 of 60507) |
+| Classes: | 277 |
+| Files: | 374 |
+| Covered lines: | 14080 |
+| Uncovered lines: | 46614 |
+| Coverable lines: | 60694 |
+| Total lines: | 67615 |
+| Line coverage: | 23.1% (14080 of 60694) |
 | Covered branches: | 0 |
 | Total branches: | 0 |
-| Covered methods: | 1715 |
-| Total methods: | 5749 |
-| Method coverage: | 29.8% (1715 of 5749) |
+| Covered methods: | 1719 |
+| Total methods: | 5764 |
+| Method coverage: | 29.8% (1719 of 5764) |
 
 |**Name**|**Covered**|**Uncovered**|**Coverable**|**Total**|**Line coverage**|**Covered**|**Total**|**Branch coverage**|**Covered**|**Total**|**Method coverage**|
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-|**GameScripts**|**14058**|**36169**|**50227**|**64168**|**27.9%**|**0**|**0**|****|**1714**|**5084**|**33.7%**|
+|**GameScripts**|**14077**|**36231**|**50308**|**64313**|**27.9%**|**0**|**0**|****|**1718**|**5092**|**33.7%**|
 |AccessibilityManager|10|31|41|82|24.3%|0|0||5|11|45.4%|
 |AerodynamicsSystem|3|10|13|29|23%|0|0||1|4|25%|
 |AIBusRouteRunner|0|62|62|380|0%|0|0||0|9|0%|
@@ -87,11 +87,12 @@
 |GpsTracker|0|172|172|188|0%|0|0||0|30|0%|
 |HUDManager|37|378|415|579|8.9%|0|0||7|45|15.5%|
 |HudSafeZoneFitter|10|38|48|140|20.8%|0|0||1|7|14.2%|
+|ImportedFoliageVariation|12|44|56|103|21.4%|0|0||3|6|50%|
 |ImportedMaterialPalette|90|8|98|213|91.8%|0|0||14|14|100%|
 |ImportedVehicleVisualRepair|184|19|203|337|90.6%|0|0||10|12|83.3%|
 |Json|589|127|716|688|82.2%|0|0||48|48|100%|
 |LiveCityCatalog|1|0|1|17|100%|0|0||1|1|100%|
-|LiveCityStreamer|58|315|373|566|15.5%|0|0||9|30|30%|
+|LiveCityStreamer|58|318|376|571|15.4%|0|0||9|30|30%|
 |LiveryCodeCodec|45|3|48|361|93.7%|0|0||5|5|100%|
 |LiveryData|11|0|11|361|100%|0|0||2|2|100%|
 |LiveryEditor|27|128|155|361|17.4%|0|0||5|20|25%|
@@ -121,7 +122,7 @@
 |OfflineCacheManager|30|305|335|361|8.9%|0|0||8|39|20.5%|
 |OfflineMapsUI|0|154|154|147|0%|0|0||0|16|0%|
 |OSMBuildingLoader|7|111|118|115|5.9%|0|0||1|19|5.2%|
-|OSMBuildingMeshBuilder|316|1028|1344|1713|23.5%|0|0||22|85|25.8%|
+|OSMBuildingMeshBuilder|323|1042|1365|1749|23.6%|0|0||23|87|26.4%|
 |OsmCityPopulationSystem|0|368|368|564|0%|0|0||0|21|0%|
 |OSMData|30|46|76|315|39.4%|0|0||3|10|30%|
 |OSMLoader|0|61|61|76|0%|0|0||0|12|0%|
@@ -138,7 +139,7 @@
 |PassengerData|14|0|14|18|100%|0|0||4|4|100%|
 |PassengerFeedbackSystem|2|58|60|90|3.3%|0|0||2|16|12.5%|
 |PassengerLoadDynamics|6|20|26|46|23%|0|0||2|4|50%|
-|PassengerManager|509|649|1158|928|43.9%|0|0||46|97|47.4%|
+|PassengerManager|508|650|1158|928|43.8%|0|0||46|97|47.4%|
 |PassengerReactionLibrary|0|7|7|26|0%|0|0||0|1|0%|
 |PassengerSpawner|89|35|124|103|71.7%|0|0||9|11|81.8%|
 |PassengerStoryManager|1|68|69|118|1.4%|0|0||1|23|4.3%|
@@ -239,7 +240,7 @@
 |UnlockManager|369|285|654|468|56.4%|0|0||44|60|73.3%|
 |UpgradeDefinition|9|0|9|74|100%|0|0||1|1|100%|
 |UpgradeManager|90|74|164|238|54.8%|0|0||15|21|71.4%|
-|UrbanMaterials|314|7|321|605|97.8%|0|0||28|28|100%|
+|UrbanMaterials|315|7|322|606|97.8%|0|0||28|28|100%|
 |VehicleDistanceLod|0|17|17|29|0%|0|0||0|3|0%|
 |VehiclePersistentState|53|2|55|123|96.3%|0|0||4|4|100%|
 |VehiclePolishEffects|0|25|25|40|0%|0|0||0|4|0%|
@@ -258,10 +259,10 @@
 |XPAwardResult|2|2|4|430|50%|0|0||2|4|50%|
 |XPBar|0|282|282|211|0%|0|0||0|24|0%|
 |XPSystem|190|124|314|430|60.5%|0|0||36|52|69.2%|
-|**GameScripts.Editor**|**3**|**10277**|**10280**|**14404**|**0%**|**0**|**0**|****|**1**|**665**|**0.1%**|
+|**GameScripts.Editor**|**3**|**10383**|**10386**|**14565**|**0%**|**0**|**0**|****|**1**|**672**|**0.1%**|
 |AIRoadGraphGenerator|0|350|350|257|0%|0|0||0|26|0%|
 |BuildingCatalogPreview|0|84|84|122|0%|0|0||0|1|0%|
-|BuildingModelImporter|0|338|338|505|0%|0|0||0|20|0%|
+|BuildingModelImporter|0|364|364|553|0%|0|0||0|23|0%|
 |BuildingsAndPoiDownloader|0|290|290|235|0%|0|0||0|20|0%|
 |CityCatalogGenerator|0|388|388|341|0%|0|0||0|28|0%|
 |CityJsonBulkDownloader|0|288|288|236|0%|0|0||0|26|0%|
@@ -278,7 +279,7 @@
 |ImportedModelWiringGenerator|0|551|551|757|0%|0|0||0|37|0%|
 |ImportedTextureSharpener|0|49|49|86|0%|0|0||0|2|0%|
 |LegacyPluginImporterUpgrader|0|48|48|81|0%|0|0||0|5|0%|
-|LiveCityModelImporter|0|390|390|535|0%|0|0||0|27|0%|
+|LiveCityModelImporter|0|470|470|648|0%|0|0||0|31|0%|
 |MainMenuBuilder|0|941|941|824|0%|0|0||0|64|0%|
 |MapboxTokenDiagnosticsTool|0|68|68|129|0%|0|0||0|6|0%|
 |OSMRouteImporterEditorTool|0|1315|1315|1299|0%|0|0||0|84|0%|

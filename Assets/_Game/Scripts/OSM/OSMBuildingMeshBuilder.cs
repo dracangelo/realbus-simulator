@@ -925,6 +925,7 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         instance.name = $"Building_Imported_{id}";
         instance.transform.SetPositionAndRotation(center, rotation);
         instance.transform.localScale = Vector3.one * scale;
+        ApplyImportedBuildingVariation(instance, id);
 
         var collider = instance.GetComponent<BoxCollider>();
         if (collider == null) collider = instance.AddComponent<BoxCollider>();
@@ -1354,6 +1355,41 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
             Mathf.Clamp01(baseColour.g * brightness),
             Mathf.Clamp01(baseColour.b * brightness - shift),
             baseColour.a);
+    }
+
+    /// <summary>
+    /// A subtle per-instance tint for downloaded buildings. The imported materials
+    /// carry real albedo maps, so this must stay close to neutral: enough to stop
+    /// a row of the same prefab reading as a clone, but not enough to turn a
+    /// concrete facade into a painted one. Stable for an id, so a building that
+    /// streams out and back keeps its tone.
+    /// </summary>
+    public static Color ImportedTintFor(long id)
+    {
+        float variation = Mathf.Abs((id * 2654435761L + 1013904223L) % 1000L) / 999f;
+        float warmth = Mathf.Abs((id * 40503L + 7L) % 997L) / 996f;
+        float brightness = Mathf.Lerp(.92f, 1.05f, variation);
+        float shift = Mathf.Lerp(-.012f, .018f, warmth);
+        return new Color(
+            Mathf.Clamp(brightness + shift, .86f, 1.08f),
+            Mathf.Clamp(brightness, .86f, 1.08f),
+            Mathf.Clamp(brightness - shift, .86f, 1.08f),
+            1f);
+    }
+
+    static void ApplyImportedBuildingVariation(GameObject instance, long id)
+    {
+        Color tint = ImportedTintFor(id);
+        var block = new MaterialPropertyBlock();
+        foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+        {
+            if (renderer == null) continue;
+            renderer.GetPropertyBlock(block);
+            block.SetColor("_Color", tint);
+            renderer.SetPropertyBlock(block);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            renderer.receiveShadows = true;
+        }
     }
 
     /// <summary>How far a roof is pulled in from the wall top, and how far it drops: the parapet.</summary>

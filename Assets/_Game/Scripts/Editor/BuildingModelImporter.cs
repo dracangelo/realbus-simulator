@@ -392,20 +392,68 @@ public static class BuildingModelImporter
         if (occlusion != null)
         {
             result.SetTexture("_OcclusionMap", occlusion);
-            result.SetFloat("_OcclusionStrength", .75f);
+            result.SetFloat("_OcclusionStrength", .88f);
             result.EnableKeyword("_OCCLUSIONMAP");
         }
 
-        bool glass = lower.Contains("glass") || lower.Contains("window") ||
-                     lower.Contains("transmission") || lower.Contains("translucent");
-        bool metal = lower.Contains("metal") || lower.Contains("steel");
-        result.SetFloat("_Metallic", glass ? .10f : metal ? .65f : 0f);
-        result.SetFloat("_Glossiness", glass ? .78f : metal ? .50f : roughnessPath != null ? .23f : .32f);
+        // Imported packs mix materials named "concrete", "plaster", "brick",
+        // "glass", "steel" and generic placeholders. Treat the name as a surface
+        // class instead of giving every wall the same 0.32 gloss: concrete should
+        // be matte, painted frames slightly smoother, metal reflective, and glass
+        // the only surface that mirrors the sky strongly.
+        SurfaceClass surface = ClassifySurface(lower);
+        float smoothness = SmoothnessFor(surface);
+        // A measured roughness map should not push clear glass below the 0.8
+        // smoothness floor that makes a window read as glazed rather than dusty.
+        if (roughnessPath != null && surface != SurfaceClass.Glass)
+            smoothness = Mathf.Clamp(smoothness * .92f, .08f, .9f);
+        result.SetFloat("_Metallic", MetallicFor(surface));
+        result.SetFloat("_Glossiness", smoothness);
+        if (result.HasProperty("_GlossyReflections"))
+            result.SetFloat("_GlossyReflections", 1f);
+        if (result.HasProperty("_BumpScale"))
+            result.SetFloat("_BumpScale", .9f);
         result.enableInstancing = true;
         return result;
     }
 
     enum TextureChannel { Diffuse, Normal, Occlusion, Roughness }
+    enum SurfaceClass { Masonry, Glass, Metal, Wood, Generic }
+
+    static SurfaceClass ClassifySurface(string materialName)
+    {
+        if (materialName.Contains("glass") || materialName.Contains("window") ||
+            materialName.Contains("transmission") || materialName.Contains("translucent"))
+            return SurfaceClass.Glass;
+        if (materialName.Contains("metal") || materialName.Contains("steel") ||
+            materialName.Contains("aluminium") || materialName.Contains("aluminum"))
+            return SurfaceClass.Metal;
+        if (materialName.Contains("wood") || materialName.Contains("timber") ||
+            materialName.Contains("door") || materialName.Contains("shutter"))
+            return SurfaceClass.Wood;
+        if (materialName.Contains("concrete") || materialName.Contains("plaster") ||
+            materialName.Contains("render") || materialName.Contains("stucco") ||
+            materialName.Contains("brick") || materialName.Contains("stone") ||
+            materialName.Contains("masonry") || materialName.Contains("wall") ||
+            materialName.Contains("tile"))
+            return SurfaceClass.Masonry;
+        return SurfaceClass.Generic;
+    }
+
+    static float MetallicFor(SurfaceClass surface)
+        => surface == SurfaceClass.Metal ? .65f : 0f;
+
+    static float SmoothnessFor(SurfaceClass surface)
+    {
+        switch (surface)
+        {
+            case SurfaceClass.Glass: return .86f;   // clear sky reflection, not a mirror
+            case SurfaceClass.Metal: return .55f;   // galvanised/painted metal, not chrome
+            case SurfaceClass.Wood: return .34f;
+            case SurfaceClass.Masonry: return .22f; // concrete, brick and plaster
+            default: return .28f;
+        }
+    }
 
     static string FindTexture(Dictionary<string, string> textures, string modelStem, string materialName, TextureChannel channel)
     {

@@ -312,6 +312,9 @@ public class LiveCityStreamer : MonoBehaviour
             foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             go.transform.localScale = Vector3.one * scale;
+            // A shared green variant per placement keeps a row of the same tree
+            // from reading as a clone while preserving GPU instancing.
+            ImportedFoliageVariation.Apply(go, entry.kind, candidate.seed);
             // Advertisements and benches are the imported props that still carried
             // no albedo. Decorate after the instance exists so the variant follows
             // this exact placement seed and survives streaming out and back.
@@ -353,6 +356,7 @@ public class LiveCityStreamer : MonoBehaviour
                 foreach (var renderer in deepGo.GetComponentsInChildren<Renderer>(true))
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 deepGo.transform.localScale = Vector3.one * deepScale;
+                ImportedFoliageVariation.Apply(deepGo, deep.kind, deepSeed);
                 active[(candidate.segment, deepKey, candidate.side)] = new Spawned { go = deepGo, entry = deep, center = deepPosition,
                     direction = candidate.direction, rotation = deepRotation, radius = deepRadius, phase = (deepSeed % 1000) * .01f };
                 triangles += deep.triangles;
@@ -457,6 +461,7 @@ public class LiveCityStreamer : MonoBehaviour
                 foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 go.transform.localScale = Vector3.one * scale;
+                ImportedFoliageVariation.Apply(go, entry.kind, seed);
                 active[(segment, slot, ScatterSide)] = new Spawned { go = go, entry = entry, center = position, direction = Vector3.forward,
                     rotation = rotation, radius = radius, phase = (seed % 1000) * .01f, scattered = true };
                 triangles += entry.triangles;

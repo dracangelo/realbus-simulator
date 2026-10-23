@@ -372,6 +372,46 @@ public class CityContentTests
     }
 
     [Test]
+    public void LiveGreenery_UsesStableSubtleGreenVariants()
+    {
+        var variants = new System.Collections.Generic.HashSet<int>();
+        var tints = new System.Collections.Generic.HashSet<Color>();
+        for (uint seed = 0; seed < 400; seed++)
+        {
+            int variant = ImportedFoliageVariation.VariantFor(seed);
+            variants.Add(variant);
+            tints.Add(ImportedFoliageVariation.TintFor(seed));
+            Assert.That(variant, Is.InRange(0, ImportedFoliageVariation.VariantCount - 1));
+            Assert.That(ImportedFoliageVariation.VariantFor(seed), Is.EqualTo(variant),
+                "a tree must keep its shade when it streams out and back");
+            Color tint = ImportedFoliageVariation.TintFor(seed);
+            Assert.That(tint.r, Is.InRange(.8f, 1.1f));
+            Assert.That(tint.g, Is.InRange(.8f, 1.1f));
+            Assert.That(tint.b, Is.InRange(.8f, 1.1f));
+            Assert.That(Mathf.Max(tint.r, Mathf.Max(tint.g, tint.b)) -
+                        Mathf.Min(tint.r, Mathf.Min(tint.g, tint.b)), Is.GreaterThan(.03f),
+                "a tint that is almost neutral does not break up a row of identical trees");
+        }
+        Assert.That(variants.Count, Is.EqualTo(ImportedFoliageVariation.VariantCount));
+        Assert.That(tints.Count, Is.EqualTo(ImportedFoliageVariation.VariantCount));
+    }
+
+    [Test]
+    public void ImportedBuildings_UseStableNearNeutralPerInstanceTints()
+    {
+        for (long id = -50; id < 50; id++)
+        {
+            Color tint = OSMBuildingMeshBuilder.ImportedTintFor(id);
+            Assert.That(OSMBuildingMeshBuilder.ImportedTintFor(id), Is.EqualTo(tint));
+            Assert.That(tint.r, Is.InRange(.86f, 1.08f));
+            Assert.That(tint.g, Is.InRange(.86f, 1.08f));
+            Assert.That(tint.b, Is.InRange(.86f, 1.08f));
+            Assert.That(Mathf.Abs(tint.r - tint.g), Is.LessThan(.06f),
+                "a downloaded facade must not turn into a painted building");
+        }
+    }
+
+    [Test]
     public void LiveGreenery_OpenGroundSpotsAreStableAndSpreadOut()
     {
         var seen = new System.Collections.Generic.HashSet<string>();
