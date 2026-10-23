@@ -34,7 +34,19 @@ public class RuntimeMinimapGraphic : MaskableGraphic
     public Color nextStopColor = new Color(0.2f, 1f, 0.62f, 1f);
     public Color busColor = new Color(0.13f, 0.7f, 1f, 1f);
     public Color ringColor = new Color(1f, 1f, 1f, 0.09f);
+    public Color roadColor = new Color(0.62f, 0.68f, 0.74f, 0.34f);
     public Color northColor = new Color(1f, 0.55f, 0.3f, 0.75f);
+
+    [Tooltip("Cap on road segments drawn per frame, so a dense junction cannot turn the map into a full-city rebuild.")]
+    public int maxRoadSegments = 1200;
+    [Tooltip("Metres the bus must move before the cached road set is re-queried.")]
+    public float roadCacheRefreshMeters = 30f;
+
+    readonly System.Collections.Generic.List<RoadSurfaceIndex.Segment> roadCache =
+        new System.Collections.Generic.List<RoadSurfaceIndex.Segment>();
+    RoadSurfaceIndex roadCacheIndex;
+    Vector3 roadCacheOrigin;
+    bool roadCacheValid;
 
     protected override void OnPopulateMesh(VertexHelper vh)
     {
@@ -56,6 +68,11 @@ public class RuntimeMinimapGraphic : MaskableGraphic
 
         float yaw = rotateWithHeading ? bus.transform.eulerAngles.y : 0f;
         Vector3 busPosition = bus.transform.position;
+
+        // The streets around the bus come first: a real map in free drive, where
+        // there is no route to draw, and a readable backdrop under the route when
+        // there is one.
+        DrawRoads(vh, busPosition, yaw, radius);
         Vector3[] path = ResolvePath();
 
         int nearest = -1;
@@ -82,6 +99,59 @@ public class RuntimeMinimapGraphic : MaskableGraphic
         // Bus marker: the map rotates, so it always faces up.
         AddBusArrow(vh, busColor);
         AddNorthMarker(vh, radius, yaw);
+    }
+
+    /// <summary>
+    /// Draws the streets within the map radius, so the dial reads as a map rather
+    /// than an empty gauge (especially in free drive, where there is no route).
+    /// Segments come from the same <see cref="RoadSurfaceIndex"/> the world is built
+    /// from, and are clipped to the dial so nothing spills past its edge.
+    /// </summary>
+    void DrawRoads(VertexHelper vh, Vector3 busPosition, float yaw, float radius)
+    {
+        var builder = OSMRoadMeshBuilder.Instance;
+        var roads = builder != null ? builder.SurfaceIndex : null;
+        if (roads == null) return;
+
+        float metresToPixels = radius / Mathf.Max(1f, worldRadiusMeters);
+        int cap = Mathf.Max(1, maxRoadSegments);
+        RefreshRoadCache(roads, busPosition, cap);
+
+        int drawn = 0;
+        for (int i = 0; i < roadCache.Count; i++)
+        {
+            if (drawn >= cap) break;
+            var segment = roadCache[i];
+            Vector2 a = ProjectWorld(segment.a, busPosition, yaw, radius, worldRadiusMeters);
+            Vector2 b = ProjectWorld(segment.b, busPosition, yaw, radius, worldRadiusMeters);
+            if (!ClipSegmentToCircle(a, b, radius - 1f, out Vector2 ca, out Vector2 cb)) continue;
+            float width = Mathf.Clamp(segment.halfWidth * 2f * metresToPixels, 1.2f, 9f);
+            AddLine(vh, ca, cb, width, roadColor);
+            drawn++;
+        }
+    }
+
+    /// <summary>
+    /// The nearby road set changes slowly compared with the frame rate, so it is
+    /// re-queried only when the bus has moved far enough or the world was rebuilt.
+    /// Projecting a cached segment each frame is cheap; scanning the index by cell
+    /// every frame is not.
+    /// </summary>
+    void RefreshRoadCache(RoadSurfaceIndex roads, Vector3 busPosition, int cap)
+    {
+        bool fresh = roadCacheValid && roadCacheIndex == roads &&
+            (busPosition - roadCacheOrigin).sqrMagnitude <= roadCacheRefreshMeters * roadCacheRefreshMeters;
+        if (fresh) return;
+
+        roadCache.Clear();
+        foreach (var segment in roads.Around(busPosition, worldRadiusMeters))
+        {
+            roadCache.Add(segment);
+            if (roadCache.Count >= cap) break;
+        }
+        roadCacheOrigin = busPosition;
+        roadCacheIndex = roads;
+        roadCacheValid = true;
     }
 
     void Update() { SetVerticesDirty(); }

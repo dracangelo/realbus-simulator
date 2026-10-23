@@ -315,6 +315,55 @@ public class BusDepotManager : MonoBehaviour
     }
 
     /// <summary>
+    /// True when a placed prop's footprint reaches the street carriageway. The
+    /// yard's own roads are excluded - those driveways are meant to meet the road.
+    /// This is the street-side twin of <see cref="PropStandsInYardLane"/>: a prop
+    /// must stand on the yard, not on the city it was built beside.
+    /// </summary>
+    public bool PropReachesStreet(GameObject prop, float clearance = 0.2f)
+    {
+        var roads = OSMRoadMeshBuilder.Resolve()?.SurfaceIndex;
+        if (roads == null || prop == null) return false;
+        var footprint = new List<Vector3>(4);
+        PropFootprint(prop, footprint);
+        if (footprint.Count < 3) return false;
+        long exclude = currentRoadWayId != long.MinValue ? currentRoadWayId : long.MinValue;
+        return roads.OverlapsFootprint(footprint, clearance, exclude);
+    }
+
+    /// <summary>
+    /// Slides the yard away from the kerb until its whole apron footprint clears
+    /// every street segment. The yard is wide enough that too shallow an offset
+    /// would otherwise lay the apron, bays and wheel stops across the carriageway.
+    /// </summary>
+    Vector3 PushYardClearOfStreet(RoadSurfaceIndex roads, Vector3 center, Vector3 outward,
+        Quaternion facing, float groundY)
+    {
+        if (roads == null) return center;
+        var footprint = new List<Vector3>(4);
+        for (int attempt = 0; attempt < 16; attempt++)
+        {
+            YardFootprint(center, facing, footprint);
+            if (!roads.OverlapsFootprint(footprint, 0.4f)) return center;
+            center += outward * 2f;
+            center.y = groundY;
+        }
+        return center;
+    }
+
+    /// <summary>Plan-view corners of the yard apron in world space.</summary>
+    void YardFootprint(Vector3 center, Quaternion facing, List<Vector3> footprint)
+    {
+        float hw = yardWidth * 0.5f;
+        float hd = yardDepth * 0.5f;
+        footprint.Clear();
+        footprint.Add(center + facing * new Vector3(-hw, 0f, -hd));
+        footprint.Add(center + facing * new Vector3(hw, 0f, -hd));
+        footprint.Add(center + facing * new Vector3(hw, 0f, hd));
+        footprint.Add(center + facing * new Vector3(-hw, 0f, hd));
+    }
+
+    /// <summary>
     /// Names of the yard props currently standing in a lane. Healthy is empty: it is
     /// the invariant the depot's own placement rules are meant to hold, so the tests
     /// and the headless smoke run assert on it directly.
@@ -444,10 +493,19 @@ public class BusDepotManager : MonoBehaviour
 
         Vector3 roadFwd = roadFacing * Vector3.forward;
         Vector3 outward = roadFacing * (leftTraffic ? Vector3.left : Vector3.right);
+        // +1 when the street lies on the yard's local +X, matching the aisle
+        // builder. Yard structures are placed on the far side of the depot from it.
+        float streetSide = Mathf.Sign(Vector3.Dot(roadFacing * Vector3.right, -outward));
+        if (streetSide == 0f) streetSide = -1f;
 
         // Position depot yard adjacent to kerb
         Vector3 depotCenter = kerbPos + outward * depotOffsetFromRoad + roadFwd * depotAlongRoadOffset;
         depotCenter.y = groundY;
+        // A yard pushed too close would lay its apron and bays across the
+        // carriageway. Walk it out until its footprint misses every street
+        // segment; the yard's own roads are laid later, so nothing needs
+        // excluding yet.
+        depotCenter = PushYardClearOfStreet(roads, depotCenter, outward, roadFacing, groundY);
 
         // Clean up any old depot, its zone and its road registrations first, so a
         // re-placed depot cannot leave the previous yard's exclusion behind.
@@ -476,7 +534,7 @@ public class BusDepotManager : MonoBehaviour
         BuildBaysAndStops(currentDepot.transform, out bayPosition, out bayRotation);
 
         // 4. Place Garage & Parking Lot Models from Assets/unity models/parking lot
-        PlaceDepot3DAssets(currentDepot.transform);
+        PlaceDepot3DAssets(currentDepot.transform, streetSide);
 
         // 5. Depot lighting & signage
         BuildDepotProps(currentDepot.transform);
@@ -848,10 +906,14 @@ public class BusDepotManager : MonoBehaviour
     /// they cannot stand in an aisle: a depot building blocking its own lanes is
     /// exactly the kind of blockage this layout exists to prevent.
     /// </summary>
-    void PlaceDepot3DAssets(Transform parent)
+    void PlaceDepot3DAssets(Transform parent, float streetSide)
     {
-        Vector3 garageLocal = new Vector3(-(yardWidth * 0.5f + 3f), ApronTopOffset, bayRowZ);
-        Vector3 parkingLocal = new Vector3(yardWidth * 0.5f + 3f, ApronTopOffset, bayRowZ);
+        // Structures live on the far side of the yard from the street, so a
+        // building can never reach the carriageway even in a right-hand-traffic
+        // city, where the depot is mirrored across the kerb.
+        float away = -streetSide;
+        Vector3 garageLocal = new Vector3(away * (yardWidth * 0.5f + 3f), ApronTopOffset, bayRowZ);
+        Vector3 parkingLocal = new Vector3(away * (yardWidth * 0.5f + 3f), ApronTopOffset, bayRowZ + bayLength + 5f);
 
         // 1. Maintenance garage: the imported model when it is yard sized, and the
         // yard's own workshop when it is not (the shipped prop is a 200 m parking
@@ -902,6 +964,15 @@ public class BusDepotManager : MonoBehaviour
             return null;
         }
 
+        // Fitting the yard is not the same as staying off the street either.
+        if (PropReachesStreet(instance))
+        {
+            Debug.Log($"[BusDepotManager] Refused imported depot prop '{prefab.name}' ({size.x:F1}x{size.y:F1}x{size.z:F1} m): " +
+                "its footprint would reach the street carriageway.");
+            DestroySafe(instance);
+            return null;
+        }
+
         ImportedMaterialPalette.ApplyFallback(instance, importedPropFallbackColor);
         EnsureColliders(instance);
         return instance;
@@ -948,7 +1019,7 @@ public class BusDepotManager : MonoBehaviour
             garage.transform.SetParent(parent, false);
             garage.transform.localPosition = localPos + new Vector3(outward * step, 0f, 0f) + Vector3.up * 3.5f;
             garage.transform.localScale = new Vector3(12f, 7f, 8f);
-            if (!PropStandsInYardLane(garage))
+            if (!PropStandsInYardLane(garage) && !PropReachesStreet(garage))
             {
                 Renderer rend = garage.GetComponent<Renderer>();
                 if (rend != null && curbMaterial != null) rend.material = curbMaterial;
@@ -1094,6 +1165,13 @@ public class BusDepotManager : MonoBehaviour
             if (PropStandsInYardLane(parked))
             {
                 Debug.Log($"[BusDepotManager] Dropped the parked fleet bus for bay {bay + 1}: its footprint would stand in the yard's entry/exit lane.");
+                DestroySafe(parked);
+                continue;
+            }
+
+            if (PropReachesStreet(parked))
+            {
+                Debug.Log($"[BusDepotManager] Dropped the parked fleet bus for bay {bay + 1}: its footprint would reach the street carriageway.");
                 DestroySafe(parked);
                 continue;
             }

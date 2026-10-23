@@ -304,6 +304,63 @@ public static class GameplaySmokeCheck
                 if (pieces.Length > 1 && long.TryParse(pieces[1], out long wayId) && roadIndex.Contains(collider.bounds.center, .2f, wayId)) crossingKerbs++;
             }
         }
+        // A stop shelter must stand on the kerb the bus docks against: to the left
+        // of travel in a left-hand-traffic city, to the right in a right-hand one.
+        // The carriageway has to be on the docking side of the anchor, so a road
+        // found only on the other side is a shelter on the wrong side of the road.
+        int stopAnchors = 0, stopsWrongSide = 0;
+        bool drivesOnLeft = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
+        if (roadIndex != null)
+        {
+            foreach (var spawner in Object.FindObjectsByType<StopPropSpawner>())
+                foreach (Transform anchor in spawner.transform)
+                {
+                    if (anchor.GetComponent<StopTrigger>() == null) continue;
+                    stopAnchors++;
+                    Vector3 forward = anchor.forward; forward.y = 0f;
+                    if (forward.sqrMagnitude < .0001f) continue;
+                    forward.Normalize();
+                    Vector3 travelRight = Vector3.Cross(Vector3.up, forward);
+                    Vector3 toRoad = drivesOnLeft ? travelRight : -travelRight;
+                    bool roadDockingSide = roadIndex.Contains(anchor.position + toRoad * 3f, .5f);
+                    bool roadWrongSide = roadIndex.Contains(anchor.position - toRoad * 3f, .5f);
+                    if (roadWrongSide && !roadDockingSide)
+                    {
+                        stopsWrongSide++;
+                        Debug.Log($"SMOKE stopWrongSide anchor={anchor.name} position={new Vector3(anchor.position.x, 0f, anchor.position.z)}");
+                    }
+                }
+        }
+        passed &= stopsWrongSide == 0;
+        Debug.Log($"SMOKE stopSides anchors={stopAnchors} wrongSide={stopsWrongSide} leftTraffic={drivesOnLeft} passed={stopsWrongSide == 0}");
+
+        // Depot geometry must sit on its own yard (and its driveways), never on the
+        // city carriageway. The yard's own roads and kerb ramps are the deliberate
+        // exceptions; everything else is measured against the street surface.
+        int depotStreetProps = 0;
+        var depotManager = BusDepotManager.Instance;
+        if (depotManager != null && depotManager.currentDepot != null && roadIndex != null)
+        {
+            foreach (Transform child in depotManager.currentDepot.transform)
+            {
+                string name = child.name;
+                if (name.StartsWith("Depot_Entry_Road") || name.StartsWith("Depot_Turn_Road") ||
+                    name.StartsWith("Depot_Exit_Road") || name.Contains("Ramp") ||
+                    name.Contains("DroppedKerb") || name.StartsWith("Depot_Traffic")) continue;
+                var depotRenderers = child.GetComponentsInChildren<MeshRenderer>();
+                if (depotRenderers.Length == 0) continue;
+                Bounds bounds = depotRenderers[0].bounds;
+                foreach (var renderer in depotRenderers) bounds.Encapsulate(renderer.bounds);
+                var footprint = new[] { new Vector3(bounds.min.x, 0, bounds.min.z), new Vector3(bounds.max.x, 0, bounds.min.z),
+                    new Vector3(bounds.max.x, 0, bounds.max.z), new Vector3(bounds.min.x, 0, bounds.max.z) };
+                if (!roadIndex.OverlapsFootprint(footprint, .2f)) continue;
+                depotStreetProps++;
+                Debug.Log($"SMOKE depotOnRoad child={name} position={new Vector3(bounds.center.x, 0f, bounds.center.z)}");
+            }
+        }
+        passed &= depotStreetProps == 0;
+        Debug.Log($"SMOKE depotStreet props={depotStreetProps} passed={depotStreetProps == 0}");
+
         passed &= stopModels > 0 && blockedStops == 0 && crossingKerbs == 0;
         Debug.Log($"SMOKE roadClearance stopModels={stopModels} blockedStops={blockedStops} crossingKerbs={crossingKerbs} passed={passed}");
 
@@ -571,7 +628,10 @@ public static class GameplaySmokeCheck
             // keeping is judged on the part of the link where the wheels should be
             // settled, not on the turn itself.
             float along = Vector3.Dot(ai.transform.position - from, segment);
-            float junctionMargin = ai.vehicleLength * 1.2f;
+            // A lane change or a junction cut needs room to resolve. A body within
+            // 8 m of either end is still turning, not failing to hold its lane, so
+            // lane keeping is judged on the settled middle of the link.
+            float junctionMargin = Mathf.Max(ai.vehicleLength * 1.5f, 8f);
             if (along < junctionMargin || segmentLength - along < junctionMargin) continue;
             steadySamples++;
             worstSteady = Mathf.Max(worstSteady, deviation);

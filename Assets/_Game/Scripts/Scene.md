@@ -617,6 +617,26 @@ The lighting stack is assembled at runtime rather than baked into `GameScene`:
 
 **No static lightmap or baked Light Probe Group is used.** The city is streamed procedurally and the same scene must render a clear noon, a cloudy afternoon and a night with a moving sun. A bake would freeze one time and one cloud state, and the moving bus would sample probes lit by the wrong hour. The runtime equivalents are the `Trilight` ambient (day/night and cloud scaled), the generated sky cubemap used as `RenderSettings.customReflectionTexture`, and the bus's realtime reflection probe. There is no `LightProbeGroup` in the scene; imported bus renderers therefore use the runtime ambient and the bus probe rather than baked probe data.
 
+### Runtime city traffic
+
+Traffic is assembled at runtime as well. `SceneBootstrap` uses the `VehiclePool` already in the scene or creates a `VehiclePool` GameObject if there is none, raises `poolSizePerScene` to **160** when the traffic catalog has models (80 when it only has the procedural fallbacks), fills it from `TrafficCatalog` (the normalised downloaded models, used ahead of the old `BussimAssets/aitraffic` archives), and hands it the daily density profile (`minActiveFraction` 0.32, `maxActiveFraction` 0.92, `minActiveVehicles` 26). Every body runs at one of three tiers:
+
+| Tier | Component | Behaviour |
+|------|-----------|-----------|
+| Full AI (≤ **20** bodies) | `AIVehicleController` | Physics body inside `fullAiRadiusMeters`; lane keeping, committed lane changes, overtaking, signals and following |
+| Cheap | `SplineVehicle` | Kinematic body out to `splineRadiusMeters`; same lane line and lane-change intent, no collisions |
+| Dormant | — | Parked off-camera and recycled when the profile asks for more cars |
+
+`RealismRules.DailyTrafficVolume` is the density profile: a quiet night baseline (0.12), a broad daytime flow (0.58) and two commuter peaks rising toward 1.0 (07:30 and 17:30, 80 minutes wide). `VehiclePool` maps the 0–1 volume between its minimum and maximum active fractions, re-evaluated every `updateDensityEverySeconds`, so the number of cars visibly rises through the morning and evening peaks and falls away overnight.
+
+The car count changes by **activating or retiring bodies only outside the camera cone**: a car in view keeps driving until it leaves it, a retirement is re-homed to an off-camera street, and a body is only moved between tiers once it is clear of the view (`visibleDespawnDistanceMeters` 320 m, `hardDespawnDistanceMeters` 760 m, `offscreenSpawnFovPaddingDegrees` 30). Density is therefore never seen as a car popping in or out; only the initial warm-up fill deliberately appears off-camera.
+
+`AIVehicleController` keeps a body on its directed link's lane line: it aims at a point on that line a lookahead ahead, with both ends using the link's own lane normal so a junction is not cut, and a lateral-error term brings a body nudged off its line back. Overtaking and ordinary lane discipline are **committed `laneIndex` changes** eased by a decaying `laneShift`, so the rendered pose is continuous and a pass is a real lane change rather than a temporary sideways offset. `TrafficParticipant` supplies the following scan (`TryFindAhead`), the overtake decision, and the `PassingLaneClear` gate every lane change must pass first.
+
+Staying out of the player's bus is handled in the same pass. `TrafficParticipant.LimitSpeed` gives the bus a wider near-field envelope (so a car brakes instead of clipping the flank of a bus crossing a junction), a stronger brake than for AI traffic, and a hard stop once a car is inside the bus's stopping envelope, so traffic queues behind the bus rather than driving through it.
+
+A committed change is supervised until the body **reaches** the new lane. If traffic or a kerb holds it so it stops making lateral progress, the change is abandoned, `laneIndex` is re-synced to the lane the body actually occupies, and it is retried after `laneChangeRetrySeconds`; `IsChangingLane` reads true across the whole window, which is what the headless lane probe filters on. The assembled scene logs the live pool and the lane keeping as `SMOKE traffic pool=... density=... fullAi=... spline=... dormant=... offLane=... worstLaneDeviation=... worstSteadyLaneDeviation=... passed=...`; the commands and thresholds are in `TESTING.md`.
+
 ### Imported models and generated content
 
 The source packs under `Assets/unity models` are editor inputs, not scene objects. The wiring tools generate stable prefabs, specs and materials under `_Game` so a scene reload never depends on an FBX's import settings:

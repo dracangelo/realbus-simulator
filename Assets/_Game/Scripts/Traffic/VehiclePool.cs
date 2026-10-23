@@ -968,9 +968,15 @@ public class VehiclePool : MonoBehaviour
 
     public float GetTrafficDensityVolume()
     {
-        float now = ScheduleManager.Instance != null
-            ? ScheduleManager.Instance.currentTimeMinutes
-            : 12f * 60f;
+        // Traffic follows the clock the player can actually see. TimeOfDaySystem
+        // tracks ScheduleManager during play, but it is also the clock a pinned
+        // (smoke) run holds still; reading the schedule alone locked density to
+        // whatever minute the schedule happened to start on, so the day curve
+        // never actually moved.
+        float now;
+        if (TimeOfDaySystem.Instance != null) now = TimeOfDaySystem.Instance.currentTimeMinutes;
+        else if (ScheduleManager.Instance != null) now = ScheduleManager.Instance.currentTimeMinutes;
+        else now = 12f * 60f;
         return RealismRules.DailyTrafficVolume(now, morningPeakMinutes,
             eveningPeakMinutes, peakWidthMinutes);
     }

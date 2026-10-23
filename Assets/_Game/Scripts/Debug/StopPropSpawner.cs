@@ -202,7 +202,15 @@ public class StopPropSpawner : MonoBehaviour
                 ? GetRouteYaw(route, i)
                 : 0f;
             Quaternion routeRotation = Quaternion.Euler(0f, yaw, 0f);
-            Vector3 heading = RoadSpawnResolver.RouteHeading(route, stopPos, routeRotation * Vector3.forward);
+            Vector3 travel = routeRotation * Vector3.forward;
+            Vector3 heading = RoadSpawnResolver.RouteHeading(route, stopPos, travel);
+            // Route geometry is not guaranteed to run in the order the bus drives
+            // it, and the kerb side is chosen from the heading. A tangent that
+            // points back down the street therefore mirrors the shelter onto the
+            // wrong side of the road. The chord from this stop to the next is the
+            // direction of travel, so fold the geometry tangent onto it.
+            if (alignToRouteDirection && Vector3.Dot(heading, travel) < 0f)
+                heading = -heading;
             if (!roads.TryRoadside(stopPos, heading, leftTraffic, out Vector3 worldPos, out routeRotation))
             {
                 Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; skipping its prop rather than blocking a lane.");

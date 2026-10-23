@@ -1,39 +1,39 @@
 ﻿# Summary
 |||
 |:---|:---|
-| Generated on: | 10/23/2026 - 10:54:48 AM |
+| Generated on: | 10/23/2026 - 2:12:01 PM |
 | Parser: | MultiReportParser (4x OpenCoverParser) |
 | Assemblies: | 2 |
 | Classes: | 277 |
 | Files: | 374 |
-| Covered lines: | 14080 |
-| Uncovered lines: | 46614 |
-| Coverable lines: | 60694 |
-| Total lines: | 67615 |
-| Line coverage: | 23.1% (14080 of 60694) |
+| Covered lines: | 14227 |
+| Uncovered lines: | 47089 |
+| Coverable lines: | 61316 |
+| Total lines: | 68671 |
+| Line coverage: | 23.2% (14227 of 61316) |
 | Covered branches: | 0 |
 | Total branches: | 0 |
-| Covered methods: | 1719 |
-| Total methods: | 5764 |
-| Method coverage: | 29.8% (1719 of 5764) |
+| Covered methods: | 1732 |
+| Total methods: | 5793 |
+| Method coverage: | 29.8% (1732 of 5793) |
 
 |**Name**|**Covered**|**Uncovered**|**Coverable**|**Total**|**Line coverage**|**Covered**|**Total**|**Branch coverage**|**Covered**|**Total**|**Method coverage**|
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-|**GameScripts**|**14077**|**36231**|**50308**|**64313**|**27.9%**|**0**|**0**|****|**1718**|**5092**|**33.7%**|
+|**GameScripts**|**14224**|**36656**|**50880**|**65300**|**27.9%**|**0**|**0**|****|**1731**|**5121**|**33.8%**|
 |AccessibilityManager|10|31|41|82|24.3%|0|0||5|11|45.4%|
 |AerodynamicsSystem|3|10|13|29|23%|0|0||1|4|25%|
 |AIBusRouteRunner|0|62|62|380|0%|0|0||0|9|0%|
 |AIBusScheduleSpawner|0|320|320|380|0%|0|0||0|20|0%|
-|AIRoadGraph|410|293|703|711|58.3%|0|0||43|61|70.4%|
-|AIVehicleController|172|434|606|705|28.3%|0|0||21|48|43.7%|
+|AIRoadGraph|412|291|703|711|58.6%|0|0||43|61|70.4%|
+|AIVehicleController|235|580|815|1041|28.8%|0|0||26|59|44%|
 |AmbientCommuterMotion|0|8|8|863|0%|0|0||0|2|0%|
 |AmbulanceBehaviour|0|112|112|90|0%|0|0||0|14|0%|
 |BalanceTelemetryRecorder|1|60|61|104|1.6%|0|0||1|19|5.2%|
 |BatterySystem|0|272|272|198|0%|0|0||0|34|0%|
 |BuildingCatalog|1|0|1|25|100%|0|0||1|1|100%|
 |BuiltInShaders|12|4|16|84|75%|0|0||4|6|66.6%|
-|BusController|150|482|632|590|23.7%|0|0||27|78|34.6%|
-|BusDepotManager|608|103|711|1228|85.5%|0|0||45|53|84.9%|
+|BusController|150|487|637|600|23.5%|0|0||27|79|34.1%|
+|BusDepotManager|643|112|755|1306|85.1%|0|0||48|56|85.7%|
 |BusFleetManager|456|152|608|665|75%|0|0||55|68|80.8%|
 |BusInputActions|0|262|262|655|0%|0|0||0|73|0%|
 |BusLiveryPaint|132|65|197|320|67%|0|0||14|19|73.6%|
@@ -139,7 +139,7 @@
 |PassengerData|14|0|14|18|100%|0|0||4|4|100%|
 |PassengerFeedbackSystem|2|58|60|90|3.3%|0|0||2|16|12.5%|
 |PassengerLoadDynamics|6|20|26|46|23%|0|0||2|4|50%|
-|PassengerManager|508|650|1158|928|43.8%|0|0||46|97|47.4%|
+|PassengerManager|499|659|1158|928|43%|0|0||46|97|47.4%|
 |PassengerReactionLibrary|0|7|7|26|0%|0|0||0|1|0%|
 |PassengerSpawner|89|35|124|103|71.7%|0|0||9|11|81.8%|
 |PassengerStoryManager|1|68|69|118|1.4%|0|0||1|23|4.3%|
@@ -161,7 +161,7 @@
 |RankUpSequence|0|182|182|131|0%|0|0||0|6|0%|
 |RealBusAudioManager|1|159|160|230|0.6%|0|0||2|28|7.1%|
 |RealBusSettings|14|0|14|138|100%|0|0||1|1|100%|
-|RealismRules|48|0|48|98|100%|0|0||13|13|100%|
+|RealismRules|58|0|58|126|100%|0|0||14|14|100%|
 |RealismTestBootstrap|0|176|176|216|0%|0|0||0|11|0%|
 |ResponsiveModalFitter|9|58|67|167|13.4%|0|0||1|10|10%|
 |RoadGeometryLod|0|45|45|61|0%|0|0||0|5|0%|
@@ -188,7 +188,7 @@
 |RuntimeDistanceCuller|0|206|206|171|0%|0|0||0|18|0%|
 |RuntimeEnvironmentSpawner|0|126|126|187|0%|0|0||0|16|0%|
 |RuntimeGasStationSpawner|0|326|326|250|0%|0|0||0|25|0%|
-|RuntimeMinimapGraphic|29|223|252|372|11.5%|0|0||3|19|15.7%|
+|RuntimeMinimapGraphic|29|261|290|442|10%|0|0||3|21|14.2%|
 |RuntimeOsmPoiVisualizer|0|315|315|238|0%|0|0||0|22|0%|
 |RuntimeSpawnLogger|0|70|70|71|0%|0|0||0|8|0%|
 |RuntimeTarmacApplier|0|222|222|209|0%|0|0||0|16|0%|
@@ -198,7 +198,7 @@
 |SaveConflictPrompt|0|92|92|133|0%|0|0||0|10|0%|
 |SaveData|28|0|28|954|100%|0|0||2|2|100%|
 |SaveManager|359|476|835|954|42.9%|0|0||47|92|51%|
-|SceneBootstrap|0|1730|1730|1496|0%|0|0||0|93|0%|
+|SceneBootstrap|0|1740|1740|1516|0%|0|0||0|94|0%|
 |SceneCatalog|0|10|10|22|0%|0|0||0|2|0%|
 |SceneLoader|0|206|206|230|0%|0|0||0|43|0%|
 |ScheduleDebugOverlay|0|66|66|51|0%|0|0||0|6|0%|
@@ -216,10 +216,10 @@
 |SkyReflectionEnvironment|80|7|87|191|91.9%|0|0||11|11|100%|
 |SlippyTileCoverage|28|1|29|42|96.5%|0|0||1|1|100%|
 |SnowController|179|64|243|300|73.6%|0|0||20|28|71.4%|
-|SplineVehicle|99|245|344|344|28.7%|0|0||15|29|51.7%|
+|SplineVehicle|105|316|421|455|24.9%|0|0||15|32|46.8%|
 |SteeringWheelControl|0|16|16|25|0%|0|0||0|8|0%|
 |StopApproachUI|0|183|183|152|0%|0|0||0|25|0%|
-|StopPropSpawner|0|380|380|448|0%|0|0||0|27|0%|
+|StopPropSpawner|0|383|383|456|0%|0|0||0|27|0%|
 |StopTrigger|0|139|139|108|0%|0|0||0|16|0%|
 |StreetTextureLibrary|469|78|547|906|85.7%|0|0||35|39|89.7%|
 |SubtitleManager|0|39|39|64|0%|0|0||0|8|0%|
@@ -231,7 +231,7 @@
 |TrafficLight|96|22|118|99|81.3%|0|0||18|22|81.8%|
 |TrafficLivery|59|1|60|149|98.3%|0|0||7|7|100%|
 |TrafficModelRules|74|8|82|197|90.2%|0|0||14|15|93.3%|
-|TrafficParticipant|14|95|109|170|12.8%|0|0||4|15|26.6%|
+|TrafficParticipant|22|114|136|226|16.1%|0|0||5|18|27.7%|
 |TrafficStressTest|0|104|104|58|0%|0|0||0|14|0%|
 |TransmissionSystem|28|23|51|54|54.9%|0|0||6|11|54.5%|
 |UIAnimator|0|115|115|88|0%|0|0||0|9|0%|
@@ -244,8 +244,8 @@
 |VehicleDistanceLod|0|17|17|29|0%|0|0||0|3|0%|
 |VehiclePersistentState|53|2|55|123|96.3%|0|0||4|4|100%|
 |VehiclePolishEffects|0|25|25|40|0%|0|0||0|4|0%|
-|VehiclePool|595|524|1119|1074|53.1%|0|0||32|54|59.2%|
-|ViewPriority|24|23|47|82|51%|0|0||2|3|66.6%|
+|VehiclePool|619|649|1268|1344|48.8%|0|0||34|58|58.6%|
+|ViewPriority|32|15|47|82|68%|0|0||3|3|100%|
 |VisualQualityController|0|108|108|175|0%|0|0||0|15|0%|
 |WeatherLighting|12|0|12|67|100%|0|0||7|7|100%|
 |WeatherPhysics|0|191|191|178|0%|0|0||0|22|0%|
@@ -259,7 +259,7 @@
 |XPAwardResult|2|2|4|430|50%|0|0||2|4|50%|
 |XPBar|0|282|282|211|0%|0|0||0|24|0%|
 |XPSystem|190|124|314|430|60.5%|0|0||36|52|69.2%|
-|**GameScripts.Editor**|**3**|**10383**|**10386**|**14565**|**0%**|**0**|**0**|****|**1**|**672**|**0.1%**|
+|**GameScripts.Editor**|**3**|**10433**|**10436**|**14634**|**0%**|**0**|**0**|****|**1**|**672**|**0.1%**|
 |AIRoadGraphGenerator|0|350|350|257|0%|0|0||0|26|0%|
 |BuildingCatalogPreview|0|84|84|122|0%|0|0||0|1|0%|
 |BuildingModelImporter|0|364|364|553|0%|0|0||0|23|0%|
@@ -272,7 +272,7 @@
 |EditorCoroutineUtility|0|76|76|1299|0%|0|0||0|10|0%|
 |EditorOverpassQueryBuilder|0|8|8|1299|0%|0|0||0|2|0%|
 |FuelAmenityDownloader|0|252|252|184|0%|0|0||0|16|0%|
-|GameplaySmokeCheck|3|516|519|724|0.5%|0|0||1|15|6.6%|
+|GameplaySmokeCheck|3|566|569|793|0.5%|0|0||1|15|6.6%|
 |GameSceneRebuilder|0|405|405|549|0%|0|0||0|29|0%|
 |ImportedModelImportSettings|0|16|16|33|0%|0|0||0|1|0%|
 |ImportedModelTextureBinder|0|168|168|236|0%|0|0||0|11|0%|

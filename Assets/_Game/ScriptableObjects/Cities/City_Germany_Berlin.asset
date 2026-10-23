@@ -37,6 +37,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c7643b0b63181c9a7aeb85d031083808, type: 2}
   - {fileID: 11400000, guid: 38d15ac85cd7730238e1527a8955bdb3, type: 2}
   - {fileID: 11400000, guid: 363f8bf3d46652e5f9a77b25eecd7efc, type: 2}
+  - {fileID: 11400000, guid: a75aec9d4cfd626c89c423e8ef53e91b, type: 2}
+  - {fileID: 11400000, guid: 26f8beba9a5ad0966891c4c850cf226c, type: 2}
+  - {fileID: 11400000, guid: 1336989dd7321af4599eb93ee7f2b940, type: 2}
+  - {fileID: 11400000, guid: 9cb427ffb8c70713b87c7407beef3ed9, type: 2}
+  - {fileID: 11400000, guid: cea9c750749262af3a67a85ff91c5916, type: 2}
+  - {fileID: 11400000, guid: f76a4b21d76bc03d5ad1250c3245d13f, type: 2}
+  - {fileID: 11400000, guid: 2c0c10f4bce591481a7fc8afd1d1c5bb, type: 2}
+  - {fileID: 11400000, guid: a5819b9caa314ec0db6d425a3708d3fe, type: 2}
+  - {fileID: 11400000, guid: 7347aad9dbc05538692b0dca6559ec7c, type: 2}
+  - {fileID: 11400000, guid: 61ffeea34e7eab95e8f6cbaeb56894bb, type: 2}
   spawnLat: 52.52
   spawnLon: 13.405
   isDownloaded: 1
