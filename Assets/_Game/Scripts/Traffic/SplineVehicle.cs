@@ -32,12 +32,19 @@ public class SplineVehicle : MonoBehaviour
 
     [Header("Path Cache")]
     public int lookaheadNodes = 8;
+    /// <summary>Return to the slow/nearside lane after a pass when it is safe.</summary>
+    public bool returnToCruiseLane = true;
+    /// <summary>Grace period after spawning or a tier change before ordinary lane discipline starts.</summary>
+    public float laneDisciplineDelaySeconds = 1.5f;
     float emergencyYieldSeconds;
     float stuckSeconds;
     float laneShift;
     float laneShiftTarget;
     float overtakeTimer;
     float overtakeCooldown;
+    int overtakeLaneIndex = -1;
+    bool returningToCruiseLane;
+    float laneDisciplineTimer;
     TrafficParticipant passTarget;
     Vector3 lastProgressPosition;
     public bool IsOvertaking { get; private set; }
@@ -78,10 +85,13 @@ public class SplineVehicle : MonoBehaviour
         laneShift = 0f;
         laneShiftTarget = 0f;
         IsOvertaking = false;
+        returningToCruiseLane = false;
         passTarget = null;
+        overtakeLaneIndex = -1;
         overtakeTimer = 0f;
         overtakeCooldown = 0f;
         emergencyYieldSeconds = 0f;
+        laneDisciplineTimer = Mathf.Max(0f, laneDisciplineDelaySeconds);
     }
 
     public void SetVelocityWorld(Vector3 velocity)
@@ -230,7 +240,11 @@ public class SplineVehicle : MonoBehaviour
     /// </summary>
     void UpdateLaneIntent(float desiredKmh)
     {
-        overtakeCooldown = Mathf.Max(0f, overtakeCooldown - Time.deltaTime);
+        float dt = Time.deltaTime;
+        overtakeCooldown = Mathf.Max(0f, overtakeCooldown - dt);
+        laneDisciplineTimer = Mathf.Max(0f, laneDisciplineTimer - dt);
+        int laneCount = Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex));
+        laneIndex = Mathf.Clamp(laneIndex, 0, laneCount - 1);
         float shiftLimit = Mathf.Max(3f, roadGraph.GetLaneWidth(currentNodeIndex, targetNodeIndex));
         float distanceToJunction = Vector3.Distance(transform.position,
             roadGraph.GetNodePosition(targetNodeIndex));
@@ -242,47 +256,79 @@ public class SplineVehicle : MonoBehaviour
             return;
         }
 
-        float passSide = AIVehicleController.OvertakeShift(roadGraph, currentNodeIndex,
-            targetNodeIndex, laneIndex, shiftLimit);
         if (IsOvertaking)
         {
-            overtakeTimer += Time.deltaTime;
+            overtakeTimer += dt;
             bool targetGone = passTarget == null || !passTarget.isActiveAndEnabled;
             bool passed = !targetGone &&
                 Vector3.Dot(transform.forward, passTarget.transform.position - transform.position) < -5f;
             bool tooCloseToJunction = distanceToJunction < 7f;
+            bool laneGone = overtakeLaneIndex < 0 || overtakeLaneIndex >= laneCount;
             if (targetGone || passed || tooCloseToJunction ||
-                roadGraph.IsRedSignal(targetNodeIndex) ||
-                Mathf.Abs(passSide) < .05f ||
+                roadGraph.IsRedSignal(targetNodeIndex) || laneGone ||
                 overtakeTimer >= Mathf.Max(2f, maximumOvertakeSeconds))
             {
                 EndOvertake();
                 return;
             }
 
-            laneShiftTarget = passSide;
+            // The passing lane is a committed lane now. Keep it until the slow
+            // vehicle is behind and the return lane is clear.
+            laneShiftTarget = 0f;
             return;
         }
 
-        if (overtakeCooldown <= 0f && Mathf.Abs(passSide) > .05f &&
-            !roadGraph.IsRedSignal(targetNodeIndex) &&
+        if (returningToCruiseLane && TryReturnToCruiseLane(distanceToJunction))
+            return;
+
+        if (Mathf.Abs(laneShift) > .05f)
+        {
+            laneShiftTarget = 0f;
+            return;
+        }
+
+        if (overtakeCooldown <= 0f && !roadGraph.IsRedSignal(targetNodeIndex) &&
             RealismRules.HasOvertakeRunway(distanceToJunction, speedKmh))
         {
-            float scan = Mathf.Max(18f, overtakeScanDistanceMeters + speedKmh / 3.6f * .8f);
-            float halfLane = Mathf.Max(1.65f,
-                roadGraph.GetLaneWidth(currentNodeIndex, targetNodeIndex) * .5f);
-            if (TrafficParticipant.TryFindAhead(transform, scan, halfLane,
-                    out TrafficParticipant leader, out float gap) &&
-                AIVehicleController.ShouldStartOvertake(desiredKmh, leader.SpeedKmh, gap,
-                    minHeadway, true))
+            int passLane = AIVehicleController.PassingLaneIndex(roadGraph, currentNodeIndex,
+                targetNodeIndex, laneIndex);
+            if (passLane >= 0)
             {
-                float clearLength = Mathf.Max(25f, speedKmh / 3.6f * 1.4f + 12f);
-                if (TrafficParticipant.PassingLaneClear(transform, passSide, clearLength))
+                float scan = Mathf.Max(18f, overtakeScanDistanceMeters + speedKmh / 3.6f * .8f);
+                float halfLane = Mathf.Max(1.65f,
+                    roadGraph.GetLaneWidth(currentNodeIndex, targetNodeIndex) * .5f);
+                if (TrafficParticipant.TryFindAhead(transform, scan, halfLane,
+                        out TrafficParticipant leader, out float gap) &&
+                    AIVehicleController.ShouldStartOvertake(desiredKmh, leader.SpeedKmh, gap,
+                        minHeadway, true))
                 {
-                    IsOvertaking = true;
-                    passTarget = leader;
-                    overtakeTimer = 0f;
-                    laneShiftTarget = passSide;
+                    float passSide = AIVehicleController.LaneOffsetDelta(roadGraph,
+                        currentNodeIndex, targetNodeIndex, laneIndex, passLane);
+                    float clearLength = Mathf.Max(25f, speedKmh / 3.6f * 1.4f + 12f);
+                    if (Mathf.Abs(passSide) > .05f &&
+                        TrafficParticipant.PassingLaneClear(transform, passSide, clearLength))
+                    {
+                        StartOvertake(leader, passLane);
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (returnToCruiseLane && laneDisciplineTimer <= 0f && laneCount > 1 &&
+            distanceToJunction > 10f)
+        {
+            int cruiseLane = AIVehicleController.CruiseLaneIndex(roadGraph,
+                currentNodeIndex, targetNodeIndex);
+            if (cruiseLane != laneIndex)
+            {
+                float side = AIVehicleController.LaneOffsetDelta(roadGraph,
+                    currentNodeIndex, targetNodeIndex, laneIndex, cruiseLane);
+                float clearLength = Mathf.Max(18f, speedKmh / 3.6f + 8f);
+                if (Mathf.Abs(side) > .05f &&
+                    TrafficParticipant.PassingLaneClear(transform, side, clearLength))
+                {
+                    BeginLaneChange(cruiseLane);
                     return;
                 }
             }
@@ -291,12 +337,77 @@ public class SplineVehicle : MonoBehaviour
         laneShiftTarget = 0f;
     }
 
+    void StartOvertake(TrafficParticipant leader, int passLane)
+    {
+        IsOvertaking = true;
+        returningToCruiseLane = false;
+        passTarget = leader;
+        overtakeLaneIndex = passLane;
+        overtakeTimer = 0f;
+        BeginLaneChange(passLane);
+        laneShiftTarget = 0f;
+    }
+
     void EndOvertake()
     {
         IsOvertaking = false;
         passTarget = null;
+        overtakeLaneIndex = -1;
         laneShiftTarget = 0f;
         overtakeCooldown = Mathf.Max(0f, overtakeCooldownSeconds);
+        returningToCruiseLane = roadGraph != null &&
+            roadGraph.IsValidNode(currentNodeIndex) && roadGraph.IsValidNode(targetNodeIndex);
+    }
+
+    /// <summary>Persisted lane change: move the lane index, keep the pose with a decaying offset.</summary>
+    void BeginLaneChange(int targetLane)
+    {
+        if (roadGraph == null || !roadGraph.IsValidNode(currentNodeIndex) ||
+            !roadGraph.IsValidNode(targetNodeIndex))
+            return;
+        int lanes = Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex));
+        if (targetLane < 0 || targetLane >= lanes || targetLane == laneIndex)
+            return;
+
+        float oldOffset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex);
+        float newOffset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, targetLane);
+        laneShift += oldOffset - newOffset;
+        laneIndex = targetLane;
+        laneShiftTarget = 0f;
+    }
+
+    bool TryReturnToCruiseLane(float distanceToJunction)
+    {
+        if (roadGraph == null || !roadGraph.IsValidNode(currentNodeIndex) ||
+            !roadGraph.IsValidNode(targetNodeIndex))
+        {
+            returningToCruiseLane = false;
+            return false;
+        }
+
+        int lanes = Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex));
+        int cruiseLane = AIVehicleController.CruiseLaneIndex(roadGraph,
+            currentNodeIndex, targetNodeIndex);
+        if (cruiseLane == laneIndex || lanes <= 1)
+        {
+            returningToCruiseLane = false;
+            return false;
+        }
+
+        if (Mathf.Abs(laneShift) > .35f || distanceToJunction < 8f)
+            return true;
+
+        float side = AIVehicleController.LaneOffsetDelta(roadGraph, currentNodeIndex,
+            targetNodeIndex, laneIndex, cruiseLane);
+        float clearLength = Mathf.Max(18f, speedKmh / 3.6f + 8f);
+        if (Mathf.Abs(side) > .05f &&
+            TrafficParticipant.PassingLaneClear(transform, side, clearLength))
+        {
+            BeginLaneChange(cruiseLane);
+            returningToCruiseLane = false;
+            laneShiftTarget = 0f;
+        }
+        return true;
     }
 
     void EnsureTargetNode(bool forceAdvance = false)

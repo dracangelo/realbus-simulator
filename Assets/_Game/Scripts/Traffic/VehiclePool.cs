@@ -58,6 +58,18 @@ public class VehiclePool : MonoBehaviour
     public int maxRehomesPerTick = 40;
     public float rehomeIntervalSeconds = 0.5f;
 
+    [Header("Visibility")]
+    /// <summary>
+    /// Cars inside this range and inside the camera cone are never deactivated.
+    /// Density falls by retiring vehicles that have already driven out of view,
+    /// not by switching off whichever pool indices happen to be close.
+    /// </summary>
+    public float visibleDespawnDistanceMeters = 320f;
+    /// <summary>Hard limit for a visible vehicle. Beyond this it is far enough away to recycle safely.</summary>
+    public float hardDespawnDistanceMeters = 760f;
+    /// <summary>Extra cone width used when choosing a re-home/activation point, so a car never appears at the edge of the screen.</summary>
+    [Range(0f, 60f)] public float offscreenSpawnFovPaddingDegrees = 30f;
+
     [Header("Model Fit")]
     [Tooltip("Extra clearance added to the widest traffic model before it is used as the lane-spacing floor.")]
     public float laneWidthPaddingMeters = 0.55f;
@@ -132,6 +144,11 @@ public class VehiclePool : MonoBehaviour
     bool loggedTrafficDisabled;
     float roadGraphRetryTick;
     float rehomeTick;
+    bool initialDensityFillPending = true;
+    // The warm-up fill is allowed to switch on in front of the loading card even
+    // though those bodies are inside the camera cone. Every later activation must
+    // happen off-camera instead.
+    bool initialTierFillPending = true;
 
     /// <summary>True once the initial pool has been placed, or traffic is deliberately off.</summary>
     public bool WarmupComplete { get; private set; }
@@ -274,19 +291,37 @@ public class VehiclePool : MonoBehaviour
             // Only vehicles the density curve currently wants are worth recycling;
             // the rest are part of the pool that stays off the road.
             if (!pv.enabledByDensity) continue;
-            if ((pv.go.transform.position - playerBus.position).sqrMagnitude <= radiusSqr) continue;
 
-            if (!TryPickSpawnLink(pv, out int startNode, out int targetNode, out int lane, out float along01))
+            bool far = (pv.go.transform.position - playerBus.position).sqrMagnitude > radiusSqr;
+            // A dormant body that is still in the player's view must not be
+            // activated in place. Move it somewhere outside the camera cone first;
+            // the tier update can then safely switch it on.
+            bool visible = IsPositionInView(pv.go.transform.position,
+                visibleDespawnDistanceMeters, offscreenSpawnFovPaddingDegrees);
+            if (!far && !visible) continue;
+
+            if (!TryRehomeVehicle(pv, true))
                 continue;
-
-            pv.full.PlaceOnLane(startNode, targetNode, lane, -1, along01);
-            pv.spline.Init(roadGraph, startNode, targetNode, lane, 0f);
-            pv.laneIndex = lane;
             moved++;
         }
 
         if (moved > 0 && logSpawnEvents)
             Debug.Log($"[VehiclePool] Re-homed {moved} dormant vehicles near the bus.");
+    }
+
+    bool TryRehomeVehicle(PooledVehicle pv, bool avoidPlayerView)
+    {
+        if (pv == null || pv.go == null || pv.full == null || pv.spline == null)
+            return false;
+        if (!TryPickSpawnLink(pv, out int startNode, out int targetNode, out int lane,
+                out float along01, avoidPlayerView))
+            return false;
+
+        pv.full.PlaceOnLane(startNode, targetNode, lane, -1, along01);
+        pv.full.ResetLaneChange();
+        pv.spline.Init(roadGraph, startNode, targetNode, lane, 0f);
+        pv.laneIndex = lane;
+        return true;
     }
 
 
@@ -432,6 +467,8 @@ public class VehiclePool : MonoBehaviour
             created++;
         }
 
+        initialDensityFillPending = true;
+        initialTierFillPending = true;
         if (logSpawnEvents)
             Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}, laneWidth={roadGraph.MinimumLaneWidth:0.00}m).");
     }
@@ -551,7 +588,7 @@ public class VehiclePool : MonoBehaviour
         return TryPickSpawnLink(ignore, out startNode, out targetNode, out lane, out _);
     }
 
-    bool TryPickSpawnLink(PooledVehicle ignore, out int startNode, out int targetNode, out int lane, out float along01)
+    bool TryPickSpawnLink(PooledVehicle ignore, out int startNode, out int targetNode, out int lane, out float along01, bool avoidPlayerView = false)
     {
         startNode = -1;
         targetNode = -1;
@@ -573,6 +610,12 @@ public class VehiclePool : MonoBehaviour
             if (localCount <= 0)
             {
                 node = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
+            }
+            else if (avoidPlayerView)
+            {
+                // Mid-drive re-homes must appear outside the windscreen. Sample the
+                // whole local band rather than the forward-biased warm-up slice.
+                node = spawnNodeCandidates[Random.Range(0, localCount)];
             }
             else
             {
@@ -602,7 +645,35 @@ public class VehiclePool : MonoBehaviour
             if (playerBus != null)
             {
                 float distance = Vector3.Distance(playerBus.position, point);
-                if (distance < minSpawnDistanceFromPlayerMeters || distance > 520f) continue;
+                // Re-home inside the spline tier so the body actually drives in
+                // view after it is enabled. A point beyond splineRadius would be
+                // switched straight back to dormant and quietly consume the
+                // density budget without putting a car on the road.
+                float maxDistance = avoidPlayerView
+                    ? Mathf.Max(520f, splineRadiusMeters)
+                    : 520f;
+                if (distance < minSpawnDistanceFromPlayerMeters || distance > maxDistance) continue;
+                if (avoidPlayerView && IsPositionInView(point,
+                        Mathf.Max(hardDespawnDistanceMeters, visibleDespawnDistanceMeters),
+                        offscreenSpawnFovPaddingDegrees))
+                    continue;
+
+                // Bias the first half of the attempts towards links that lead
+                // back towards the bus. A re-home on a road heading away only
+                // drives out of range and gets recycled without ever entering
+                // view; the second half still accepts any cleared street so a
+                // one-way or sparse band can always be filled.
+                if (avoidPlayerView && i < attempts / 2)
+                {
+                    Vector3 linkDirection = roadGraph.GetNodePosition(next) -
+                                            roadGraph.GetNodePosition(node);
+                    linkDirection.y = 0f;
+                    Vector3 towardsBus = playerBus.position - point;
+                    towardsBus.y = 0f;
+                    if (linkDirection.sqrMagnitude > .0001f && towardsBus.sqrMagnitude > .0001f &&
+                        Vector3.Dot(linkDirection.normalized, towardsBus.normalized) < -.35f)
+                        continue;
+                }
             }
 
             startNode = node;
@@ -763,17 +834,161 @@ public class VehiclePool : MonoBehaviour
         if (forcedActiveCount >= 0)
         {
             targetActive = Mathf.Clamp(forcedActiveCount, 0, pooled.Count);
-        }
-        else
-        {
-            float mult = GetTrafficDensityMultiplier();
-            float normalized = Mathf.InverseLerp(1f, rushMultiplier, mult);
-            float targetFraction = Mathf.Lerp(minActiveFraction, maxActiveFraction, normalized);
-            targetActive = Mathf.Clamp(Mathf.Max(minActiveVehicles, Mathf.RoundToInt(targetFraction * pooled.Count)), 0, pooled.Count);
+            // Stress/debug runs ask for an exact count. Keep the historic
+            // deterministic selection for that path.
+            for (int i = 0; i < pooled.Count; i++)
+                pooled[i].enabledByDensity = i < targetActive;
+            initialDensityFillPending = false;
+            return;
         }
 
+        // Use the shaped daily volume (night trough, daytime flow, two peaks),
+        // not the raw rush multiplier, which was flat for every non-peak hour.
+        float volume = GetTrafficDensityVolume();
+        float targetFraction = Mathf.Lerp(minActiveFraction, maxActiveFraction, volume);
+        targetActive = Mathf.Clamp(
+            Mathf.Max(minActiveVehicles, Mathf.RoundToInt(targetFraction * pooled.Count)),
+            0, pooled.Count);
+
+        // The warm-up fill already sits in the streets ahead of the bus under the
+        // loading card. Keep that visible first impression instead of immediately
+        // recycling it behind the camera. From then on every change is off-camera.
+        if (initialDensityFillPending)
+        {
+            for (int i = 0; i < pooled.Count; i++)
+                pooled[i].enabledByDensity = i < targetActive;
+            initialDensityFillPending = false;
+            return;
+        }
+
+        if (playerBus == null)
+        {
+            for (int i = 0; i < pooled.Count; i++)
+                pooled[i].enabledByDensity = i < targetActive;
+            return;
+        }
+
+        // Count the vehicles the curve already wants. Anything still visible in
+        // the camera cone is kept; the density target is met by retiring cars
+        // that are already out of view and by recycling dormant bodies outside
+        // the cone. That removes the fixed-index pop on/off at the target
+        // boundary that made traffic appear and disappear in front of the bus.
+        int active = 0;
         for (int i = 0; i < pooled.Count; i++)
-            pooled[i].enabledByDensity = i < targetActive;
+        {
+            var pv = pooled[i];
+            if (pv == null || pv.go == null || !pv.enabledByDensity) continue;
+            float distance = GetDistanceToBus(pv.go.transform.position);
+            bool visible = IsVehicleVisible(pv);
+            if (distance > hardDespawnDistanceMeters && !visible)
+            {
+                pv.enabledByDensity = false;
+                continue;
+            }
+            active++;
+        }
+
+        // A dormant body that is still visible would pop when the tier update
+        // switches it back on. Move it out of the cone now; if there is no clear
+        // off-camera street, it simply stays dormant for this tick.
+        for (int i = 0; i < pooled.Count; i++)
+        {
+            var pv = pooled[i];
+            if (pv == null || pv.go == null || !pv.enabledByDensity ||
+                pv.tier != SimulationTier.Dormant)
+                continue;
+            if (IsVehicleVisible(pv))
+                TryRehomeVehicle(pv, true);
+        }
+
+        if (active > targetActive)
+        {
+            candidates.Clear();
+            for (int i = 0; i < pooled.Count; i++)
+            {
+                var pv = pooled[i];
+                if (pv == null || pv.go == null || !pv.enabledByDensity) continue;
+                if (IsVehicleVisible(pv)) continue;
+                float distance = GetDistanceToBus(pv.go.transform.position);
+                if (distance < visibleDespawnDistanceMeters) continue;
+                candidates.Add((pv, distance));
+            }
+            candidates.Sort((a, b) => b.distance.CompareTo(a.distance));
+            for (int i = 0; i < candidates.Count && active > targetActive; i++)
+            {
+                candidates[i].vehicle.enabledByDensity = false;
+                active--;
+            }
+        }
+        else if (active < targetActive)
+        {
+            // Retire the out-of-view bodies the previous tick disabled before
+            // choosing replacements. Otherwise a density rise (for example
+            // immediately after the route teleports the bus) has to wait for the
+            // next tier pass before the freed bodies become candidates, and the
+            // new street stays sparse for a few seconds.
+            for (int i = 0; i < pooled.Count; i++)
+            {
+                var pv = pooled[i];
+                if (pv == null || pv.go == null || pv.enabledByDensity ||
+                    pv.tier == SimulationTier.Dormant)
+                    continue;
+                ApplyTierIfNeeded(pv, SimulationTier.Dormant);
+            }
+
+            candidates.Clear();
+            for (int i = 0; i < pooled.Count; i++)
+            {
+                var pv = pooled[i];
+                if (pv == null || pv.go == null || pv.enabledByDensity ||
+                    pv.tier != SimulationTier.Dormant)
+                    continue;
+                candidates.Add((pv, GetDistanceToBus(pv.go.transform.position)));
+            }
+            // Prefer already-near bodies, then recycle farther ones into an
+            // off-camera street. This keeps the same pool distributed around the
+            // bus instead of clustering every car at its initial spawn point.
+            candidates.Sort((a, b) => a.distance.CompareTo(b.distance));
+            for (int i = 0; i < candidates.Count && active < targetActive; i++)
+            {
+                var pv = candidates[i].vehicle;
+                bool visible = IsVehicleVisible(pv);
+                bool tooFar = candidates[i].distance >
+                              Mathf.Max(splineRadiusMeters, rehomeDistanceMeters);
+                if (visible || tooFar)
+                {
+                    if (!TryRehomeVehicle(pv, true))
+                        continue;
+                }
+                pv.enabledByDensity = true;
+                active++;
+            }
+        }
+    }
+
+    public float GetTrafficDensityVolume()
+    {
+        float now = ScheduleManager.Instance != null
+            ? ScheduleManager.Instance.currentTimeMinutes
+            : 12f * 60f;
+        return RealismRules.DailyTrafficVolume(now, morningPeakMinutes,
+            eveningPeakMinutes, peakWidthMinutes);
+    }
+
+    bool IsVehicleVisible(PooledVehicle pv)
+    {
+        if (pv == null || pv.go == null || playerBus == null) return false;
+        return IsPositionInView(pv.go.transform.position, hardDespawnDistanceMeters,
+            offscreenSpawnFovPaddingDegrees);
+    }
+
+    bool IsPositionInView(Vector3 point, float maxDistance, float extraFovDegrees = 0f)
+    {
+        if (playerBus == null) return false;
+        Vector3 forward = ViewPriority.ResolveForward(playerBus);
+        return ViewPriority.IsInsideView(playerBus.position, forward,
+            ViewPriority.DefaultFovDegrees + Mathf.Max(0f, extraFovDegrees),
+            Mathf.Max(0f, maxDistance), point);
     }
 
     public void SetForcedActiveCount(int count)
@@ -826,6 +1041,28 @@ public class VehiclePool : MonoBehaviour
             }
 
             float dist = GetDistanceToBus(pv.go.transform.position);
+            // A body outside the simulation band but still inside the camera
+            // cone would visibly blink out. Keep it on the cheap tier until it
+            // has driven out of view; the next density tick can then retire it.
+            bool visible = dist <= hardDespawnDistanceMeters && IsVehicleVisible(pv);
+            if (dist > hardDespawnDistanceMeters && !visible)
+            {
+                pv.enabledByDensity = false;
+                ApplyTierIfNeeded(pv, SimulationTier.Dormant);
+                continue;
+            }
+
+            // Beyond the cheap tier and out of sight there is no simulation to
+            // run. Retire it from the density count instead of leaving it dormant
+            // but still counted as an active car; ApplyDensityNow will recycle it
+            // back into the visible band on a later tick.
+            if (dist > splineRadiusMeters && !visible)
+            {
+                pv.enabledByDensity = false;
+                ApplyTierIfNeeded(pv, SimulationTier.Dormant);
+                continue;
+            }
+
             bool keepFull = pv.tier == SimulationTier.FullAI && dist <= (fullAiRadiusMeters + transitionHysteresisMeters);
             if (keepFull && fullUsed < clampedCap)
             {
@@ -856,22 +1093,49 @@ public class VehiclePool : MonoBehaviour
             {
                 ApplyTierIfNeeded(pv, SimulationTier.Spline);
             }
+            else if (dist <= hardDespawnDistanceMeters && IsVehicleVisible(pv))
+            {
+                ApplyTierIfNeeded(pv, SimulationTier.Spline);
+            }
             else
             {
                 ApplyTierIfNeeded(pv, SimulationTier.Dormant);
             }
         }
+
+        initialTierFillPending = false;
     }
 
     float GetDistanceToBus(Vector3 pos)
     {
-        if (playerBus == null) return 9999f;
+        // Before the bus exists (scene load) a sentinel distance would make the
+        // tier pass retire every warmed body on its first frame. Measuring from
+        // the pool origin instead keeps the warm fill alive until the bus appears.
+        if (playerBus == null) return 0f;
         return Vector3.Distance(playerBus.position, pos);
     }
 
     void ApplyTierIfNeeded(PooledVehicle pv, SimulationTier desired)
     {
         if (pv == null || pv.go == null) return;
+
+        // Never switch a visible body on or off once the warm-up is over. A
+        // dormant body in the camera cone must first be re-homed outside it;
+        // RehomeDistantVehicles does that on its own cadence, so waiting a tick
+        // here is cheap and invisible. During the initial fill the loading card
+        // covers the scene, so the warmed bodies are intentionally switched on in
+        // their placed view.
+        if (!initialTierFillPending && pv.tier == SimulationTier.Dormant &&
+            desired != SimulationTier.Dormant && IsVehicleVisible(pv))
+            return;
+
+        // The inverse case: density asked for a retirement, but the car is still
+        // on screen. Keep the cheap spline tier alive until it drives out of
+        // view instead of popping it off the road.
+        if (desired == SimulationTier.Dormant && pv.tier != SimulationTier.Dormant &&
+            IsVehicleVisible(pv))
+            desired = SimulationTier.Spline;
+
         if (pv.tier == desired)
         {
             // Keep object enabled while active tiers are running.

@@ -10,6 +10,34 @@ public static class RealismRules
         double b = CircularDistance(minutes, evening) / Math.Max(1f, width);
         return 1f + (Math.Max(1f, peak) - 1f) * (float)Math.Max(Math.Exp(-0.5 * a * a), Math.Exp(-0.5 * b * b));
     }
+
+    /// <summary>
+    /// Normalised road-traffic volume for the time of day, in the range 0..1.
+    /// <see cref="DailyDensity"/> only scales the two rush-hour humps, so every
+    /// hour outside them used the same baseline. That meant 03:00 and 13:00 had
+    /// the same number of cars. This profile adds the missing day/night shape:
+    /// a quiet night, a broad daytime flow, and two commuter peaks. VehiclePool
+    /// maps it between its minimum and maximum active fractions.
+    /// </summary>
+    public static float DailyTrafficVolume(float minutes, float morning = 450f,
+        float evening = 1050f, float width = 80f)
+    {
+        minutes = (minutes % 1440f + 1440f) % 1440f;
+        double morningDistance = CircularDistance(minutes, morning) / Math.Max(1f, width);
+        double eveningDistance = CircularDistance(minutes, evening) / Math.Max(1f, width);
+        float rush = (float)Math.Max(Math.Exp(-0.5 * morningDistance * morningDistance),
+            Math.Exp(-0.5 * eveningDistance * eveningDistance));
+
+        // The daylight term is deliberately wider than the rush term. It makes
+        // midday busier than the small hours without flattening the two peaks.
+        float daylight = Daylight(minutes, 330f, 1140f);
+        daylight = daylight * daylight * (3f - 2f * daylight);
+        const float nightVolume = 0.12f;
+        const float daytimeVolume = 0.58f;
+        float baseVolume = Math.Max(0f, Math.Min(1f,
+            nightVolume + (daytimeVolume - nightVolume) * daylight));
+        return Math.Max(0f, Math.Min(1f, baseVolume + (1f - baseVolume) * rush));
+    }
     static float CircularDistance(float a, float b) { float d = Math.Abs(a - b) % 1440f; return Math.Min(d, 1440f - d); }
     public static float LoadFactor(int passengers, int capacity) => 1f + 0.18f * Clamp01((float)passengers / Math.Max(1, capacity));
     public static float TyreGrip(float wear) => 1f - 0.28f * Clamp01((wear - 0.5f) / 0.5f);

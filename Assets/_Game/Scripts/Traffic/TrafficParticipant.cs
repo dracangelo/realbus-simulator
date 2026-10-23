@@ -11,9 +11,38 @@ public class TrafficParticipant : MonoBehaviour
     public float length = 4.2f;
     /// <summary>Body width in metres. VehiclePool writes the measured prefab width so following and passing checks use the real model, not a car-sized assumption.</summary>
     public float width = 2f;
-    public float SpeedKmh => bus != null ? bus.currentSpeedKmh : ai != null && ai.enabled ? ai.currentSpeedKmh : spline != null ? spline.speedKmh : 0f;
-    void Awake() { ai = GetComponent<AIVehicleController>(); spline = GetComponent<SplineVehicle>(); bus = GetComponent<BusController>(); if (bus != null) { length = 12f; width = 2.5f; } }
-    void OnEnable() { if (!active.Contains(this)) active.Add(this); }
+    bool ownerCached;
+    public float SpeedKmh
+    {
+        get
+        {
+            CacheOwner();
+            return bus != null ? bus.currentSpeedKmh
+                : ai != null && ai.enabled ? ai.currentSpeedKmh
+                : spline != null ? spline.speedKmh : 0f;
+        }
+    }
+    public bool IsPlayerVehicle
+    {
+        get { CacheOwner(); return bus != null; }
+    }
+    void Awake() { CacheOwner(true); }
+    void OnEnable() { CacheOwner(true); if (!active.Contains(this)) active.Add(this); }
+    /// <summary>
+    /// Cached lazily as well as in Awake so a component added in an edit-mode
+    /// test (where Unity does not call Awake) and a BusController whose
+    /// RequireComponent lands after this participant both still find each other.
+    /// </summary>
+    public void RefreshOwner() { CacheOwner(true); }
+    void CacheOwner(bool force = false)
+    {
+        if (ownerCached && !force) return;
+        ai = GetComponent<AIVehicleController>();
+        spline = GetComponent<SplineVehicle>();
+        bus = GetComponent<BusController>();
+        if (bus != null) { length = 12f; width = 2.5f; }
+        ownerCached = true;
+    }
     void OnDisable() { active.Remove(this); }
     static float WidthOf(TrafficParticipant participant)
     {
@@ -41,7 +70,20 @@ public class TrafficParticipant : MonoBehaviour
             Vector3 offset = other.transform.position - vehicle.position;
             float ahead = Vector3.Dot(vehicle.forward, offset);
             if (ahead <= 0f || Mathf.Abs(offset.y) > 3f) continue;
-            if (Mathf.Abs(Vector3.Dot(vehicle.right, offset)) > LateralClearance(self, other)) continue;
+
+            bool playerBus = other.IsPlayerVehicle;
+            float lateralClearance = LateralClearance(self, other);
+            // A long bus crossing a junction presents its flank towards the
+            // approaching lane even when its centre is not on that lane line.
+            // Give the player's bus a wider near-field envelope so a car brakes
+            // instead of clipping the middle of the bus.
+            bool broadside = playerBus &&
+                Mathf.Abs(Vector3.Dot(vehicle.forward, other.transform.forward)) < .5f;
+            if (playerBus)
+                lateralClearance = Mathf.Max(lateralClearance,
+                    WidthOf(self) * .5f + other.width * .5f + (broadside ? 2.3f : .8f));
+            if (Mathf.Abs(Vector3.Dot(vehicle.right, offset)) > lateralClearance) continue;
+
             // Keep a real bumper gap. Subtracting both half lengths stops a long
             // bus from being followed as if it were a 4 m car and is what makes
             // overtaking a bus start far enough back to complete in the lane.
@@ -50,9 +92,23 @@ public class TrafficParticipant : MonoBehaviour
             // bus were parked.
             float gap = ahead - selfHalfLength - other.length * .5f;
             bool oncoming = Vector3.Dot(vehicle.forward, other.transform.forward) < -0.25f;
+            float leaderBrake = playerBus ? brake * 1.4f : brake;
+            float leaderSpeed = Mathf.Max(0f, other.SpeedKmh);
             desired = Mathf.Min(desired, oncoming
-                ? RealismRules.StoppingSpeedKmh(gap, clearance, brake)
-                : RealismRules.SafeFollowingSpeedKmh(desired, other.SpeedKmh, gap, clearance, brake));
+                ? RealismRules.StoppingSpeedKmh(gap, clearance + .5f, leaderBrake)
+                : RealismRules.SafeFollowingSpeedKmh(desired, leaderSpeed, gap, clearance, leaderBrake));
+
+            // The following curve can still permit a small closing speed at
+            // close range. A player bus is never worth that risk: if the car is
+            // already inside the bus's stopping envelope, bring it to a stop.
+            if (playerBus)
+            {
+                float selfSpeed = self != null ? Mathf.Max(0f, self.SpeedKmh) : 0f;
+                if (gap <= clearance + .25f) desired = 0f;
+                else if (selfSpeed > leaderSpeed + 2f && gap < 14f)
+                    desired = Mathf.Min(desired,
+                        RealismRules.StoppingSpeedKmh(gap, clearance + .5f, leaderBrake));
+            }
         }
         return desired;
     }
@@ -97,7 +153,7 @@ public class TrafficParticipant : MonoBehaviour
         foreach (var other in active)
         {
             if (other == null || other.transform == vehicle || other.SpeedKmh >= 2f) continue;
-            if (other.bus == null && (other.ai == null || other.ai.vehicleType != AIVehicleController.VehicleType.Bus)) continue;
+            if (!other.IsPlayerVehicle && (other.ai == null || other.ai.vehicleType != AIVehicleController.VehicleType.Bus)) continue;
             Vector3 offset = other.transform.position - vehicle.position;
             float ahead = Vector3.Dot(vehicle.forward, offset);
             if (ahead > 0f && ahead < distance &&

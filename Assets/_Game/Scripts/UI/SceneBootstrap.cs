@@ -533,6 +533,7 @@ public class SceneBootstrap : MonoBehaviour
         pool.roadGraph = graph;
         pool.allowAutoResolveRoadGraph = true;
         ConfigureVehiclePoolPrefabs(pool);
+        ConfigureVehiclePoolDensity(pool);
 
         var busSpawner = FindAnyObjectByType<AIBusScheduleSpawner>();
         if (busSpawner == null)
@@ -1004,12 +1005,31 @@ public class SceneBootstrap : MonoBehaviour
         // drives on the correct side of the road via CityManager.activeCountry.DrivesOnLeft.
         // A larger pool at higher density fractions is what puts them visibly on the streets.
         pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, importedModels > 0 ? 160 : 80);
-        pool.minActiveVehicles = importedModels > 0 ? 32 : 12;
-        if (importedModels > 0)
-            pool.maxActiveFraction = Mathf.Clamp(pool.maxActiveFraction, 0.45f, 0.75f);
-        else
-            pool.debugForceActiveCount = Mathf.Max(pool.debugForceActiveCount, 14);
+        // Let the daily volume drive the count in both cases. Forcing a fixed
+        // number for the fallback catalog made every hour identical and was one
+        // reason the city looked like it had almost no traffic outside a rush hour.
+        pool.minActiveVehicles = importedModels > 0 ? 26 : 10;
+        pool.minActiveFraction = importedModels > 0 ? 0.32f : 0.30f;
+        pool.maxActiveFraction = importedModels > 0 ? 0.92f : 0.85f;
+        pool.debugForceActiveCount = 0;
         pool.logSpawnEvents = false;
+    }
+
+    /// <summary>
+    /// Applies the density envelope even when the scene already had a prefab
+    /// list. The old early return meant a serialized pool kept its flat legacy
+    /// fractions and the daily curve never changed the visible count.
+    /// </summary>
+    void ConfigureVehiclePoolDensity(VehiclePool pool)
+    {
+        if (pool == null)
+            return;
+        bool largePool = pool.poolSizePerScene >= 120;
+        pool.minActiveVehicles = largePool ? 26 : 10;
+        pool.minActiveFraction = largePool ? .32f : .30f;
+        pool.maxActiveFraction = largePool ? .92f : .85f;
+        // Forcing a fixed count bypasses the daily profile entirely.
+        pool.debugForceActiveCount = 0;
     }
 
     /// <summary>

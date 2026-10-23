@@ -9,6 +9,25 @@ public class RealismSystemsTests
         Assert.AreEqual(5f, RealismRules.DailyDensity(minutes), 0.001f);
         Assert.AreEqual(RealismRules.DailyDensity(minutes), RealismRules.DailyDensity(minutes + 1440f), 0.001f);
     }
+
+    [Test]
+    public void DailyTrafficVolume_HasNightTroughDaytimeFlowAndCommuterPeaks()
+    {
+        float night = RealismRules.DailyTrafficVolume(3f * 60f);
+        float lunchtime = RealismRules.DailyTrafficVolume(12f * 60f);
+        float morningPeak = RealismRules.DailyTrafficVolume(7.5f * 60f);
+        float eveningPeak = RealismRules.DailyTrafficVolume(17.5f * 60f);
+
+        Assert.That(night, Is.InRange(0f, 1f));
+        Assert.That(morningPeak, Is.InRange(0f, 1f));
+        Assert.That(night, Is.LessThan(lunchtime - .2f),
+            "03:00 must be visibly quieter than the middle of the day");
+        Assert.That(morningPeak, Is.GreaterThan(lunchtime + .15f),
+            "the morning commute must be a distinct peak");
+        Assert.That(eveningPeak, Is.GreaterThan(lunchtime + .15f),
+            "the evening commute must be a distinct peak");
+        Assert.AreEqual(morningPeak, RealismRules.DailyTrafficVolume(7.5f * 60f + 1440f), .001f);
+    }
     [Test]
     public void FullLoadAndWornTyresUseSpecifiedThresholds()
     {

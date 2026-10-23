@@ -577,9 +577,17 @@ public static class GameplaySmokeCheck
             worstSteady = Mathf.Max(worstSteady, deviation);
             if (deviation > 1.2f) offLane++;
             if (deviation > .8f)
+            {
+                var dbgRb = ai.GetComponent<Rigidbody>();
+                var dbgSpline = ai.GetComponent<SplineVehicle>();
                 Debug.Log($"SMOKE traffic lane sample {deviation:F2}m on {ai.name} along {along:F1}/{segmentLength:F1}m " +
                     $"node {ai.currentNodeIndex}->{ai.targetNodeIndex} lane {ai.laneIndex}/{graph.GetLaneCount(ai.currentNodeIndex, ai.targetNodeIndex)} " +
-                    $"expected {expected:F2} actual {actual:F2} speed {ai.currentSpeedKmh:F0}");
+                    $"expected {expected:F2} actual {actual:F2} laneErr {ai.LateralLaneError:F2} speed {ai.currentSpeedKmh:F0} " +
+                    $"kin={(dbgRb != null && dbgRb.isKinematic)} rbV={(dbgRb != null ? dbgRb.linearVelocity.magnitude * 3.6f : 0f):F0} " +
+                    $"splineOn={(dbgSpline != null && dbgSpline.enabled)} fullOn={ai.enabled} " +
+                    $"oneWay={graph.IsOneWay(ai.currentNodeIndex, ai.targetNodeIndex)} shared={graph.IsSharedLane(ai.currentNodeIndex, ai.targetNodeIndex)} " +
+                    $"halfW={graph.GetRoadHalfWidth(ai.currentNodeIndex, ai.targetNodeIndex):F2} laneW={graph.GetLaneWidth(ai.currentNodeIndex, ai.targetNodeIndex):F2}");
+            }
         }
 
         // No active vehicle at all is a failure: a pool that never leaves its dormant
@@ -599,7 +607,8 @@ public static class GameplaySmokeCheck
             $"busDistance={(playerBus != null && pooledCount > 0 ? $"{nearest:F0}-{farthest:F0}m" : "n/a")} models={models.Count} " +
             $"[{string.Join(",", models.Select(m => m.prefab.name))}] untextured={untextured} " +
             $"widestModel={pool.WidestVehicleWidth:F2}m laneFloor={laneFloor}m " +
-            $"density={densityEnabled} fullAi={fullAi} spline={spline} dormant={dormant} " +
+            $"densityVolume={pool.GetTrafficDensityVolume():F2} density={densityEnabled} " +
+            $"fullAi={fullAi} spline={spline} dormant={dormant} " +
             $"laneSamples={laneSamples} steadySamples={steadySamples} offLane={offLane} worstLaneDeviation={worstDeviation:F2} " +
             $"worstSteadyLaneDeviation={worstSteady:F2} worst={worstVehicle} passed={trafficOk}");
         return trafficOk;

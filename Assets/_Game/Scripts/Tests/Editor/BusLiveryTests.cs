@@ -184,16 +184,33 @@ public class BusLiveryTests
         Assert.That(inwardShift, Is.GreaterThan(0f), "left-hand traffic passes on the right (inward)");
         Assert.That(outer + inwardShift, Is.LessThan(0f), "keep the pass on the left carriageway");
 
-        // The outer lane is already at the kerb, so there is nowhere to yield.
+        // The outermost lane is already at the kerb, so there is nowhere to yield.
         Assert.That(AIVehicleController.KerbShift(graph, 0, 1, 1, 3f), Is.EqualTo(0f));
         // The inner lane yields outward toward the kerb.
         Assert.That(AIVehicleController.KerbShift(graph, 0, 1, 0, 3f), Is.LessThan(0f));
+
+        // The committed-lane forms of those shifts point at the same lanes. The
+        // controllers persist laneIndex through the pass instead of using the
+        // offsets as a temporary sideways push.
+        Assert.That(AIVehicleController.CruiseLaneIndex(graph, 0, 1), Is.EqualTo(1),
+            "two-way traffic cruises in the kerbside lane");
+        Assert.That(AIVehicleController.PassingLaneIndex(graph, 0, 1, 1), Is.EqualTo(0),
+            "the kerbside lane passes inwards");
+        Assert.That(AIVehicleController.PassingLaneIndex(graph, 0, 1, 0), Is.EqualTo(-1),
+            "the inner lane has nowhere legal to pass on a two-way road");
+        Assert.That(AIVehicleController.KerbLaneIndex(graph, 0, 1, 0), Is.EqualTo(1));
+        Assert.That(AIVehicleController.LaneOffsetDelta(graph, 0, 1, 1, 0), Is.GreaterThan(0f),
+            "moving inboard is a positive lateral change on left-hand two-way roads");
 
         // On a one-way carriageway the pass uses the offside (right in
         // left-hand traffic), falling back to the other side at the edge.
         graph.nodes[0].outgoingOneWays = new[] { true };
         Assert.That(AIVehicleController.OvertakeShift(graph, 0, 1, 0, 3f), Is.GreaterThan(0f));
         Assert.That(AIVehicleController.OvertakeShift(graph, 0, 1, 1, 3f), Is.LessThan(0f));
+        Assert.That(AIVehicleController.CruiseLaneIndex(graph, 0, 1), Is.EqualTo(0));
+        Assert.That(AIVehicleController.PassingLaneIndex(graph, 0, 1, 0), Is.EqualTo(1));
+        Assert.That(AIVehicleController.PassingLaneIndex(graph, 0, 1, 1), Is.EqualTo(0));
+        Assert.That(AIVehicleController.KerbLaneIndex(graph, 0, 1, 1), Is.EqualTo(0));
 
         // A single-lane carriageway has nowhere to pass or yield.
         graph.nodes[0].outgoingOneWays = new[] { false };
@@ -205,6 +222,21 @@ public class BusLiveryTests
         Object.DestroyImmediate(root);
         Object.DestroyImmediate(a.gameObject);
         Object.DestroyImmediate(b.gameObject);
+    }
+
+    [Test]
+    public void PlayerBus_IsRegisteredAsTrafficParticipant()
+    {
+        var go = new GameObject("PlayerBusTrafficParticipantTest");
+        go.AddComponent<BusController>();
+
+        var participant = go.GetComponent<TrafficParticipant>();
+        Assert.That(participant, Is.Not.Null,
+            "AI traffic perception must include the player's bus");
+        Assert.That(participant.IsPlayerVehicle, Is.True);
+        Assert.That(participant.length, Is.EqualTo(12f).Within(.001f));
+
+        Object.DestroyImmediate(go);
     }
 
     [Test]

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(TrafficParticipant))]
 public class BusController : MonoBehaviour
 {
     [Header("Steering")]
@@ -96,6 +97,15 @@ public class BusController : MonoBehaviour
         }
         transform.SetPositionAndRotation(position, rotation);
         Physics.SyncTransforms();
+    }
+
+    void Awake()
+    {
+        // The player's bus has to be visible to the same perception rules as AI
+        // traffic, or cars only react to each other and drive straight through it.
+        if (!TryGetComponent(out TrafficParticipant participant))
+            participant = gameObject.AddComponent<TrafficParticipant>();
+        participant.RefreshOwner();
     }
 
     void Start()
