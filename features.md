@@ -98,7 +98,7 @@
 - Local/cloud conflict detection with player choice.
 - Main menu, garage, settings, credits, pause, resilient loading, and mobile UI.
 - Rounded cinematic HUD with navigation, next stop, speed dial, fuel, passengers, gear, and schedule.
-- North-up route minimap with stop markers and a visibility toggle.
+- Minimap that draws the surrounding street network under the route, with stop markers, a heading-up/north-up switch and a visibility toggle.
 - First-drive tutorial, missed-stop recovery, and turn guidance.
 - Exterior, cockpit, chase, and kerb cameras with a digital mirror.
 

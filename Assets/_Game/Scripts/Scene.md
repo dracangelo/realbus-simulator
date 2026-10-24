@@ -617,6 +617,10 @@ The lighting stack is assembled at runtime rather than baked into `GameScene`:
 
 **No static lightmap or baked Light Probe Group is used.** The city is streamed procedurally and the same scene must render a clear noon, a cloudy afternoon and a night with a moving sun. A bake would freeze one time and one cloud state, and the moving bus would sample probes lit by the wrong hour. The runtime equivalents are the `Trilight` ambient (day/night and cloud scaled), the generated sky cubemap used as `RenderSettings.customReflectionTexture`, and the bus's realtime reflection probe. There is no `LightProbeGroup` in the scene; imported bus renderers therefore use the runtime ambient and the bus probe rather than baked probe data.
 
+### Runtime HUD and minimap
+
+`HUDManager` builds the navigation card at runtime, including `RuntimeMinimapGraphic`. The dial draws, back to front: the surrounding street network from `OSMRoadMeshBuilder.SurfaceIndex`, the remaining route and the covered trail, the stop markers (next stop highlighted), a rotating bus arrow and a north marker. Road segments are re-queried only when the bus has moved `roadCacheRefreshMeters` (30 m) or the world is rebuilt, and drawing stops at `maxRoadSegments` (1200), so a dense junction cannot turn the map into a full-city rebuild. With `rotateWithHeading` the map turns under the bus; with it off the view is north-up. Because the streets are drawn even when no route is active, free drive still shows a real map instead of an empty dial.
+
 ### Runtime city traffic
 
 Traffic is assembled at runtime as well. `SceneBootstrap` uses the `VehiclePool` already in the scene or creates a `VehiclePool` GameObject if there is none, raises `poolSizePerScene` to **160** when the traffic catalog has models (80 when it only has the procedural fallbacks), fills it from `TrafficCatalog` (the normalised downloaded models, used ahead of the old `BussimAssets/aitraffic` archives), and hands it the daily density profile (`minActiveFraction` 0.32, `maxActiveFraction` 0.92, `minActiveVehicles` 26). Every body runs at one of three tiers:
@@ -636,6 +640,14 @@ The car count changes by **activating or retiring bodies only outside the camera
 Staying out of the player's bus is handled in the same pass. `TrafficParticipant.LimitSpeed` gives the bus a wider near-field envelope (so a car brakes instead of clipping the flank of a bus crossing a junction), a stronger brake than for AI traffic, and a hard stop once a car is inside the bus's stopping envelope, so traffic queues behind the bus rather than driving through it.
 
 A committed change is supervised until the body **reaches** the new lane. If traffic or a kerb holds it so it stops making lateral progress, the change is abandoned, `laneIndex` is re-synced to the lane the body actually occupies, and it is retried after `laneChangeRetrySeconds`; `IsChangingLane` reads true across the whole window, which is what the headless lane probe filters on. The assembled scene logs the live pool and the lane keeping as `SMOKE traffic pool=... density=... fullAi=... spline=... dormant=... offLane=... worstLaneDeviation=... worstSteadyLaneDeviation=... passed=...`; the commands and thresholds are in `TESTING.md`.
+
+Traffic density follows `TimeOfDaySystem.currentTimeMinutes`, not only the mission timetable, so the cars on the road match the sky and the clock: the daily profile is 0.12 at 01:00, 0.96 at 08:00 and 0.95 at 17:00, and the live pool followed with 62 / 117 / 139 non-dormant bodies. A pinned `REALBUS_SMOKE_TIME` therefore pins the traffic count as well. The lane probe ignores the first and last 8 m (or 1.5 bus lengths) of each link, because a body is still turning there; on the settled middle, the latest runs report `offLane=0` and a worst steady error under 0.5 m.
+
+### Runtime depot
+
+`BusDepotManager` builds the yard beside the route start's kerb: a paved apron, a one-way entry aisle, a U-turn and a one-way exit aisle registered in `RoadSurfaceIndex` as real road, parking bays, imported garage/parking props, lighting, parked fleet buses and an ambient yard circuit. The yard is slid outward from the kerb until its apron footprint clears every street segment (`PushYardClearOfStreet`), and yard structures are placed on the far side of the yard from the street (`streetSide`), so a right-hand-traffic city cannot mirror a building onto the carriageway. `PropReachesStreet` rejects an imported structure, the procedural workshop or a parked fleet bus whose footprint reaches the street; `DepotPropsReachingStreet` is the same audit used by the smoke check.
+
+The driveways stop **on** the kerb line rather than past it. They used to end 1.6 m beyond the kerb, which laid about a metre of the depot's asphalt on the carriageway; now the dropped-kerb ramp bridges the last 0.6 m of pavement and finishes flush with the asphalt edge, so the bus still drives out onto a continuous surface while the street keeps its full width. The city kerb colliders across each mouth are removed (`ClearStreetKerbAcrossDriveways`) so the driveway is not walled off.
 
 ### Imported models and generated content
 
@@ -661,6 +673,8 @@ The project is on the **Built-in Render Pipeline**, so all imported opaque surfa
 The catalog currently contains 16 entries: one pedestrian, five billboards, one bench, four trees, two plants and three rocks. New environment entries include Banana (4,900 triangles), Coconut (1,944), Grass (58,880) and Tree+1 (54,648). Dense sources such as `autumn_grass.fbx` (7.7M triangles), `Carpinus Betulus` (1.95M) and `Pyrrosia Lingua` (1.69M) remain skipped.
 
 Stop placement remains safety-first: `StopPropSpawner.MoveClearOfRoad` pushes a shelter, poster or commuter off the carriageway, removes a poster pane that still cannot clear, and falls back to the compact totem when the shelter cannot fit. The smoke probe must report `blockedStops=0` and `crossingKerbs=0`. `Bus_Stand`'s `BusStop` material and `bus_Stop`'s `Cube.014`/`No Name` material have no safe single map and use the runtime palette fallback; `Grass+and+Ground+Texture` also has no nearby map.
+
+The kerb side comes from the direction of travel, not from the raw route geometry. `RoadSpawnResolver.RouteHeading` returns the nearest geometry tangent, which is not guaranteed to run in travel order; a tangent pointing back down the street would mirror the shelter onto the opposite side. `StopPropSpawner` folds that heading onto the stop→next-stop chord before `TryRoadside`, so the shelter and its docking anchor stay on the left kerb in left-hand traffic and on the right kerb in right-hand traffic. The smoke probe checks every anchor (`stopSides anchors=... wrongSide=0`) and has passed in both Nairobi and Berlin.
 
 Regeneration commands and the headless checks are in `TESTING.md`. The generator is editor-only; runtime code consumes the generated prefabs, specs, materials and `LiveCityCatalog`.
 

@@ -332,6 +332,30 @@ public class BusDepotManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Street-clearance audit for the acceptance run: the yard props whose footprint
+    /// reaches the carriageway. Healthy is empty. The yard's own asphalt, driveways,
+    /// dropped kerbs and ambient traffic are the deliberate street join and are
+    /// skipped; the apron is the yard surface itself, so its bounding box is the yard,
+    /// not a prop that could be moved off the road.
+    /// </summary>
+    public List<string> DepotPropsReachingStreet()
+    {
+        var offenders = new List<string>();
+        if (currentDepot == null) return offenders;
+        foreach (Transform child in currentDepot.transform)
+        {
+            string name = child.name;
+            if (name.StartsWith("Depot_Entry_Road") || name.StartsWith("Depot_Turn_Road") ||
+                name.StartsWith("Depot_Exit_Road") || name.StartsWith("Depot_Apron") ||
+                name.Contains("Ramp") || name.Contains("DroppedKerb") ||
+                name.StartsWith("Depot_Traffic")) continue;
+            if (PropReachesStreet(child.gameObject))
+                offenders.Add($"{name}@{child.position.x:F1},{child.position.z:F1}");
+        }
+        return offenders;
+    }
+
+    /// <summary>
     /// Slides the yard away from the kerb until its whole apron footprint clears
     /// every street segment. The yard is wide enough that too shallow an offset
     /// would otherwise lay the apron, bays and wheel stops across the carriageway.
@@ -635,12 +659,12 @@ public class BusDepotManager : MonoBehaviour
         float loopEndX = -side * (halfWidth - 6f);
         float turnX = -side * (halfWidth - 3f);
         // The aisle runs at right angles to the kerb, so its last point is its end
-        // cap - it has to sit ON the street, past the kerb line, or the driveway stops
-        // a metre short and reads as a strip of tarmac lying beside the road. `side`
-        // points from the yard towards the street, so adding it crosses the kerb. The
-        // kerb sits 0.6 m outside the asphalt, so 1.6 m past it leaves about a metre
-        // of tarmac overlapping the carriageway.
-        float outerX = localKerb.x + side * 1.6f;
+        // cap. It stops ON the kerb line: crossing it used to leave about a metre of
+        // the depot's own tarmac on the carriageway, which read as the depot spilling
+        // into the street. The dropped kerb built below bridges the last 0.6 m of
+        // pavement and finishes flush with the asphalt edge, so the bus still has
+        // continuous tarmac while the street keeps its full width.
+        float outerX = localKerb.x;
 
         Vector3 Local(float x, float z) => parent.TransformPoint(new Vector3(x, DrivewayLift, z));
 
@@ -678,7 +702,7 @@ public class BusDepotManager : MonoBehaviour
         var builder = OSMRoadMeshBuilder.Resolve();
         if (builder == null) return;
 
-        float streetX = localKerb.x + side * 1.5f;   // just short of the driveway mouth
+        float streetX = localKerb.x + side * 0.6f;   // flush with the asphalt edge, not on it
         float yardX = localKerb.x - side * 0.5f;     // back onto the driveway
         float kerbLift = builder.boundaryHeight + 0.01f;
         BuildDroppedKerb(parent, builder, streetX, yardX, kerbLift, entryZ);
@@ -822,7 +846,7 @@ public class BusDepotManager : MonoBehaviour
         ramp.transform.SetParent(parent, false);
         ramp.transform.localPosition = new Vector3(outerX * 0.5f, ApronTopOffset - 0.04f, laneZ);
         ramp.transform.localRotation = Quaternion.identity;
-        ramp.transform.localScale = new Vector3(Mathf.Abs(outerX) + 2f, 0.08f, depotRoadWidth);
+        ramp.transform.localScale = new Vector3(Mathf.Abs(outerX), 0.08f, depotRoadWidth);
 
         Renderer rend = ramp.GetComponent<Renderer>();
         if (rend != null && tarmacMaterial != null) rend.material = tarmacMaterial;

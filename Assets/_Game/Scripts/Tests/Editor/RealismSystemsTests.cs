@@ -285,10 +285,10 @@ public class RealismSystemsTests
                 "the entry driveway must reach past the yard edge to the street");
             Assert.That(Mathf.Abs(exitOuter.x), Is.GreaterThan(depotManager.yardWidth * 0.5f),
                 "the exit driveway must reach past the yard edge to the street");
-            Assert.That(Mathf.Abs(entryOuter.x), Is.GreaterThan(Mathf.Abs(kerbLocal.x)),
-                "the entry driveway must cross the kerb line onto the carriageway");
-            Assert.That(Mathf.Abs(exitOuter.x), Is.GreaterThan(Mathf.Abs(kerbLocal.x)),
-                "the exit driveway must cross the kerb line onto the carriageway");
+            Assert.That(Mathf.Abs(entryOuter.x), Is.LessThanOrEqualTo(Mathf.Abs(kerbLocal.x) + 0.01f),
+                "the entry driveway must stop at the kerb, not lay depot tarmac on the carriageway");
+            Assert.That(Mathf.Abs(exitOuter.x), Is.LessThanOrEqualTo(Mathf.Abs(kerbLocal.x) + 0.01f),
+                "the exit driveway must stop at the kerb, not lay depot tarmac on the carriageway");
 
             // The bays stay behind the driving band, the player is dropped in Bay 1,
             // and the departure gate sits on the road at the end of the exit aisle.

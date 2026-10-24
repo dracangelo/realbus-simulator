@@ -335,31 +335,17 @@ public static class GameplaySmokeCheck
         Debug.Log($"SMOKE stopSides anchors={stopAnchors} wrongSide={stopsWrongSide} leftTraffic={drivesOnLeft} passed={stopsWrongSide == 0}");
 
         // Depot geometry must sit on its own yard (and its driveways), never on the
-        // city carriageway. The yard's own roads and kerb ramps are the deliberate
-        // exceptions; everything else is measured against the street surface.
-        int depotStreetProps = 0;
+        // city carriageway. The audit measures each prop's real footprint and skips
+        // the yard surface itself plus the driveway/kerb join, which is how the depot
+        // legitimately meets the street.
         var depotManager = BusDepotManager.Instance;
-        if (depotManager != null && depotManager.currentDepot != null && roadIndex != null)
-        {
-            foreach (Transform child in depotManager.currentDepot.transform)
-            {
-                string name = child.name;
-                if (name.StartsWith("Depot_Entry_Road") || name.StartsWith("Depot_Turn_Road") ||
-                    name.StartsWith("Depot_Exit_Road") || name.Contains("Ramp") ||
-                    name.Contains("DroppedKerb") || name.StartsWith("Depot_Traffic")) continue;
-                var depotRenderers = child.GetComponentsInChildren<MeshRenderer>();
-                if (depotRenderers.Length == 0) continue;
-                Bounds bounds = depotRenderers[0].bounds;
-                foreach (var renderer in depotRenderers) bounds.Encapsulate(renderer.bounds);
-                var footprint = new[] { new Vector3(bounds.min.x, 0, bounds.min.z), new Vector3(bounds.max.x, 0, bounds.min.z),
-                    new Vector3(bounds.max.x, 0, bounds.max.z), new Vector3(bounds.min.x, 0, bounds.max.z) };
-                if (!roadIndex.OverlapsFootprint(footprint, .2f)) continue;
-                depotStreetProps++;
-                Debug.Log($"SMOKE depotOnRoad child={name} position={new Vector3(bounds.center.x, 0f, bounds.center.z)}");
-            }
-        }
-        passed &= depotStreetProps == 0;
-        Debug.Log($"SMOKE depotStreet props={depotStreetProps} passed={depotStreetProps == 0}");
+        var depotOffenders = depotManager != null
+            ? depotManager.DepotPropsReachingStreet()
+            : new System.Collections.Generic.List<string>();
+        foreach (string offender in depotOffenders)
+            Debug.Log($"SMOKE depotOnRoad {offender}");
+        passed &= depotOffenders.Count == 0;
+        Debug.Log($"SMOKE depotStreet props={depotOffenders.Count} passed={depotOffenders.Count == 0}");
 
         passed &= stopModels > 0 && blockedStops == 0 && crossingKerbs == 0;
         Debug.Log($"SMOKE roadClearance stopModels={stopModels} blockedStops={blockedStops} crossingKerbs={crossingKerbs} passed={passed}");
