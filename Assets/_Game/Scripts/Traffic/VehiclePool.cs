@@ -32,7 +32,12 @@ public class VehiclePool : MonoBehaviour
 
     [Header("Pool")]
     public AIRoadGraph roadGraph;
-    public int poolSizePerScene = 120;
+    /// <summary>
+    /// Bodies created once during the loading card and reused for the whole
+    /// session. The active count is the density envelope below; this is the
+    /// ceiling. <see cref="TrafficPerformancePolicy"/> keeps both in one place.
+    /// </summary>
+    public int poolSizePerScene = TrafficPerformancePolicy.FallbackPoolSize;
     public VehiclePrefabEntry[] prefabs;
     public bool logSpawnEvents = true;
     public bool allowAutoResolveRoadGraph = true;
@@ -54,7 +59,7 @@ public class VehiclePool : MonoBehaviour
     /// behind beyond the spline radius and every vehicle stays dormant, which is why
     /// only a couple of cars ever appeared.
     /// </summary>
-    public float rehomeDistanceMeters = 650f;
+    public float rehomeDistanceMeters = TrafficPerformancePolicy.RehomeDistanceMeters;
     public int maxRehomesPerTick = 40;
     public float rehomeIntervalSeconds = 0.5f;
 
@@ -64,9 +69,9 @@ public class VehiclePool : MonoBehaviour
     /// Density falls by retiring vehicles that have already driven out of view,
     /// not by switching off whichever pool indices happen to be close.
     /// </summary>
-    public float visibleDespawnDistanceMeters = 320f;
+    public float visibleDespawnDistanceMeters = TrafficPerformancePolicy.VisibleDespawnDistanceMeters;
     /// <summary>Hard limit for a visible vehicle. Beyond this it is far enough away to recycle safely.</summary>
-    public float hardDespawnDistanceMeters = 760f;
+    public float hardDespawnDistanceMeters = TrafficPerformancePolicy.HardDespawnDistanceMeters;
     /// <summary>Extra cone width used when choosing a re-home/activation point, so a car never appears at the edge of the screen.</summary>
     [Range(0f, 60f)] public float offscreenSpawnFovPaddingDegrees = 30f;
 
@@ -92,10 +97,10 @@ public class VehiclePool : MonoBehaviour
     [Range(0f, 1f)] public float spawnFovShare = 0.65f;
 
     [Header("Tier Split (distance from player bus)")]
-    public float fullAiRadiusMeters = 280f;
-    public float splineRadiusMeters = 520f;
+    public float fullAiRadiusMeters = TrafficPerformancePolicy.FullAiRadiusMeters;
+    public float splineRadiusMeters = TrafficPerformancePolicy.SplineRadiusMeters;
     public float transitionHysteresisMeters = 30f;
-    [Range(15, 20)] public int maxFullAiVehicles = 20;
+    [Range(4, 20)] public int maxFullAiVehicles = TrafficPerformancePolicy.MaxFullAiVehicles;
     public float tierUpdateIntervalSeconds = 0.2f;
 
     [Header("Density")]
@@ -105,9 +110,9 @@ public class VehiclePool : MonoBehaviour
     /// being empty - which is what a fixed count of ten vehicles bought before, at every
     /// hour of the day.
     /// </summary>
-    public int minActiveVehicles = 0;
-    public float minActiveFraction = 0.35f;
-    public float maxActiveFraction = 0.95f;
+    public int minActiveVehicles = TrafficPerformancePolicy.FallbackMinActiveVehicles;
+    public float minActiveFraction = TrafficPerformancePolicy.MinActiveFraction;
+    public float maxActiveFraction = TrafficPerformancePolicy.MaxActiveFraction;
     public float updateDensityEverySeconds = 3f;
 
     [Header("Rush Hour")]
@@ -383,6 +388,9 @@ public class VehiclePool : MonoBehaviour
         ApplyTrafficLaneWidth(roadGraph);
 
         int created = 0;
+        int wheelCollidersRemoved = 0;
+        int meshCollidersRemoved = 0;
+        int animatorsDisabled = 0;
         for (int i = 0; i < poolSizePerScene; i++)
         {
             var picked = PickWeightedPrefab();
@@ -390,6 +398,14 @@ public class VehiclePool : MonoBehaviour
 
             GameObject go = Instantiate(picked.prefab, transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(go.transform);
+            // The prefab is a drivable vehicle in some packs and a static shell in
+            // others. Traffic only ever needs the shell: wheel colliders, mesh
+            // colliders, driver animators and per-car audio are removed once here
+            // instead of running for the life of the pool.
+            TrafficBodyOptimizer.Report optimized = TrafficBodyOptimizer.Prepare(go);
+            wheelCollidersRemoved += optimized.wheelCollidersRemoved;
+            meshCollidersRemoved += optimized.meshCollidersRemoved;
+            animatorsDisabled += optimized.animatorsDisabled;
             // One prefab per model would otherwise put the same colour on every
             // instance of that model. The paint is a property block on the body
             // slot, so the shared material stays batched.
@@ -470,7 +486,10 @@ public class VehiclePool : MonoBehaviour
         initialDensityFillPending = true;
         initialTierFillPending = true;
         if (logSpawnEvents)
-            Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created (roadGraphNodes={roadGraph.NodeCount}, laneWidth={roadGraph.MinimumLaneWidth:0.00}m).");
+            Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created " +
+                      $"(roadGraphNodes={roadGraph.NodeCount}, laneWidth={roadGraph.MinimumLaneWidth:0.00}m, " +
+                      $"wheelCollidersRemoved={wheelCollidersRemoved}, meshCollidersRemoved={meshCollidersRemoved}, " +
+                      $"animatorsDisabled={animatorsDisabled}).");
     }
 
     /// <summary>
@@ -1033,7 +1052,7 @@ public class VehiclePool : MonoBehaviour
         int ownFull = 0;
         foreach (var vehicle in pooled) if (vehicle.tier == SimulationTier.FullAI) ownFull++;
         int externalFull = Mathf.Max(0, AIVehicleController.ActiveCount - ownFull);
-        int clampedCap = Mathf.Max(0, Mathf.Min(maxFullAiVehicles, 20 - externalFull));
+        int clampedCap = Mathf.Max(0, Mathf.Min(maxFullAiVehicles, TrafficPerformancePolicy.FullAiCeiling - externalFull));
         reservedFull.Clear(); candidates.Clear();
 
         // Keep existing full-AI vehicles if still within hysteresis, then fill remaining budget.
@@ -1069,6 +1088,9 @@ public class VehiclePool : MonoBehaviour
                 continue;
             }
 
+            if (pv.tier == SimulationTier.Spline)
+                ApplySplineCadence(pv, dist);
+
             bool keepFull = pv.tier == SimulationTier.FullAI && dist <= (fullAiRadiusMeters + transitionHysteresisMeters);
             if (keepFull && fullUsed < clampedCap)
             {
@@ -1098,10 +1120,12 @@ public class VehiclePool : MonoBehaviour
             else if (dist <= splineRadiusMeters)
             {
                 ApplyTierIfNeeded(pv, SimulationTier.Spline);
+                ApplySplineCadence(pv, dist);
             }
             else if (dist <= hardDespawnDistanceMeters && IsVehicleVisible(pv))
             {
                 ApplyTierIfNeeded(pv, SimulationTier.Spline);
+                ApplySplineCadence(pv, dist);
             }
             else
             {
@@ -1119,6 +1143,21 @@ public class VehiclePool : MonoBehaviour
         // the pool origin instead keeps the warm fill alive until the bus appears.
         if (playerBus == null) return 0f;
         return Vector3.Distance(playerBus.position, pos);
+    }
+
+    /// <summary>
+    /// A spline car still has to perceive the road, but not sixty times a second
+    /// when it is a few hundred metres away. The step is accumulated inside the
+    /// controller, so the car keeps its average speed and only the update rate
+    /// drops. Near traffic stays per-frame.
+    /// </summary>
+    static void ApplySplineCadence(PooledVehicle pv, float distance)
+    {
+        if (pv == null || pv.spline == null)
+            return;
+        float interval = TrafficPerformancePolicy.SplineUpdateInterval(distance);
+        if (!Mathf.Approximately(pv.spline.updateIntervalSeconds, interval))
+            pv.spline.updateIntervalSeconds = interval;
     }
 
     void ApplyTierIfNeeded(PooledVehicle pv, SimulationTier desired)
@@ -1239,6 +1278,10 @@ public class VehiclePool : MonoBehaviour
         }
 
         if (pv.rb != null) pv.rb.detectCollisions = desired == SimulationTier.FullAI;
+        // A body that leaves the spline tier goes back to a per-frame update, so a
+        // later promotion or re-activation never inherits a stale coarse cadence.
+        if (desired != SimulationTier.Spline && pv.spline != null)
+            pv.spline.updateIntervalSeconds = 0f;
         pv.tier = desired;
     }
 

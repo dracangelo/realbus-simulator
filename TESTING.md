@@ -153,6 +153,25 @@ The EditMode cases pin the policy and the builder: `SceneryLodTests.TinyStreetPr
 
 **Latest run (2026-10-24):** EditMode **598 tests — 589 passed / 9 failed**, the same nine pre-existing failures. The Nairobi clear-noon smoke exited 0 with no LOD, material or null-reference errors: `SMOKE environment … fogStart=140 fogEnd=950 hazeOwnsFog=True`, `SMOKE perf samples=117 avgFps=8.4 p50Ms=92.9 p95Ms=251.0 … renderers=7097 farClip=1000 lodGroups=163`, and the world still reported `roads=True/True buildings=True/True mission=InProgress`. The software-GL frame time is noisy, so this run proves correctness, not a measured GPU win; a real-display pass is still needed to judge the LOD transitions and the 1 km far plane.
 
+### Traffic and bus cost
+
+`TrafficPerformancePolicy` owns the traffic budget and is read by `VehiclePool`, `SceneBootstrap`, `AIBusScheduleSpawner` and the spline controller, so the pool, the bootstrap and the ambient buses cannot drift apart:
+
+| Knob | Value | Old value |
+| --- | --- | --- |
+| Pool bodies (catalog / fallback) | 120 / 64 | 160 / 120 |
+| Active fraction (min–max) | 0.24–0.62 | 0.32–0.92 |
+| Active floor (catalog / fallback) | 12 / 8 | 26 / 10 |
+| Full-physics bodies | 12, radius 200 m | 20, radius 280 m |
+| Spline band | 400 m | 520 m |
+| Hard despawn / visible despawn | 600 / 280 m | 760 / 320 m |
+
+The pool is not re-created while driving: bodies are instantiated once during the loading card (and ambient buses once into a spare stack) and then activated, re-homed and retired. `TrafficBodyOptimizer` runs once per spawned body and removes wheel colliders (player-only physics), non-trigger `MeshCollider`s (leaving one box where nothing solid remains) and driver `Animator`/per-car `AudioSource` components; a body with a lamp rig gets `TrafficPresentationCull`, which drops its lights past 160 m. `SplineVehicle.updateIntervalSeconds` is set from the policy by the tier pass, so a spline car updates every frame near the bus, at 20 Hz past 180 m and at 10 Hz past 320 m, with the elapsed time accumulated so its average speed is unchanged.
+
+The EditMode cases pin the budget and the optimiser: `TrafficPerformanceTests.ActiveFleetStaysWellBelowThePoolAtEveryHour`, `PhysicsRingStaysInsideTheSplineRingAndTheDespawnBand`, `SplineCadenceOnlyCoarsensDistantVehicles`, `ConsumeStepWaitsForTheIntervalThenKeepsTheWholeStep`, `PrepareStripsWheelCollidersAndMeshCollidersButKeepsAnAuthoredBox`, `PrepareAddsOneBoxColliderWhenOnlyAMeshColliderExisted`, `PrepareDisablesAnimatorAndAudioButKeepsTriggerVolumes`, `PrepareAddsThePresentationCullOnlyWhenTheBodyHasLights`, `PrepareLeavesThePlayerVehicleAlone` and `PrepareIsIdempotent`.
+
+**Traffic run (2026-10-24, 08:00 clear, Nairobi):** EditMode **608 tests — 599 passed / 9 failed**, the same nine pre-existing failures. The smoke reported `SMOKE traffic pool=120 spawned=120 … density=45 fullAi=12 spline=33 dormant=75 renderers=826 poolRenderers=1468 wheelColliders=0 meshColliders=0 … offLane=0 … passed=True` against the previous `density=133 fullAi=20 spline=113`, and `SMOKE trafficSide … wrongSide=0 … passed=True`. Frame time in the same harness moved from `avgFps=8.4 p50Ms=92.9` to `avgFps=22.7 p50Ms=32.4`, but software GL is too noisy and the streamed building count differs between runs, so that is evidence of less work, not a measured GPU win.
+
 ## Imported model wiring
 
 The bus, stop and environment packs under `Assets/unity models` are not wired by hand. Regenerate them in batch after replacing or adding a source FBX:

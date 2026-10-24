@@ -242,6 +242,9 @@ public class DepotTrafficSpawner : MonoBehaviour
         foreach (var bus in vehicle.GetComponentsInChildren<BusController>(true)) BusDepotManager.DestroySafe(bus);
         foreach (var camera in vehicle.GetComponentsInChildren<Camera>(true)) BusDepotManager.DestroySafe(camera);
         foreach (var body in vehicle.GetComponentsInChildren<Rigidbody>(true)) body.isKinematic = true;
+        // Yard traffic is scenery on a circuit, so the same player-only physics
+        // and presentation costs the city pool strips apply here too.
+        TrafficBodyOptimizer.Prepare(vehicle);
 
         var spline = vehicle.GetComponent<SplineVehicle>();
         if (spline == null) spline = vehicle.AddComponent<SplineVehicle>();

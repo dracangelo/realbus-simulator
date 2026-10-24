@@ -32,6 +32,14 @@ public class SplineVehicle : MonoBehaviour
 
     [Header("Path Cache")]
     public int lookaheadNodes = 8;
+    /// <summary>
+    /// Seconds between movement and perception steps. VehiclePool raises this for
+    /// vehicles far from the bus; zero keeps the original per-frame update. The
+    /// step is accumulated rather than skipped, so average speed is unchanged.
+    /// </summary>
+    [Tooltip("0 = every frame. The pool sets 0.05-0.1 s for distant vehicles.")]
+    public float updateIntervalSeconds = 0f;
+    float updateAccumulator;
     /// <summary>Return to the slow/nearside lane after a pass when it is safe.</summary>
     public bool returnToCruiseLane = true;
     /// <summary>Grace period after spawning or a tier change before ordinary lane discipline starts.</summary>
@@ -106,6 +114,37 @@ public class SplineVehicle : MonoBehaviour
 
     void Update()
     {
+        float dt = ConsumeStep(ref updateAccumulator, Time.deltaTime, updateIntervalSeconds);
+        if (dt <= 0f)
+            return;
+        Simulate(dt);
+    }
+
+    /// <summary>
+    /// Accumulates frame time and returns the step to simulate with, or zero
+    /// while a coarse cadence has not elapsed yet. Pure, so the cadence can be
+    /// checked without a frame. A zero interval means every frame, which is what
+    /// the near tier keeps.
+    /// </summary>
+    public static float ConsumeStep(ref float accumulated, float deltaTime, float intervalSeconds)
+    {
+        if (intervalSeconds <= 0.001f)
+        {
+            accumulated = 0f;
+            return deltaTime;
+        }
+
+        accumulated += Mathf.Max(0f, deltaTime);
+        if (accumulated < intervalSeconds)
+            return 0f;
+
+        float step = accumulated;
+        accumulated = 0f;
+        return step;
+    }
+
+    void Simulate(float dt)
+    {
         if (roadGraph == null || !roadGraph.IsValidNode(currentNodeIndex))
             return;
 
@@ -123,7 +162,7 @@ public class SplineVehicle : MonoBehaviour
         segment.y = 0f;
         if (segment.sqrMagnitude < .0001f) return;
         segment.Normalize();
-        emergencyYieldSeconds = Mathf.Max(0f, emergencyYieldSeconds - Time.deltaTime);
+        emergencyYieldSeconds = Mathf.Max(0f, emergencyYieldSeconds - dt);
 
         float distanceToJunction = Vector3.Distance(transform.position, nodeB);
         float desired = roadGraph.GetSpeedLimitKmh(currentNodeIndex) *
@@ -136,9 +175,9 @@ public class SplineVehicle : MonoBehaviour
             desired = RealismRules.ApproachSpeedKmh(desired, desired * turnFactor,
                 distanceToJunction, approach);
         }
-        UpdateLaneIntent(desired);
+        UpdateLaneIntent(desired, dt);
         laneShift = AIVehicleController.StepLaneChange(laneShift, laneShiftTarget,
-            laneChangeMetersPerSecond, Time.deltaTime);
+            laneChangeMetersPerSecond, dt);
 
         // The same lane line the full-physics controller drives: a lane point at each
         // end of this link, and a lookahead on it, so a low-detail car also stays in
@@ -199,17 +238,17 @@ public class SplineVehicle : MonoBehaviour
         float frontLimited = TrafficParticipant.LimitSpeed(transform, desired, 5f,
             brakeKmhPerSec / 3.6f * 0.65f, ignore);
         float rate = frontLimited < speedKmh ? brakeKmhPerSec : accelKmhPerSec;
-        speedKmh = Mathf.MoveTowards(speedKmh, frontLimited, rate * Time.deltaTime);
+        speedKmh = Mathf.MoveTowards(speedKmh, frontLimited, rate * dt);
 
         float speedMs = speedKmh / 3.6f;
-        Vector3 nextPos = Vector3.MoveTowards(transform.position, target, speedMs * Time.deltaTime);
+        Vector3 nextPos = Vector3.MoveTowards(transform.position, target, speedMs * dt);
         transform.position = nextPos;
-        UpdateStuckRecovery();
+        UpdateStuckRecovery(dt);
 
         if (dir.sqrMagnitude > 0.001f)
         {
             Quaternion look = Quaternion.LookRotation(dir, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, look, turnRate * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, look, turnRate * dt);
         }
 
         if (dist <= 3.5f)
@@ -223,12 +262,12 @@ public class SplineVehicle : MonoBehaviour
         }
     }
 
-    void UpdateStuckRecovery()
+    void UpdateStuckRecovery(float dt)
     {
         float moved = Vector3.Distance(transform.position, lastProgressPosition); lastProgressPosition = transform.position;
         bool legitimateStop = emergencyYieldSeconds > 0f || roadGraph.IsRedSignal(targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, minHeadway + 2f);
         if (moved > 0.025f || speedKmh > 1.5f || legitimateStop) { stuckSeconds = 0f; return; }
-        stuckSeconds += Time.deltaTime;
+        stuckSeconds += dt;
         if (stuckSeconds >= 18f)
         {
             cachedPath.Clear();
@@ -244,9 +283,8 @@ public class SplineVehicle : MonoBehaviour
     /// offside lane so a slow or stopped vehicle can be passed without a physics
     /// body forcing it to a crawl.
     /// </summary>
-    void UpdateLaneIntent(float desiredKmh)
+    void UpdateLaneIntent(float desiredKmh, float dt)
     {
-        float dt = Time.deltaTime;
         overtakeCooldown = Mathf.Max(0f, overtakeCooldown - dt);
         laneDisciplineTimer = Mathf.Max(0f, laneDisciplineTimer - dt);
         int laneCount = Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex));

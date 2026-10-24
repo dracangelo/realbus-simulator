@@ -778,12 +778,18 @@ public static class GameplaySmokeCheck
         bool trafficOk = laneOk && texturedOk && variedOk && liveriesOk && sidesOk;
         Debug.Log($"SMOKE liveries painted={liveryPainted} distinct={liveryColors.Count} passed={liveriesOk}");
         string laneFloor = pool.roadGraph != null ? pool.roadGraph.MinimumLaneWidth.ToString("F2") : "n/a";
+        int trafficRenderers = pool.GetComponentsInChildren<Renderer>().Length;
+        int poolRenderers = pool.GetComponentsInChildren<Renderer>(true).Length;
+        int trafficWheelColliders = pool.GetComponentsInChildren<WheelCollider>(true).Length;
+        int trafficMeshColliders = pool.GetComponentsInChildren<MeshCollider>(true).Length;
         Debug.Log($"SMOKE traffic pool={pool.GetPoolCount()} spawned={pooledCount} atOrigin={atOrigin} " +
             $"busDistance={(playerBus != null && pooledCount > 0 ? $"{nearest:F0}-{farthest:F0}m" : "n/a")} models={models.Count} " +
             $"[{string.Join(",", models.Select(m => m.prefab.name))}] untextured={untextured} " +
             $"widestModel={pool.WidestVehicleWidth:F2}m laneFloor={laneFloor}m " +
             $"densityVolume={pool.GetTrafficDensityVolume():F2} density={densityEnabled} " +
             $"fullAi={fullAi} spline={spline} dormant={dormant} " +
+            $"renderers={trafficRenderers} poolRenderers={poolRenderers} " +
+            $"wheelColliders={trafficWheelColliders} meshColliders={trafficMeshColliders} " +
             $"laneSamples={laneSamples} steadySamples={steadySamples} offLane={offLane} worstLaneDeviation={worstDeviation:F2} " +
             $"worstSteadyLaneDeviation={worstSteady:F2} worst={worstVehicle} passed={trafficOk}");
         return trafficOk;

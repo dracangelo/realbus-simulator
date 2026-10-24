@@ -61,7 +61,12 @@ public class AIBusScheduleSpawner : MonoBehaviour
         foreach (var route in routes) if (route != null) capacity += Mathf.Max(1, route.maxConcurrentBuses);
         if (aiBusPrefab != null) for (int i = 0; i < capacity; i++)
         {
-            var go = Instantiate(aiBusPrefab, transform); go.SetActive(false); spare.Push(go);
+            var go = Instantiate(aiBusPrefab, transform);
+            // An ambient bus is not drivable: no wheel colliders, no cooked mesh
+            // collider and no per-bus audio are needed for a body on a schedule.
+            TrafficBodyOptimizer.Prepare(go);
+            go.SetActive(false);
+            spare.Push(go);
         }
         float now = ScheduleManager.Instance != null ? ScheduleManager.Instance.currentTimeMinutes : 8f * 60f;
         for (int i = 0; i < routes.Length; i++)
@@ -87,7 +92,8 @@ public class AIBusScheduleSpawner : MonoBehaviour
             if (activeByRoute[i] >= Mathf.Max(1, route.maxConcurrentBuses))
                 continue;
 
-            if (now >= nextSpawnTimeByRoute[i] && spare.Count > 0 && AIVehicleController.ActiveCount < 20)
+            if (now >= nextSpawnTimeByRoute[i] && spare.Count > 0 &&
+                AIVehicleController.ActiveCount < TrafficPerformancePolicy.FullAiCeiling)
             {
                 // A blocked spawn is retried on a real-time timer rather than a whole
                 // headway: ambient buses should fill a gap in the street, not skip it.

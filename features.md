@@ -54,6 +54,7 @@
 - Traffic that does not U-turn at ordinary two-way junctions (only at dead ends), and spawns that stay clear of the player and other vehicles.
 - Traffic volume that follows the daily demand curve, with a floor so the road is never empty, a tier split by distance, and a pool that re-homes dormant vehicles around the bus as it drives.
 - Full-physics, spline, billboard, and distance-culling traffic tiers.
+- A single traffic budget: 120 pooled bodies at 24–62 % active, full physics for 12 cars inside 200 m, 20/10 Hz spline updates past 180/320 m, and player-only wheel colliders and mesh colliders stripped from every ambient vehicle.
 - Traffic lights, pedestrian crossings, passing, and emergency sirens.
 
 ## World realism

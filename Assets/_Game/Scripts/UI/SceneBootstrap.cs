@@ -1008,13 +1008,17 @@ public class SceneBootstrap : MonoBehaviour
         // The downloaded FBX models (Stylized Vehicles + Van) are cheap geometry that
         // drives on the correct side of the road via CityManager.activeCountry.DrivesOnLeft.
         // A larger pool at higher density fractions is what puts them visibly on the streets.
-        pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, importedModels > 0 ? 160 : 80);
+        // The pool is created once and reused; the density envelope below is what
+        // decides how many of those bodies are actually on the road. Both numbers
+        // live in TrafficPerformancePolicy so the scene bootstrap, the pool and
+        // the ambient-bus spawner cannot drift apart.
+        pool.poolSizePerScene = Mathf.Max(pool.poolSizePerScene, TrafficPerformancePolicy.PoolSize(importedModels > 0));
         // Let the daily volume drive the count in both cases. Forcing a fixed
         // number for the fallback catalog made every hour identical and was one
         // reason the city looked like it had almost no traffic outside a rush hour.
-        pool.minActiveVehicles = importedModels > 0 ? 26 : 10;
-        pool.minActiveFraction = importedModels > 0 ? 0.32f : 0.30f;
-        pool.maxActiveFraction = importedModels > 0 ? 0.92f : 0.85f;
+        pool.minActiveVehicles = TrafficPerformancePolicy.MinActiveVehicles(importedModels > 0);
+        pool.minActiveFraction = TrafficPerformancePolicy.MinActiveFraction;
+        pool.maxActiveFraction = TrafficPerformancePolicy.MaxActiveFraction;
         pool.debugForceActiveCount = 0;
         pool.logSpawnEvents = false;
     }
@@ -1028,10 +1032,10 @@ public class SceneBootstrap : MonoBehaviour
     {
         if (pool == null)
             return;
-        bool largePool = pool.poolSizePerScene >= 120;
-        pool.minActiveVehicles = largePool ? 26 : 10;
-        pool.minActiveFraction = largePool ? .32f : .30f;
-        pool.maxActiveFraction = largePool ? .92f : .85f;
+        bool largePool = pool.poolSizePerScene >= TrafficPerformancePolicy.ImportedPoolSize;
+        pool.minActiveVehicles = TrafficPerformancePolicy.MinActiveVehicles(largePool);
+        pool.minActiveFraction = TrafficPerformancePolicy.MinActiveFraction;
+        pool.maxActiveFraction = TrafficPerformancePolicy.MaxActiveFraction;
         // Forcing a fixed count bypasses the daily profile entirely.
         pool.debugForceActiveCount = 0;
     }
