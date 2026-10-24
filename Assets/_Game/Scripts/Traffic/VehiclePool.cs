@@ -158,6 +158,9 @@ public class VehiclePool : MonoBehaviour
     /// <summary>True once the initial pool has been placed, or traffic is deliberately off.</summary>
     public bool WarmupComplete { get; private set; }
 
+    /// <summary>The active body count the daily curve currently asks for.</summary>
+    public int DensityTarget { get; private set; }
+
     void Start()
     {
         if (IsTrafficGraphDisabledByConfig())
@@ -659,18 +662,13 @@ public class VehiclePool : MonoBehaviour
             Vector3 point = GetSpawnPoint(node, next, candidateLane, candidateAlong);
             if (!IsSpawnPointClear(point, ignore)) continue;
 
-            // Keep the warm pool in the same 45-520 m band as before. The band is
-            // only applied once there is a player to measure from.
+            // Keep a re-homed body inside the spline band. A point past it is out
+            // of view, so the tier pass would retire the body on its next tick and
+            // the density fill would never actually reach its target.
             if (playerBus != null)
             {
                 float distance = Vector3.Distance(playerBus.position, point);
-                // Re-home inside the spline tier so the body actually drives in
-                // view after it is enabled. A point beyond splineRadius would be
-                // switched straight back to dormant and quietly consume the
-                // density budget without putting a car on the road.
-                float maxDistance = avoidPlayerView
-                    ? Mathf.Max(520f, splineRadiusMeters)
-                    : 520f;
+                float maxDistance = TrafficPerformancePolicy.DensitySpawnBandMeters;
                 if (distance < minSpawnDistanceFromPlayerMeters || distance > maxDistance) continue;
                 if (avoidPlayerView && IsPositionInView(point,
                         Mathf.Max(hardDespawnDistanceMeters, visibleDespawnDistanceMeters),
@@ -853,6 +851,7 @@ public class VehiclePool : MonoBehaviour
         if (forcedActiveCount >= 0)
         {
             targetActive = Mathf.Clamp(forcedActiveCount, 0, pooled.Count);
+            DensityTarget = targetActive;
             // Stress/debug runs ask for an exact count. Keep the historic
             // deterministic selection for that path.
             for (int i = 0; i < pooled.Count; i++)
@@ -868,6 +867,7 @@ public class VehiclePool : MonoBehaviour
         targetActive = Mathf.Clamp(
             Mathf.Max(minActiveVehicles, Mathf.RoundToInt(targetFraction * pooled.Count)),
             0, pooled.Count);
+        DensityTarget = targetActive;
 
         // The warm-up fill already sits in the streets ahead of the bus under the
         // loading card. Keep that visible first impression instead of immediately
@@ -899,7 +899,11 @@ public class VehiclePool : MonoBehaviour
             if (pv == null || pv.go == null || !pv.enabledByDensity) continue;
             float distance = GetDistanceToBus(pv.go.transform.position);
             bool visible = IsVehicleVisible(pv);
-            if (distance > hardDespawnDistanceMeters && !visible)
+            // Match the tier pass: outside the spline band and out of sight is not
+            // a car on the road, so it must not hold a slot in the density budget.
+            // Retiring it here lets the fill below recycle it back into the band
+            // on this same tick instead of leaving the street sparse until the next.
+            if (distance > splineRadiusMeters && !visible)
             {
                 pv.enabledByDensity = false;
                 continue;
@@ -972,8 +976,10 @@ public class VehiclePool : MonoBehaviour
             {
                 var pv = candidates[i].vehicle;
                 bool visible = IsVehicleVisible(pv);
-                bool tooFar = candidates[i].distance >
-                              Mathf.Max(splineRadiusMeters, rehomeDistanceMeters);
+                // A body outside the spline band would be enabled here and then
+                // retired by the tier pass on its next tick (it is out of view),
+                // so it must be re-homed into the band first.
+                bool tooFar = NeedsDensityRehome(candidates[i].distance);
                 if (visible || tooFar)
                 {
                     if (!TryRehomeVehicle(pv, true))
@@ -1144,6 +1150,15 @@ public class VehiclePool : MonoBehaviour
         if (playerBus == null) return 0f;
         return Vector3.Distance(playerBus.position, pos);
     }
+
+    /// <summary>
+    /// True when a dormant body is too far from the bus to switch on where it
+    /// stands. It has to be re-homed into the spline band first; activating it
+    /// outside that band would only make the tier pass retire it on its next
+    /// tick, which is what kept the active fleet short of the density target.
+    /// </summary>
+    public static bool NeedsDensityRehome(float distanceToBus)
+        => distanceToBus > TrafficPerformancePolicy.DensitySpawnBandMeters;
 
     /// <summary>
     /// A spline car still has to perceive the road, but not sixty times a second

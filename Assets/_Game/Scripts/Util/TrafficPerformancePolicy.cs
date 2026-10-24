@@ -35,6 +35,15 @@ public static class TrafficPerformancePolicy
     // player can actually reach, then hand the rest to the kinematic spline.
     public const float FullAiRadiusMeters = 200f;
     public const float SplineRadiusMeters = 400f;
+    /// <summary>
+    /// The band a density fill is allowed to activate a body in. It is exactly
+    /// the spline band on purpose: a body re-homed past <see cref="SplineRadiusMeters"/>
+    /// is out of view, so the tier pass retires it on its next tick. That used to
+    /// leave the fill activating cars at 400-520 m and the tier pass switching
+    /// them straight back off, which is why the active fleet stalled well below
+    /// the density target instead of reaching it.
+    /// </summary>
+    public static float DensitySpawnBandMeters => SplineRadiusMeters;
     public const float HardDespawnDistanceMeters = 600f;
     public const float VisibleDespawnDistanceMeters = 280f;
     public const float RehomeDistanceMeters = 600f;

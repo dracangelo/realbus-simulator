@@ -57,6 +57,24 @@ public class TrafficPerformanceTests
     }
 
     [Test]
+    public void DensityFillRehomesAnythingOutsideTheSplineBand()
+    {
+        Assert.That(TrafficPerformancePolicy.DensitySpawnBandMeters,
+            Is.EqualTo(TrafficPerformancePolicy.SplineRadiusMeters),
+            "a body re-homed past the spline band would be retired on the next tier tick");
+        Assert.That(TrafficPerformancePolicy.DensitySpawnBandMeters,
+            Is.LessThan(TrafficPerformancePolicy.HardDespawnDistanceMeters));
+
+        Assert.That(VehiclePool.NeedsDensityRehome(
+            TrafficPerformancePolicy.DensitySpawnBandMeters - 1f), Is.False);
+        Assert.That(VehiclePool.NeedsDensityRehome(
+            TrafficPerformancePolicy.DensitySpawnBandMeters + 1f), Is.True,
+            "the density fill must move a far body into the band, not switch it on where it stands");
+        Assert.That(VehiclePool.NeedsDensityRehome(
+            TrafficPerformancePolicy.HardDespawnDistanceMeters), Is.True);
+    }
+
+    [Test]
     public void ConsumeStepWaitsForTheIntervalThenKeepsTheWholeStep()
     {
         float accumulated = 0f;

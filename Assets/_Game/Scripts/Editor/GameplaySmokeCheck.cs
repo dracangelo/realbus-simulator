@@ -581,7 +581,10 @@ public static class GameplaySmokeCheck
             if (child.GetComponent<AIVehicleController>() == null) continue;
             pooledCount++;
             if (child.position.sqrMagnitude < .01f) atOrigin++;
-            if (playerBus == null) continue;
+            // Dormant bodies are inactive and deliberately left where they last
+            // drove, which can be kilometres behind the bus. The distance range is
+            // only meaningful for the cars actually on the road.
+            if (playerBus == null || !child.gameObject.activeSelf) continue;
             float distance = Vector3.Distance(child.position, playerBus.transform.position);
             nearest = Mathf.Min(nearest, distance);
             farthest = Mathf.Max(farthest, distance);
@@ -786,7 +789,7 @@ public static class GameplaySmokeCheck
             $"busDistance={(playerBus != null && pooledCount > 0 ? $"{nearest:F0}-{farthest:F0}m" : "n/a")} models={models.Count} " +
             $"[{string.Join(",", models.Select(m => m.prefab.name))}] untextured={untextured} " +
             $"widestModel={pool.WidestVehicleWidth:F2}m laneFloor={laneFloor}m " +
-            $"densityVolume={pool.GetTrafficDensityVolume():F2} density={densityEnabled} " +
+            $"densityVolume={pool.GetTrafficDensityVolume():F2} density={densityEnabled} densityTarget={pool.DensityTarget} " +
             $"fullAi={fullAi} spline={spline} dormant={dormant} " +
             $"renderers={trafficRenderers} poolRenderers={poolRenderers} " +
             $"wheelColliders={trafficWheelColliders} meshColliders={trafficMeshColliders} " +
