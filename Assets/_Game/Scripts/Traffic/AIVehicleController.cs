@@ -53,6 +53,19 @@ public class AIVehicleController : MonoBehaviour
     public const float LaneCenteringGain = 0.9f;
 
     /// <summary>
+    /// Caps speed when the steering target sits behind or far to the side of the
+    /// body. A hard turn is crept through instead of being taken at cruise, where
+    /// the body would keep its speed and slide sideways across the road. Both
+    /// simulation tiers call this, so a change to the rule cannot diverge between
+    /// the physics cars and the spline cars again.
+    /// </summary>
+    public static float HardTurnSpeedLimitKmh(float desiredKmh, float alignment)
+    {
+        if (alignment >= .35f) return desiredKmh;
+        return Mathf.Min(desiredKmh, Mathf.Lerp(0f, 14f, Mathf.Clamp01((alignment + 1f) / 1.35f)));
+    }
+
+    /// <summary>
     /// Lateral offset from the current lane to a passing lane on the same
     /// carriageway. On a two-way link lane 0 is the inner lane next to the
     /// centre line on both driving sides, so a pass moves inward towards lane
@@ -966,9 +979,8 @@ public class AIVehicleController : MonoBehaviour
     {
         // A target behind or far to the side of the body means a hard turn. Creep
         // through it instead of keeping full speed and sliding sideways.
-        float alignment = Vector3.Dot(transform.forward, forwardDir);
-        if (alignment < .35f)
-            targetSpeedKmh = Mathf.Min(targetSpeedKmh, Mathf.Lerp(0f, 14f, Mathf.Clamp01((alignment + 1f) / 1.35f)));
+        targetSpeedKmh = HardTurnSpeedLimitKmh(targetSpeedKmh,
+            Vector3.Dot(transform.forward, forwardDir));
 
         float targetMs = targetSpeedKmh / 3.6f;
         float currentMs = currentSpeedKmh / 3.6f;

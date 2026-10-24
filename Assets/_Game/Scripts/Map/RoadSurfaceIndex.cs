@@ -167,7 +167,7 @@ public sealed class RoadSurfaceIndex
                 float distance = (along - new Vector3(requested.x, 0, requested.z)).sqrMagnitude;
                 if (distance > 3600f) continue;
                 float score = distance + (1 - alignment) * 900f;
-                Vector3 candidate = along + Vector3.Cross(Vector3.up, direction) * (leftTraffic ? -1 : 1) * (segment.halfWidth + .6f);
+                Vector3 candidate = along + RoadSpawnResolver.KerbSide(direction, leftTraffic) * (segment.halfWidth + .6f);
                 if (score >= best || Contains(candidate, .3f)) continue;
                 best = score; found = true; kerb = candidate; rotation = Quaternion.LookRotation(direction, Vector3.up);
             }

@@ -304,12 +304,18 @@ public static class GameplaySmokeCheck
                 if (pieces.Length > 1 && long.TryParse(pieces[1], out long wayId) && roadIndex.Contains(collider.bounds.center, .2f, wayId)) crossingKerbs++;
             }
         }
-        // A stop shelter must stand on the kerb the bus docks against: to the left
-        // of travel in a left-hand-traffic city, to the right in a right-hand one.
-        // The carriageway has to be on the docking side of the anchor, so a road
-        // found only on the other side is a shelter on the wrong side of the road.
-        int stopAnchors = 0, stopsWrongSide = 0;
+        // A stop shelter must stand on the kerb the player drives past: to the left
+        // of travel in a left-hand-traffic city, to the right in right-hand traffic.
+        // Measure that against the DRIVEN path, not against the shelter's own
+        // rotation: a reversed heading otherwise makes the placement and the probe
+        // agree with each other while both point at the wrong kerb.
+        int stopAnchors = 0, stopsWrongSide = 0, stopsBackwards = 0, stopsUnmeasured = 0;
         bool drivesOnLeft = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
+        var stopRoute = MissionManager.Instance != null ? MissionManager.Instance.currentRoute : null;
+        Vector3[] stopPath = stopRoute != null && stopRoute.EnsureWorldPathPoints()
+            ? stopRoute.pathPoints : null;
+        if (stopPath == null)
+            Debug.Log("SMOKE stopSides no driven path; the kerb side cannot be judged");
         if (roadIndex != null)
         {
             foreach (var spawner in Object.FindObjectsByType<StopPropSpawner>())
@@ -317,22 +323,54 @@ public static class GameplaySmokeCheck
                 {
                     if (anchor.GetComponent<StopTrigger>() == null) continue;
                     stopAnchors++;
-                    Vector3 forward = anchor.forward; forward.y = 0f;
-                    if (forward.sqrMagnitude < .0001f) continue;
-                    forward.Normalize();
-                    Vector3 travelRight = Vector3.Cross(Vector3.up, forward);
-                    Vector3 toRoad = drivesOnLeft ? travelRight : -travelRight;
-                    bool roadDockingSide = roadIndex.Contains(anchor.position + toRoad * 3f, .5f);
-                    bool roadWrongSide = roadIndex.Contains(anchor.position - toRoad * 3f, .5f);
-                    if (roadWrongSide && !roadDockingSide)
+                    // An anchor that cannot be measured is a failure, not a pass: a
+                    // missing path used to skip every stop and look clean.
+                    if (!RoadSpawnResolver.NearestPathFrame(stopPath, anchor.position,
+                            out Vector3 pathPoint, out Vector3 pathTangent))
+                    {
+                        stopsUnmeasured++;
+                        continue;
+                    }
+
+                    Vector3 kerbSide = RoadSpawnResolver.KerbSide(pathTangent, drivesOnLeft);
+                    if (kerbSide.sqrMagnitude < .5f)
+                    {
+                        stopsUnmeasured++;
+                        continue;
+                    }
+
+                    // The shelter is the largest renderer under the anchor; decorations
+                    // and the docking outline are smaller. Measure its bounds centre,
+                    // because a mesh origin can sit at the anchor while its body is
+                    // metres onto the pavement.
+                    Renderer model = null;
+                    float bestVolume = 0f;
+                    foreach (var renderer in anchor.GetComponentsInChildren<Renderer>())
+                    {
+                        Vector3 size = renderer.bounds.size;
+                        float volume = size.x * size.y * size.z;
+                        if (volume <= bestVolume) continue;
+                        bestVolume = volume;
+                        model = renderer;
+                    }
+                    Vector3 sample = model != null ? model.bounds.center : anchor.position;
+                    float lateral = Vector3.Dot(sample - pathPoint, kerbSide);
+                    float facing = Vector3.Dot(anchor.forward, pathTangent);
+                    if (facing < 0.5f) stopsBackwards++;
+                    // On the correct kerb the shelter stands beyond the path on the
+                    // kerb side; a negative lateral puts it across the carriageway.
+                    if (lateral < 0.5f)
                     {
                         stopsWrongSide++;
-                        Debug.Log($"SMOKE stopWrongSide anchor={anchor.name} position={new Vector3(anchor.position.x, 0f, anchor.position.z)}");
+                        Debug.Log($"SMOKE stopWrongSide anchor={anchor.name} lateral={lateral:F2} " +
+                            $"facing={facing:F2} position={new Vector3(anchor.position.x, 0f, anchor.position.z)}");
                     }
                 }
         }
-        passed &= stopsWrongSide == 0;
-        Debug.Log($"SMOKE stopSides anchors={stopAnchors} wrongSide={stopsWrongSide} leftTraffic={drivesOnLeft} passed={stopsWrongSide == 0}");
+        bool stopSidesOk = stopAnchors > 0 && stopsWrongSide == 0 && stopsBackwards == 0 && stopsUnmeasured == 0;
+        passed &= stopSidesOk;
+        Debug.Log($"SMOKE stopSides anchors={stopAnchors} wrongSide={stopsWrongSide} " +
+            $"backwards={stopsBackwards} unmeasured={stopsUnmeasured} leftTraffic={drivesOnLeft} passed={stopSidesOk}");
 
         // Depot geometry must sit on its own yard (and its driveways), never on the
         // city carriageway. The audit measures each prop's real footprint and skips
@@ -646,7 +684,98 @@ public static class GameplaySmokeCheck
             : laneSamples > 0 && worstDeviation <= 3f;
         bool texturedOk = untextured == 0;
         bool variedOk = models.Count >= 3;
-        bool trafficOk = laneOk && texturedOk && variedOk && liveriesOk;
+
+        // A lane probe that compares a car with the lane its own graph computed cannot
+        // see a flipped side: graph, placement and probe agree while all three point at
+        // the oncoming carriageway. Judge the side against the COUNTRY's driving side,
+        // and measure the visible body centre as well as the physics line, so an
+        // off-centre imported pivot is neither hidden by a correct transform nor
+        // mistaken for a lane bug.
+        int sideSamples = 0, sideWrong = 0, sideReversed = 0, pivotOffsets = 0;
+        int skipChanging = 0, skipInvalid = 0, skipOneWay = 0, skipMargin = 0, skipOffLane = 0;
+        float worstPivot = 0f;
+        var country = RoadSpawnResolver.ResolveCountry();
+        if (country != null)
+        {
+            float kerbSign = country.DrivesOnLeft ? -1f : 1f;
+            void AuditSide(string tier, AIRoadGraph graph, int from, int to, int lane,
+                Transform root, bool changing, float margin, float speedKmh)
+            {
+                if (changing || root == null) { skipChanging++; return; }
+                if (graph == null || !graph.IsValidNode(from) || !graph.IsValidNode(to)) { skipInvalid++; return; }
+                int lanes = graph.GetLaneCount(from, to);
+                // A one-way link has no oncoming half to be wrong about, and a shared
+                // single-lane two-way street legitimately puts both flows on the middle.
+                if (graph.IsOneWay(from, to) || graph.IsSharedLane(from, to)) { skipOneWay++; return; }
+                Vector3 fromPos = graph.GetNodePosition(from);
+                Vector3 segment = graph.GetNodePosition(to) - fromPos;
+                segment.y = 0f;
+                float length = segment.magnitude;
+                if (length < 1f) { skipInvalid++; return; }
+                segment /= length;
+                float along = Vector3.Dot(root.position - fromPos, segment);
+                float facing = Vector3.Dot(root.forward, segment);
+                if (facing < .5f)
+                {
+                    sideReversed++;
+                    Debug.Log($"SMOKE sideReversed {tier} {root.name} dot={facing:F2} lane={lane}/{lanes} " +
+                        $"node={from}->{to} along={along:F1}/{length:F1} speed={speedKmh:F0} " +
+                        $"pos={new Vector3(root.position.x, 0f, root.position.z)}");
+                    return;
+                }
+                if (along < margin || length - along < margin) { skipMargin++; return; }
+                float expected = graph.GetLaneOffset(from, to, lane);
+                Vector3 right = Vector3.Cross(Vector3.up, segment);
+                float lateral = Vector3.Dot(root.position - fromPos, right);
+                // Mid-change, recovery and junction cuts are measured elsewhere.
+                if (Mathf.Abs(lateral - expected) > .8f) { skipOffLane++; return; }
+
+                Bounds visual = default;
+                bool hasVisual = false;
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(false))
+                {
+                    if (renderer == null) continue;
+                    if (!hasVisual) { visual = renderer.bounds; hasVisual = true; }
+                    else visual.Encapsulate(renderer.bounds);
+                }
+                float lateralVisual = hasVisual
+                    ? Vector3.Dot(new Vector3(visual.center.x, root.position.y, visual.center.z) - fromPos, right)
+                    : lateral;
+                float pivot = lateralVisual - lateral;
+                if (Mathf.Abs(pivot) > Mathf.Abs(worstPivot)) worstPivot = pivot;
+                if (Mathf.Abs(pivot) > .75f) pivotOffsets++;
+
+                sideSamples++;
+                if (lateral * kerbSign < -.5f || lateralVisual * kerbSign < -.5f)
+                {
+                    sideWrong++;
+                    Debug.Log($"SMOKE wrongSide {tier} {root.name} body={lateral:F2} visual={lateralVisual:F2} " +
+                        $"pivot={pivot:F2} expected={expected:F2} kerbSign={kerbSign:F0} graphLeft={graph.DrivesOnLeft} " +
+                        $"lane={lane}/{lanes} node={from}->{to} along={along:F1}/{length:F1}");
+                }
+            }
+            foreach (var ai in Object.FindObjectsByType<AIVehicleController>(FindObjectsInactive.Exclude))
+            {
+                if (!ai.isActiveAndEnabled) continue;
+                AuditSide("full", ai.roadGraph, ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex,
+                    ai.transform, ai.IsChangingLane, Mathf.Max(ai.vehicleLength * 1.5f, 8f), ai.currentSpeedKmh);
+            }
+            foreach (var splineCar in Object.FindObjectsByType<SplineVehicle>(FindObjectsInactive.Exclude))
+            {
+                if (!splineCar.isActiveAndEnabled) continue;
+                AuditSide("spline", splineCar.roadGraph, splineCar.currentNodeIndex, splineCar.targetNodeIndex,
+                    splineCar.laneIndex, splineCar.transform, splineCar.IsOvertaking, 12f, splineCar.speedKmh);
+            }
+        }
+        bool sidesOk = country != null && sideSamples > 0 && sideWrong == 0;
+        passed &= sidesOk;
+        Debug.Log($"SMOKE trafficSide samples={sideSamples} wrongSide={sideWrong} reversed={sideReversed} " +
+            $"pivotOffsets={pivotOffsets} worstPivot={worstPivot:F2} " +
+            $"skipChanging={skipChanging} skipInvalid={skipInvalid} skipOneWay={skipOneWay} " +
+            $"skipMargin={skipMargin} skipOffLane={skipOffLane} " +
+            $"countryLeft={(country != null && country.DrivesOnLeft)} passed={sidesOk}");
+
+        bool trafficOk = laneOk && texturedOk && variedOk && liveriesOk && sidesOk;
         Debug.Log($"SMOKE liveries painted={liveryPainted} distinct={liveryColors.Count} passed={liveriesOk}");
         string laneFloor = pool.roadGraph != null ? pool.roadGraph.MinimumLaneWidth.ToString("F2") : "n/a";
         Debug.Log($"SMOKE traffic pool={pool.GetPoolCount()} spawned={pooledCount} atOrigin={atOrigin} " +

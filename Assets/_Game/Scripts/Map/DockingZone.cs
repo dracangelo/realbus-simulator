@@ -4,11 +4,21 @@ using System.Collections;
 public class DockingZone : MonoBehaviour
 {
     [Header("Settings")]
-    public float dockingRadius = 4f;
-    public float kerbToleranceMeters = 0.8f;
-    public float stopSignToleranceMeters = 4f;
-    public float maxDockingSpeedKmh = 1.5f;
-    public float headingToleranceDegrees = 25f;
+    [Tooltip("Longitudinal half-length of the docking bay. Also fills stopSignToleranceMeters through the legacy sync.")]
+    public float dockingRadius = 7f;
+    // These are the PASS gate, not the grading target. The stop anchor sits only
+    // ~0.6 m inside the asphalt edge, so an 0.8 m lateral envelope demanded a door
+    // pressed onto or over the kerb: a correctly parked bus could miss it by a few
+    // centimetres. Grading still rewards a tight, square stop because the score
+    // divides these offsets by the same tolerances.
+    [Tooltip("Allowed kerb gap between the door and the stop anchor.")]
+    public float kerbToleranceMeters = 2f;
+    [Tooltip("Allowed fore/aft error past the shelter.")]
+    public float stopSignToleranceMeters = 7f;
+    [Tooltip("Speed at or below which the bus counts as stopped at the kerb.")]
+    public float maxDockingSpeedKmh = 3f;
+    [Tooltip("Allowed yaw error while pulling in at an angle.")]
+    public float headingToleranceDegrees = 40f;
     public string stopName;
     public int stopIndex = -1;
     [Tooltip("0 preserves authored door anchors; -1/+1 selects the generated left/right kerb anchor.")]

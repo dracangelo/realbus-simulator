@@ -178,6 +178,12 @@ public class SplineVehicle : MonoBehaviour
         if (dir.sqrMagnitude < .0001f) dir = segment;
         else dir.Normalize();
 
+        // Mirror the full-physics controller: a steering line behind or far to the
+        // side of the body is a hard turn. Without this the spline tier kept its
+        // cruise speed and slid sideways across the road while it swung round.
+        desired = AIVehicleController.HardTurnSpeedLimitKmh(desired,
+            Vector3.Dot(transform.forward, dir));
+
         if (emergencyYieldSeconds > 0f) desired = Mathf.Min(desired, 8f);
         if (roadGraph.IsRedSignal(targetNodeIndex))
             desired = Mathf.Min(desired, RealismRules.StoppingSpeedKmh(dist, 5f, brakeKmhPerSec / 3.6f * 0.65f));

@@ -33,7 +33,7 @@
 
 - Free-drive and scheduled mission modes.
 - Route-direction, country-side lane spawning with barrier clearance checks.
-- Guided, accuracy-graded docking against the real bus door and physical stop prefab.
+- Guided, accuracy-graded docking against the real bus door and physical stop prefab, with a forgiving pass gate (2 m kerb gap, 7 m fore/aft, 40°, 3 km/h) and a tighter gold-grade score.
 - Road-width-aware stop placement with off-road shelters and reachable kerb anchors.
 - Door controls, kneeling, boarding, and alighting.
 - Timetables with early, on-time, late, and severely late arrivals.

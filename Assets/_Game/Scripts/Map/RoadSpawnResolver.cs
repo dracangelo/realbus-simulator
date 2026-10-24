@@ -110,6 +110,20 @@ public static class RoadSpawnResolver
         return leftHandTraffic ? -offset : offset;
     }
 
+    /// <summary>
+    /// Unit vector from the carriageway centreline toward the kerb a bus stops at,
+    /// for a given direction of travel. In left-hand traffic the bus keeps left and
+    /// docks at the left kerb, so the sign flips with the traffic side. Placement and
+    /// the smoke audit both use this, so they cannot disagree about which kerb is
+    /// "correct".
+    /// </summary>
+    public static Vector3 KerbSide(Vector3 heading, bool leftHandTraffic)
+    {
+        Vector3 forward = Vector3.ProjectOnPlane(heading, Vector3.up);
+        if (forward.sqrMagnitude < 1e-4f) return Vector3.zero;
+        return Vector3.Cross(Vector3.up, forward.normalized) * (leftHandTraffic ? -1f : 1f);
+    }
+
     public static CountryDefinition ResolveCountry()
     {
         var manager = CityManager.Instance;
@@ -125,6 +139,13 @@ public static class RoadSpawnResolver
     public static Vector3 RouteHeading(BusRoute route, Vector3 requested, Vector3 fallback)
     {
         if (route == null) return fallback;
+        // The driven path is the authority on travel order: it is the line the
+        // minimap draws and the mission scores the bus against. Raw OSM geometry (and
+        // the stop list) can be stored in an order that does not match the drive, and
+        // a reversed tangent puts a kerb-side prop on the opposite side of the road.
+        if (route.EnsureWorldPathPoints() && route.pathPoints != null && route.pathPoints.Length >= 2)
+            return PathHeading(route.pathPoints, requested, fallback);
+
         var geometry = route.geometryLatLonFlat;
         if (GPSManager.Instance != null && geometry != null && geometry.Length >= 4)
         {
@@ -132,7 +153,36 @@ public static class RoadSpawnResolver
             for (int i = 0; i < points.Length; i++) points[i] = GPSManager.Instance.GpsToWorld(geometry[i * 2], geometry[i * 2 + 1]);
             return PathHeading(points, requested, fallback);
         }
-        return PathHeading(route.pathPoints, requested, fallback);
+        return fallback;
+    }
+
+    /// <summary>
+    /// Nearest point on a polyline and that segment's tangent in the polyline's own
+    /// stored order. For a route path that order is the direction the player drives,
+    /// which is what the kerb side has to be measured against.
+    /// </summary>
+    public static bool NearestPathFrame(Vector3[] points, Vector3 requested,
+        out Vector3 point, out Vector3 tangent)
+    {
+        point = requested; tangent = Vector3.forward;
+        if (points == null || points.Length < 2) return false;
+        float best = float.MaxValue;
+        bool found = false;
+        for (int i = 1; i < points.Length; i++)
+        {
+            Vector3 a = points[i - 1], b = points[i];
+            a.y = b.y = requested.y;
+            Vector3 segment = b - a;
+            if (segment.sqrMagnitude < 1f) continue;
+            Vector3 projected = ProjectOnSegment(requested, a, b);
+            float distance = (projected - requested).sqrMagnitude;
+            if (distance >= best) continue;
+            best = distance;
+            point = projected;
+            tangent = segment.normalized;
+            found = true;
+        }
+        return found;
     }
 
     public static Vector3 PathHeading(Vector3[] points, Vector3 requested, Vector3 fallback)

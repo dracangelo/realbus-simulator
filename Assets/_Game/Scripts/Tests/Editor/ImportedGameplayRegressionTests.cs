@@ -75,6 +75,102 @@ public class ImportedGameplayRegressionTests
         Assert.That(graph.GetLaneOffset(1, 0, 99), Is.EqualTo(graph.GetLaneOffset(1, 0, 0)).Within(.001f));
     }
 
+    /// <summary>
+    /// A junction edge that points back down the road must never be picked while a
+    /// forward edge exists. Reversing the directed link mirrors the lane offset onto
+    /// the opposite carriageway, and a car still facing its old way then slides
+    /// across the centre line: that was the traffic seen driving on the wrong side.
+    /// </summary>
+    [Test]
+    public void RoadGraph_RefusesABackwardEdgeWhileAForwardEdgeExists()
+    {
+        var graph = Child("Wrong-side graph").AddComponent<AIRoadGraph>();
+        var current = Child("Junction").transform;
+        var ahead = Child("Ahead").transform;
+        var stray = Child("Backwards link").transform;
+        var behind = Child("Behind").transform;
+        ahead.position = new Vector3(0f, 0f, 22f);
+        stray.position = new Vector3(.6f, 0f, -18f);
+        behind.position = new Vector3(0f, 0f, -15f);
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = current, nextNodeIndices = new[] { 1, 2, 3 } },
+            new AIRoadGraph.RoadNode { point = ahead, nextNodeIndices = new[] { 0 } },
+            new AIRoadGraph.RoadNode { point = stray, nextNodeIndices = new[] { 0 } },
+            new AIRoadGraph.RoadNode { point = behind, nextNodeIndices = new[] { 0 } }
+        };
+
+        for (int i = 0; i < 200; i++)
+            Assert.That(graph.GetRandomNextNode(0, 3), Is.EqualTo(1),
+                "a backwards edge at a junction must never be chosen over a forward one");
+    }
+
+    /// <summary>
+    /// The forward-only rule must not trap traffic: a cul-de-sac still turns round,
+    /// because the edge it arrived on is the only way out.
+    /// </summary>
+    [Test]
+    public void RoadGraph_StillReversesAtADeadEnd()
+    {
+        var graph = Child("Dead-end graph").AddComponent<AIRoadGraph>();
+        var end = Child("End").transform;
+        var entry = Child("Entry").transform;
+        entry.position = new Vector3(0f, 0f, 12f);
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = end, nextNodeIndices = new[] { 1 } },
+            new AIRoadGraph.RoadNode { point = entry, nextNodeIndices = new[] { 0 } }
+        };
+
+        Assert.That(graph.GetRandomNextNode(0, 1), Is.EqualTo(1));
+    }
+
+    /// <summary>
+    /// Lane offsets are laid out per directed link, so the same lane index sits on
+    /// opposite sides of the centre line once a link is read backwards. This is the
+    /// geometry that punished a reversed car, and it has to stay that way: the fix
+    /// belongs in the edge picker, not in the offset.
+    /// </summary>
+    [Test]
+    public void LaneOffset_MirrorsAcrossTheCentreLineWhenALinkIsReversed()
+    {
+        var graph = Child("Lane graph").AddComponent<AIRoadGraph>();
+        var a = Child("A").transform;
+        var b = Child("B").transform;
+        b.position = new Vector3(0f, 0f, 20f);
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = a, laneWidth = 3.5f, nextNodeIndices = new[] { 1 },
+                outgoingLaneCounts = new[] { 2 }, outgoingLaneWidths = new[] { 3.5f } },
+            new AIRoadGraph.RoadNode { point = b, laneWidth = 3.5f, nextNodeIndices = new[] { 0 },
+                outgoingLaneCounts = new[] { 2 }, outgoingLaneWidths = new[] { 3.5f } }
+        };
+
+        Vector3 forwardRight = Vector3.Cross(Vector3.up, (b.position - a.position).normalized);
+        Vector3 backwardRight = Vector3.Cross(Vector3.up, (a.position - b.position).normalized);
+        float forwardLateral = forwardRight.x * graph.GetLaneOffset(0, 1, 0);
+        float backwardLateral = backwardRight.x * graph.GetLaneOffset(1, 0, 0);
+
+        Assert.That(forwardLateral, Is.EqualTo(-1.75f).Within(.01f));
+        Assert.That(forwardLateral * backwardLateral, Is.LessThan(0f),
+            "both links must put the kerb lane on their own driving side");
+    }
+
+    /// <summary>
+    /// A body whose steering target is behind it must slow to a crawl instead of
+    /// holding cruise, so a bad turn cannot carry it sideways across the road. The
+    /// rule is shared by both simulation tiers.
+    /// </summary>
+    [Test]
+    public void HardTurnLimit_CreepsInsteadOfHoldingCruise()
+    {
+        Assert.That(AIVehicleController.HardTurnSpeedLimitKmh(50f, 1f), Is.EqualTo(50f).Within(.001f));
+        Assert.That(AIVehicleController.HardTurnSpeedLimitKmh(50f, .34f), Is.LessThan(14f));
+        Assert.That(AIVehicleController.HardTurnSpeedLimitKmh(50f, 0f), Is.EqualTo(10.37f).Within(.05f));
+        Assert.That(AIVehicleController.HardTurnSpeedLimitKmh(50f, -1f), Is.EqualTo(0f).Within(.001f));
+        Assert.That(AIVehicleController.HardTurnSpeedLimitKmh(4f, -1f), Is.EqualTo(0f).Within(.001f));
+    }
+
     GameObject root;
 
     [SetUp] public void Setup() { root = new GameObject("Regression fixture"); }
@@ -204,6 +300,46 @@ public class ImportedGameplayRegressionTests
     {
         var path = new[] { Vector3.zero, new Vector3(0, 0, 20), new Vector3(30, 0, 20) };
         Assert.That(RoadSpawnResolver.PathHeading(path, new Vector3(2, 0, 4), Vector3.right), Is.EqualTo(Vector3.forward));
+    }
+
+    [Test]
+    public void RouteHeading_FollowsDrivenPathEvenWhenStopOrderIsReversed()
+    {
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        try
+        {
+            // The bus drives north along this path. An imported route can still list
+            // its stops in the opposite order; folding the tangent onto that chord is
+            // what put shelters on the far kerb, so the driven path has to win.
+            route.pathPoints = new[] { new Vector3(0, 0, 0), new Vector3(0, 0, 20), new Vector3(0, 0, 40) };
+            Vector3 heading = RoadSpawnResolver.RouteHeading(route, new Vector3(0, 0, 10), Vector3.back);
+            Assert.That(heading, Is.EqualTo(Vector3.forward));
+        }
+        finally
+        {
+            Object.DestroyImmediate(route);
+        }
+    }
+
+    [Test]
+    public void NearestPathFrame_ReportsTheTangentInPathOrder()
+    {
+        var path = new[] { new Vector3(0, 0, 0), new Vector3(0, 0, 20) };
+        Assert.That(RoadSpawnResolver.NearestPathFrame(path, new Vector3(1, 0, 5),
+            out Vector3 point, out Vector3 tangent), Is.True);
+        Assert.That(tangent, Is.EqualTo(Vector3.forward));
+        Assert.That(point, Is.EqualTo(new Vector3(0, 0, 5)));
+    }
+
+    [Test]
+    public void KerbSide_AgreesWithTheSideTryRoadsideOffsetsTo()
+    {
+        // Facing +Z, the left kerb is -X. In left-hand traffic the bus keeps left and
+        // docks there; in right-hand traffic it docks at +X. TryRoadside offsets the
+        // same vector by the same sign, so placement and the smoke audit share it.
+        Assert.That(RoadSpawnResolver.KerbSide(Vector3.forward, true), Is.EqualTo(Vector3.left));
+        Assert.That(RoadSpawnResolver.KerbSide(Vector3.forward, false), Is.EqualTo(Vector3.right));
+        Assert.That(RoadSpawnResolver.KerbSide(Vector3.zero, true), Is.EqualTo(Vector3.zero));
     }
 
     static RoadSurfaceIndex Crossroads()

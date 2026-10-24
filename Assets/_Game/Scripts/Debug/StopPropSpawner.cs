@@ -27,8 +27,11 @@ public class StopPropSpawner : MonoBehaviour
     // the pavement falls back to the standalone poster totem (see SpawnStopProps).
     public Vector2 randomScaleRange = new Vector2(1.5f, 2.1f);
     public float triggerApproachDistance = 50f;
-    public float triggerDockingRadius = 4f;
-    public float triggerKerbTolerance = 0.8f;
+    // Runtime stops take their docking envelope from here. These match
+    // DockingZone's defaults: forgiving enough for a correctly parked bus, strict
+    // enough that the bus still has to reach the kerb.
+    public float triggerDockingRadius = 7f;
+    public float triggerKerbTolerance = 2f;
     public bool spawnOnlyFirstStopAtMissionStart = false;
     public bool logSpawns = true;
 
@@ -198,26 +201,23 @@ public class StopPropSpawner : MonoBehaviour
                 continue;
             }
 
-            float yaw = alignToRouteDirection
-                ? GetRouteYaw(route, i)
-                : 0f;
-            Quaternion routeRotation = Quaternion.Euler(0f, yaw, 0f);
-            Vector3 travel = routeRotation * Vector3.forward;
-            Vector3 heading = RoadSpawnResolver.RouteHeading(route, stopPos, travel);
-            // Route geometry is not guaranteed to run in the order the bus drives
-            // it, and the kerb side is chosen from the heading. A tangent that
-            // points back down the street therefore mirrors the shelter onto the
-            // wrong side of the road. The chord from this stop to the next is the
-            // direction of travel, so fold the geometry tangent onto it.
-            if (alignToRouteDirection && Vector3.Dot(heading, travel) < 0f)
-                heading = -heading;
+            Quaternion routeRotation = alignToRouteDirection
+                ? Quaternion.Euler(0f, GetRouteYaw(route, i), 0f)
+                : Quaternion.identity;
+            // The kerb side is chosen from the heading, so the heading has to be the
+            // direction the player actually drives. RouteHeading follows the driven
+            // path; the stop list is not a safe substitute, because many imported
+            // routes list stops out of path order and folding a correct tangent onto
+            // that chord mirrors the shelter onto the opposite kerb for those stops.
+            Vector3 heading = RoadSpawnResolver.RouteHeading(route, stopPos,
+                routeRotation * Vector3.forward);
             if (!roads.TryRoadside(stopPos, heading, leftTraffic, out Vector3 worldPos, out routeRotation))
             {
                 Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; skipping its prop rather than blocking a lane.");
                 continue;
             }
             worldPos.y = OSMRoadMeshBuilder.Instance.roadYOffset;
-            Vector3 outward = routeRotation * Vector3.right * (leftTraffic ? -1f : 1f);
+            Vector3 outward = RoadSpawnResolver.KerbSide(routeRotation * Vector3.forward, leftTraffic);
             // The bus's door target stays just inside the road edge so the
             // chassis never has to climb the physical kerb to finish docking.
             worldPos -= outward * 1.2f;

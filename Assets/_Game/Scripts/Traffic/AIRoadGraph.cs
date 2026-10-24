@@ -205,9 +205,9 @@ public class AIRoadGraph : MonoBehaviour
         if (next == null || next.Length == 0) return -1;
 
         int reverse = -1;
-        int chosen = -1;
-        int candidateCount = 0;
-        float totalWeight = 0f;
+        for (int i = 0; i < next.Length; i++)
+            if (next[i] == previousNodeIndex && IsValidNode(next[i])) reverse = next[i];
+
         bool haveIncoming = IsValidNode(previousNodeIndex);
         Vector3 currentPosition = GetNodePosition(currentIndex);
         Vector3 incoming = haveIncoming
@@ -217,59 +217,58 @@ public class AIRoadGraph : MonoBehaviour
         if (incoming.sqrMagnitude > .0001f) incoming.Normalize();
         else haveIncoming = false;
 
-        for (int i = 0; i < next.Length; i++)
+        // Dot of an eligible edge with the incoming direction; -2 marks an edge
+        // that must not be picked (the node just left or an invalid node).
+        float Dot(int candidate)
         {
-            int candidate = next[i];
-            if (!IsValidNode(candidate) || candidate == currentIndex) continue;
-            if (candidate == previousNodeIndex) { reverse = candidate; continue; }
-
-            candidateCount++;
-            float weight = 1f;
-            if (haveIncoming)
-            {
-                Vector3 outgoing = GetNodePosition(candidate) - currentPosition;
-                outgoing.y = 0f;
-                if (outgoing.sqrMagnitude > .0001f)
-                {
-                    float dot = Mathf.Clamp(Vector3.Dot(incoming, outgoing.normalized), -1f, 1f);
-                    // Prefer carrying on over turning, but keep every legal turn possible.
-                    weight = Mathf.Lerp(0.08f, 1f, (dot + 1f) * .5f);
-                }
-            }
-
-            totalWeight += weight;
-            chosen = candidate;
+            if (!IsValidNode(candidate) || candidate == currentIndex || candidate == previousNodeIndex) return -2f;
+            if (!haveIncoming) return 1f;
+            Vector3 outgoing = GetNodePosition(candidate) - currentPosition;
+            outgoing.y = 0f;
+            if (outgoing.sqrMagnitude <= .0001f) return 1f;
+            return Mathf.Clamp(Vector3.Dot(incoming, outgoing.normalized), -1f, 1f);
         }
 
-        if (candidateCount == 0)
-            return reverse;
+        float Weight(float dot) => Mathf.Lerp(.08f, 1f, (dot + 1f) * .5f);
 
-        if (candidateCount == 1)
-            return chosen;
-
-        float roll = Random.Range(0f, totalWeight);
-        float accumulated = 0f;
-        for (int i = 0; i < next.Length; i++)
+        int Pick(float minDot)
         {
-            int candidate = next[i];
-            if (!IsValidNode(candidate) || candidate == currentIndex || candidate == previousNodeIndex) continue;
-
-            float weight = 1f;
-            if (haveIncoming)
+            float totalWeight = 0f;
+            for (int i = 0; i < next.Length; i++)
             {
-                Vector3 outgoing = GetNodePosition(candidate) - currentPosition;
-                outgoing.y = 0f;
-                if (outgoing.sqrMagnitude > .0001f)
-                {
-                    float dot = Mathf.Clamp(Vector3.Dot(incoming, outgoing.normalized), -1f, 1f);
-                    weight = Mathf.Lerp(0.08f, 1f, (dot + 1f) * .5f);
-                }
+                float dot = Dot(next[i]);
+                if (dot < minDot) continue;
+                totalWeight += Weight(dot);
             }
+            if (totalWeight <= 0f) return -1;
 
-            accumulated += weight;
-            if (roll <= accumulated) return candidate;
+            float roll = Random.Range(0f, totalWeight);
+            float accumulated = 0f;
+            for (int i = 0; i < next.Length; i++)
+            {
+                float dot = Dot(next[i]);
+                if (dot < minDot) continue;
+                accumulated += Weight(dot);
+                if (roll <= accumulated) return next[i];
+            }
+            return -1;
         }
 
+        // Prefer edges that carry the car forward. An edge pointing back down the
+        // road reverses the directed link, and the lane offset is laid out relative
+        // to that link: the offset mirrors onto the opposite carriageway while the
+        // body still faces its old way, so the car slides across the centre line.
+        // A reversal is kept only when the junction genuinely offers nothing else
+        // (a cul-de-sac), where `reverse` is the way out.
+        bool hasForward = false;
+        for (int i = 0; i < next.Length; i++)
+        {
+            float dot = Dot(next[i]);
+            if (dot >= -.2f) { hasForward = true; break; }
+        }
+
+        int chosen = hasForward ? Pick(-.2f) : Pick(-1.5f);
+        if (chosen < 0) chosen = reverse;
         return chosen;
     }
 

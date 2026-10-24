@@ -33,6 +33,36 @@ public class GameplayRulesTests
     }
 
     [Test]
+    public void DockingZoneGateAllowsARealKerbGapButStillRequiresTheKerb()
+    {
+        // GameplayRules.IsDocked keeps the strict defaults above as the "perfect
+        // stop" reference. A runtime stop passes its own wider gate: the anchor sits
+        // only ~0.6 m inside the asphalt edge, so a 0.8 m envelope demanded a door
+        // pressed onto the kerb and a correct stop could miss by centimetres.
+        var go = new GameObject("DockingZoneTest");
+        try
+        {
+            var zone = go.AddComponent<DockingZone>();
+            Assert.That(zone.kerbToleranceMeters, Is.GreaterThanOrEqualTo(1.8f));
+            Assert.That(zone.stopSignToleranceMeters, Is.GreaterThanOrEqualTo(6f));
+            Assert.That(zone.headingToleranceDegrees, Is.GreaterThanOrEqualTo(35f));
+            Assert.That(zone.maxDockingSpeedKmh, Is.GreaterThanOrEqualTo(3f));
+
+            Assert.IsTrue(GameplayRules.IsDocked(1.5f, 6f, 35f, 2.5f,
+                zone.kerbToleranceMeters, zone.stopSignToleranceMeters,
+                zone.headingToleranceDegrees, zone.maxDockingSpeedKmh));
+            // Still not docked from the middle of a wide road.
+            Assert.IsFalse(GameplayRules.IsDocked(4f, 6f, 35f, 2.5f,
+                zone.kerbToleranceMeters, zone.stopSignToleranceMeters,
+                zone.headingToleranceDegrees, zone.maxDockingSpeedKmh));
+        }
+        finally
+        {
+            Object.DestroyImmediate(go);
+        }
+    }
+
+    [Test]
     public void SignalCrossingDetectsHighAndLowSpeedsButNotReverseOrSideways()
     {
         Assert.IsTrue(GameplayRules.CrossedStopLine(0, -20, 0, 20, 8));
