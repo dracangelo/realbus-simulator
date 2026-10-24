@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Drives the second half of the loading bar inside the gameplay scene: the world is
@@ -57,11 +58,23 @@ public class WorldReadyLoadingScreen : MonoBehaviour
         "The bus depot is placed near your route start. Drive out when ready.",
     };
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Bootstrap()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void RegisterSceneBootstrap()
     {
-        if (FindAnyObjectByType<MissionManager>() == null) return;
+        // The gameplay scene is normally reached from the menu, which is a scene
+        // load inside an already-running play session. AfterSceneLoad only fires
+        // once, at play-mode entry, so the old bootstrap never ran for that path
+        // and the menu's loading card was never handed to this component. The
+        // card then stayed up for the whole session. Register a hook that runs on
+        // every scene load instead, including a direct GameScene play.
+        SceneManager.sceneLoaded -= BootstrapOnSceneLoaded;
+        SceneManager.sceneLoaded += BootstrapOnSceneLoaded;
+    }
+
+    static void BootstrapOnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
         if (Instance != null) return;
+        if (FindAnyObjectByType<MissionManager>() == null) return;
         new GameObject("WorldReadyLoadingScreen").AddComponent<WorldReadyLoadingScreen>();
     }
 

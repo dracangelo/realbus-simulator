@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Warms the assets the player will see first, before the loading overlay
@@ -35,11 +36,21 @@ public class WorldPreloadCoordinator : MonoBehaviour
     readonly List<ResourceRequest> coreRequests = new List<ResourceRequest>();
     readonly List<Object> preloadedAssets = new List<Object>();
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Bootstrap()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void RegisterSceneBootstrap()
     {
-        if (FindAnyObjectByType<MissionManager>() == null) return;
+        // A menu-to-gameplay transition is a scene load inside an already-running
+        // play session; AfterSceneLoad only fires at play-mode entry. Hook every
+        // scene load so the near-field warm-up starts for the route the player
+        // actually picked, not only when GameScene is the first scene played.
+        SceneManager.sceneLoaded -= BootstrapOnSceneLoaded;
+        SceneManager.sceneLoaded += BootstrapOnSceneLoaded;
+    }
+
+    static void BootstrapOnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
         if (Instance != null) return;
+        if (FindAnyObjectByType<MissionManager>() == null) return;
         new GameObject("WorldPreloadCoordinator").AddComponent<WorldPreloadCoordinator>();
     }
 

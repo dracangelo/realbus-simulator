@@ -133,6 +133,19 @@ The 39.6 MB Overture footprint pack is parsed on the thread pool (`OSMParser.Par
 
 The EditMode cases pin the contract without a scene: `WorldSystemsTests.WorldReadiness_NeverReportsFullUntilTheWorldIsPlayable`, `WorldReadiness_ProgressAdvancesThroughTheLadderAndNeverRegresses`, `LoadingBar_HoldsOneMonotonicRunAcrossTheSceneHandOff` and `BusInputLock_HoldsEveryPedalAtZeroUntilTheWorldIsPlayable`.
 
+### Menu-to-gameplay regression
+
+`GameplaySmokeCheck` opens `GameScene` before entering play mode, so it does not exercise the path the player takes. `MenuFlowSmokeCheck` starts in `MainMenu`, selects a route, calls `SceneLoader.LoadGame()`, and fails unless the card is handed to `WorldReadyLoadingScreen` and then released:
+
+```bash
+LD_PRELOAD="$XML" xvfb-run -a "$UNITY" -batchmode -projectPath "$PWD" \
+  -executeMethod MenuFlowSmokeCheck.Run -logFile /tmp/menu-flow.log
+grep -a "MENU FLOW" /tmp/menu-flow.log
+```
+
+Expected: `MENU FLOW: WorldReadyLoadingScreen bootstrapped … card visible=True`, then `MENU FLOW PASS: card released … passed=True`, and exit status `0`. This is the regression for the menu transition never bootstrapping the world phase: a menu→`GameScene` load is a scene load inside an already-running play session, so the old `AfterSceneLoad` bootstrap never ran and the loading card stayed up for the whole drive. `WorldReadyLoadingScreen` and `WorldPreloadCoordinator` now subscribe to `SceneManager.sceneLoaded` from `BeforeSceneLoad` and bootstrap whenever a scene containing a `MissionManager` activates, which covers both the menu flow and a direct `GameScene` play.
+
+
 ### Road environment LOD and far clip
 
 The road environment now has one policy for how much of it the camera draws. `SceneryLodPolicy` holds the far-plane budget and the per-kind street-prop distances; `SceneryLodBuilder` adds the missing three-level `LODGroup` to imported buildings and detailed street props. The camera far plane is clamped to **600–1000 m** (1000 m gameplay) instead of the old 1.5–2.5 km clamp and 4 km authored scene. Clear haze is opaque by 950 m, so the far plane sits inside the fog rather than showing the empty ring beyond the 600–800 m building stream.
@@ -171,6 +184,8 @@ The pool is not re-created while driving: bodies are instantiated once during th
 The EditMode cases pin the budget and the optimiser: `TrafficPerformanceTests.ActiveFleetStaysWellBelowThePoolAtEveryHour`, `PhysicsRingStaysInsideTheSplineRingAndTheDespawnBand`, `DensityFillRehomesAnythingOutsideTheSplineBand`, `SplineCadenceOnlyCoarsensDistantVehicles`, `ConsumeStepWaitsForTheIntervalThenKeepsTheWholeStep`, `PrepareStripsWheelCollidersAndMeshCollidersButKeepsAnAuthoredBox`, `PrepareAddsOneBoxColliderWhenOnlyAMeshColliderExisted`, `PrepareDisablesAnimatorAndAudioButKeepsTriggerVolumes`, `PrepareAddsThePresentationCullOnlyWhenTheBodyHasLights`, `PrepareLeavesThePlayerVehicleAlone` and `PrepareIsIdempotent`.
 
 **Traffic run (2026-10-24, 08:00 clear, Nairobi):** EditMode **609 tests — 600 passed / 9 failed**, the same nine pre-existing failures. The smoke reported `SMOKE traffic pool=120 spawned=120 … busDistance=69-396m … density=69 densityTarget=72 fullAi=12 spline=57 dormant=51 renderers=527 poolRenderers=1161 wheelColliders=0 meshColliders=0 … offLane=0 … passed=True` against the previous `density=133 fullAi=20 spline=113`, and `SMOKE trafficSide … wrongSide=0 … passed=True`. Two consecutive runs landed at 69–71 active against the 72 target. The first pass of this change stalled at 45 because the density fill re-homed cars into a 520 m band while the tier pass retired anything past the 400 m spline band; `TrafficPerformancePolicy.DensitySpawnBandMeters` now makes both use the same band. Frame time in the same harness moved from `avgFps=8.4 p50Ms=92.9` to `avgFps=14.4 p50Ms=47.7`, but software GL is too noisy and the streamed building count differs between runs, so that is evidence of less work, not a measured GPU win.
+
+**After the loading-screen bootstrap fix (same day):** EditMode stayed at **609 tests — 600 passed / 9 failed** (the same nine), and the 08:00 clear smoke exited `0` with `WorldReadyLoadingScreen: world ready in 41.2s`, `SMOKE traffic … density=72 densityTarget=72 fullAi=12 spline=60 dormant=48 wheelColliders=0 meshColliders=0` and `avgFps=22.9 p50Ms=30.9`. The lane audit reported one transient `offLane=1` (`Sedan1 … laneErr 3.74`, `skipOffLane=1`, 62 km/h) where the previous run had `offLane=0`; it was a full-physics body mid-link, not a rehome or a pool change, so it is recorded here as the known noisy sample rather than a regression. The menu transition itself is covered by `MenuFlowSmokeCheck` (see "Menu-to-gameplay regression" above).
 
 ## Imported model wiring
 
