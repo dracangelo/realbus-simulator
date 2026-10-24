@@ -853,6 +853,13 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         // a mid-grey albedo under direct light clamps to white and reads as paper.
         block.SetColor("_RoofTint", Color.Lerp(new Color(.095f, .095f, .10f), tint, .10f));
         mr.SetPropertyBlock(block);
+        // A procedural extrusion is already cheap, but a tall block with facade
+        // tiles and roof clutter can still spend a few hundred triangles at a
+        // distance where a box is indistinguishable. The threshold keeps the
+        // LODGroup off the many small houses where it would cost more than it saves.
+        if (SceneryLodPolicy.NeedsLod(SceneryLodBuilder.TriangleCount(mesh), SceneryLodPolicy.BuildingLodTriangleThreshold))
+            SceneryLodBuilder.Attach(buildingObj, mesh.bounds, SceneryLodPolicy.BuildingLod1ScreenHeight,
+                SceneryLodPolicy.BuildingLod2ScreenHeight, tint);
         if (drawFootprints)
             BuildFootprintOutline(record.footprint, buildingObj.transform, PaletteFor(record.kind, record.id));
         return buildingObj;
@@ -926,6 +933,12 @@ public class OSMBuildingMeshBuilder : MonoBehaviour
         instance.transform.SetPositionAndRotation(center, rotation);
         instance.transform.localScale = Vector3.one * scale;
         ApplyImportedBuildingVariation(instance, id);
+        // Downloaded building packs carry hundreds of thousands of triangles and
+        // no LODs of their own. Put the full mesh in LOD0, a shared box in LOD1
+        // and an unlit box in LOD2 so a facade two streets away costs one draw.
+        if (SceneryLodPolicy.NeedsLod(entry.triangles, SceneryLodPolicy.BuildingLodTriangleThreshold))
+            SceneryLodBuilder.Attach(instance, entry.bounds, SceneryLodPolicy.BuildingLod1ScreenHeight,
+                SceneryLodPolicy.BuildingLod2ScreenHeight, ImportedTintFor(id));
 
         var collider = instance.GetComponent<BoxCollider>();
         if (collider == null) collider = instance.AddComponent<BoxCollider>();

@@ -19,7 +19,13 @@ public class LiveCityStreamer : MonoBehaviour
     /// far half of a 340 m ring is a few pixels of greenery, and keeping thousands of
     /// those renderers in the shadow pass was most of the street scene's draw cost.
     /// </summary>
-    public float propRenderDistance = 240f;
+    public float propRenderDistance = SceneryLodPolicy.VegetationRenderDistance;
+    /// <summary>
+    /// Benches, signs and rocks stop being readable long before a tree does, so
+    /// they leave the draw and shadow passes earlier. The object stays alive.
+    /// </summary>
+    public float tinyPropRenderDistance = SceneryLodPolicy.TinyPropRenderDistance;
+    public float pedestrianRenderDistance = SceneryLodPolicy.PedestrianRenderDistance;
     public int triangleBudget = 14000000;
     public int maxWalkers = 40;
     [Tooltip("Distance between placement samples along a road. Smaller = denser.")]
@@ -319,6 +325,7 @@ public class LiveCityStreamer : MonoBehaviour
             // no albedo. Decorate after the instance exists so the variant follows
             // this exact placement seed and survives streaming out and back.
             StreetTextureLibrary.Decorate(go, entry.kind, candidate.seed);
+            ApplySceneryLod(go, entry);
             active[(candidate.segment, candidate.sample, candidate.side)] = new Spawned { go = go, entry = entry, center = position,
                 direction = candidate.direction, rotation = rotation, radius = radius, phase = (candidate.seed % 1000) * .01f };
             triangles += entry.triangles;
@@ -462,6 +469,7 @@ public class LiveCityStreamer : MonoBehaviour
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 go.transform.localScale = Vector3.one * scale;
                 ImportedFoliageVariation.Apply(go, entry.kind, seed);
+                ApplySceneryLod(go, entry);
                 active[(segment, slot, ScatterSide)] = new Spawned { go = go, entry = entry, center = position, direction = Vector3.forward,
                     rotation = rotation, radius = radius, phase = (seed % 1000) * .01f, scattered = true };
                 triangles += entry.triangles;
@@ -528,19 +536,57 @@ public class LiveCityStreamer : MonoBehaviour
     }
 
     /// <summary>
+    /// Adds a LODGroup to the detailed imported props that do not ship one. Trees
+    /// and plants with artist LODs already have a group and are left untouched.
+    /// Pedestrians stay animated at street range and are not worth a box proxy.
+    /// </summary>
+    void ApplySceneryLod(GameObject go, LiveCityCatalog.Entry entry)
+    {
+        if (go == null || entry == null || entry.kind == LiveCityCatalog.Kind.Pedestrian)
+            return;
+        if (!SceneryLodPolicy.NeedsLod(entry.triangles, SceneryLodPolicy.PropLodTriangleThreshold))
+            return;
+
+        SceneryLodBuilder.Attach(go, entry.bounds, SceneryLodPolicy.PropLod1ScreenHeight,
+            SceneryLodPolicy.PropLod2ScreenHeight, SceneryLodPolicy.PropTint(entry.kind), castShadows: false);
+    }
+
+    /// <summary>
     /// Draws only the props close enough to read. Inactive objects are skipped by
     /// culling, the shadow pass and their per-frame sway, while the prop stays in the
     /// active table so walking back toward it is instant rather than a re-spawn.
     /// </summary>
     void CullDistantProps(Vector3 player)
     {
-        float sqr = Mathf.Max(40f, propRenderDistance);
-        sqr *= sqr;
         foreach (var item in active.Values)
         {
             if (item.go == null) continue;
+            float limit = RenderDistanceFor(item.entry);
+            float sqr = Mathf.Max(20f, limit);
+            sqr *= sqr;
             bool visible = FlatDistanceSquared(item.center, player) <= sqr;
             if (item.go.activeSelf != visible) item.go.SetActive(visible);
+        }
+    }
+
+    /// <summary>
+    /// A bench or sign is a handful of pixels past a hundred metres; a tree still
+    /// reads as a canopy at twice that. Using one radius for both kept thousands of
+    /// tiny street objects in the shadow pass for no visible gain.
+    /// </summary>
+    float RenderDistanceFor(LiveCityCatalog.Entry entry)
+    {
+        if (entry == null) return propRenderDistance;
+        switch (entry.kind)
+        {
+            case LiveCityCatalog.Kind.Pedestrian:
+                return pedestrianRenderDistance;
+            case LiveCityCatalog.Kind.Bench:
+            case LiveCityCatalog.Kind.Billboard:
+            case LiveCityCatalog.Kind.Rock:
+                return tinyPropRenderDistance;
+            default:
+                return propRenderDistance;
         }
     }
 

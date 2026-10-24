@@ -826,9 +826,12 @@ public static class GameplaySmokeCheck
         int p50 = Mathf.Clamp(Mathf.RoundToInt(sorted.Count * 0.50f) - 1, 0, sorted.Count - 1);
         int p95 = Mathf.Clamp(Mathf.RoundToInt(sorted.Count * 0.95f) - 1, 0, sorted.Count - 1);
         int renderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Exclude).Length;
+        Camera mainCamera = Camera.main;
+        float farClip = mainCamera != null ? mainCamera.farClipPlane : 0f;
+        int lodGroups = Object.FindObjectsByType<LODGroup>(FindObjectsInactive.Exclude).Length;
         Debug.Log($"SMOKE perf samples={sorted.Count} avgFps={sorted.Count / Mathf.Max(0.001f, total):F1} " +
             $"p50Ms={sorted[p50] * 1000f:F1} p95Ms={sorted[p95] * 1000f:F1} worstMs={sorted[sorted.Count - 1] * 1000f:F1} " +
-            $"over33ms={over33} over50ms={over50} renderers={renderers}");
+            $"over33ms={over33} over50ms={over50} renderers={renderers} farClip={farClip:F0} lodGroups={lodGroups}");
 
         // Where the draw calls come from. A renderer count on its own does not say
         // whether the city, the props or the traffic is the expensive half.

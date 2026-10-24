@@ -133,6 +133,26 @@ The 39.6 MB Overture footprint pack is parsed on the thread pool (`OSMParser.Par
 
 The EditMode cases pin the contract without a scene: `WorldSystemsTests.WorldReadiness_NeverReportsFullUntilTheWorldIsPlayable`, `WorldReadiness_ProgressAdvancesThroughTheLadderAndNeverRegresses`, `LoadingBar_HoldsOneMonotonicRunAcrossTheSceneHandOff` and `BusInputLock_HoldsEveryPedalAtZeroUntilTheWorldIsPlayable`.
 
+### Road environment LOD and far clip
+
+The road environment now has one policy for how much of it the camera draws. `SceneryLodPolicy` holds the far-plane budget and the per-kind street-prop distances; `SceneryLodBuilder` adds the missing three-level `LODGroup` to imported buildings and detailed street props. The camera far plane is clamped to **600–1000 m** (1000 m gameplay) instead of the old 1.5–2.5 km clamp and 4 km authored scene. Clear haze is opaque by 950 m, so the far plane sits inside the fog rather than showing the empty ring beyond the 600–800 m building stream.
+
+LOD groups use three levels:
+
+| Level | Building | Street prop |
+| --- | --- | --- |
+| LOD0 | full imported/procedural mesh | full imported prop |
+| LOD1 | shared lit box, shadows on | shared lit box, shadows on |
+| LOD2 | shared unlit box, no shadows | shared unlit box, no shadows |
+
+The proxies share one built-in cube mesh and two materials, so the added memory is a transform and two renderers per object. A model that already ships an artist `LODGroup` (the four-level Coconut/Banana, the imported `10_f_building`, the LOD-named tree packs) is left untouched. Meshes below the triangle threshold (procedural infill houses) are already cheaper than a proxy and keep their full mesh.
+
+Street props are culled by kind: benches, billboards and rocks at **130 m**, vegetation at **240 m**, pedestrians at **120 m**. The object stays alive, so walking back toward it is a re-activation rather than a re-spawn.
+
+The EditMode cases pin the policy and the builder: `SceneryLodTests.TinyStreetPropsLeaveTheDrawPassBeforeVegetation`, `FarClipIsClampedIntoTheStreamedEnvelope`, `OnlyDetailedMeshesGetAThreeLevelGroup`, `AttachBuildsThreeLevelsWithASharedProxy` and `AttachLeavesAnArtistLodGroupAlone`.
+
+**Latest run (2026-10-24):** EditMode **598 tests — 589 passed / 9 failed**, the same nine pre-existing failures. The Nairobi clear-noon smoke exited 0 with no LOD, material or null-reference errors: `SMOKE environment … fogStart=140 fogEnd=950 hazeOwnsFog=True`, `SMOKE perf samples=117 avgFps=8.4 p50Ms=92.9 p95Ms=251.0 … renderers=7097 farClip=1000 lodGroups=163`, and the world still reported `roads=True/True buildings=True/True mission=InProgress`. The software-GL frame time is noisy, so this run proves correctness, not a measured GPU win; a real-display pass is still needed to judge the LOD transitions and the 1 km far plane.
+
 ## Imported model wiring
 
 The bus, stop and environment packs under `Assets/unity models` are not wired by hand. Regenerate them in batch after replacing or adding a source FBX:

@@ -65,6 +65,7 @@
 - Fog that is lit by the sky: daylight haze, sunrise and sunset warmth, and near-black fog at night.
 - Time-of-day simulation with street, cabin, and headlight control, and a sun that follows a continuous arc through dawn and dusk.
 - Vehicle, road, map-tile, and traffic level-of-detail systems.
+- A shared road-environment LOD policy: a 1000 m gameplay far plane, three-level LOD groups for imported buildings and detailed street props (full mesh → shared lit box → shared unlit box), and shorter draw distances for benches, signs and rocks than for trees.
 - Runtime stress testing with CSV performance reports.
 - Real gas-station models spawn at OpenStreetMap fuel locations.
 - Varied-height OSM buildings with façade and roof materials.

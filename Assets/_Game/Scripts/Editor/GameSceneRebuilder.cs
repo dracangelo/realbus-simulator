@@ -281,7 +281,7 @@ public static class GameSceneRebuilder
         camera.tag = "MainCamera";
         camera.fieldOfView = 62f;
         camera.nearClipPlane = 0.05f;
-        camera.farClipPlane = 4000f;
+        camera.farClipPlane = SceneryLodPolicy.GameplayFarClip;
         cameraGo.AddComponent<AudioListener>();
 
         if (bus != null)

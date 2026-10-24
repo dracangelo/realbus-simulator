@@ -332,10 +332,12 @@ public class CinematicAtmosphereController : MonoBehaviour
             // left so little precision at road distance that the asphalt and the
             // ground tile underneath it could swap depth from one frame to the next
             // - the ground flicker. The gameplay camera sits 12.5 m behind the bus,
-            // so 0.3 m is still comfortably ahead of the nearest bodywork, and the
-            // fog closes well before 2.5 km.
+            // so 0.3 m is still comfortably ahead of the nearest bodywork. The far
+            // plane is now the streaming envelope: the city exists to 600-800 m,
+            // clear haze is opaque by 950 m, and drawing the empty ring beyond it
+            // only paid for culled ground and distant facades.
             cam.nearClipPlane = Mathf.Clamp(cam.nearClipPlane, 0.3f, 0.5f);
-            cam.farClipPlane = Mathf.Clamp(cam.farClipPlane, 1500f, 2500f);
+            cam.farClipPlane = SceneryLodPolicy.ClampFarClip(cam.farClipPlane);
             // The adaptive resolution used by MobilePerformanceManager only takes
             // effect when the camera opts in; without this the buffer resize was a
             // no-op and a thermally throttled phone kept rendering at full size.

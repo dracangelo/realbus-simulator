@@ -634,6 +634,22 @@ The lighting stack is assembled at runtime rather than baked into `GameScene`:
 
 **No static lightmap or baked Light Probe Group is used.** The city is streamed procedurally and the same scene must render a clear noon, a cloudy afternoon and a night with a moving sun. A bake would freeze one time and one cloud state, and the moving bus would sample probes lit by the wrong hour. The runtime equivalents are the `Trilight` ambient (day/night and cloud scaled), the generated sky cubemap used as `RenderSettings.customReflectionTexture`, and the bus's realtime reflection probe. There is no `LightProbeGroup` in the scene; imported bus renderers therefore use the runtime ambient and the bus probe rather than baked probe data.
 
+### Runtime road environment LOD
+
+`SceneryLodPolicy` is the single distance budget for the road environment, and `SceneryLodBuilder` applies it at spawn time:
+
+| Owner | Responsibility |
+|-------|----------------|
+| `SceneryLodPolicy` | 1000 m gameplay far clip (clamped 600–1000 m), building/prop LOD screen heights, triangle thresholds, per-kind prop cull distances |
+| `SceneryLodBuilder` | Adds a three-level `LODGroup` (full mesh → shared lit box → shared unlit box) when the object has no artist LOD; skips existing groups |
+| `OSMBuildingMeshBuilder` | Adds LODs to imported mapped/infill buildings and any procedural building above 1500 triangles |
+| `LiveCityStreamer` | Adds LODs to detailed trees/props above 2000 triangles; culls benches/billboards/rocks at 130 m, vegetation at 240 m, pedestrians at 120 m |
+| `CinematicAtmosphereController` | Clamps `Camera.main.farClipPlane` into the policy; `GameSceneRebuilder` writes the same value for new scenes |
+
+LOD proxies share the built-in cube mesh and two runtime materials (`Scenery LOD Lit`, `Scenery LOD Unlit`), so a streamed building or tree pays for two renderers and a transform, not a decimated copy of its mesh. LOD2 has shadows off; LOD1 keeps a cheap box shadow. Artist LOD groups (imported `10_f_building`, the four-level Coconut/Banana trees, LOD-named plant packs) are never rebuilt.
+
+The far plane now sits inside the haze (950 m clear) and inside the streamed building envelope (600–800 m), so the camera no longer draws an empty ring of ground and distant facades beyond the playable city.
+
 ### Runtime HUD and minimap
 
 `HUDManager` builds the navigation card at runtime, including `RuntimeMinimapGraphic`. The dial draws, back to front: the surrounding street network from `OSMRoadMeshBuilder.SurfaceIndex`, the remaining route and the covered trail, the stop markers (next stop highlighted), a rotating bus arrow and a north marker. Road segments are re-queried only when the bus has moved `roadCacheRefreshMeters` (30 m) or the world is rebuilt, and drawing stops at `maxRoadSegments` (1200), so a dense junction cannot turn the map into a full-city rebuild. With `rotateWithHeading` the map turns under the bus; with it off the view is north-up. Because the streets are drawn even when no route is active, free drive still shows a real map instead of an empty dial.
