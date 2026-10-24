@@ -16,9 +16,18 @@ public class WorldSystemsTests
         var milestones = new WorldReadiness.Milestones();
 
         Assert.IsFalse(WorldReadiness.Evaluate(milestones).ready);
+        Assert.AreEqual("RESTORING SAVE DATA...", WorldReadiness.Evaluate(milestones).status);
+
+        milestones.saveLoaded = true;
+        Assert.AreEqual("INITIALISING AUDIO...", WorldReadiness.Evaluate(milestones).status);
+
+        milestones.audioReady = true;
         Assert.AreEqual("SPAWNING BUS...", WorldReadiness.Evaluate(milestones).status);
 
         milestones.busSpawned = true;
+        Assert.AreEqual("CONFIGURING VEHICLE...", WorldReadiness.Evaluate(milestones).status);
+
+        milestones.vehicleConfigured = true;
         Assert.AreEqual("INITIALISING MAP...", WorldReadiness.Evaluate(milestones).status);
 
         milestones.mapInitialised = true;
@@ -34,6 +43,9 @@ public class WorldSystemsTests
         Assert.AreEqual("DOWNLOADING MAP TILES...", WorldReadiness.Evaluate(milestones).status);
 
         milestones.tilesLoaded = true;
+        Assert.AreEqual("PREPARING COCKPIT...", WorldReadiness.Evaluate(milestones).status);
+
+        milestones.hudReady = true;
         var ready = WorldReadiness.Evaluate(milestones);
         Assert.IsTrue(ready.ready);
         Assert.AreEqual("WORLD READY", ready.status);
@@ -45,7 +57,11 @@ public class WorldSystemsTests
     {
         var milestones = new WorldReadiness.Milestones
         {
+            saveLoaded = true,
+            audioReady = true,
             busSpawned = true,
+            vehicleConfigured = true,
+            hudReady = true,
             mapInitialised = true,
             gpsReady = true,
             roadsBuilt = true,
@@ -75,7 +91,7 @@ public class WorldSystemsTests
         // Once every milestone is cleared the bar legitimately sits at full.
         bool saturated = previous >= 1f;
 
-        for (int step = 1; step <= 7; step++)
+        for (int step = 1; step <= 10; step++)
         {
             ApplyStep(ref milestones, step);
             float progress = WorldReadiness.Evaluate(milestones).progress;
@@ -95,13 +111,16 @@ public class WorldSystemsTests
 
     static void ApplyStep(ref WorldReadiness.Milestones milestones, int step)
     {
-        if (step >= 1) milestones.busSpawned = true;
-        if (step >= 2) milestones.mapInitialised = true;
-        if (step >= 3) milestones.gpsReady = true;
-        if (step >= 4) milestones.roadsBuilt = true;
-        if (step >= 5) milestones.buildingsRingReady = true;
-        if (step >= 6) milestones.tilesLoaded = true;
-        if (step >= 7) { milestones.depotRequired = true; milestones.depotBuilt = true; }
+        if (step >= 1) milestones.saveLoaded = true;
+        if (step >= 2) milestones.audioReady = true;
+        if (step >= 3) milestones.busSpawned = true;
+        if (step >= 4) milestones.vehicleConfigured = true;
+        if (step >= 5) milestones.mapInitialised = true;
+        if (step >= 6) milestones.gpsReady = true;
+        if (step >= 7) milestones.roadsBuilt = true;
+        if (step >= 8) milestones.buildingsRingReady = true;
+        if (step >= 9) milestones.tilesLoaded = true;
+        if (step >= 10) milestones.hudReady = true;
     }
 
     [Test]
@@ -109,7 +128,11 @@ public class WorldSystemsTests
     {
         var milestones = new WorldReadiness.Milestones
         {
+            saveLoaded = true,
+            audioReady = true,
             busSpawned = true,
+            vehicleConfigured = true,
+            hudReady = true,
             mapInitialised = true,
             gpsReady = true,
             roadsBuilt = true,
@@ -131,6 +154,89 @@ public class WorldSystemsTests
         milestones.depotBuilt = true;
         Assert.IsTrue(WorldReadiness.Evaluate(milestones).ready);
         Assert.AreEqual("none", WorldReadiness.DescribePending(milestones));
+    }
+
+    [Test]
+    public void WorldReadiness_NeverReportsFullUntilTheWorldIsPlayable()
+    {
+        // Everything except the near-field warm-up is done, and the warm-up itself
+        // reports a full internal progress. The card must still not show 100%,
+        // because the scene is not playable yet.
+        var milestones = new WorldReadiness.Milestones
+        {
+            saveLoaded = true,
+            audioReady = true,
+            busSpawned = true,
+            vehicleConfigured = true,
+            mapInitialised = true,
+            gpsReady = true,
+            roadsBuilt = true,
+            buildingsRingReady = true,
+            tilesLoaded = true,
+            preloadRequired = true,
+            preloadReady = false,
+            preloadProgress = 1f
+        };
+
+        var waiting = WorldReadiness.Evaluate(milestones);
+        Assert.IsFalse(waiting.ready);
+        Assert.Less(waiting.progress, 1f, "100% has to mean playable, not merely nearly there");
+
+        milestones.depotRequired = true;
+        milestones.depotBuilt = false;
+        var depotWaiting = WorldReadiness.Evaluate(milestones);
+        Assert.IsFalse(depotWaiting.ready);
+        Assert.Less(depotWaiting.progress, 1f);
+    }
+
+    [Test]
+    public void LoadingBar_HoldsOneMonotonicRunAcrossTheSceneHandOff()
+    {
+        // The scene load fills the first band and the world warm-up continues from
+        // exactly that value: the player must never see 100% and then a new bar.
+        Assert.Greater(LoadingScreenUI.SceneLoadStart, 0f);
+        Assert.Greater(LoadingScreenUI.SceneLoadEnd, LoadingScreenUI.SceneLoadStart);
+        Assert.AreEqual(LoadingScreenUI.SceneLoadEnd, LoadingScreenUI.WorldProgressToScreen(0f), 0.0001f);
+        Assert.AreEqual(1f, LoadingScreenUI.WorldProgressToScreen(1f), 0.0001f);
+
+        float previous = 0f;
+        for (int i = 0; i <= 20; i++)
+        {
+            float screen = LoadingScreenUI.WorldProgressToScreen(i / 20f);
+            Assert.GreaterOrEqual(screen, previous, "the hand-off must not step the bar backwards");
+            previous = screen;
+        }
+    }
+
+    [Test]
+    public void BusInputLock_HoldsEveryPedalAtZeroUntilTheWorldIsPlayable()
+    {
+        var go = new GameObject("InputLockedBus");
+        try
+        {
+            var bus = go.AddComponent<BusController>();
+            bus.inputLocked = true;
+
+            // A mobile control writes after the bus's own Update; the lock has to
+            // refuse it at the source, not only in the next frame's Update.
+            bus.SetMobileInput(1f, 1f, 1f);
+            Assert.AreEqual(0f, bus.throttleInput);
+            Assert.AreEqual(0f, bus.brakeInput);
+            Assert.AreEqual(0f, bus.steerInput);
+
+            bus.SetSteerInput(-1f);
+            Assert.AreEqual(0f, bus.steerInput);
+
+            bus.inputLocked = false;
+            bus.SetMobileInput(0.6f, 0.2f, -0.5f);
+            Assert.AreEqual(0.6f, bus.throttleInput, 0.0001f);
+            Assert.AreEqual(0.2f, bus.brakeInput, 0.0001f);
+            Assert.AreEqual(-0.5f, bus.steerInput, 0.0001f);
+        }
+        finally
+        {
+            Object.DestroyImmediate(go);
+        }
     }
 
     // ── HUD fit around the driving controls ──────────────────────────────────

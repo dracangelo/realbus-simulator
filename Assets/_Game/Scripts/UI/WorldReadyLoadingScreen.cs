@@ -1,20 +1,22 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
-/// Shows a full-screen title card inside the gameplay scene while the world is still
-/// warming up (map tiles downloading, OSM roads building, bus spawning). The scene
-/// loading bar only covers Unity's scene activation; this covers the async
-/// asset-streaming phase that follows it, which is by far the longer wait.
+/// Drives the second half of the loading bar inside the gameplay scene: the world is
+/// still warming up (map tiles downloading, OSM roads building, traffic and props
+/// streaming in, the bus being configured) long after the Unity scene activates.
+/// This owns only the wait. The visible card is the same
+/// <see cref="CinematicLoadingCard"/> the scene load used, held by
+/// <see cref="LoadingScreenUI"/>, so the player sees one continuous bar from menu to
+/// cockpit instead of a 100% scene load followed by a second screen starting at 10%.
 ///
-/// The card itself is <see cref="CinematicLoadingCard"/>, shared with the scene-load
-/// screen so the two waits are visually the same shot rather than two different
-/// panels. This component owns only the wait: what to say, when the world is ready,
-/// and the dismiss.
+/// It also owns the playable gate: drive input is locked and
+/// <see cref="WaitUntilPlayable"/> holds the mission countdown until the world is
+/// actually ready (or the ceiling expires), so no countdown second and no mission
+/// clock is spent behind the card.
 ///
-/// Auto-bootstrapped via RuntimeInitializeOnLoadMethod so it
-/// works even when the gameplay scene is played directly from the Editor.
+/// Auto-bootstrapped via RuntimeInitializeOnLoadMethod so it works even when the
+/// gameplay scene is played directly from the Editor.
 /// </summary>
 [DefaultExecutionOrder(-150)]
 public class WorldReadyLoadingScreen : MonoBehaviour
@@ -33,11 +35,17 @@ public class WorldReadyLoadingScreen : MonoBehaviour
     // look frozen after loading, so the ceiling is generous.
     [SerializeField] float timeoutSeconds = 60f;
 
-    Canvas canvas;
-    CinematicLoadingCard card;
-    // -1 so the first NextTip() lands on Tips[0] rather than skipping it: the card
-    // swaps its copy at the dark point of the cycle, which is the first frame.
+    LoadingScreenUI screen;
+    BusController lockedBus;
+    float shownAt;
     int tipIndex = -1;
+    string lastStatus;
+
+    /// <summary>
+    /// True once the world phase is over, whether the world reached readiness or the
+    /// ceiling expired. Anything waiting to hand control to the player watches this.
+    /// </summary>
+    public bool Playable { get; private set; }
 
     static readonly string[] Tips =
     {
@@ -62,97 +70,71 @@ public class WorldReadyLoadingScreen : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        Build();
-    }
-
-    void Start()
-    {
-        // Show in Start rather than after a couple of frames. Start runs before
-        // Unity renders the first gameplay frame, so the scene-load card and the
-        // world-warm-up card overlap instead of leaving a visible empty frame.
-        Show();
-        if (card != null)
-        {
-            card.SetSubject();
-            card.SetEyebrow("PREPARING YOUR WORLD");
-            NextTip();
-            card.TipFadedOut += NextTip;
-        }
-        StartCoroutine(WaitForWorldReady());
     }
 
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
+        // Never leave the bus locked if this component is torn down mid-wait
+        // (a scene reload, a failed load, exiting play mode).
+        ReleaseInput();
+        // Same for the shared transition flag: a teardown mid-wait must not block
+        // the next gameplay load.
+        if (LoadingScreenUI.GameplayLoadInProgress) LoadingScreenUI.ReleaseGameplayLoad();
     }
 
-    public void Show()
+    void Start()
     {
-        if (canvas != null) canvas.gameObject.SetActive(true);
-        // The scene-load card was already fully revealed; animating the world
-        // card in again would read as a second screen rather than a hand-off.
-        if (card != null) card.Reveal(instant: true);
+        shownAt = Time.unscaledTime;
+        // Reuse the scene-load card if there is one; a direct GameScene play has no
+        // session, so this creates (and reveals) the same card.
+        screen = LoadingScreenUI.EnsureExists();
+        screen.BeginWorldPhase();
+        if (screen != null) screen.TipFaded += NextTip;
+        NextTip();
+        StartCoroutine(WaitForWorldReady());
     }
 
-    /// <summary>Closes the card and hides the canvas once the bars have retracted.</summary>
-    public void Hide()
+    /// <summary>
+    /// Coroutine callers can hold gameplay until the overlay has handed the world
+    /// over. Returns immediately when no overlay exists (tests, headless probes) and
+    /// after the overlay's own ceiling, so it can never wedge a caller forever.
+    /// </summary>
+    public static IEnumerator WaitUntilPlayable()
     {
-        if (card == null || !isActiveAndEnabled) { HideImmediate(); return; }
-        card.Dismiss();
-        StartCoroutine(DeactivateWhenClosed());
-    }
+        WorldReadyLoadingScreen gate = Instance;
+        if (gate == null) yield break;
 
-    void HideImmediate()
-    {
-        if (card != null) card.Dismiss(instant: true);
-        if (canvas != null) canvas.gameObject.SetActive(false);
-    }
-
-    IEnumerator DeactivateWhenClosed()
-    {
-        float waited = 0f;
-        while (!card.IsDismissed && waited < 2f)
-        {
-            waited += Time.unscaledDeltaTime;
+        float deadline = Time.realtimeSinceStartup + gate.timeoutSeconds + 10f;
+        while (gate != null && !gate.Playable && Time.realtimeSinceStartup < deadline)
             yield return null;
-        }
-        if (canvas != null) canvas.gameObject.SetActive(false);
-    }
-
-    public void SetStatus(string message, float progress01)
-    {
-        if (card == null) return;
-        card.SetStatus(message);
-        card.SetProgress(progress01);
     }
 
     IEnumerator WaitForWorldReady()
     {
-        float elapsed = 0f;
+        float deadline = Time.unscaledTime + timeoutSeconds;
         bool worldReady = false;
 
-        while (elapsed < timeoutSeconds)
+        while (Time.unscaledTime < deadline)
         {
-            elapsed += Time.unscaledDeltaTime;
+            LockInput();
 
-            var snapshot = WorldReadiness.Evaluate(WorldReadiness.Capture());
-            SetStatus(snapshot.status, snapshot.progress);
+            WorldReadiness.Snapshot snapshot = WorldReadiness.Evaluate(WorldReadiness.Capture());
+            screen.SetStatus(snapshot.status);
+            // One line per ladder step: when a load is slow, the log names the
+            // milestone it is sitting on instead of leaving a silent gap.
+            if (snapshot.status != lastStatus)
+            {
+                lastStatus = snapshot.status;
+                Debug.Log($"WorldReadyLoadingScreen: {snapshot.status} at {Time.unscaledTime - shownAt:0.0}s.");
+            }
+            // The card clamps to a monotonic value, so a milestone that flickers
+            // back (a re-bind, a streaming flag) cannot make the bar retreat.
+            screen.SetWorldProgress(snapshot.progress);
 
             if (snapshot.ready)
             {
                 worldReady = true;
-                SetStatus("WORLD READY", 1f);
-
-                // Hold the finished card for a deliberate beat. A short minimum
-                // duration also protects the no-streaming / editor direct-play
-                // case, where readiness can become true on the first frame.
-                if (elapsed < minimumVisibleSeconds)
-                {
-                    yield return null;
-                    continue;
-                }
-
-                yield return new WaitForSecondsRealtime(holdAfterReadySeconds);
                 break;
             }
 
@@ -161,6 +143,15 @@ public class WorldReadyLoadingScreen : MonoBehaviour
 
         if (worldReady)
         {
+            // 100% is only ever written here, after every milestone is true.
+            screen.SetStatus("WORLD READY");
+            screen.SetWorldProgress(1f);
+            Debug.Log($"WorldReadyLoadingScreen: world ready in {Time.unscaledTime - shownAt:0.0}s.");
+
+            float visibleFor = Time.unscaledTime - shownAt;
+            float hold = Mathf.Max(0f, minimumVisibleSeconds - visibleFor) + holdAfterReadySeconds;
+            yield return new WaitForSecondsRealtime(hold);
+
             // Last chance to fix imported models that spawned after their own
             // ApplyFallback call - the depot, stop props, gas stations and the
             // fleet buses are all in place by now.
@@ -170,54 +161,71 @@ public class WorldReadyLoadingScreen : MonoBehaviour
         }
         else
         {
+            // The ceiling is a safety valve, not a success: the bar keeps the last
+            // honest value and the card says what is still streaming, so the player
+            // is never told 100% while work is outstanding.
             Debug.LogWarning(
                 $"WorldReadyLoadingScreen: world not ready after {timeoutSeconds:0}s, still waiting on " +
                 $"{WorldReadiness.DescribePending(WorldReadiness.Capture())}. Showing the scene anyway.");
+            screen.SetStatus("STILL STREAMING — CONTINUING IN THE CITY");
+            yield return new WaitForSecondsRealtime(holdAfterReadySeconds);
         }
 
-        if (card != null)
-        {
-            card.TipFadedOut -= NextTip;
-            card.Dismiss();
-        }
+        // The preloaded catalogs were only held so the scene systems could read them
+        // from Resources. By now every one of them is either referenced by a live
+        // system or no longer needed, so let the loading-only copies go while the
+        // card still covers the world: unloading after the card is gone would show
+        // up as a hitch on the first frame of gameplay.
+        if (WorldPreloadCoordinator.Instance != null)
+            WorldPreloadCoordinator.Instance.ReleasePreloadedReferences();
+        yield return Resources.UnloadUnusedAssets();
 
-        float waited = 0f;
-        while ((card == null || !card.IsDismissed) && waited < 2f)
-        {
-            waited += Time.unscaledDeltaTime;
-            yield return null;
-        }
+        Playable = true;
+        ReleaseInput();
+        Finish();
+    }
 
-        if (canvas != null) canvas.gameObject.SetActive(false);
+    void Finish()
+    {
+        if (screen != null) screen.TipFaded -= NextTip;
+
+        // One owner for the transition: SceneLoader closes the session (which
+        // releases the card) when it exists; a direct scene play closes it here.
+        if (SceneLoader.Instance != null)
+            SceneLoader.Instance.CompleteGameplayLoad();
+        else
+            LoadingScreenUI.ReleaseGameplayLoad();
+
         Destroy(gameObject);
+    }
+
+    /// <summary>Holds every drive input at zero for whichever bus is current.</summary>
+    void LockInput()
+    {
+        BusController bus = MissionManager.Instance != null ? MissionManager.Instance.busController : null;
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
+        if (bus == null) return;
+
+        if (lockedBus != null && lockedBus != bus)
+            lockedBus.inputLocked = false;
+        lockedBus = bus;
+        if (!bus.inputLocked) bus.inputLocked = true;
+    }
+
+    void ReleaseInput()
+    {
+        if (lockedBus != null) lockedBus.inputLocked = false;
+        lockedBus = null;
+        // A SceneBootstrap prefab swap can leave a second body behind; unlock every
+        // one of them rather than only the one this component happened to track.
+        foreach (BusController bus in FindObjectsByType<BusController>(FindObjectsInactive.Exclude))
+            if (bus != null) bus.inputLocked = false;
     }
 
     void NextTip()
     {
-        if (card == null || Tips.Length == 0) return;
+        if (screen == null || Tips.Length == 0) return;
         tipIndex = (tipIndex + 1) % Tips.Length;
-        card.SetTip(Tips[tipIndex]);
-    }
-
-    void Build()
-    {
-        var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(CanvasGroup));
-        canvasGo.transform.SetParent(transform, false);
-        canvas = canvasGo.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        // Above the HUD and above the intro's letterbox, so the title card owns the
-        // frame until the world is up.
-        canvas.sortingOrder = 490;
-
-        var scaler = canvasGo.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        card = CinematicLoadingCard.Create(canvasGo.transform);
-        card.SetSubject();
-        card.SetStatus("INITIALISING...");
-        card.SetProgress(0f);
-        canvas.gameObject.SetActive(false);
+        screen.SetTip(Tips[tipIndex]);
     }
 }

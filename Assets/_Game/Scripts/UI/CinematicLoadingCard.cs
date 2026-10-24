@@ -324,6 +324,10 @@ public class CinematicLoadingCard : MonoBehaviour
 
         Image background = MakeImage("Background", transform, UITheme.Background);
         Stretch(background.rectTransform);
+        // Every other image in the card is decorative, but this one is the shield:
+        // it must swallow touches so the pedal, steering and action clusters behind
+        // the card cannot be pressed while the world is still loading.
+        background.raycastTarget = true;
 
         // The glow sits behind everything: a warm pool the title can sit in.
         glow = MakeImage("Glow", background.transform, UITheme.WithAlpha(UITheme.AccentFixed, 0.10f));

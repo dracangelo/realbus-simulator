@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
@@ -5,6 +6,41 @@ using UnityEngine;
 
 public static class OSMParser
 {
+    /// <summary>
+    /// Parses a footprint/road pack on the thread pool and yields until it is
+    /// finished. The parser builds plain C# objects only, so a 60k-footprint pack
+    /// does not freeze the frame (or the loading card) while it is read. The
+    /// completed callback runs on the main thread.
+    /// </summary>
+    public static IEnumerator ParseInBackground(string raw, bool json, System.Action<OSMData> completed)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            completed?.Invoke(new OSMData());
+            yield break;
+        }
+
+        OSMData parsed = null;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var task = System.Threading.Tasks.Task.Run(() =>
+        {
+            parsed = json ? ParseOverpassJson(raw) : Parse(raw);
+        });
+
+        while (!task.IsCompleted)
+            yield return null;
+
+        stopwatch.Stop();
+        if (task.IsFaulted)
+        {
+            Debug.LogError($"OSM parse failed after {stopwatch.ElapsedMilliseconds}ms: {task.Exception?.GetBaseException().Message}");
+            parsed = new OSMData();
+        }
+
+        Debug.Log($"OSM: parsed {raw.Length} bytes off-thread in {stopwatch.ElapsedMilliseconds}ms.");
+        completed?.Invoke(parsed ?? new OSMData());
+    }
+
     public static OSMData Parse(string xml)
     {
         var data = new OSMData();

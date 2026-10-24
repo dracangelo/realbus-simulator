@@ -218,6 +218,18 @@ public class WorldPreloadCoordinator : MonoBehaviour
         IsReady = true;
     }
 
+    /// <summary>
+    /// Drops the loader's own references to the preloaded catalogs once the world is
+    /// playable, so the loading pass stops keeping assets alive. Anything a live
+    /// scene system still uses stays loaded: this list was only a bridge between
+    /// <see cref="Resources.LoadAsync"/> and the systems that read the catalogs.
+    /// </summary>
+    public void ReleasePreloadedReferences()
+    {
+        preloadedAssets.Clear();
+        coreRequests.Clear();
+    }
+
     void RequestCore<T>(string path) where T : Object
     {
         ResourceRequest request = Resources.LoadAsync<T>(path);

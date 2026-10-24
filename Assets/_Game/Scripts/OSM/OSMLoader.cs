@@ -60,9 +60,9 @@ public class OSMLoader : MonoBehaviour
 
         Debug.Log($"OSM: Loaded {raw.Length} bytes from disk");
 
-        osmData = preferredPath.EndsWith(".json")
-            ? OSMParser.ParseOverpassJson(raw)
-            : OSMParser.Parse(raw);
+        OSMData parsed = null;
+        yield return OSMParser.ParseInBackground(raw, preferredPath.EndsWith(".json"), result => parsed = result);
+        osmData = parsed;
         dataLoaded = osmData != null && osmData.ways != null && osmData.ways.Count > 0;
 
         if (!dataLoaded)

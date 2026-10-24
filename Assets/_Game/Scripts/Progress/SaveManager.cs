@@ -95,6 +95,13 @@ public class SaveManager : MonoBehaviour
     public bool HasPendingConflict => pendingConflict != null;
     public SaveConflictInfo PendingConflict => pendingConflict;
 
+    /// <summary>
+    /// True once the local profile, upgrades and liveries have been applied. The
+    /// loading gate waits for it, so gameplay can never start on top of a save that
+    /// is still being read.
+    /// </summary>
+    public bool IsInitialized => initialized;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Bootstrap()
     {

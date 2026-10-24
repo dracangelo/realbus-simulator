@@ -31,6 +31,12 @@ public class MissionManager : MonoBehaviour
     public bool repositionBusOnStart = true;
     public bool startAtDepot = true;
     public bool autoInitialize = true;
+    /// <summary>
+    /// True when this mission start did not place a depot (placement failed, the
+    /// start was a checkpoint resume, or the scene starts on the street). The
+    /// loading gate reads it so it never waits for a yard that is not coming.
+    /// </summary>
+    public bool DepotPlacementFailed { get; private set; }
     public float ElapsedSeconds { get; private set; }
     public float DistanceDrivenKm { get; private set; }
     public MissionResult LastResult { get; private set; }
@@ -120,6 +126,7 @@ public class MissionManager : MonoBehaviour
         PassengerManager.Instance?.ResetForFreeDriveMode();
         LastResult = null;
         ElapsedSeconds = DistanceDrivenKm = 0f;
+        DepotPlacementFailed = false;
         currentStopIndex = 0;
         isProcessingStop = pendingDoorOpenRequest = false;
         currentRoute = route;
@@ -174,12 +181,14 @@ public class MissionManager : MonoBehaviour
 
         Vector3 startPos = GPSManager.Instance.GpsToWorld(spawnLat, spawnLon);
         startPos = ApplySpawnOffsetFromRouteStart(startPos);
+        bool spawnedAtDepot = false;
         if (repositionBusOnStart)
         {
             if (pendingCheckpoint != null)
                 busController.Teleport(pendingCheckpoint.busPosition, pendingCheckpoint.busRotation);
             else if (startAtDepot && BusDepotManager.EnsureExists().TrySpawnDepotAndResolveBay(currentRoute, startPos, busController, out var depotBayPos, out var depotBayRot, out var depotExitPos))
             {
+                spawnedAtDepot = true;
                 busController.Teleport(depotBayPos, depotBayRot);
                 busController.SetParkingBrake(true);
                 // Throttle releases the park brake (BusController), and the yard's own
@@ -209,6 +218,17 @@ public class MissionManager : MonoBehaviour
             MobileCameraController.EnsureExists().SetPreset(MobileCameraController.Instance.CurrentPreset);
             Debug.Log($"MissionManager: Player spawned at {body.position}, heading {body.rotation.eulerAngles.y:F1} degrees.");
         }
+
+        // A depot that could not be placed (or a checkpoint resume, or a scene that
+        // starts on the street) must not hold the loading screen open waiting for a
+        // yard that is never coming. The bus is on the road either way.
+        DepotPlacementFailed = pendingCheckpoint != null || (startAtDepot && !spawnedAtDepot);
+
+        // The loading card is still up while the map, roads, traffic and cockpit
+        // warm. Do not burn the countdown - or start the mission clock - behind it:
+        // wait for the overlay to hand the world over. Bounded by the overlay's own
+        // ceiling, and a no-op when the scene is played without an overlay.
+        yield return WorldReadyLoadingScreen.WaitUntilPlayable();
 
         Debug.Log("Mission starting...");
 

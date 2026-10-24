@@ -600,6 +600,23 @@ Each stop has:
 | `MobileControlsUI` | All 8 button slots wired to Bus_Root/BusController |
 | `SceneBootstrap` | Does NOT redirect from GameScene (GameScene is exempt) |
 
+### Runtime loading chain
+
+No scene in the build list is a dedicated loading scene, and none was added. The loading card is built at runtime and marked `DontDestroyOnLoad`, so it can cover the `LoadSceneAsync` swap without a second scene to load, a build-index change or an asset that might itself still be streaming. One card is shared by both waits:
+
+| Owner | Responsibility |
+|-------|----------------|
+| `LoadingScreenUI` | Builds the canvas and the single `CinematicLoadingCard`; maps scene load to 4–44 % and world progress to 44–100 %; monotonic `SetProgress`; owns the `GameplayLoadInProgress` guard |
+| `SceneLoader` | 0.8 s preparation beat, `LoadSceneAsync(GameScene)` (name first, `gameplayBuildIndex` fallback), 90 s ceiling on load and activation; does not hide the card at scene activation |
+| `WorldReadyLoadingScreen` | Adopts the same card, locks `BusController.inputLocked`, polls `WorldReadiness`, writes 100 % only when ready, 60 s ceiling, releases preloaded references, destroys itself |
+| `WorldReadiness` | Pure milestone ladder (save, audio, bus, vehicle, map, GPS, roads, buildings, tiles, near-field, HUD, depot); absent managers count as satisfied |
+| `WorldPreloadCoordinator` | `Resources.LoadAsync` catalogs and near-field warm-up with per-stage ceilings (8–18 s) and a 32 s overall ceiling |
+| `MissionManager` | `WaitUntilPlayable()` before the countdown and the mission clock; `DepotPlacementFailed` stops a failed yard holding the card open |
+
+`SceneLoader` is created by the menus; `WorldReadyLoadingScreen` and `WorldPreloadCoordinator` are bootstrapped with `RuntimeInitializeOnLoadMethod(AfterSceneLoad)` only when the scene contains a `MissionManager`, so the gameplay scene played directly still works and a menu scene never grows a loader. `SaveManager`, `RealBusAudioManager` and `HUDManager` are runtime-bootstrapped too (BeforeSceneLoad / AfterSceneLoad); none is serialized into `GameScene`, which is why the gate reads their public `IsInitialized` / `IsBound` properties instead of scene references. `SceneBootstrap` swaps the scene bus for the player's drivable prefab and immediately calls `RealBusAudioManager.RebindScene()`, because the engine loops were attached to the body that was just destroyed; the audio manager also retries binding every second while its bus is null.
+
+The card's background has `raycastTarget = true` and the bus refuses `SetMobileInput` / `SetSteerInput` while `inputLocked`, so neither a touch already down nor a physical key can roll the bus out from behind the title card. `TESTING.md` lists the band table and the log lines that prove the order headlessly. The 39.6 MB Overture footprint pack is parsed on the thread pool by `OSMParser.ParseInBackground`, not on the main thread, because a synchronous 63 748-footprint parse froze the card for tens of seconds; the road pack uses the same path.
+
 ### Runtime cinematic lighting
 
 The lighting stack is assembled at runtime rather than baked into `GameScene`:

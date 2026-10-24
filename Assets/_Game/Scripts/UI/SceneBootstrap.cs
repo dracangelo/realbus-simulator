@@ -284,6 +284,10 @@ public class SceneBootstrap : MonoBehaviour
 
         sceneBus.gameObject.SetActive(false);
         Destroy(sceneBus.gameObject);
+        // The engine, tyre and interior loops were attached to the body that just
+        // left. Re-bind them to the player's bus now instead of letting the engine
+        // fall silent for the whole drive.
+        RealBusAudioManager.EnsureExists().RebindScene();
         Debug.Log($"SceneBootstrap: Using real drivable prefab '{spec.drivablePrefab.name}' for physics and docking.");
         return replacement;
     }

@@ -60,6 +60,12 @@ public class BusController : MonoBehaviour
     public float brakeInput = 0f;
     public float currentSpeedKmh = 0f;
     public bool kneelingSuspensionActive = false;
+    /// <summary>
+    /// Set while a loading overlay is still covering the world. Every drive input is
+    /// held at zero, so a held key or a touch that was already down cannot roll the
+    /// bus out from behind the title card.
+    /// </summary>
+    public bool inputLocked = false;
 
     [Header("Kneeling Suspension")]
     public float kneelingDropMeters = 0.08f;
@@ -162,7 +168,16 @@ public class BusController : MonoBehaviour
 
     void Update()
     {
-        if (readKeyboard)
+        // A loading overlay owns the bus until the world is playable. This has to be
+        // checked before the keyboard read: the overlay covers the touch pedals but
+        // a physical keyboard (or a held touch that was already down) would still
+        // send input straight through the title card.
+        if (inputLocked)
+        {
+            mobileThrottle = mobileBrake = mobileSteering = 0f;
+            throttleInput = brakeInput = steerInput = 0f;
+        }
+        else if (readKeyboard)
         {
             var keyboard = Keyboard.current;
             throttleInput = Mathf.Max(mobileThrottle, keyboard != null && keyboard.wKey.isPressed ? 1f : 0f);
@@ -190,6 +205,16 @@ public class BusController : MonoBehaviour
     {
         if (rb == null || engineData == null || transmissionData == null)
             return;
+
+        // Enforced here as well as in Update: a mobile control that writes the input
+        // fields directly must not be able to drive the bus while the loading card
+        // still covers the world. FixedUpdate runs after every Update, so this is the
+        // last word before the drive maths reads the pedals.
+        if (inputLocked)
+        {
+            mobileThrottle = mobileBrake = mobileSteering = 0f;
+            throttleInput = brakeInput = steerInput = 0f;
+        }
 
         // A route start owns the interlock during briefing, countdown and stops.
         // It must never remain latched while the mission is actively driving.
@@ -430,11 +455,19 @@ public class BusController : MonoBehaviour
         rb.AddForce(AerodynamicsSystem.DragForce(rb.linearVelocity, dragCoefficient, frontalArea, airDensity));
     }
 
-    public void SetSteerInput(float value) { mobileSteering = steerInput = Mathf.Clamp(value, -1f, 1f); }
+    public void SetSteerInput(float value)
+    {
+        mobileSteering = inputLocked ? 0f : Mathf.Clamp(value, -1f, 1f);
+        steerInput = mobileSteering;
+    }
+
     public void SetMobileInput(float throttle, float brake, float steering)
     {
-        mobileThrottle = Mathf.Clamp01(throttle);
-        mobileBrake = Mathf.Clamp01(brake);
+        // Refuse at the source as well as in Update/FixedUpdate: a control cluster
+        // that writes after the bus's own Update must not be able to push the
+        // pedals while the loading card is up.
+        mobileThrottle = inputLocked ? 0f : Mathf.Clamp01(throttle);
+        mobileBrake = inputLocked ? 0f : Mathf.Clamp01(brake);
         SetSteerInput(steering);
         throttleInput = mobileThrottle;
         brakeInput = mobileBrake;

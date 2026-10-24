@@ -97,6 +97,7 @@
 - Automatic saves after missions, rank-ups, purchases, customization, and app backgrounding.
 - Local/cloud conflict detection with player choice.
 - Main menu, garage, settings, credits, pause, resilient loading, and mobile UI.
+- One continuous loading bar from menu to cockpit: scene load, save, audio, bus, map, roads, buildings, tiles, near-field assets, HUD and depot are all gated before input unlocks.
 - Rounded cinematic HUD with navigation, next stop, speed dial, fuel, passengers, gear, and schedule.
 - Minimap that draws the surrounding street network under the route, with stop markers, a heading-up/north-up switch and a visibility toggle.
 - First-drive tutorial, missed-stop recovery, and turn guidance.

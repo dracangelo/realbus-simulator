@@ -12,6 +12,9 @@ public class SceneLoader : MonoBehaviour
     [Tooltip("A short deliberate beat after the route is confirmed. It gives the loading card time to appear before the scene swap, so the player never sees a half-built street flash past.")]
     [SerializeField, Min(0f)] float gameplayPreparationDelaySeconds = 0.8f;
 
+    [Tooltip("Ceiling for the async scene load. A local scene should never take this long; if it does, the transition is aborted instead of leaving the player on a frozen card.")]
+    [SerializeField, Min(10f)] float sceneLoadTimeoutSeconds = 90f;
+
     bool isLoading;
 
     public static SceneLoader EnsureExists()
@@ -40,6 +43,9 @@ public class SceneLoader : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // A gameplay load is not finished when the scene activates: the world phase
+        // still owns the same card and bar. CompleteGameplayLoad releases both.
+        if (LoadingScreenUI.GameplayLoadInProgress) return;
         isLoading = false;
         if (LoadingScreenUI.Instance != null) LoadingScreenUI.Instance.Hide();
     }
@@ -63,13 +69,14 @@ public class SceneLoader : MonoBehaviour
     /// <summary>
     /// Route selection goes through a deliberate preparation beat. Unity can
     /// activate the gameplay scene in a few frames, but the map, roads and
-    /// buildings are still streaming in; showing the loading card before the
-    /// swap lets <see cref="WorldReadyLoadingScreen"/> take over without a
-    /// visible half-built frame.
+    /// buildings are still streaming in; the bar therefore only fills to
+    /// <see cref="LoadingScreenUI.SceneLoadEnd"/> here and
+    /// <see cref="WorldReadyLoadingScreen"/> continues from that value while it
+    /// waits for the world. The card is never dismissed at scene activation.
     /// </summary>
     public void LoadGame()
     {
-        if (isLoading) return;
+        if (isLoading || LoadingScreenUI.GameplayLoadInProgress) return;
         StartCoroutine(PrepareAndLoadGame());
     }
 
@@ -78,9 +85,8 @@ public class SceneLoader : MonoBehaviour
         isLoading = true;
 
         LoadingScreenUI screen = LoadingScreenUI.EnsureExists();
-        screen.Show();
         BusRoute route = GameState.Instance != null ? GameState.Instance.selectedRoute : null;
-        screen.SetStatus(route != null
+        screen.BeginGameplayLoad(route != null
             ? $"PREPARING {RouteNaming.DisplayCode(route)}..."
             : "PREPARING YOUR ROUTE...");
 
@@ -91,10 +97,12 @@ public class SceneLoader : MonoBehaviour
         while (elapsed < delay)
         {
             elapsed += Time.unscaledDeltaTime;
-            screen.SetProgress(delay > 0f ? Mathf.Clamp01(elapsed / delay) * 0.12f : 0.12f);
+            screen.SetProgress(delay > 0f
+                ? Mathf.Clamp01(elapsed / delay) * LoadingScreenUI.SceneLoadStart
+                : LoadingScreenUI.SceneLoadStart);
             yield return null;
         }
-        screen.SetProgress(0.12f);
+        screen.SetProgress(LoadingScreenUI.SceneLoadStart);
 
         int fallbackBuildIndex = sceneCatalog != null ? sceneCatalog.gameplayBuildIndex : 4;
         AsyncOperation operation = null;
@@ -106,12 +114,71 @@ public class SceneLoader : MonoBehaviour
         if (operation == null)
         {
             Debug.LogError("SceneLoader: Could not load GameScene by name or build index.");
-            screen.Hide();
-            isLoading = false;
+            CancelGameplayLoad();
             yield break;
         }
 
-        yield return LoadAsync(operation);
+        screen.SetStatus(route != null
+            ? $"LOADING {RouteNaming.DisplayCode(route)}..."
+            : "LOADING THE CITY...");
+        operation.allowSceneActivation = false;
+        float loadDeadline = Time.unscaledTime + Mathf.Max(10f, sceneLoadTimeoutSeconds);
+        while (operation.progress < 0.9f)
+        {
+            // A local scene load should finish in a few frames. If it does not, the
+            // transition is aborted rather than leaving the player pinned to a card
+            // whose bar can never advance; the menu is still behind it and usable.
+            if (Time.unscaledTime >= loadDeadline)
+            {
+                Debug.LogError(
+                    $"SceneLoader: GameScene did not finish loading within {sceneLoadTimeoutSeconds:0}s " +
+                    $"(progress {operation.progress:P0}). Aborting the transition.");
+                CancelGameplayLoad();
+                yield break;
+            }
+
+            screen.SetProgress(Mathf.Lerp(LoadingScreenUI.SceneLoadStart,
+                LoadingScreenUI.SceneLoadEnd, operation.progress / 0.9f));
+            yield return null;
+        }
+        screen.SetProgress(LoadingScreenUI.SceneLoadEnd);
+
+        // Activation is the hand-off, not the finish: the card stays up and
+        // WorldReadyLoadingScreen takes the same bar from here.
+        operation.allowSceneActivation = true;
+        loadDeadline = Time.unscaledTime + Mathf.Max(10f, sceneLoadTimeoutSeconds);
+        while (!operation.isDone)
+        {
+            if (Time.unscaledTime >= loadDeadline)
+            {
+                // Activation itself is stalled (a scene that never finishes
+                // activating). Same rule: release the card instead of freezing on it.
+                Debug.LogError(
+                    $"SceneLoader: GameScene activation did not complete within {sceneLoadTimeoutSeconds:0}s. " +
+                    "Aborting the transition.");
+                CancelGameplayLoad();
+                yield break;
+            }
+            yield return null;
+        }
+    }
+
+    /// <summary>
+    /// Called by <see cref="WorldReadyLoadingScreen"/> once the world is playable (or
+    /// its ceiling expired). Only here does the gameplay transition stop accepting
+    /// input and release the card.
+    /// </summary>
+    public void CompleteGameplayLoad()
+    {
+        isLoading = false;
+        LoadingScreenUI.ReleaseGameplayLoad();
+    }
+
+    /// <summary>Aborts a transition that could not even start, without stranding the card.</summary>
+    public void CancelGameplayLoad()
+    {
+        isLoading = false;
+        LoadingScreenUI.ReleaseGameplayLoad();
     }
 
     public void LoadCitySelectChecked()
@@ -200,9 +267,10 @@ public class SceneLoader : MonoBehaviour
         operation.allowSceneActivation = false;
         while (operation.progress < 0.9f)
         {
-            // Start above the preparation card's 12% so the bar never jumps
-            // backwards between "preparing" and the actual scene load.
-            screen.SetProgress(Mathf.Lerp(0.12f, 1f, operation.progress / 0.9f));
+            // Menu navigation is the whole wait, so it may use the whole bar. It
+            // starts above zero so it never jumps back from the reveal.
+            screen.SetProgress(Mathf.Lerp(LoadingScreenUI.SceneLoadStart, 1f,
+                operation.progress / 0.9f));
             yield return null;
         }
         screen.SetProgress(1f);

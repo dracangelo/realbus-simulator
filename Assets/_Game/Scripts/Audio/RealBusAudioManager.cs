@@ -19,7 +19,22 @@ public class RealBusAudioManager : MonoBehaviour
     readonly HashSet<Button> hookedButtons = new HashSet<Button>();
     float nextButtonScan;
     float nextTyreSqueal;
+    float nextBusBind;
     bool braking;
+
+    /// <summary>
+    /// True once the engine, tyre, interior and ambience loops are attached to the
+    /// player's bus. The loading gate waits for this, so the first thing the player
+    /// hears is a running engine rather than silence that fills in later.
+    /// </summary>
+    public bool IsBound => bus != null;
+
+    /// <summary>
+    /// Re-attaches the scene loops to whichever bus is current. Called by
+    /// SceneBootstrap after it swaps in the player's drivable prefab, because the
+    /// loops that were attached to the scene bus die with it.
+    /// </summary>
+    public void RebindScene() => BindScene();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Bootstrap() { EnsureExists(); }
@@ -79,7 +94,19 @@ public class RealBusAudioManager : MonoBehaviour
     void Update()
     {
         if (Time.unscaledTime >= nextButtonScan) { nextButtonScan = Time.unscaledTime + 2f; HookButtons(); }
-        if (bus == null) return;
+        if (bus == null)
+        {
+            // SceneBootstrap can replace the scene bus with the player's drivable
+            // prefab after sceneLoaded, which destroyed the body these loops were
+            // attached to. Re-bind on a slow timer instead of going silent for the
+            // rest of the drive.
+            if (Time.unscaledTime >= nextBusBind)
+            {
+                nextBusBind = Time.unscaledTime + 1f;
+                BindScene();
+            }
+            return;
+        }
         float rpm = Mathf.InverseLerp(650f, 2600f, bus.currentRPM);
         float load = Mathf.Clamp01(Mathf.Max(bus.throttleInput, rpm * 0.45f));
         float effects = SettingsManager.EnsureExists().Current.effectsVolume;

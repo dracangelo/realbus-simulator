@@ -39,7 +39,9 @@ public class OSMBuildingLoader : MonoBehaviour
         yield return ReadText(overturePath, text => overtureRaw = text);
         if (!string.IsNullOrWhiteSpace(overtureRaw))
         {
-            osmData = OSMParser.ParseOverpassJson(overtureRaw);
+            OSMData parsed = null;
+            yield return OSMParser.ParseInBackground(overtureRaw, json: true, result => parsed = result);
+            osmData = parsed;
             if (HasBuildings(osmData))
             {
                 dataLoaded = true;
@@ -58,10 +60,9 @@ public class OSMBuildingLoader : MonoBehaviour
             yield return ReadText(path, text => raw = text);
             if (string.IsNullOrWhiteSpace(raw)) continue;
             Debug.Log($"Buildings: Loaded {raw.Length} bytes from {path}");
-            yield return null;
-            osmData = path.EndsWith(".json")
-                ? OSMParser.ParseOverpassJson(raw)
-                : OSMParser.Parse(raw);
+            OSMData parsed = null;
+            yield return OSMParser.ParseInBackground(raw, path.EndsWith(".json"), result => parsed = result);
+            osmData = parsed;
             dataLoaded = HasBuildings(osmData);
             if (!dataLoaded) continue;
             Debug.Log($"Buildings: Data ready — {osmData.ways.Count} ways");
