@@ -34,11 +34,33 @@ public class PassengerAgent
 
     public PassengerAgent(int originStop, int destinationStop, float initialPatience, bool wheelchair, PassengerArchetype passengerArchetype = PassengerArchetype.Commuter)
     {
+        ResetForReuse(originStop, destinationStop, initialPatience, wheelchair, passengerArchetype);
+    }
+
+    /// <summary>
+    /// Clears every piece of state so a pooled agent can be handed out again as a
+    /// brand-new passenger. Pooling avoids a fresh allocation for every person who
+    /// ever waits at a stop during a shift.
+    /// </summary>
+    public void ResetForReuse(int originStop, int destinationStop, float initialPatience, bool wheelchair, PassengerArchetype passengerArchetype = PassengerArchetype.Commuter)
+    {
         originStopIndex = originStop;
         destinationStopIndex = destinationStop;
         patienceSeconds = initialPatience;
+        satisfaction = 1f;
         isWheelchairPassenger = wheelchair;
+        isSeated = false;
+        isBoarding = false;
+        isAlighting = false;
+        assignedSlotIndex = -1;
         archetype = passengerArchetype;
+        stopRequested = false;
+        preparingToAlight = false;
+        hasComplainedAboutBraking = false;
+        platformPosition = Vector3.zero;
+        busLocalPosition = Vector3.zero;
+        boardingLerp = 0f;
+        standingSway = 0f;
     }
 
     public void TickPatience(float deltaTime)

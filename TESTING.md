@@ -108,6 +108,75 @@ grep "SMOKE environment" /tmp/smoke-windy.log
 
 The assembled scene runs a compressed world clock: `TimeOfDaySystem` starts at the timetable's opening hour and covers a full 24 game hours in 30 real minutes, while `ScheduleManager` keeps its own one-game-minute-per-real-minute timetable for stop punctuality. A pinned `REALBUS_SMOKE_TIME` disables that advance so the sky holds still for the duration of a smoke run. Traffic density reads the same clock (`VehiclePool.GetTrafficDensityVolume`), so a pinned run also pins how many cars the pool keeps awake. The weather cycle starts after the real WeatherService lookup, or after a short 45-second hold when the offline simulated weather is used, then holds each state for 90–240 real seconds and cross-fades over 45–90 seconds.
 
+### Full route and stop progression
+
+The route bug this covers is not a crash: a stop service that never finished left the
+served stop as the navigation target, so however far the player drove the mission still
+thought they were parked at a stop they had already left. A fixed-duration smoke cannot
+catch that, because the failure is "nothing happens for a long time". The route runner
+drives the whole route in the real scene and asserts progression stop by stop:
+
+```bash
+bash tools/run_route_smoke.sh
+```
+
+It launches `GameplaySmokeCheck.RunRoute` in batchmode (same licensing, `LD_PRELOAD`
+and `xvfb-run` handling as the other scripts) and writes `TestResults/route-smoke.log`.
+For every stop it walks the mission's own guidance line in paced hops, seats the bus on
+the docking bay through `BusController.Teleport`, waits for the bay's own gate to dock,
+opens the doors through `MissionManager.TryOpenDoorsAtCurrentStop` (the same entry point
+the on-screen button uses) and then requires, without pressing anything else:
+
+- `MissionManager.currentStopIndex` reaches `stopIndex + 1`;
+- the guidance path was rebuilt for the new target (`GuidancePathVersion` increases);
+- the navigator stayed live for the whole route: every five seconds the run samples
+  `RouteArrowOverlay.HasVisibleArrows` / `BeaconVisible` and `HUDManager.NavigatorVisible`,
+  and a missing sample fails the run (`SMOKE routeNavigator checks=… failures=…`). At the
+  final stop the beacon and arrival banner are accepted as the navigator, because no road
+  remains to draw chevrons on;
+- the mission is `Completed` and `routeActive` is false after the last stop.
+
+The log prints one `SMOKE routeStop` line per stop and a `SMOKE routeResult` summary.
+A stop that does not release the route fails the run with the state attached
+(`SMOKE route failed: stop 3 did not advance after 88.0s (processing=True
+state=AtStop … animations=True dwell=52.0 budget=87.0)`), which names the culprit
+instead of waiting out a timeout. The runner also fails on the failure modes that made
+the bug look like a hang: an index that moved on its own (`SMOKE routeIndexDrift`), a leg
+that cannot be closed (60 hops without getting closer, or 240 s per stop), and a route
+that never finishes (1800 s overall). A leg the runner cannot walk is not quietly skipped:
+it logs `SMOKE routeShortcut`, seats the bus on the bay, and the stop still has to dock
+and release `currentStopIndex` on its own, and the summary counts `shortcuts=`. Between stops the same run checks the city
+traffic: bodies in the pool actually move, cars hold their lane once settled, bodies on
+two-way links sit on the country's driving side, imported models are textured and
+liveries vary (`SMOKE traffic`, `SMOKE trafficSide`, `SMOKE liveries`). The traffic
+verdict is taken independently of stop progression, so a route failure still reports
+whether the road was alive.
+
+The run is served in game time with `Time.timeScale = 3` (Unity keeps the authored
+`fixedDeltaTime`, so the same number of physics steps happen per game second), which is
+what keeps a 17-stop service to roughly 12 minutes of wall clock instead of 35.
+
+**Latest route run (2026-10-26, Nairobi, 17 stops):** `Route check PASSED`, exit `0`.
+`SMOKE routeResult stops=17 serviced=17 docked=17 advanced=17 failures=0 shortcuts=0
+serviceAvg=45.0s serviceLongest=86.6s seconds=809 completed=True trafficMoved=6/12
+trafficLaneChecked=True trafficLanes=True navigator=True passed=True`, with every stop
+reporting `guidanceVersion=n->n+1 rebuilt=True` and the final one `indexAfter=17
+state=Completed`. The navigator assertion ran **158** samples with **0 failures**
+(`SMOKE routeNavigator checks=158 failures=0 arrows=False beacon=True banner=True
+passed=True`; `arrows=False` is the final destination sample, where the beacon and
+arrival banner are the navigator). The traffic sample from the same run: `SMOKE
+trafficSide samples=19 wrongSide=0 reversed=2 … countryLeft=True passed=True`,
+`SMOKE liveries painted=114 distinct=16 passed=True`, `SMOKE traffic pool=120
+spawned=120 atOrigin=0 busDistance=47-400m models=12` and `SMOKE routeTraffic
+window=6.1s active=12 moved=6 passed=True`.
+
+Two runner bugs were found and fixed by writing this down rather than by a timeout. The
+index-drift guard used to fire while the stop was still being served (advancing is the
+assertion there, not drift), and the walker stepped straight at the bay, which drove the
+bus through the buildings between it and the stop and let the collision response put it
+back; it now follows the mission's guidance and only pulls in at the kerb once the line
+has passed the stop.
+
 ### Loading screen gate
 
 The loading card is not decorative. One `CinematicLoadingCard` is owned by `LoadingScreenUI` and survives the scene swap; `SceneLoader` fills it to 44 % during `LoadSceneAsync`, then `WorldReadyLoadingScreen` continues from exactly that value while the world builds. 100 % is written only after `WorldReadiness.Evaluate` reports `ready`, and drive input is held at zero until then. A headless run proves the gate from the log:

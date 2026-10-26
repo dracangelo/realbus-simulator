@@ -60,6 +60,30 @@ public class RouteArrowOverlay : MonoBehaviour
 
     public static RouteArrowOverlay Instance { get; private set; }
 
+    /// <summary>True when at least one route chevron is on screen.</summary>
+    public bool HasVisibleArrows
+    {
+        get
+        {
+            if (pool == null) return false;
+            foreach (var arrow in pool)
+                if (arrow.root != null && arrow.root.activeSelf) return true;
+            return false;
+        }
+    }
+
+    /// <summary>True when the next-stop beacon is on screen.</summary>
+    public bool BeaconVisible => beacon.root != null && beacon.root.activeSelf;
+
+    /// <summary>
+    /// True when a route is active and the overlay is actually drawing part of it.
+    /// The full-route smoke run samples this for the whole journey: the old defect
+    /// was not a crash but markers that silently stopped being drawn after the first
+    /// route or the first served stop.
+    /// </summary>
+    public bool IsGuiding => overlayReady && mission != null && mission.routeActive &&
+        mission.currentRoute != null && (HasVisibleArrows || BeaconVisible);
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap() { EnsureExists(); }
 
@@ -80,7 +104,7 @@ public class RouteArrowOverlay : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    void Start() { StartCoroutine(BindWhenReady()); }
+    float bindRetryTimer;
 
     void OnDestroy()
     {
@@ -88,24 +112,61 @@ public class RouteArrowOverlay : MonoBehaviour
         DestroyPool();
     }
 
-    IEnumerator BindWhenReady()
+    /// <summary>
+    /// Binds on demand rather than once at startup. The overlay is created before
+    /// the gameplay scene exists and survives scene loads, so a single 45-second
+    /// startup coroutine meant that any route started after that window - or any
+    /// route whose bus was replaced - got no markers at all.
+    /// </summary>
+    bool TryBind()
     {
-        float deadline = Time.realtimeSinceStartup + 45f;
-        while (Time.realtimeSinceStartup < deadline)
-        {
-            bus     = FindAnyObjectByType<BusController>();
-            mission = MissionManager.Instance;
-            if (bus != null && mission != null) break;
-            yield return new WaitForSeconds(0.5f);
-        }
-        if (bus == null) yield break;
-        BuildPool();
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
+        if (mission == null) mission = MissionManager.Instance;
+        if (bus == null) return false;
+        if (pool == null || beacon.root == null) BuildPool();
         overlayReady = true;
+        return true;
     }
 
     void Update()
     {
-        if (!overlayReady || bus == null) return;
+        if (!overlayReady)
+        {
+            // Cheap retry: the bus does not exist until a route is loaded.
+            bindRetryTimer += Time.unscaledDeltaTime;
+            if (bindRetryTimer < 0.5f) return;
+            bindRetryTimer = 0f;
+            if (!TryBind()) return;
+        }
+
+        // The overlay survives scene loads (DontDestroyOnLoad) but the mission,
+        // the bus and the route behind them do not. Holding the references from
+        // the first route is why the markers worked for the opening route and
+        // then silently disappeared - or kept guiding the previous route - once
+        // the player loaded another one. Re-resolve whenever the bound objects
+        // are gone.
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
+        if (mission == null || mission.currentRoute == null)
+        {
+            var resolved = MissionManager.Instance;
+            if (resolved != mission)
+            {
+                mission = resolved;
+                lastPathVersion = -1;
+                cachedPath.Clear();
+            }
+        }
+        if (bus == null || mission == null) { HideAll(); if (beacon.root != null) beacon.root.SetActive(false); return; }
+
+        // No active route (menu, free drive, finished route): the markers belong to
+        // the navigator and must not linger over an old leg.
+        if (!mission.routeActive || mission.currentRoute == null)
+        {
+            HideAll();
+            if (beacon.root != null) beacon.root.SetActive(false);
+            return;
+        }
+
         RefreshPath();
         PlaceArrows();
         PlaceBeacon();
@@ -222,9 +283,21 @@ public class RouteArrowOverlay : MonoBehaviour
     {
         if (mission == null) return;
         var src = mission.ActiveGuidancePathPoints;
-        if (src == null || src.Count < 2) { cachedPath.Clear(); return; }
+        if (src == null || src.Count < 2)
+        {
+            // A rebuild can briefly hand back no points (GPS or tile data not
+            // ready yet). Keep the last valid line and its version instead of
+            // blanking the navigator: the next rebuild replaces it. A route
+            // change is handled above by re-binding the mission and clearing.
+            return;
+        }
 
-        int version = src.Count;
+        // GuidancePathVersion changes on every rebuild, including the rebuild that
+        // happens when a stop is served or a diversion is cleared. Caching by the
+        // point count treated the next leg as unchanged whenever it happened to
+        // have the same number of points, so the chevrons kept leading the player
+        // back down the leg they had just driven.
+        int version = mission.GuidancePathVersion;
         if (version == lastPathVersion) return;
         lastPathVersion = version;
 
@@ -246,7 +319,12 @@ public class RouteArrowOverlay : MonoBehaviour
         float accum     = 0f;
         float nextDist  = arrowSpacingMeters * 0.5f;
 
-        for (int i = Mathf.Max(0, nearest - 1);
+        // Start on the nearest segment itself. Starting one segment earlier (the
+        // old behaviour) applied the projection t from the nearest segment to the
+        // segment before it, so near the end of a leg the first "ahead" arrow was
+        // actually behind the bus and the remaining arrows ran out before the
+        // stop. That read as the navigator disappearing on the final approach.
+        for (int i = Mathf.Max(0, nearest);
              i < cachedPath.Count - 1 && arrowIdx < pool.Length; i++)
         {
             Vector3 segA   = cachedPath[i];
@@ -254,7 +332,7 @@ public class RouteArrowOverlay : MonoBehaviour
             float   segLen = Vector3.Distance(segA, segB);
             if (segLen < 0.01f) continue;
 
-            float t0        = (i == nearest - 1) ? nearestT : 0f;
+            float t0        = (i == nearest) ? nearestT : 0f;
             float available = segLen * (1f - t0);
 
             while (available >= nextDist - accum && arrowIdx < pool.Length)

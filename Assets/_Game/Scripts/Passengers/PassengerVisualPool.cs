@@ -7,7 +7,7 @@ public class PassengerVisualPool : MonoBehaviour
     public PassengerManager passengers;
     public BusController bus;
     public GameObject passengerPrefab;
-    public int visualBudget = 120;
+    public int visualBudget = CrowdPerformancePolicy.MaxPassengerProxies;
     readonly Dictionary<PassengerAgent, Transform> visible = new Dictionary<PassengerAgent, Transform>();
     readonly Stack<Transform> spare = new Stack<Transform>();
     readonly HashSet<PassengerAgent> used = new HashSet<PassengerAgent>();
@@ -18,6 +18,9 @@ public class PassengerVisualPool : MonoBehaviour
     {
         if (passengers == null) passengers = PassengerManager.Instance;
         if (bus == null) bus = FindAnyObjectByType<BusController>();
+        visualBudget = Mathf.Clamp(
+            visualBudget <= 0 ? CrowdPerformancePolicy.MaxPassengerProxies : visualBudget,
+            1, CrowdPerformancePolicy.MaxPassengerProxies);
         material = new Material(BuiltInShaders.Lit);
         material.color = new Color(0.15f, 0.55f, 0.75f);
         for (int i = 0; i < visualBudget; i++)
@@ -29,6 +32,11 @@ public class PassengerVisualPool : MonoBehaviour
                 Destroy(go.GetComponent<Collider>());
                 go.GetComponent<Renderer>().sharedMaterial = material;
             }
+            // Proxies are driven by transforms, so an off-screen Animator has
+            // nothing worth evaluating. This keeps a full bus from animating
+            // people the camera cannot see.
+            foreach (var animator in go.GetComponentsInChildren<Animator>(true))
+                animator.cullingMode = AnimatorCullingMode.CullCompletely;
             go.SetActive(false); spare.Push(go.transform);
         }
     }

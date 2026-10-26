@@ -77,6 +77,12 @@ public class PassengerManager : MonoBehaviour
     private readonly List<PassengerAgent> onboardPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> waitingPassengers = new List<PassengerAgent>();
     private readonly List<PassengerAgent> alightingPassengers = new List<PassengerAgent>();
+    /// <summary>Returned agents wait here instead of being reallocated at every stop.</summary>
+    private readonly Stack<PassengerAgent> sparePassengers = new Stack<PassengerAgent>();
+    const float AnimationIntervalSeconds = 1f / 30f;
+    const float SatisfactionIntervalSeconds = 0.25f;
+    float animationTimer;
+    float satisfactionTimer;
     public IReadOnlyList<PassengerAgent> OnboardPassengers => onboardPassengers;
     public IReadOnlyList<PassengerAgent> AlightingPassengers => alightingPassengers;
     public IReadOnlyList<PassengerAgent> WaitingPassengers => waitingPassengers;
@@ -94,12 +100,12 @@ public class PassengerManager : MonoBehaviour
     public void RestoreCheckpointState(int passengerCount, float satisfaction, int served, float fares,
         float income, float distanceKm, int currentStopIndex, int routeStopCount)
     {
-        onboardPassengers.Clear(); waitingPassengers.Clear(); alightingPassengers.Clear();
+        ReleaseAllPassengers();
         int restoredCount = Mathf.Clamp(passengerCount, 0, GetMaxCapacity());
         int destination = Mathf.Clamp(currentStopIndex + 1, 0, Mathf.Max(0, routeStopCount - 1));
         for (int i = 0; i < restoredCount; i++)
         {
-            PassengerAgent passenger = new PassengerAgent(Mathf.Max(0, currentStopIndex - 1), destination, 60f, false);
+            PassengerAgent passenger = RentPassenger(Mathf.Max(0, currentStopIndex - 1), destination, 60f, false, PassengerArchetype.Commuter);
             passenger.satisfaction = Mathf.Clamp01(satisfaction); passenger.AssignBusSlot(i); passenger.MarkBoarded();
             onboardPassengers.Add(passenger);
         }
@@ -129,12 +135,29 @@ public class PassengerManager : MonoBehaviour
     {
         TrackDistance();
 
-        UpdatePassengerAnimationState();
+        float dt = Time.deltaTime;
+        // Boarding/alighting interpolation is invisible between 30 Hz steps, and
+        // the satisfaction average is a display value, not a simulation input.
+        // Thinning both keeps a full bus from doing per-passenger work every frame.
+        animationTimer += dt;
+        if (animationTimer >= AnimationIntervalSeconds)
+        {
+            UpdatePassengerAnimationState(animationTimer);
+            animationTimer = 0f;
+        }
+
         TickPendingDoorLock();
         UpdateAccessibilityReset();
         PrepareApproachingStop();
         UpdatePatience();
-        RecalculateSatisfaction();
+
+        satisfactionTimer += dt;
+        if (satisfactionTimer >= SatisfactionIntervalSeconds)
+        {
+            RecalculateSatisfaction();
+            satisfactionTimer = 0f;
+        }
+
         HandleStopRequestAcknowledgeInput();
         HandleDoorOpenInput();
     }
@@ -156,6 +179,8 @@ public class PassengerManager : MonoBehaviour
 
     void PrepareWaiting(BusStopData stop, int index, int count)
     {
+        for (int i = 0; i < waitingPassengers.Count; i++)
+            ReturnPassenger(waitingPassengers[i]);
         waitingPassengers.Clear();
         preparedStop = index;
         WaitingPlatformWorld = GPSManager.Instance != null ? GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude) : transform.position;
@@ -206,7 +231,7 @@ public class PassengerManager : MonoBehaviour
         }
     }
 
-    void UpdatePassengerAnimationState()
+    void UpdatePassengerAnimationState(float dt)
     {
         for (int i = 0; i < onboardPassengers.Count; i++)
         {
@@ -215,11 +240,11 @@ public class PassengerManager : MonoBehaviour
                 continue;
 
             Vector3 target = ResolveBusSlotLocalPosition(passenger, i);
-            passenger.TickBoardingAnimation(Time.deltaTime, target, boardingAnimationSpeed);
-            passenger.TickAlightingAnimation(Time.deltaTime, doorLocalPosition, alightingAnimationSpeed);
+            passenger.TickBoardingAnimation(dt, target, boardingAnimationSpeed);
+            passenger.TickAlightingAnimation(dt, doorLocalPosition, alightingAnimationSpeed);
 
             if (!passenger.isBoarding && !passenger.isAlighting)
-                passenger.busLocalPosition = Vector3.Lerp(passenger.busLocalPosition, target, Time.deltaTime * 4f);
+                passenger.busLocalPosition = Vector3.Lerp(passenger.busLocalPosition, target, dt * 4f);
         }
 
         for (int i = alightingPassengers.Count - 1; i >= 0; i--)
@@ -231,7 +256,7 @@ public class PassengerManager : MonoBehaviour
                 continue;
             }
 
-            passenger.TickAlightingAnimation(Time.deltaTime, doorLocalPosition, alightingAnimationSpeed);
+            passenger.TickAlightingAnimation(dt, doorLocalPosition, alightingAnimationSpeed);
             if (!passenger.HasReachedExit(doorLocalPosition))
                 continue;
 
@@ -239,6 +264,7 @@ public class PassengerManager : MonoBehaviour
             completedPassengerCount++;
             passenger.MarkExited();
             alightingPassengers.RemoveAt(i);
+            ReturnPassenger(passenger);
         }
     }
 
@@ -284,6 +310,42 @@ public class PassengerManager : MonoBehaviour
         maxBusCapacity = Mathf.Max(1, spec.PassengerCapacity);
         doorOpenCapacityLimit = Mathf.Clamp(spec.doorOpenCapacityLimit, 1, maxBusCapacity);
         seatedCapacity = Mathf.Clamp(spec.SeatedCapacity, 0, maxBusCapacity);
+    }
+
+    /// <summary>Hands out a clean agent from the pool, allocating only when the pool is empty.</summary>
+    PassengerAgent RentPassenger(int originStop, int destinationStop, float initialPatience, bool wheelchair,
+        PassengerArchetype archetype)
+    {
+        PassengerAgent agent = sparePassengers.Count > 0
+            ? sparePassengers.Pop()
+            : new PassengerAgent(originStop, destinationStop, initialPatience, wheelchair, archetype);
+        agent.ResetForReuse(originStop, destinationStop, initialPatience, wheelchair, archetype);
+        return agent;
+    }
+
+    /// <summary>Clears an agent and returns it to the pool so the next stop reuses the object.</summary>
+    void ReturnPassenger(PassengerAgent agent)
+    {
+        if (agent == null)
+            return;
+
+        agent.ResetForReuse(0, -1, 60f, false, PassengerArchetype.Commuter);
+        sparePassengers.Push(agent);
+    }
+
+    /// <summary>Returns everyone currently tracked to the pool and empties the three lists.</summary>
+    void ReleaseAllPassengers()
+    {
+        for (int i = 0; i < onboardPassengers.Count; i++)
+            ReturnPassenger(onboardPassengers[i]);
+        for (int i = 0; i < waitingPassengers.Count; i++)
+            ReturnPassenger(waitingPassengers[i]);
+        for (int i = 0; i < alightingPassengers.Count; i++)
+            ReturnPassenger(alightingPassengers[i]);
+
+        onboardPassengers.Clear();
+        waitingPassengers.Clear();
+        alightingPassengers.Clear();
     }
 
     public bool CanOpenDoors()
@@ -425,9 +487,8 @@ public class PassengerManager : MonoBehaviour
         lastSpeedKmh = busController != null ? busController.currentSpeedKmh : 0f;
         totalPassengersServed = 0;
         totalFareCollected = totalFaresCollected = sessionIncome = totalDistanceKm = 0f;
-        onboardPassengers.Clear();
-        waitingPassengers.Clear();
-        alightingPassengers.Clear();
+        ReleaseAllPassengers();
+        animationTimer = satisfactionTimer = 0f;
         currentPassengers = 0;
         waitingAtCurrentStop = 0;
         lastAlightingCount = 0;
@@ -452,7 +513,12 @@ public class PassengerManager : MonoBehaviour
                     Mathf.RoundToInt(currentPassengers * 0.2f),
                     Mathf.RoundToInt(currentPassengers * 0.6f) + 1));
             for (int i = 0; i < alightingFallback && onboardPassengers.Count > 0; i++)
-                onboardPassengers.RemoveAt(onboardPassengers.Count - 1);
+            {
+                int last = onboardPassengers.Count - 1;
+                var removed = onboardPassengers[last];
+                onboardPassengers.RemoveAt(last);
+                ReturnPassenger(removed);
+            }
             return alightingFallback;
         }
 
@@ -489,12 +555,12 @@ public class PassengerManager : MonoBehaviour
             int destination = ResolveDestinationStop(stopIndex, totalStops);
             bool wheelchair = Random.value < wheelchairChance;
 
-            var p = new PassengerAgent(
+            var p = RentPassenger(
                 originStop: Mathf.Max(0, stopIndex),
                 destinationStop: destination,
                 initialPatience: Random.Range(45f, 120f),
                 wheelchair: wheelchair,
-                passengerArchetype: ResolveArchetype()
+                archetype: ResolveArchetype()
             );
             ApplyArchetypeTuning(p);
             waitingPassengers.Add(p);
@@ -504,7 +570,7 @@ public class PassengerManager : MonoBehaviour
                 int extraStudents = Random.Range(1, 3);
                 for (int groupIndex = 0; groupIndex < extraStudents; groupIndex++)
                 {
-                    var student = new PassengerAgent(
+                    var student = RentPassenger(
                         Mathf.Max(0, stopIndex),
                         destination,
                         Random.Range(45f, 110f),
@@ -776,6 +842,7 @@ public class PassengerManager : MonoBehaviour
                 passenger.MarkExited();
             }
             alightingPassengers.RemoveAt(i);
+            ReturnPassenger(passenger);
         }
 
         latestRequiredDwellSeconds = 0f;

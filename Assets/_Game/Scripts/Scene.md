@@ -73,7 +73,7 @@ Assets/
 │   │   │   ├── GPSManager.cs
 │   │   │   ├── BusStop.cs
 │   │   │   ├── BusRoute.cs            (ScriptableObject)
-│   │   │   ├── RouteVisualizer.cs
+│   │   │   ├── RouteArrowOverlay.cs   (runtime world-space navigator)
 │   │   │   ├── FreeDriveSession.cs
 │   │   │   ├── MissionManager.cs
 │   │   │   ├── MissionState.cs        (enum)
@@ -445,13 +445,8 @@ GameScene
 │   ├── TL_Kenyatta                 ← phase offset 45
 │   └── TL_MuseumHill               ← phase offset 20
 │
-├── RouteVisualizer                 ← Position 0,0,0
-│   ├── RouteVisualizer script
-│   │   ├── Route → Route_01_CBD_Westlands (fallback if no GameState)
-│   │   ├── Route Color → orange #FF8000
-│   │   ├── Line Width → 3
-│   │   └── Line Height Y → 0.5
-│   └── LineRenderer (added at runtime)
+├── RouteArrowOverlay               ← runtime-only (AfterSceneLoad + DontDestroyOnLoad); not saved in the scene
+│   └── RouteBeacon + RouteArrow_*  ← pooled chevrons and next-stop beacon along the active guidance path
 │
 ├── Directional Light               ← Sun light for SkyController
 │

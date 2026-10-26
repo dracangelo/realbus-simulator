@@ -654,8 +654,10 @@ public class VehiclePool : MonoBehaviour
             int next = roadGraph.GetRandomNextNode(node, -1);
             if (!roadGraph.IsValidNode(next)) continue;
 
-            int laneCount = Mathf.Max(1, roadGraph.GetLaneCount(node, next));
-            int candidateLane = Random.Range(0, laneCount);
+            // A new body belongs in its normal driving lane. Spawning in a random
+            // lane put cars in the oncoming half or the passing lane on their
+            // first metre, which read as traffic that did not keep a side.
+            int candidateLane = AIVehicleController.CruiseLaneIndex(roadGraph, node, next);
             // Spread bodies along the link. Junction-only spawning created visible
             // clumps and made re-homed traffic look like it had teleported.
             float candidateAlong = Random.Range(0.12f, 0.88f);

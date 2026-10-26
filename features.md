@@ -26,7 +26,7 @@
 - Player favourites plus selective offline-map, world-data, all-route, or one-route downloads.
 - OSM lane-aware road dividers and AI traffic on the correct side of each carriageway.
 - In-game optional downloads for city world data, all routes, or one OSM route.
-- GPS tracking, route previews, and runtime navigation lines.
+- GPS tracking, route previews, and a runtime navigator (world-space chevrons, next-stop beacon and turn banner) that stays bound across stops, diversions and scene loads.
 - Cinematic country, city, and route selectors with swipeable cards.
 
 ## Gameplay
@@ -48,9 +48,11 @@
 ## Passengers and traffic
 
 - Rush-hour passenger demand and destination-based journeys.
-- Capacity limits, wheelchair passengers, and reusable passenger visuals.
+- Capacity limits, wheelchair passengers, and a pooled visual layer that is fully reset on reuse (30 Hz animation, 4 Hz satisfaction, no stale references or duplicate agents).
 - Pooled cars, trucks, buses, and vans built from the downloaded vehicle models, normalised, faced, weighted by cost at import, and textured from the pack's own assets (materials are saved as real assets, so no prefab ships with an empty slot).
-- Traffic that keeps its own lane on the correct side of the road, including shared single-lane streets, with lane-following steering instead of corner cutting.
+- Traffic that keeps its own lane on the correct side of the road across one-way and two-way roads with one to four or more lanes, including lane-count changes, with lane-following steering instead of corner cutting and no oscillation between lanes.
+- Configurable left- and right-hand driving: spawn and cruise lanes are derived from the road graph's driving side, and new vehicles use the route's cruise lane rather than a random lane.
+- Distance-tiered pedestrians: full walk and body sway under 35 m, a simplified walk at 10 Hz from 35–80 m, 4 Hz from 80–120 m, and a frozen pose beyond the render distance; crossing walkers spawn only near the player and retire to the pool.
 - Traffic that does not U-turn at ordinary two-way junctions (only at dead ends), and spawns that stay clear of the player and other vehicles.
 - Traffic volume that follows the daily demand curve, with a floor so the road is never empty, a tier split by distance, and a pool that re-homes dormant vehicles around the bus as it drives.
 - Full-physics, spline, billboard, and distance-culling traffic tiers.

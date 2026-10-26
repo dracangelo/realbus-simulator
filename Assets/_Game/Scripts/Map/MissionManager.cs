@@ -47,6 +47,13 @@ public class MissionManager : MonoBehaviour
     private Vector3 nextStopWorldPos;
     bool missionStarting;
     public bool isProcessingStop { get; private set; } = false;
+
+    /// <summary>
+    /// Upper bound on how long a stop waits for boarding/alighting animations
+    /// before it completes anyway. The same anti-stuck reasoning as the door-lock
+    /// ceiling: a stuck animation must never strand the route at a stop.
+    /// </summary>
+    public const float MaxServiceAnimationWaitSeconds = 10f;
     public bool earlyDepartureRequested { get; private set; } = false;
     private bool pendingDoorOpenRequest = false;
     private Vector3[] activeGuidancePathPoints;
@@ -509,8 +516,23 @@ public class MissionManager : MonoBehaviour
             yield return null;
         }
 
-        while (!earlyDepartureRequested && PassengerManager.Instance != null && PassengerManager.Instance.HasServiceAnimations)
+        // A boarding or alighting animation can outlive its useful window (a
+        // passenger waiting behind a door that was shut, a model whose exit point
+        // is never reached). Waiting on it with no ceiling left the mission in
+        // AtStop with the served stop still the navigation target, so however far
+        // the player drove the game behaved as if the stop had not been left. The
+        // wait is bounded, and the stop always completes.
+        float serviceWait = 0f;
+        while (!earlyDepartureRequested && PassengerManager.Instance != null &&
+               PassengerManager.Instance.HasServiceAnimations)
         {
+            serviceWait += Time.deltaTime;
+            if (serviceWait >= MaxServiceAnimationWaitSeconds)
+            {
+                Debug.LogWarning($"[MissionManager] Service animations at '{stop.stopName}' did not finish " +
+                    $"within {MaxServiceAnimationWaitSeconds:F0}s. Completing the stop so the route can continue.");
+                break;
+            }
             yield return null;
         }
 

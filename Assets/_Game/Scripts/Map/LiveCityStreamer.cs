@@ -27,7 +27,7 @@ public class LiveCityStreamer : MonoBehaviour
     public float tinyPropRenderDistance = SceneryLodPolicy.TinyPropRenderDistance;
     public float pedestrianRenderDistance = SceneryLodPolicy.PedestrianRenderDistance;
     public int triangleBudget = 14000000;
-    public int maxWalkers = 40;
+    public int maxWalkers = CrowdPerformancePolicy.MaxAmbientWalkers;
     [Tooltip("Distance between placement samples along a road. Smaller = denser.")]
     [Min(2f)] public float spacing = 2.6f;
     [Tooltip("Models placed per frame while a street fills. Higher fills faster and costs more frame time.")]
@@ -151,8 +151,14 @@ public class LiveCityStreamer : MonoBehaviour
         public Quaternion rotation;
         public float radius, phase;
         public bool scattered;
+        /// <summary>Seconds accumulated since this walker last had its pose updated.</summary>
+        public float animationTimer;
     }
     readonly Dictionary<(RoadSurfaceIndex.Segment, int, int), Spawned> active = new Dictionary<(RoadSurfaceIndex.Segment, int, int), Spawned>();
+    /// <summary>Only the pedestrians, so the per-frame walk tick does not scan every prop.</summary>
+    readonly List<Spawned> walkerItems = new List<Spawned>();
+    /// <summary>Trees and plants, updated on the slower sway cadence.</summary>
+    readonly List<Spawned> swaying = new List<Spawned>();
     /// <summary>One shared placement key per open-ground cell, so a scattered prop knows where it came from.</summary>
     readonly Dictionary<Vector2Int, RoadSurfaceIndex.Segment> scatterCells = new Dictionary<Vector2Int, RoadSurfaceIndex.Segment>();
     /// <summary>Way id reserved for the open-ground keys; no real road can own it.</summary>
@@ -181,7 +187,8 @@ public class LiveCityStreamer : MonoBehaviour
     {
         StopAllCoroutines();
         foreach (var item in active.Values) if (item.go != null) Destroy(item.go);
-        active.Clear(); scatterCells.Clear(); triangles = walkers = 0; index = null;
+        active.Clear(); walkerItems.Clear(); swaying.Clear();
+        scatterCells.Clear(); triangles = walkers = 0; index = null;
     }
 
     IEnumerator Stream()
@@ -193,6 +200,17 @@ public class LiveCityStreamer : MonoBehaviour
             InitialPassComplete = true;
             yield break;
         }
+        // An authored value may be larger than the crowd policy allows; the policy
+        // is the ceiling so a scene tweak cannot quietly reintroduce a full crowd.
+        // Ambient scenery walkers also follow the quality tier, which keeps a
+        // phone from streaming the same pavement crowd as a desktop.
+        int tierBudget = CrowdPerformancePolicy.BudgetForQuality(
+            QualitySettings.GetQualityLevel(), Application.isMobilePlatform,
+            CrowdPerformancePolicy.MaxAmbientWalkers);
+        maxWalkers = CrowdPerformancePolicy.ClampWalkerBudget(
+            Mathf.Min(maxWalkers <= 0 ? tierBudget : maxWalkers, tierBudget),
+            CrowdPerformancePolicy.MaxAmbientWalkers);
+
         while (enabled)
         {
             var roads = OSMRoadMeshBuilder.Instance;
@@ -202,7 +220,8 @@ public class LiveCityStreamer : MonoBehaviour
             if (index != roads.SurfaceIndex)
             {
                 foreach (var item in active.Values) if (item.go != null) Destroy(item.go);
-                active.Clear(); scatterCells.Clear(); triangles = walkers = 0;
+                active.Clear(); walkerItems.Clear(); swaying.Clear();
+                scatterCells.Clear(); triangles = walkers = 0;
                 index = roads.SurfaceIndex;
             }
             var bus = MissionManager.Instance != null ? MissionManager.Instance.busController : FindAnyObjectByType<BusController>();
@@ -218,10 +237,11 @@ public class LiveCityStreamer : MonoBehaviour
     IEnumerator Refresh(Transform viewer, OSMBuildingMeshBuilder buildings)
     {
         Vector3 player = viewer.position;
+        float walkerRetireSqr = CrowdPerformancePolicy.WalkerRetireDistanceMeters * CrowdPerformancePolicy.WalkerRetireDistanceMeters;
         var remove = new List<(RoadSurfaceIndex.Segment, int, int)>();
         foreach (var pair in active)
             if (FlatDistanceSquared(pair.Value.center, player) > Mathf.Max(loadRadius + 30f, unloadRadius) * Mathf.Max(loadRadius + 30f, unloadRadius)
-                || (pair.Value.entry.kind == LiveCityCatalog.Kind.Pedestrian && FlatDistanceSquared(pair.Value.center, player) > 140f * 140f)
+                || (pair.Value.entry.kind == LiveCityCatalog.Kind.Pedestrian && FlatDistanceSquared(pair.Value.center, player) > walkerRetireSqr)
                 || buildings.OverlapsBuilding(pair.Value.center, pair.Value.radius))
                 remove.Add(pair.Key);
         foreach (var key in remove)
@@ -229,6 +249,7 @@ public class LiveCityStreamer : MonoBehaviour
             var item = active[key];
             triangles -= item.entry.triangles;
             if (item.entry.kind == LiveCityCatalog.Kind.Pedestrian) walkers--;
+            Forget(item);
             Destroy(item.go); active.Remove(key);
         }
         var candidates = new List<Candidate>();
@@ -268,7 +289,8 @@ public class LiveCityStreamer : MonoBehaviour
             var entry = SelectEntry(candidate.seed);
             if (entry == null || entry.prefab == null || triangles + entry.triangles > triangleBudget) continue;
             bool walking = entry.kind == LiveCityCatalog.Kind.Pedestrian;
-            if (walking && (walkers >= maxWalkers || FlatDistanceSquared(candidate.center, player) > 120f * 120f))
+            float walkerSpawnSqr = CrowdPerformancePolicy.CrossingSpawnRadiusMeters * CrowdPerformancePolicy.CrossingSpawnRadiusMeters;
+            if (walking && (walkers >= maxWalkers || FlatDistanceSquared(candidate.center, player) > walkerSpawnSqr))
             {
                 entry = SelectVegetationEntry(candidate.seed);
                 if (entry == null || entry.prefab == null || triangles + entry.triangles > triangleBudget) continue;
@@ -326,10 +348,12 @@ public class LiveCityStreamer : MonoBehaviour
             // this exact placement seed and survives streaming out and back.
             StreetTextureLibrary.Decorate(go, entry.kind, candidate.seed);
             ApplySceneryLod(go, entry);
-            active[(candidate.segment, candidate.sample, candidate.side)] = new Spawned { go = go, entry = entry, center = position,
+            var spawned = new Spawned { go = go, entry = entry, center = position,
                 direction = candidate.direction, rotation = rotation, radius = radius, phase = (candidate.seed % 1000) * .01f };
+            active[(candidate.segment, candidate.sample, candidate.side)] = spawned;
             triangles += entry.triangles;
-            if (walking) walkers++;
+            if (walking) { walkers++; walkerItems.Add(spawned); }
+            else RegisterSwaying(spawned);
             // The first few props are sorted into the player's view. Opening the
             // loading gate there is enough for the first frame; the rest of the
             // street keeps filling while the player is already in the bus.
@@ -364,9 +388,11 @@ public class LiveCityStreamer : MonoBehaviour
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 deepGo.transform.localScale = Vector3.one * deepScale;
                 ImportedFoliageVariation.Apply(deepGo, deep.kind, deepSeed);
-                active[(candidate.segment, deepKey, candidate.side)] = new Spawned { go = deepGo, entry = deep, center = deepPosition,
+                var deepSpawned = new Spawned { go = deepGo, entry = deep, center = deepPosition,
                     direction = candidate.direction, rotation = deepRotation, radius = deepRadius, phase = (deepSeed % 1000) * .01f };
+                active[(candidate.segment, deepKey, candidate.side)] = deepSpawned;
                 triangles += deep.triangles;
+                RegisterSwaying(deepSpawned);
                 if (++placedThisFrame >= Mathf.Max(1, instancesPerFrame)) { placedThisFrame = 0; yield return null; }
             }
         }
@@ -470,9 +496,11 @@ public class LiveCityStreamer : MonoBehaviour
                 go.transform.localScale = Vector3.one * scale;
                 ImportedFoliageVariation.Apply(go, entry.kind, seed);
                 ApplySceneryLod(go, entry);
-                active[(segment, slot, ScatterSide)] = new Spawned { go = go, entry = entry, center = position, direction = Vector3.forward,
+                var scatteredItem = new Spawned { go = go, entry = entry, center = position, direction = Vector3.forward,
                     rotation = rotation, radius = radius, phase = (seed % 1000) * .01f, scattered = true };
+                active[(segment, slot, ScatterSide)] = scatteredItem;
                 triangles += entry.triangles;
+                RegisterSwaying(scatteredItem);
                 scattered++;
                 if (++plantedThisFrame >= Mathf.Max(1, instancesPerFrame) / 2) { plantedThisFrame = 0; yield return null; }
             }
@@ -508,30 +536,85 @@ public class LiveCityStreamer : MonoBehaviour
     }
 
     float cullTick;
+    float swayTick;
 
     void Update()
     {
+        var bus = MissionManager.Instance != null ? MissionManager.Instance.busController : null;
+        bool havePlayer = bus != null;
+        Vector3 player = havePlayer ? bus.transform.position : transform.position;
+
         cullTick += Time.deltaTime;
         if (cullTick >= 0.5f)
         {
             cullTick = 0f;
-            var bus = MissionManager.Instance != null ? MissionManager.Instance.busController : null;
-            if (bus != null) CullDistantProps(bus.transform.position);
+            if (havePlayer) CullDistantProps(player);
         }
 
-        foreach (var item in active.Values)
+        // Two short lists instead of a scan of every active prop: walkers need a
+        // per-frame distance tier, planting only needs a slow sway tick.
+        AnimateWalkers(player, havePlayer);
+        AnimateSway();
+    }
+
+    void RegisterSwaying(Spawned item)
+    {
+        if (item == null || item.entry == null) return;
+        if (item.entry.kind == LiveCityCatalog.Kind.Tree || item.entry.kind == LiveCityCatalog.Kind.Plant)
+            swaying.Add(item);
+    }
+
+    void Forget(Spawned item)
+    {
+        if (item == null) return;
+        walkerItems.Remove(item);
+        swaying.Remove(item);
+    }
+
+    /// <summary>
+    /// Walks the ambient crowd at a distance-appropriate cadence. The pose is a
+    /// pure function of time, so skipping updates thins the cost without slowing
+    /// the walk, and a walker past the cutoff keeps its last pose.
+    /// </summary>
+    void AnimateWalkers(Vector3 player, bool havePlayer)
+    {
+        for (int i = walkerItems.Count - 1; i >= 0; i--)
         {
-            if (item.go == null || !item.go.activeSelf) continue;
+            var item = walkerItems[i];
+            if (item == null || item.go == null) { walkerItems.RemoveAt(i); continue; }
+            if (!item.go.activeSelf) continue;
+
+            float distance = havePlayer ? Mathf.Sqrt(FlatDistanceSquared(item.center, player)) : 0f;
+            if (!CrowdPerformancePolicy.AnimatesAt(distance)) continue;
+
+            item.animationTimer += Time.deltaTime;
+            float interval = CrowdPerformancePolicy.AnimationInterval(distance);
+            if (interval > 0f && item.animationTimer < interval) continue;
+            item.animationTimer = 0f;
+
             float t = Time.time + item.phase;
-            if (item.entry.kind == LiveCityCatalog.Kind.Pedestrian)
-            {
-                float along = Mathf.PingPong(t * 1.1f, 12f) - 6f;
-                Vector3 direction = (Mathf.Repeat(t * 1.1f, 24f) < 12f ? 1f : -1f) * item.direction;
-                Quaternion walkRot = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 0, Mathf.Sin(t * 7f) * 1.5f);
-                item.go.transform.SetPositionAndRotation(item.center + item.direction * along, walkRot);
-            }
-            else if (item.entry.kind == LiveCityCatalog.Kind.Tree || item.entry.kind == LiveCityCatalog.Kind.Plant)
-                item.go.transform.rotation = item.rotation * Quaternion.Euler(Mathf.Sin(t * .8f) * .4f, 0, Mathf.Sin(t * .6f) * .35f);
+            float along = Mathf.PingPong(t * 1.1f, 12f) - 6f;
+            Vector3 direction = (Mathf.Repeat(t * 1.1f, 24f) < 12f ? 1f : -1f) * item.direction;
+            float sway = CrowdPerformancePolicy.UsesFullAnimation(distance) ? Mathf.Sin(t * 7f) * 1.5f : 0f;
+            Quaternion walkRot = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 0, sway);
+            item.go.transform.SetPositionAndRotation(item.center + item.direction * along, walkRot);
+        }
+    }
+
+    void AnimateSway()
+    {
+        if (swaying.Count == 0) return;
+        swayTick += Time.deltaTime;
+        if (swayTick < CrowdPerformancePolicy.SwayIntervalSeconds) return;
+        swayTick = 0f;
+
+        for (int i = swaying.Count - 1; i >= 0; i--)
+        {
+            var item = swaying[i];
+            if (item == null || item.go == null) { swaying.RemoveAt(i); continue; }
+            if (!item.go.activeSelf) continue;
+            float t = Time.time + item.phase;
+            item.go.transform.rotation = item.rotation * Quaternion.Euler(Mathf.Sin(t * .8f) * .4f, 0, Mathf.Sin(t * .6f) * .35f);
         }
     }
 

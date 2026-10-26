@@ -20,6 +20,13 @@ public class HUDManager : MonoBehaviour
     public bool IsBound => bus != null;
     public bool IsVisible => canvas != null && canvas.gameObject.activeSelf;
 
+    /// <summary>
+    /// True when the turn banner is on screen with a live instruction. The smoke run
+    /// asserts this for the whole route, not just at the start.
+    /// </summary>
+    public bool NavigatorVisible => IsVisible && guidanceText != null &&
+        guidanceText.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(guidanceText.text);
+
     Canvas canvas;
     GameObject safeRoot;
     TextMeshProUGUI speedText, gearText, nextStopText, etaText, guidanceText, scheduleText;
@@ -237,7 +244,12 @@ public class HUDManager : MonoBehaviour
         int count = mission.currentRoute.stops.Length;
         int index = Mathf.Clamp(mission.currentStopIndex, 0, Mathf.Max(0, count - 1));
         string navigation = GetGuidanceInstruction();
-        if (string.IsNullOrWhiteSpace(navigation)) navigation = "CONTINUE STRAIGHT";
+        if (string.IsNullOrWhiteSpace(navigation))
+        {
+            // Keep the banner up with an explicit fallback instead of blanking the
+            // navigator when the guidance line is temporarily unavailable.
+            navigation = "ROUTE DATA UNAVAILABLE • CONTINUE";
+        }
         guidanceText.text = navigation;
         nextStopText.text = $"{mission.currentRoute.stops[index].stopName}  •  {mission.distanceToNextStop:0} m";
         float etaSeconds = mission.distanceToNextStop / Mathf.Max(4.2f, speed / 3.6f);

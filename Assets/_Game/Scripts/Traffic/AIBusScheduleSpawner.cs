@@ -209,8 +209,9 @@ public class AIBusScheduleSpawner : MonoBehaviour
             if (Vector3.Distance(graph.GetNodePosition(from), graph.GetNodePosition(to)) < 8f)
                 continue;
 
-            int laneCount = Mathf.Max(1, graph.GetLaneCount(from, to));
-            int candidateLane = Random.Range(0, laneCount);
+            // A scheduled bus starts in the kerbside driving lane, not a random
+            // lane across the carriageway.
+            int candidateLane = AIVehicleController.CruiseLaneIndex(graph, from, to);
             Vector3 candidatePoint = GetLanePoint(graph, from, to, candidateLane);
             if (!IsSpawnPointClear(candidatePoint))
                 continue;

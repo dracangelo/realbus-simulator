@@ -388,6 +388,86 @@ public class BusDepotManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Post-construction sweep: no yard prop may reach the street carriageway. A
+    /// prop that does is slid away from the street in small steps (it keeps its
+    /// footing only while it also stays clear of the yard's own lanes) and is
+    /// dropped when no nearby position satisfies both. Placement-time checks stay:
+    /// this is the net that catches props created or decorated after them, and
+    /// imported models whose render bounds are wider than the placement box.
+    /// </summary>
+    void SettleDepotPropsClearOfStreet(Transform parent, Vector3 outward)
+    {
+        if (parent == null) return;
+        outward.y = 0f;
+        if (outward.sqrMagnitude < 0.0001f) return;
+        outward.Normalize();
+
+        var candidates = new List<Transform>();
+        foreach (Transform child in parent)
+            if (IsYardProp(child.name) && !IsStreetJoin(child.name)) candidates.Add(child);
+
+        int moved = 0, removed = 0;
+        foreach (Transform prop in candidates)
+        {
+            if (prop == null || !PropReachesStreet(prop.gameObject, 0f)) continue;
+
+            Vector3 original = prop.position;
+            bool cleared = false;
+            // Search both along and against the away-from-street direction, nearest
+            // first: a shelter that only just clips the kerb is nudged a metre, and
+            // a prop that was placed beyond the yard edge can step back inside it.
+            for (int step = 1; step <= 12 && !cleared; step++)
+            {
+                for (int side = 0; side < 2 && !cleared; side++)
+                {
+                    Vector3 candidate = original + outward * (step * 0.75f) * (side == 0 ? 1f : -1f);
+                    prop.position = candidate;
+                    if (PropReachesStreet(prop.gameObject, 0f)) continue;
+                    if (PropStandsInYardLane(prop.gameObject)) continue;
+                    cleared = true;
+                    moved++;
+                }
+            }
+            if (cleared) continue;
+
+            // No clear footing nearby: an imported depot building is routinely
+            // larger than the apron at the scale the placement pass asked for, so
+            // shrinking it is a better answer than deleting it. Try a few sizes at
+            // the position it was authored for.
+            prop.position = original;
+            Vector3 authoredScale = prop.localScale;
+            for (int shrink = 0; shrink < 3 && !cleared; shrink++)
+            {
+                prop.localScale = authoredScale * Mathf.Pow(0.8f, shrink + 1);
+                if (PropReachesStreet(prop.gameObject, 0f)) continue;
+                if (PropStandsInYardLane(prop.gameObject)) continue;
+                cleared = true;
+                moved++;
+                Debug.Log($"[BusDepotManager] Shrank '{prop.name}' to {Mathf.Pow(0.8f, shrink + 1) * 100f:F0}% so it fits the yard clear of the street.");
+            }
+            if (cleared) continue;
+            prop.localScale = authoredScale;
+
+            // A prop that merely touches the kerb line is not the artifact the
+            // player sees; one whose body lies in the carriageway is. Drop it only
+            // when the road actually runs through it - 0.6 m of penetration, not
+            // the 0.2 m margin the placement pass uses as a safety envelope.
+            if (!PropReachesStreet(prop.gameObject, -0.6f) && !PropStandsInYardLane(prop.gameObject))
+                continue;
+
+            // Destroy is deferred; deactivate first so the rest of the build frame
+            // already measures the yard without it.
+            prop.gameObject.SetActive(false);
+            DestroySafe(prop.gameObject);
+            removed++;
+            Debug.Log($"[BusDepotManager] Removed '{prop.name}': it could not be placed clear of the street carriageway.");
+        }
+
+        if (moved > 0 || removed > 0)
+            Debug.Log($"[BusDepotManager] Depot street sweep: moved={moved} removed={removed}.");
+    }
+
+    /// <summary>
     /// Names of the yard props currently standing in a lane. Healthy is empty: it is
     /// the invariant the depot's own placement rules are meant to hold, so the tests
     /// and the headless smoke run assert on it directly.
@@ -400,6 +480,18 @@ public class BusDepotManager : MonoBehaviour
             if (IsYardProp(child.name) && PropStandsInYardLane(child.gameObject, padding))
                 offenders.Add(child.name);
         return offenders;
+    }
+
+    /// <summary>
+    /// Parts of the yard that are meant to meet the street: the dropped kerbs cut
+    /// into the carriageway edge, the ramps up to them and the yard's own markings.
+    /// They are not scenery that could be moved off the road.
+    /// </summary>
+    static bool IsStreetJoin(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return false;
+        return name.Contains("DroppedKerb") || name.Contains("Ramp") ||
+               name.Contains("Kerb_Cut") || name.StartsWith("Bay_Stripe");
     }
 
     /// <summary>Yard children that are structure or scenery rather than the road surface itself.</summary>
@@ -571,6 +663,13 @@ public class BusDepotManager : MonoBehaviour
 
         // 8. Nothing the city already built may remain in the yard
         EvictCityBuildingsFromDepot();
+
+        // 9. Last look at what the yard now holds against the street. Each spawner
+        // checks its own prop, but a prop whose model carries a wide base or an
+        // offset pivot can still clip the carriageway once scaled and rotated in
+        // place, which reads as depot scenery merging into the road. Anything that
+        // still reaches the street is slid deeper into the yard, or dropped.
+        SettleDepotPropsClearOfStreet(currentDepot.transform, outward);
 
         // The whole depot is imported scenery: keep it on the palette's
         // late-repair list so white FBX materials are caught even if a spawn
@@ -1339,18 +1438,32 @@ public class BusDepotManager : MonoBehaviour
 
     void EnsureColliders(GameObject go)
     {
-        if (go.GetComponentInChildren<Collider>() == null)
+        if (go.GetComponentInChildren<Collider>() != null) return;
+
+        var box = go.AddComponent<BoxCollider>();
+        var renderers = go.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return;
+
+        Bounds world = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) world.Encapsulate(renderers[i].bounds);
+
+        // The box lives on a prop that is usually scaled up (1.5x for the service
+        // garage). Copying the WORLD size into box.size measured it in local units,
+        // so the collider came out 1.5x larger than the model it wrapped - it
+        // reached into the carriageway and stopped the bus short of a wall it was
+        // not touching. Convert the eight corners into the prop's own space instead,
+        // which respects both the scale and the rotation.
+        var local = new Bounds(go.transform.InverseTransformPoint(world.center), Vector3.zero);
+        for (int corner = 0; corner < 8; corner++)
         {
-            var box = go.AddComponent<BoxCollider>();
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers.Length > 0)
-            {
-                Bounds b = renderers[0].bounds;
-                for (int i = 1; i < renderers.Length; i++) b.Encapsulate(renderers[i].bounds);
-                box.center = go.transform.InverseTransformPoint(b.center);
-                box.size = b.size;
-            }
+            var point = new Vector3(
+                (corner & 1) == 0 ? world.min.x : world.max.x,
+                (corner & 2) == 0 ? world.min.y : world.max.y,
+                (corner & 4) == 0 ? world.min.z : world.max.z);
+            local.Encapsulate(go.transform.InverseTransformPoint(point));
         }
+        box.center = local.center;
+        box.size = local.size;
     }
 
     void Update()

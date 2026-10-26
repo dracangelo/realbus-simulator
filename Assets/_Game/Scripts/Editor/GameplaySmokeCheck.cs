@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -27,6 +28,79 @@ public static class GameplaySmokeCheck
     // next person to eyeball a game view.
     static readonly System.Collections.Generic.List<float> frameTimes = new System.Collections.Generic.List<float>(2048);
     static int sampledFrame = -1;
+
+    // ---- Full-route stop progression (RealBus.SmokeRoute) ---------------------
+    // The stop list is run end to end in the real gameplay scene rather than trusted
+    // to a timed wait: the bus is walked along the mission's own guidance line to each
+    // stop, the docking bay is asked whether it really is at that kerb, the doors are
+    // opened through the same entry point the on-screen button uses, and
+    // currentStopIndex is required to advance for every single service. The old bug
+    // hid exactly here - a service that never finished left the served stop as the
+    // navigation target, so the route looked stuck behind the bus.
+    const int RoutePhaseBoot = 0;
+    const int RoutePhaseTravel = 1;
+    const int RoutePhaseDock = 2;
+    const int RoutePhaseService = 3;
+    const int RoutePhaseSummary = 4;
+    static int routePhase;
+    static float routePhaseAt;
+    static float routeStartedAt;
+    static float routeBootAt;
+    static int routeStopIndex;
+    static int routeServiced;
+    static int routeAdvanced;
+    static int routeDocked;
+    static int routeFailures;
+    static int routeGuidanceVersionBeforeService;
+    static bool routeCurrentStopDocked;
+    static int routeDockAttempts;
+    static float routeBusYOffset;
+    static float routeBootLogAt;
+    static float routeClosestRemaining;
+    static int routeStallHops;
+    static bool routeLegRescued;
+    static int routeShortcuts;
+    static int routeHops;
+    static float routeTravelLogAt;
+    static float routeStopTravelAt;
+    // Metres of route covered per hop and the pause between hops. The pause lets the
+    // tile/prop streamer and the traffic perception catch up; without it the runner
+    // teleports across the whole city between two frames and the streamer thrashes.
+    const float RouteHopMeters = 60f;
+    const float RouteHopSeconds = .35f;
+    // A leg that cannot be closed in this many seconds, or in this many hops that do
+    // not get any closer to the bay, is a stuck runner: report the state instead of
+    // walking in circles until an external timeout kills the process.
+    const float RouteStopTravelBudgetSeconds = 240f;
+    // Distance at which the runner stops following the guided line and pulls into
+    // the bay. The docking bay is a few metres off the line by construction.
+    const float RouteDockApproachMeters = 30f;
+    // The route is served in game time, so a headless run fast-forwards it. Every
+    // system in the run reads scaled time, so the service is the same, just sooner.
+    const float RouteTimeScale = 3f;
+    const int RouteStallHopLimit = 90;
+    const float RouteOverallBudgetSeconds = 1800f;
+    static readonly List<string> routeFailureLog = new List<string>();
+    static readonly List<float> routeServiceSeconds = new List<float>();
+    static readonly List<Transform> trafficMotionBodies = new List<Transform>();
+    static readonly List<Vector3> trafficMotionStarts = new List<Vector3>();
+    static float trafficMotionAt = -1f;
+    static bool trafficMotionSampled;
+    static int trafficMotionMoved;
+    static int trafficMotionActive;
+    static bool trafficLaneChecked;
+    // The lane/side/livery verdict is kept apart from the generic smoke verdict:
+    // Run() clears that flag, so folding traffic into it made every route run fail.
+    static bool trafficLaneOk = true;
+    // Navigator liveness: sampled while the route is active, so a banner or overlay
+    // that disappears after the opening leg is a failure rather than an eyeball task.
+    static float routeNavigatorAt = -1f;
+    static float routeNavigatorReadyAt = -1f;
+    static int routeNavigatorChecks;
+    static int routeNavigatorFailures;
+    static bool routeNavigatorArrows;
+    static bool routeNavigatorBeacon;
+    static bool routeNavigatorHud;
     static GameplaySmokeCheck() { EditorApplication.update += Tick; }
 
     public static void Run()
@@ -55,6 +129,28 @@ public static class GameplaySmokeCheck
     {
         SessionState.SetBool("RealBus.SmokeHandling", true);
         RunExtended();
+    }
+
+    /// <summary>
+    /// Runs the whole route headlessly and asserts that the mission leaves each stop.
+    /// Batch only; exits Unity when the last stop has been served.
+    /// </summary>
+    public static void RunRoute()
+    {
+        if (!Application.isBatchMode)
+        {
+            Debug.LogError("GameplaySmokeCheck.RunRoute is a batch-only check; it exits Unity when finished.");
+            return;
+        }
+        SessionState.SetBool("RealBus.SmokeRoute", true);
+        Run();
+    }
+
+    static void SetRouteTimeScale(float scale)
+    {
+        // fixedDeltaTime is left at its authored value: Unity then takes the same
+        // number of physics steps per GAME second, just more of them per real second.
+        Time.timeScale = Mathf.Max(.01f, scale);
     }
 
     public static void RunLiveCity()
@@ -169,6 +265,7 @@ public static class GameplaySmokeCheck
         if (started == 0) started = EditorApplication.timeSinceStartup;
         double elapsed = EditorApplication.timeSinceStartup - started;
         CaptureCinematicIntroOnce();
+        if (SessionState.GetBool("RealBus.SmokeRoute", false)) { TickRoute(elapsed); return; }
         if (SessionState.GetBool("RealBus.SmokeLiveCity", false)) { TickLiveCity(elapsed); return; }
         if (elapsed > 240)
         {
@@ -796,6 +893,592 @@ public static class GameplaySmokeCheck
             $"laneSamples={laneSamples} steadySamples={steadySamples} offLane={offLane} worstLaneDeviation={worstDeviation:F2} " +
             $"worstSteadyLaneDeviation={worstSteady:F2} worst={worstVehicle} passed={trafficOk}");
         return trafficOk;
+    }
+
+    /// <summary>
+    /// Runs the route one stop at a time. Every stop is walked to along the mission's
+    /// own guidance line, served through the real door entry point, and then required
+    /// to move <see cref="MissionManager.currentStopIndex"/> on. A stop that does not
+    /// release the route is a failure with its state attached, not something the
+    /// harness waits out.
+    /// </summary>
+    static void TickRoute(double elapsed)
+    {
+        var mission = MissionManager.Instance;
+        var bus = mission != null ? mission.busController : Object.FindAnyObjectByType<BusController>();
+        if (routeStartedAt <= 0f) routeStartedAt = Time.time;
+
+        if (Time.time - routeStartedAt > RouteOverallBudgetSeconds)
+        {
+            FailRoute($"the route did not finish in {Time.time - routeStartedAt:F0}s " +
+                $"(at stop {routeStopIndex}, {routeServiced} serviced, {RouteState(mission)})");
+            return;
+        }
+
+        if (routePhase == RoutePhaseBoot)
+        {
+            // The route has to be served in the finished city, not while the near
+            // ring is still being built: a runner that hops through an unfinished
+            // world measures streaming work instead of stop progression.
+            bool worldBuilt = OSMLoader.Instance != null && OSMLoader.Instance.dataLoaded &&
+                OSMRoadMeshBuilder.Instance != null && OSMRoadMeshBuilder.Instance.roadsBuilt &&
+                OSMBuildingMeshBuilder.Instance != null && OSMBuildingMeshBuilder.Instance.buildingsBuilt;
+            bool routeReady = mission != null && bus != null && mission.routeActive &&
+                mission.currentRoute != null && mission.currentRoute.stops != null &&
+                mission.currentRoute.stops.Length > 0;
+            if (!routeReady || !worldBuilt || FindRouteZone(mission, 0) == null)
+            {
+                if (Time.time - routeBootLogAt > 10f)
+                {
+                    routeBootLogAt = Time.time;
+                    Debug.Log($"SMOKE route boot t={elapsed:F0}s route={routeReady} world={worldBuilt} " +
+                        $"roads={(OSMLoader.Instance != null && OSMLoader.Instance.dataLoaded)}/" +
+                        $"{(OSMRoadMeshBuilder.Instance != null && OSMRoadMeshBuilder.Instance.roadsBuilt)} " +
+                        $"buildings={(OSMBuildingMeshBuilder.Instance != null && OSMBuildingMeshBuilder.Instance.buildingsBuilt)} " +
+                        $"stops={routeReady && FindRouteZone(mission, 0) != null} mission={mission?.missionState}");
+                }
+                if (elapsed < 300) return;
+                FailRoute($"the route was not ready after {elapsed:F0}s (route={routeReady} world={worldBuilt} " +
+                    $"mission={mission?.missionState} active={mission?.routeActive} bus={bus != null} " +
+                    $"firstStopZone={routeReady && FindRouteZone(mission, 0) != null})");
+                return;
+            }
+            Vector3 busPosition = bus.transform.position;
+            routeBusYOffset = busPosition.y;
+            var guidance = mission.GetGuidancePathPoints();
+            if (guidance != null && guidance.Length > 0)
+            {
+                float best = float.MaxValue;
+                foreach (Vector3 point in guidance)
+                {
+                    float sqr = FlatSqr(point, busPosition);
+                    if (sqr >= best) continue;
+                    best = sqr;
+                    routeBusYOffset = busPosition.y - point.y;
+                }
+            }
+            SetRouteTimeScale(RouteTimeScale);
+            routeStopIndex = Mathf.Clamp(mission.currentStopIndex, 0, mission.currentRoute.stops.Length - 1);
+            routePhase = RoutePhaseTravel;
+            routePhaseAt = Time.time;
+            BeginRouteLeg();
+            Debug.Log($"SMOKE route start stops={mission.currentRoute.stops.Length} index={mission.currentStopIndex} " +
+                $"stop='{mission.currentRoute.stops[routeStopIndex].stopName}' busYOffset={routeBusYOffset:F2} " +
+                $"toStop={mission.distanceToNextStop:F0}m guidanceVersion={mission.GuidancePathVersion}");
+            SampleTrafficMotion(busPosition);
+            return;
+        }
+
+        // Traffic is judged independently of stop progression: the pool, the lanes and
+        // the driving side are checked while the route is under way, so a route bug
+        // cannot take the traffic verdict down with it, and a short first leg still
+        // gets its motion window.
+        if (mission.routeActive && Time.time - routeStartedAt > 8f)
+        {
+            SampleTrafficMotion(bus.transform.position);
+            if (!trafficLaneChecked)
+            {
+                trafficLaneChecked = true;
+                trafficLaneOk &= CheckTraffic();
+            }
+            // Give the overlay and the HUD one rendered frame to react to the
+            // route becoming active before judging whether they are drawing.
+            if (routeNavigatorReadyAt < 0f) routeNavigatorReadyAt = Time.time;
+            if (Time.time - routeNavigatorReadyAt > 3f) SampleRouteNavigator(mission);
+        }
+
+        int stopCount = mission.currentRoute.stops.Length;
+        if (routeStopIndex >= stopCount)
+        {
+            FinishRoute(mission);
+            return;
+        }
+
+        var zone = FindRouteZone(mission, routeStopIndex);
+        if (zone == null)
+        {
+            FailRoute($"stop {routeStopIndex} ('{mission.currentRoute.stops[routeStopIndex].stopName}') has no docking zone");
+            return;
+        }
+
+        // The mission is the authority on the stop being served. If it has moved on
+        // without this runner asking, the runner is out of step and the report should
+        // say so rather than serve a stop that is no longer the target. While the stop
+        // is being served the mission advancing IS the assertion, so it is not drift.
+        if (routePhase != RoutePhaseService && mission.currentStopIndex != routeStopIndex)
+        {
+            routeFailures++;
+            routeFailureLog.Add($"index drift before stop {routeStopIndex}: mission was at {mission.currentStopIndex}");
+            Debug.LogError($"SMOKE routeIndexDrift expected={routeStopIndex} actual={mission.currentStopIndex}");
+            routeStopIndex = Mathf.Clamp(mission.currentStopIndex, 0, stopCount - 1);
+            return;
+        }
+
+        if (routePhase == RoutePhaseTravel)
+        {
+            Vector3 target = zone.transform.position;
+            float remaining = FlatDistance(bus.transform.position, target);
+            if (remaining > 8f)
+            {
+                if (Time.time - routeStopTravelAt > RouteStopTravelBudgetSeconds)
+                {
+                    string detail = $"stop {routeStopIndex} ('{zone.stopName}') was still {remaining:F0}m away after " +
+                        $"{Time.time - routeStopTravelAt:F0}s of travelling ({routeHops} hops, " +
+                        $"bus={Flat(bus.transform.position)} speed={bus.currentSpeedKmh:F0} {RouteState(mission)})";
+                    routeFailures++;
+                    routeFailureLog.Add(detail);
+                    FailRoute(detail);
+                    return;
+                }
+
+                if (Time.time - routeTravelLogAt > 15f)
+                {
+                    routeTravelLogAt = Time.time;
+                    Debug.Log($"SMOKE routeTravel index={routeStopIndex} hops={routeHops} remaining={remaining:F0}m " +
+                        $"closest={routeClosestRemaining:F0}m bus={Flat(bus.transform.position)} bay={Flat(target)} " +
+                        $"speed={bus.currentSpeedKmh:F0} guidance={mission.GuidancePathVersion} {RouteState(mission)}");
+                }
+
+                // Paced hops keep the guidance rebuild, the stop triggers and the
+                // traffic perception running between moves rather than teleporting
+                // the bus across a leg in a single frame.
+                if (Time.time - routePhaseAt < RouteHopSeconds) return;
+                routePhaseAt = Time.time;
+                routeHops++;
+
+                // Walking in place is the failure this runner must never hide: a leg
+                // that stops getting closer is reported with the bus, the bay and the
+                // guidance it was following. The accounting is per hop, not per frame,
+                // so the pause between hops cannot look like a stall.
+                if (remaining < routeClosestRemaining - .5f)
+                {
+                    routeClosestRemaining = remaining;
+                    routeStallHops = 0;
+                }
+                else if (++routeStallHops > 60 && !routeLegRescued)
+                {
+                    // The runner walks the route by teleporting, so a leg can be cut off
+                    // by geometry it cannot drive through. Cross that leg by seating the
+                    // bus on the bay itself and say so in the log, instead of spinning
+                    // until the budget expires. The stop still has to dock and release
+                    // the index on its own, which is what this run is about.
+                    routeLegRescued = true;
+                    routeShortcuts++;
+                    Debug.Log($"SMOKE routeShortcut index={routeStopIndex} stop='{zone.stopName}' " +
+                        $"from={Flat(bus.transform.position)} bay={Flat(target)} remaining={remaining:F0}m " +
+                        $"closest={routeClosestRemaining:F0}m hops={routeHops} {RouteState(mission)}");
+                    PoseBusAtStop(bus, zone);
+                    routePhase = RoutePhaseDock;
+                    routePhaseAt = Time.time;
+                    return;
+                }
+                else if (routeStallHops > RouteStallHopLimit)
+                {
+                    string detail = $"stop {routeStopIndex} ('{zone.stopName}') never got closer than " +
+                        $"{routeClosestRemaining:F0}m in {routeStallHops} hops (now {remaining:F0}m, " +
+                        $"bus={Flat(bus.transform.position)} bay={Flat(target)} " +
+                        $"speed={bus.currentSpeedKmh:F0} guidance={mission.GuidancePathVersion} " +
+                        $"points={mission.GetGuidancePathPoints()?.Length ?? 0} {RouteState(mission)})";
+                    routeFailures++;
+                    routeFailureLog.Add(detail);
+                    FailRoute(detail);
+                    return;
+                }
+
+                // The mission's own guidance is what the player is expected to
+                // drive, so the runner follows it wherever it goes. Stepping straight
+                // at the bay instead simply walks the bus through the buildings
+                // between here and there, and the collision response puts it back.
+                // The last few metres are the pull-in: the bay sits at the kerb, a few
+                // metres off the guided line, so from there the runner drives at the bay
+                // itself or it would sail past its own stop.
+                Vector3 waypoint = target;
+                bool guided = remaining > RouteDockApproachMeters &&
+                    TryNextRouteWaypoint(mission, bus.transform.position, target, RouteHopMeters, out waypoint);
+                // Guidance runs from the bus to the end of the route, so once the line
+                // has passed this stop it leads away from the bay. That is the moment to
+                // pull in at the kerb rather than be walked to the next stop.
+                if (guided && FlatDistance(waypoint, target) >= remaining - .5f)
+                    guided = false;
+                if (!guided)
+                {
+                    Vector3 approach = target - bus.transform.position;
+                    approach.y = 0f;
+                    float step = Mathf.Min(RouteHopMeters, approach.magnitude);
+                    waypoint = approach.sqrMagnitude < .0001f
+                        ? target
+                        : bus.transform.position + approach.normalized * step;
+                    waypoint.y = bus.transform.position.y;
+                }
+                Vector3 direction = waypoint - bus.transform.position;
+                direction.y = 0f;
+                if (direction.sqrMagnitude < .01f) return;
+                bus.SetParkingBrake(false);
+                bus.ServiceBrakeInterlock = false;
+                bus.Teleport(new Vector3(waypoint.x, waypoint.y + routeBusYOffset, waypoint.z),
+                    Quaternion.LookRotation(direction.normalized, Vector3.up));
+                return;
+            }
+
+            PoseBusAtStop(bus, zone);
+            routePhase = RoutePhaseDock;
+            routePhaseAt = Time.time;
+            return;
+        }
+
+        if (routePhase == RoutePhaseDock)
+        {
+            routeCurrentStopDocked = zone.isCorrectlyDocked && DockingZone.CurrentDockedZone == zone;
+            if (!routeCurrentStopDocked && Time.time - routePhaseAt < 2f) return;
+            if (!routeCurrentStopDocked && routeDockAttempts < 3)
+            {
+                // Physics or a collider streamed in under the bus can settle the body
+                // off the bay between the pose and the gate; seat it again before the
+                // stop is reported as undisposable.
+                routeDockAttempts++;
+                PoseBusAtStop(bus, zone);
+                routePhaseAt = Time.time;
+                return;
+            }
+            if (!routeCurrentStopDocked)
+            {
+                routeFailures++;
+                string detail = $"stop {routeStopIndex} never docked: zone={zone.isCorrectlyDocked} " +
+                    $"current='{DockingZone.CurrentDockedZone?.stopName}' " +
+                    $"kerb={zone.currentKerbOffsetMeters:F2}/{zone.kerbToleranceMeters:F2} " +
+                    $"sign={zone.currentStopSignOffsetMeters:F2}/{zone.stopSignToleranceMeters:F2} " +
+                    $"heading={zone.currentHeadingErrorDegrees:F1}/{zone.headingToleranceDegrees:F1} " +
+                    $"speed={bus.currentSpeedKmh:F1}/{zone.maxDockingSpeedKmh:F1}";
+                routeFailureLog.Add(detail);
+                FailRoute(detail);
+                return;
+            }
+
+            routeDocked++;
+            Debug.Log($"SMOKE routeDock index={routeStopIndex} name='{zone.stopName}' kerb={zone.currentKerbOffsetMeters:F2} " +
+                $"sign={zone.currentStopSignOffsetMeters:F2} heading={zone.currentHeadingErrorDegrees:F1} " +
+                $"score={zone.currentDockingScore:F0} speed={bus.currentSpeedKmh:F1}");
+
+            OpenRouteDoors(mission, zone);
+            routeServiced++;
+            routePhase = RoutePhaseService;
+            routePhaseAt = Time.time;
+            return;
+        }
+
+        // RoutePhaseService: the stop is being served. Nothing here presses the close
+        // button: the mission has to end the stop by itself, which is what the old
+        // unbounded animation wait silently failed to do.
+        float served = Time.time - routePhaseAt;
+        bool routeEnded = mission.missionState == MissionState.Completed || !mission.routeActive;
+        bool advanced = mission.currentStopIndex == routeStopIndex + 1;
+        if (advanced || (routeEnded && routeStopIndex == stopCount - 1))
+        {
+            routeAdvanced++;
+            routeServiceSeconds.Add(served);
+            string stopName = mission.currentRoute != null && routeStopIndex < mission.currentRoute.stops.Length
+                ? mission.currentRoute.stops[routeStopIndex].stopName
+                : zone.stopName;
+            int versionAfter = mission.GuidancePathVersion;
+            bool guidanceRebuilt = versionAfter > routeGuidanceVersionBeforeService;
+            // The last stop has no next target to steer at: completing the route is
+            // what it has to do instead, and that is asserted by the summary below.
+            bool lastStop = routeStopIndex == stopCount - 1;
+            if (!guidanceRebuilt && !lastStop)
+            {
+                routeFailures++;
+                routeFailureLog.Add($"stop {routeStopIndex} advanced without a guidance rebuild " +
+                    $"({routeGuidanceVersionBeforeService} -> {versionAfter})");
+            }
+            Debug.Log($"SMOKE routeStop index={routeStopIndex} name='{stopName}' docked={routeCurrentStopDocked} advanced=True " +
+                $"service={served:F1}s indexAfter={mission.currentStopIndex} state={mission.missionState} " +
+                $"guidanceVersion={routeGuidanceVersionBeforeService}->{versionAfter} rebuilt={guidanceRebuilt} " +
+                $"routeActive={mission.routeActive} passengers={PassengerManager.Instance?.currentPassengers}");
+            routeStopIndex++;
+            routePhase = RoutePhaseTravel;
+            routePhaseAt = Time.time;
+            BeginRouteLeg();
+            return;
+        }
+
+        // A stop still holding the route after the dwell it asked for plus the
+        // service-animation ceiling is the bug this runner exists for. Report what the
+        // mission, the doors and the passengers were doing instead of timing out.
+        float dwell = PassengerManager.Instance != null ? PassengerManager.Instance.GetRequiredDwellTimeSeconds() : 0f;
+        float budget = dwell + MissionManager.MaxServiceAnimationWaitSeconds + 25f;
+        if (served > budget)
+        {
+            routeFailures++;
+            string detail = $"stop {routeStopIndex} did not advance after {served:F1}s " +
+                $"(processing={mission.isProcessingStop} state={mission.missionState} index={mission.currentStopIndex} " +
+                $"doors={PassengerManager.Instance?.doorsOpen} animations={PassengerManager.Instance?.HasServiceAnimations} " +
+                $"dwell={dwell:F1} budget={budget:F1})";
+            routeFailureLog.Add(detail);
+            FailRoute(detail);
+            return;
+        }
+        if (Time.frameCount % 60 == 0)
+            Debug.Log($"SMOKE routeServing index={routeStopIndex} t={served:F1}s dwell={dwell:F1}s " +
+                $"processing={mission.isProcessingStop} animations={PassengerManager.Instance?.HasServiceAnimations} " +
+                $"passengers={PassengerManager.Instance?.currentPassengers}");
+    }
+
+    static void OpenRouteDoors(MissionManager mission, DockingZone zone)
+    {
+        // A stop reached by the runner would otherwise be many minutes early, and the
+        // mission would hold the bus in its punctuality dwell. Arriving at the
+        // scheduled minute keeps the dwell under test to the one passengers ask for.
+        var schedule = ScheduleManager.Instance;
+        if (schedule != null)
+        {
+            float scheduled = schedule.GetScheduledArrival(routeStopIndex);
+            if (scheduled > 0f && scheduled > schedule.currentTimeMinutes)
+                schedule.currentTimeMinutes = scheduled;
+        }
+        bool opened = mission.TryOpenDoorsAtCurrentStop();
+        routeGuidanceVersionBeforeService = mission.GuidancePathVersion;
+        if (!opened)
+            Debug.LogWarning($"SMOKE routeDoors index={routeStopIndex} opened=False isProcessingStop={mission.isProcessingStop} " +
+                $"state={mission.missionState} docked={zone.isCorrectlyDocked} " +
+                $"passengers={PassengerManager.Instance?.currentPassengers}");
+    }
+
+    static void PoseBusAtStop(BusController bus, DockingZone zone)
+    {
+        // Seat the bus so its own door reference sits on the bay the game measures
+        // the stop against, facing the way the stop was built. The docking gate, not
+        // this helper, is still the judge of whether the bus is really at the kerb.
+        Quaternion rotation = zone.transform.rotation;
+        Vector3 doorLocal = bus.dockingReference != null
+            ? bus.transform.InverseTransformPoint(bus.dockingReference.position)
+            : Vector3.zero;
+        doorLocal.y = 0f;
+        // DockingZone flips the door anchor onto the authored kerb side before it
+        // measures the bay. Seating the bus from the unflipped anchor parks it a door
+        // width off the bay, so the stop could never open.
+        if (zone.roadsideDockingSide != 0 && bus.dockingReference != null &&
+            bus.dockingReference.name == "DockingReference")
+            doorLocal.x = Mathf.Abs(doorLocal.x) * Mathf.Sign(zone.roadsideDockingSide);
+        Vector3 position = zone.transform.position - rotation * doorLocal;
+        position.y = zone.transform.position.y + routeBusYOffset;
+        bus.SetParkingBrake(true);
+        bus.ServiceBrakeInterlock = false;
+        bus.Teleport(position, rotation);
+        Debug.Log($"SMOKE routePose index={routeStopIndex} position={new Vector3(position.x, 0f, position.z)} " +
+            $"yaw={rotation.eulerAngles.y:F1} bay={new Vector3(zone.transform.position.x, 0f, zone.transform.position.z)}");
+    }
+
+    static DockingZone FindRouteZone(MissionManager mission, int index)
+    {
+        if (mission == null || mission.currentRoute == null || mission.currentRoute.stops == null ||
+            index < 0 || index >= mission.currentRoute.stops.Length)
+            return null;
+        string stopName = mission.currentRoute.stops[index].stopName;
+        // A route can visit the same shelter more than once (this one lists
+        // 'Stima Plaza' three times running), so a name-only match can land on the
+        // wrong visit. The zone whose stopIndex is this route index wins, and ties
+        // are broken by distance to the stop's own coordinate.
+        bool hasGps = GPSManager.Instance != null;
+        Vector3 stopWorld = hasGps
+            ? GPSManager.Instance.GpsToWorld(mission.currentRoute.stops[index].latitude,
+                mission.currentRoute.stops[index].longitude)
+            : Vector3.zero;
+        DockingZone best = null;
+        int bestRank = int.MaxValue;
+        float bestSqr = float.MaxValue;
+        foreach (var zone in Object.FindObjectsByType<DockingZone>(FindObjectsInactive.Exclude))
+        {
+            int rank = zone.stopIndex == index ? 0 :
+                string.Equals(zone.stopName, stopName, System.StringComparison.Ordinal) ? 1 : -1;
+            if (rank < 0) continue;
+            float sqr = hasGps ? FlatSqr(zone.transform.position, stopWorld) : 0f;
+            if (rank > bestRank || (rank == bestRank && sqr >= bestSqr)) continue;
+            best = zone;
+            bestRank = rank;
+            bestSqr = sqr;
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// Resets the per-leg travel bookkeeping. Each stop gets its own budget, so one
+    /// long leg cannot eat the time the rest of the route needs to prove itself.
+    /// </summary>
+    static void BeginRouteLeg()
+    {
+        routeClosestRemaining = float.MaxValue;
+        routeStallHops = 0;
+        routeLegRescued = false;
+        routeHops = 0;
+        routeDockAttempts = 0;
+        routeStopTravelAt = Time.time;
+        routeTravelLogAt = Time.time;
+    }
+
+    static Vector3 Flat(Vector3 position) => new Vector3(position.x, 0f, position.z);
+
+    static string RouteState(MissionManager mission)
+    {
+        if (mission == null) return "mission=none";
+        return $"state={mission.missionState} active={mission.routeActive} index={mission.currentStopIndex} " +
+            $"processing={mission.isProcessingStop} toStop={mission.distanceToNextStop:F0}m";
+    }
+
+    /// <summary>
+    /// The next point to drive to. Returns true when it came from the mission's own
+    /// guidance (the line the player is told to follow); the straight-at-the-bay
+    /// fallback is only for a mission with no usable guidance at all.
+    /// </summary>
+    static bool TryNextRouteWaypoint(MissionManager mission, Vector3 from, Vector3 target, float step,
+        out Vector3 waypoint)
+    {
+        if (mission != null && mission.TryGetGuidancePointAhead(step, out Vector3 ahead) &&
+            FlatDistance(ahead, from) > .5f)
+        {
+            waypoint = ahead;
+            return true;
+        }
+
+        Vector3 offset = target - from;
+        offset.y = 0f;
+        float distance = offset.magnitude;
+        waypoint = distance <= .01f ? target : from + offset / distance * Mathf.Min(step, distance);
+        return false;
+    }
+
+    static float FlatSqr(Vector3 a, Vector3 b)
+    {
+        float x = a.x - b.x, z = a.z - b.z;
+        return x * x + z * z;
+    }
+
+    static float FlatDistance(Vector3 a, Vector3 b) => Mathf.Sqrt(FlatSqr(a, b));
+
+    /// <summary>
+    /// Watches the street actually move. A pool that is populated but stationary is
+    /// indistinguishable from no traffic when the player is at a stop.
+    /// </summary>
+    static void SampleTrafficMotion(Vector3 around)
+    {
+        if (trafficMotionSampled) return;
+        if (trafficMotionBodies.Count == 0)
+        {
+            foreach (var ai in Object.FindObjectsByType<AIVehicleController>(FindObjectsInactive.Exclude))
+            {
+                if (!ai.isActiveAndEnabled) continue;
+                if (Vector3.Distance(ai.transform.position, around) > 400f) continue;
+                trafficMotionBodies.Add(ai.transform);
+                trafficMotionStarts.Add(ai.transform.position);
+            }
+            trafficMotionAt = Time.time;
+            trafficMotionActive = trafficMotionBodies.Count;
+            Debug.Log($"SMOKE routeTraffic sample bodies={trafficMotionActive} " +
+                $"around={new Vector3(around.x, 0f, around.z)}");
+            return;
+        }
+        if (Time.time - trafficMotionAt < 6f) return;
+        trafficMotionSampled = true;
+        trafficMotionMoved = 0;
+        for (int i = 0; i < trafficMotionBodies.Count; i++)
+        {
+            Transform body = trafficMotionBodies[i];
+            if (body == null || !body.gameObject.activeInHierarchy) continue;
+            if (FlatDistance(body.position, trafficMotionStarts[i]) > 5f) trafficMotionMoved++;
+        }
+        bool moved = trafficMotionActive >= 3 && trafficMotionMoved >= Mathf.Max(2, trafficMotionActive / 4);
+        Debug.Log($"SMOKE routeTraffic window={(Time.time - trafficMotionAt):F1}s active={trafficMotionActive} " +
+            $"moved={trafficMotionMoved} passed={moved}");
+        if (!moved)
+        {
+            routeFailures++;
+            routeFailureLog.Add($"traffic did not move: {trafficMotionMoved}/{trafficMotionActive} bodies moved in 6s");
+        }
+    }
+
+    /// <summary>
+    /// Samples the three parts of the navigator a player actually sees: the world
+    /// chevrons, the next-stop beacon and the HUD turn banner. The requirement is
+    /// that they stay alive for the whole route, so this is sampled every few seconds
+    /// instead of once when the route starts.
+    /// </summary>
+    static void SampleRouteNavigator(MissionManager mission)
+    {
+        if (routeNavigatorAt > 0f && Time.time - routeNavigatorAt < 5f) return;
+        routeNavigatorAt = Time.time;
+
+        var overlay = RouteArrowOverlay.Instance;
+        var hud = HUDManager.Instance;
+        bool pathOk = mission.ActiveGuidancePathPoints != null && mission.ActiveGuidancePathPoints.Count >= 2;
+        bool arrows = overlay != null && overlay.HasVisibleArrows;
+        bool beacon = overlay != null && overlay.BeaconVisible;
+        bool banner = hud != null && hud.NavigatorVisible;
+        // The final stop is the destination: there is no road ahead to draw
+        // chevrons on, so the beacon and the arrival banner are the navigator
+        // there. Everywhere else the route line must still be visible.
+        bool atFinalStop = mission.currentRoute != null &&
+            mission.currentStopIndex >= mission.currentRoute.stops.Length - 1;
+        bool arrivalState = atFinalStop && beacon && banner &&
+            (mission.isProcessingStop || mission.distanceToNextStop <= 30f);
+
+        routeNavigatorChecks++;
+        routeNavigatorArrows = arrows;
+        routeNavigatorBeacon = beacon;
+        routeNavigatorHud = banner;
+
+        if ((arrows && beacon && banner && pathOk) || arrivalState) return;
+
+        routeNavigatorFailures++;
+        if (routeNavigatorFailures <= 5)
+            Debug.LogWarning($"SMOKE routeNavigator missing at stop {routeStopIndex}: overlay={overlay != null} " +
+                $"arrows={arrows} beacon={beacon} hud={hud != null} banner={banner} arrival={arrivalState} " +
+                $"path={mission.ActiveGuidancePathPoints?.Count ?? 0} version={mission.GuidancePathVersion} {RouteState(mission)}");
+    }
+
+    static void FinishRoute(MissionManager mission)
+    {
+        int stopCount = mission != null && mission.currentRoute != null && mission.currentRoute.stops != null
+            ? mission.currentRoute.stops.Length : 0;
+        bool completed = mission != null && mission.missionState == MissionState.Completed && !mission.routeActive;
+        bool trafficOk = trafficMotionSampled && trafficMotionActive >= 3 &&
+            trafficMotionMoved >= Mathf.Max(2, trafficMotionActive / 4);
+        bool navigatorOk = routeNavigatorChecks > 0 && routeNavigatorFailures == 0;
+        bool routeOk = completed && routeFailures == 0 && routeAdvanced == stopCount && stopCount > 0 &&
+            trafficOk && trafficLaneChecked && trafficLaneOk && navigatorOk;
+        float total = Time.time - routeStartedAt;
+        float average = routeServiceSeconds.Count > 0 ? routeServiceSeconds.Average() : 0f;
+        float longest = routeServiceSeconds.Count > 0 ? routeServiceSeconds.Max() : 0f;
+        Debug.Log($"SMOKE routeResult stops={stopCount} serviced={routeServiced} docked={routeDocked} advanced={routeAdvanced} " +
+            $"failures={routeFailures} shortcuts={routeShortcuts} serviceAvg={average:F1}s serviceLongest={longest:F1}s " +
+            $"seconds={total:F0} completed={completed} trafficMoved={trafficMotionMoved}/{trafficMotionActive} " +
+            $"trafficLaneChecked={trafficLaneChecked} trafficLanes={trafficLaneOk} " +
+            $"navigator={navigatorOk} passed={routeOk}");
+        Debug.Log($"SMOKE routeNavigator checks={routeNavigatorChecks} failures={routeNavigatorFailures} " +
+            $"arrows={routeNavigatorArrows} beacon={routeNavigatorBeacon} banner={routeNavigatorHud} passed={navigatorOk}");
+        foreach (string failure in routeFailureLog) Debug.Log($"SMOKE routeFailure {failure}");
+        LogPerformance();
+        ClearRouteSession();
+        EditorApplication.Exit(routeOk ? 0 : 2);
+    }
+
+    static void FailRoute(string reason)
+    {
+        Debug.LogError($"SMOKE route failed: {reason}");
+        Debug.Log($"SMOKE routeResult stops={(MissionManager.Instance?.currentRoute?.stops?.Length ?? 0)} " +
+            $"serviced={routeServiced} docked={routeDocked} advanced={routeAdvanced} failures={routeFailures + 1} " +
+            $"navigatorChecks={routeNavigatorChecks} navigatorFailures={routeNavigatorFailures} " +
+            $"seconds={(Time.time - routeStartedAt):F0} completed=False passed=False");
+        foreach (string failure in routeFailureLog) Debug.Log($"SMOKE routeFailure {failure}");
+        LogPerformance();
+        ClearRouteSession();
+        EditorApplication.Exit(2);
+    }
+
+    static void ClearRouteSession()
+    {
+        SessionState.SetBool("RealBus.SmokeRoute", false);
+        SessionState.SetBool("RealBus.SmokeCheck", false);
+        SessionState.SetBool("RealBus.SmokeExtended", false);
+        Time.timeScale = 1f;
     }
 
     static float EmissionRate(ParticleSystem system)

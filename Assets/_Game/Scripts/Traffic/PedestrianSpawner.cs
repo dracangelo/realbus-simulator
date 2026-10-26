@@ -29,11 +29,12 @@ public class PedestrianSpawner : MonoBehaviour
 
     [Header("Pedestrians")]
     public GameObject pedestrianPrefab;
-    // Raised from 50 so crossings are busy enough to read as a living city. The
-    // imported pedestrian is a multi-part model (about ten renderers each), so 120
-    // of them meant 1,200 draw calls for people who are a few pixels tall at the
-    // far end of the street. 64 still fills a crossing while halving that bill.
-    public int maxActivePedestrians = 64;
+    // The imported pedestrian is a multi-part model (about ten renderers each),
+    // so the crowd budget is deliberately modest: only crossings near the bus
+    // are populated, and the policy clamps this value. 48 fills the crossings
+    // around the player without paying for people a few pixels tall at the far
+    // end of the street.
+    public int maxActivePedestrians = CrowdPerformancePolicy.MaxCrossingPedestrians;
     public float spawnCheckInterval = 0.5f;
     public float walkSpeed = 1.4f;
     public bool logSpawnEvents = false;
@@ -46,6 +47,7 @@ public class PedestrianSpawner : MonoBehaviour
     readonly List<SimplePedestrian> active = new List<SimplePedestrian>();
     readonly Dictionary<int, int> activeByCrossing = new Dictionary<int, int>();
     ZebraCrossing[] runtimeCrossings;
+    BusController playerBus;
     float timer;
     bool loggedCrossings;
 
@@ -70,6 +72,15 @@ public class PedestrianSpawner : MonoBehaviour
 
         EnsurePedestrianPrefab();
         EnsureRuntimeCrossings();
+        // The quality tier is the budget, not just the ceiling: a Low preset or a
+        // phone should see a thinner pavement, and the bodies are instantiated up
+        // front, so an oversized crowd is paid for at load time as well.
+        int tierBudget = CrowdPerformancePolicy.BudgetForQuality(
+            QualitySettings.GetQualityLevel(), Application.isMobilePlatform,
+            CrowdPerformancePolicy.MaxCrossingPedestrians);
+        maxActivePedestrians = CrowdPerformancePolicy.ClampWalkerBudget(
+            Mathf.Min(maxActivePedestrians <= 0 ? tierBudget : maxActivePedestrians, tierBudget),
+            CrowdPerformancePolicy.MaxCrossingPedestrians);
         for (int i = 0; i < maxActivePedestrians; i++)
         {
             var go = Instantiate(pedestrianPrefab, transform);
@@ -96,11 +107,26 @@ public class PedestrianSpawner : MonoBehaviour
             TrySpawnPedestrians();
         }
 
+        bool havePlayer = TryResolvePlayerPosition(out Vector3 player);
         for (int i = active.Count - 1; i >= 0; i--)
         {
             var p = active[i];
             if (p == null) { active.RemoveAt(i); continue; }
-            p.Tick(Time.deltaTime, walkSpeed);
+
+            float distance = havePlayer ? FlatDistance(p.transform.position, player) : 0f;
+            // A walker that has drifted beyond the drawn band is decoration the
+            // player cannot see. Retire it instead of letting it finish a crossing
+            // that is already out of view, and hand the body back to the pool.
+            if (havePlayer && distance > CrowdPerformancePolicy.WalkerRetireDistanceMeters)
+            {
+                p.Retire();
+                p.gameObject.SetActive(false);
+                spare.Push(p);
+                active.RemoveAt(i);
+                continue;
+            }
+
+            p.Tick(Time.deltaTime, walkSpeed, distance);
             if (p.IsDone)
             {
                 p.gameObject.SetActive(false);
@@ -118,12 +144,20 @@ public class PedestrianSpawner : MonoBehaviour
 
         float density = GetTimeOfDayDensity();
         float spawnChance = Mathf.Clamp01(baselineSpawnChance * density);
+        bool havePlayer = TryResolvePlayerPosition(out Vector3 player);
+        float spawnRadiusSqr = CrowdPerformancePolicy.CrossingSpawnRadiusMeters * CrowdPerformancePolicy.CrossingSpawnRadiusMeters;
 
         for (int i = 0; i < activeCrossings.Length; i++)
         {
             var x = activeCrossings[i];
             if (x == null || x.spawnA == null || x.spawnB == null) continue;
             if (GetActiveCountForCrossing(i) > 0) continue;
+
+            // Crossings all over the city are generated, but a walker on a
+            // crossing beyond the drawn band can never be seen. Populating only
+            // the nearby ones keeps the crowd budget where the player is.
+            if (havePlayer && FlatDistanceSquared((x.spawnA.position + x.spawnB.position) * 0.5f, player) > spawnRadiusSqr)
+                continue;
 
             // Only cross when road traffic is red (pedestrian green assumed).
             if (x.controllingTrafficLight != null && !x.controllingTrafficLight.IsRed())
@@ -298,6 +332,30 @@ public class PedestrianSpawner : MonoBehaviour
             Destroy(root.GetChild(i).gameObject);
     }
 
+    bool TryResolvePlayerPosition(out Vector3 position)
+    {
+        if (playerBus == null)
+            playerBus = MissionManager.Instance != null
+                ? MissionManager.Instance.busController
+                : FindAnyObjectByType<BusController>();
+        if (playerBus == null)
+        {
+            position = default;
+            return false;
+        }
+
+        position = playerBus.transform.position;
+        return true;
+    }
+
+    static float FlatDistance(Vector3 a, Vector3 b) => Mathf.Sqrt(FlatDistanceSquared(a, b));
+
+    static float FlatDistanceSquared(Vector3 a, Vector3 b)
+    {
+        a.y = b.y = 0f;
+        return (a - b).sqrMagnitude;
+    }
+
     float GetTimeOfDayDensity()
     {
         float now = ScheduleManager.Instance != null ? ScheduleManager.Instance.currentTimeMinutes : 12f * 60f;
@@ -332,6 +390,7 @@ public class SimplePedestrian : MonoBehaviour
     Transform target;
     System.Action onFinished;
     bool released;
+    float animationTimer;
     public bool IsDone { get; private set; }
     public bool IsInsideCrossingZone { get; private set; }
 
@@ -340,11 +399,15 @@ public class SimplePedestrian : MonoBehaviour
         target = destination;
         onFinished = finished;
         released = false;
+        animationTimer = 0f;
         IsDone = false;
         IsInsideCrossingZone = insideCrossingZone;
     }
 
-    public void Tick(float dt, float speed)
+    /// <summary>Ends the walk early (for example when the walker leaves the drawn band) and returns it to the pool.</summary>
+    public void Retire() => Finish();
+
+    public void Tick(float dt, float speed, float distanceMeters)
     {
         if (target == null) { Finish(); return; }
         Vector3 to = target.position - transform.position;
@@ -352,9 +415,34 @@ public class SimplePedestrian : MonoBehaviour
         float dist = to.magnitude;
         if (dist < 0.25f) { Finish(); return; }
         Vector3 dir = to / Mathf.Max(0.001f, dist);
+        // Position advances every frame so a crossing takes the same time at every
+        // animation tier. Only the decorative facing and sway are thinned, and
+        // past the cutoff the pose is frozen entirely.
         transform.position += dir * speed * dt;
-        float sway = Mathf.Sin(Time.time * 7f) * 1.5f;
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(0, 0, sway), dt * 8f);
+
+        if (!CrowdPerformancePolicy.AnimatesAt(distanceMeters))
+            return;
+
+        float interval = CrowdPerformancePolicy.AnimationInterval(distanceMeters);
+        if (interval > 0f)
+        {
+            animationTimer += dt;
+            if (animationTimer < interval)
+                return;
+            dt = animationTimer;
+            animationTimer = 0f;
+        }
+        else
+        {
+            animationTimer = 0f;
+        }
+
+        float sway = CrowdPerformancePolicy.UsesFullAnimation(distanceMeters)
+            ? Mathf.Sin(Time.time * 7f) * 1.5f
+            : 0f;
+        transform.rotation = Quaternion.Slerp(transform.rotation,
+            Quaternion.LookRotation(dir, Vector3.up) * Quaternion.Euler(0, 0, sway),
+            Mathf.Clamp01(dt * 8f));
     }
 
     void Finish()
