@@ -30,16 +30,6 @@ public class RuntimeCityContentDownloader : MonoBehaviour
     public event Action<string, float> Changed;
     public event Action<CityDefinition, bool> Completed;
 
-    readonly string[] endpoints =
-    {
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter",
-        "https://lz4.overpass-api.de/api/interpreter",
-        // Regional Overpass instance. It is used last because it only covers
-        // its own extract; an empty successful response is rejected below so
-        // it can never overwrite a real city pack with zero elements.
-        "https://overpass.osm.ch/api/interpreter"
-    };
     bool cancelRequested;
     UnityWebRequest activeRequest;
 
@@ -244,29 +234,58 @@ public class RuntimeCityContentDownloader : MonoBehaviour
     IEnumerator PostWithFallback(string query, Action<string> result)
     {
         result?.Invoke(null);
-        for (int i = 0; i < endpoints.Length && !cancelRequested; i++)
+        List<string> mirrors = OverpassDownloadPolicy.BuildEndpointList(null);
+
+        for (int i = 0; i < mirrors.Count && !cancelRequested; i++)
         {
-            byte[] body = Encoding.UTF8.GetBytes("data=" + UnityWebRequest.EscapeURL(query));
-            activeRequest = new UnityWebRequest(endpoints[i], "POST")
+            for (int attempt = 1;
+                 attempt <= OverpassDownloadPolicy.DefaultAttemptsPerEndpoint && !cancelRequested;
+                 attempt++)
             {
-                uploadHandler = new UploadHandlerRaw(body),
-                downloadHandler = new DownloadHandlerBuffer(),
-                timeout = 135
-            };
-            activeRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            activeRequest.SetRequestHeader("Accept", "application/json");
-            activeRequest.SetRequestHeader("User-Agent", "RealBusSimulator/1.0");
-            yield return activeRequest.SendWebRequest();
-            if (activeRequest.result == UnityWebRequest.Result.Success)
-            {
-                string json = activeRequest.downloadHandler.text;
+                byte[] body = Encoding.UTF8.GetBytes("data=" + UnityWebRequest.EscapeURL(query));
+                activeRequest = new UnityWebRequest(mirrors[i], "POST")
+                {
+                    uploadHandler = new UploadHandlerRaw(body),
+                    downloadHandler = new DownloadHandlerBuffer(),
+                    timeout = 135
+                };
+                activeRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                activeRequest.SetRequestHeader("Accept", "application/json");
+                activeRequest.SetRequestHeader("User-Agent", "RealBusSimulator/1.0");
+                yield return activeRequest.SendWebRequest();
+
+                string json = activeRequest.downloadHandler != null ? activeRequest.downloadHandler.text : null;
+                bool valid = activeRequest.result == UnityWebRequest.Result.Success &&
+                             OverpassDownloadPolicy.LooksLikeOverpassJson(json);
+                if (valid)
+                {
+                    activeRequest.Dispose(); activeRequest = null;
+                    result?.Invoke(json);
+                    yield break;
+                }
+
+                long status = activeRequest.responseCode;
+                string error = activeRequest.error;
+                string retryAfter = activeRequest.GetResponseHeader("Retry-After");
+                string reason = activeRequest.result == UnityWebRequest.Result.Success
+                    ? "the response was not a usable Overpass document"
+                    : OverpassDownloadPolicy.Describe(activeRequest.result, status, error);
+                Debug.LogWarning($"City content download failed via {mirrors[i]} " +
+                                 $"(attempt {attempt}/{OverpassDownloadPolicy.DefaultAttemptsPerEndpoint}): {reason}");
+
+                // A 200 with an error page is as retryable as a timeout; a 400 is not.
+                bool retryable = activeRequest.result == UnityWebRequest.Result.Success ||
+                                 OverpassDownloadPolicy.IsRetryable(activeRequest.result, status, error);
                 activeRequest.Dispose(); activeRequest = null;
-                result?.Invoke(json);
-                yield break;
+
+                if (!retryable || attempt >= OverpassDownloadPolicy.DefaultAttemptsPerEndpoint)
+                    break;
+                yield return new WaitForSecondsRealtime(
+                    OverpassDownloadPolicy.RetryDelaySeconds(attempt, retryAfter));
             }
-            Debug.LogWarning($"City content download failed via {endpoints[i]}: {activeRequest.error}");
-            activeRequest.Dispose(); activeRequest = null;
-            if (i + 1 < endpoints.Length) yield return new WaitForSecondsRealtime(1f + i);
+
+            if (i + 1 < mirrors.Count && !cancelRequested)
+                yield return new WaitForSecondsRealtime(1f + i);
         }
     }
 
@@ -278,19 +297,7 @@ public class RuntimeCityContentDownloader : MonoBehaviour
         Debug.Log("[CityContent] " + value);
     }
 
-    static bool IsValidOverpassJson(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json) || json.Length < 20) return false;
-        try
-        {
-            var response = OverpassResponse.Deserialize(json);
-            // An empty elements array is a successful HTTP response, not a
-            // successful download. Regional mirrors return it for cities they
-            // do not cover; accepting it would replace a full pack with no data.
-            return response?.elements != null && response.elements.Count > 0;
-        }
-        catch (Exception) { return false; }
-    }
+    static bool IsValidOverpassJson(string json) => OverpassDownloadPolicy.LooksLikeOverpassJson(json);
 
     public static string FormatBytes(long bytes)
     {

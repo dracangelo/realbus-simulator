@@ -33,6 +33,10 @@ public class WorldPreloadCoordinator : MonoBehaviour
     public string Status { get; private set; } = "PREPARING ASSETS...";
     public float Progress { get; private set; }
 
+    /// <summary>The map loader gave up on the centre tiles; the card shows the error and a retry.</summary>
+    public bool MapUnavailable { get; private set; }
+    public string MapFailureMessage { get; private set; }
+
     readonly List<ResourceRequest> coreRequests = new List<ResourceRequest>();
     readonly List<Object> preloadedAssets = new List<Object>();
 
@@ -143,7 +147,12 @@ public class WorldPreloadCoordinator : MonoBehaviour
             if (scenery == null) scenery = FindAnyObjectByType<LiveCityStreamer>();
             if (detail == null) detail = NearFieldAssetWarmup.EnsureExists();
 
-            mapComplete = map == null || map.NearTilesLoaded;
+            // A failed map is a settled stage: waiting out the rest of the budget
+            // would only delay the error card and the retry button. The failure is
+            // surfaced, not swallowed.
+            MapUnavailable = map != null && map.MapFailed;
+            MapFailureMessage = MapUnavailable ? map.LastMapError : null;
+            mapComplete = map == null || map.NearTilesLoaded || MapUnavailable;
             roadsComplete = roads == null || roads.roadsBuilt;
             buildingsComplete = buildings == null || buildings.InitialRingReady;
             infillComplete = infill == null || infill.InitialFillComplete;
@@ -195,7 +204,12 @@ public class WorldPreloadCoordinator : MonoBehaviour
         // the loop past its ceiling before the flags are refreshed. Re-read the
         // live systems once so the log and the timeout decision describe the world
         // we actually finished with, not the frame before the stall.
-        if (map != null) mapComplete = map.NearTilesLoaded;
+        if (map != null)
+        {
+            MapUnavailable = map.MapFailed;
+            MapFailureMessage = MapUnavailable ? map.LastMapError : null;
+            mapComplete = map.NearTilesLoaded || MapUnavailable;
+        }
         if (roads != null) roadsComplete = roads.roadsBuilt;
         if (buildings != null) buildingsComplete = buildings.InitialRingReady;
         if (infill != null) infillComplete = infill.InitialFillComplete;

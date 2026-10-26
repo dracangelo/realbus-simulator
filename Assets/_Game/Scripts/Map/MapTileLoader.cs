@@ -42,6 +42,12 @@ public class MapTileLoader : MonoBehaviour
     public bool followPlayer = true;
     float nextFollowCheck;
 
+    [Header("Download Quality")]
+    [Tooltip("1 = 512 px tiles, 2 = 1024 px @2x. 0 = choose from platform and quality tier.")]
+    [Range(0, 2)] public int tilePixelRatio = 0;
+    [Tooltip("Attempts for the direct (cache-disabled) path. The cache retries its own downloads.")]
+    [Range(1, 6)] public int maxDownloadAttempts = MapDownloadPolicy.DefaultMaxAttempts;
+
     [Header("Tile Visual Quality")]
     public bool forceSharpTileFiltering = true;
     [Tooltip("Negative values sharpen the ground but make distant rows crawl. Kept near zero so the imagery stays stable while the bus moves.")]
@@ -63,11 +69,25 @@ public class MapTileLoader : MonoBehaviour
     private bool initStarted;
     private bool loggedFirstTile;
     private bool centerTileLoaded;
+    private int activePixelRatio = 2;
+    private readonly HashSet<Vector2Int> failedTiles = new HashSet<Vector2Int>();
+
     /// <summary>True once the map tile directly beneath the route start / city
     /// centre has been downloaded and displayed.</summary>
     public bool CenterTileLoaded => centerTileLoaded;
     public int LoadedTileCount => activeTiles.Count;
     public int RequestedTileCount => requestedTiles.Count;
+
+    /// <summary>True when the tile under the bus could not be loaded after every retry.</summary>
+    public bool MapFailed { get; private set; }
+    /// <summary>Why the last tile failure happened, for the loading card and diagnostics.</summary>
+    public string LastMapError { get; private set; }
+    /// <summary>Tiles that failed and would be retried by <see cref="RetryFailedTiles"/>.</summary>
+    public int FailedTileCount => failedTiles.Count;
+    /// <summary>The raster ratio this run is actually using (1 or 2).</summary>
+    public int TilePixelRatio => activePixelRatio;
+    /// <summary>Raised when the map's failure or recovery state changes.</summary>
+    public event System.Action MapStateChanged;
 
     /// <summary>
     /// True once the high-priority tile ring around the centre is on screen.
@@ -80,7 +100,11 @@ public class MapTileLoader : MonoBehaviour
         get
         {
             if (!centerTileLoaded) return false;
-            int ring = Mathf.Clamp(Mathf.Min(tilesX, tilesY) / 2, 1, 2);
+            // A 5x5 window is already the mobile memory budget. Waiting for all
+            // 25 tiles before handing control to the player is unnecessary: the
+            // centre 3x3 covers the street the bus starts on, and the outer ring
+            // streams behind the card.
+            int ring = Mathf.Min(tilesX, tilesY) <= 5 ? 1 : 2;
             for (int dx = -ring; dx <= ring; dx++)
             for (int dy = -ring; dy <= ring; dy++)
                 if (!activeTiles.ContainsKey(new Vector2Int(centerTileX + dx, centerTileY + dy)))
@@ -208,7 +232,16 @@ public class MapTileLoader : MonoBehaviour
 
         ResolveTokenOnce();
         if (!Settings.HasToken)
+        {
+            // A missing credential is a settled failure, not a slow download. The
+            // loading screen must be able to say so immediately instead of waiting
+            // out its whole ceiling on a request that will never be sent.
+            LastMapError = MapDownloadPolicy.Describe(MapTileFailureKind.NoToken) +
+                           ". Add one in Assets/Resources/Mapbox/MapboxConfiguration.txt.";
+            MapFailed = true;
+            MapStateChanged?.Invoke();
             yield break;
+        }
 
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
@@ -269,15 +302,23 @@ public class MapTileLoader : MonoBehaviour
         // the version check, so their coordinates are released rather than leaked.
         requestedTiles.Clear();
         authFailureDetected = false;
+        failedTiles.Clear();
+        MapFailed = false;
+        LastMapError = null;
+
+        int desiredPixelRatio = MapDownloadPolicy.ResolvePixelRatio(
+            tilePixelRatio, Application.isMobilePlatform, QualitySettings.GetQualityLevel());
 
         // A tile coordinate means nothing without its zoom: z15/100,200 and
         // z17/100,200 are different pieces of ground. Changing zoom (city switch,
         // quality change) has to start from a clean window or the old imagery would
-        // be considered already loaded.
-        if (zoom != activeZoom)
+        // be considered already loaded. A pixel-ratio change is the same: the
+        // cached 1x file and the 2x file are different images.
+        if (zoom != activeZoom || desiredPixelRatio != activePixelRatio)
         {
             ClearTiles();
             activeZoom = zoom;
+            activePixelRatio = desiredPixelRatio;
         }
 
         centreLat = lat;
@@ -404,7 +445,14 @@ public class MapTileLoader : MonoBehaviour
         Texture2D tex = null;
         if (preferOfflineCache && Cache != null)
         {
-            yield return Cache.GetTileTexture(zoom, tileX, tileY, t => tex = t);
+            yield return Cache.GetTileTexture(zoom, tileX, tileY, activePixelRatio, t =>
+            {
+                // The loader can be destroyed while a shared cache download is in
+                // flight. The callback still runs on the cache object, so a texture
+                // handed to a dead loader has to be released here.
+                if (this != null) tex = t;
+                else if (t != null) Destroy(t);
+            });
         }
         else if (!Settings.HasToken)
         {
@@ -412,31 +460,67 @@ public class MapTileLoader : MonoBehaviour
             // worse than sending nothing: Mapbox answers 401 "Direct access not allowed",
             // which used to halt every later download as if the token were bad.
             WarnMissingTokenOnce();
+            NoteTileFailure(tileX, tileY, MapDownloadPolicy.Describe(MapTileFailureKind.NoToken));
             yield break;
         }
         else
         {
-            string url = MapboxTileRequest.BuildTileUrl(Settings.Style, zoom, tileX, tileY, Settings.Token);
-
-            // Buffer the response first, then decode it ourselves. UnityWebRequestTexture
-            // can report a DataProcessingError with HTTP 200 for otherwise valid Mapbox
-            // PNG/JPEG tiles on some Unity/Linux combinations.
-            using (UnityWebRequest request = UnityWebRequest.Get(url))
+            tex = null;
+            int attempts = MapDownloadPolicy.ResolveMaxAttempts(maxDownloadAttempts);
+            for (int attempt = 1; attempt <= attempts; attempt++)
             {
-                request.timeout = Mathf.Max(1, httpTimeoutSeconds);
-                request.SetRequestHeader("Accept", "image/png,image/jpeg;q=0.9,*/*;q=0.1");
-                yield return request.SendWebRequest();
+                string url = MapboxTileRequest.BuildTileUrl(
+                    Settings.Style, zoom, tileX, tileY, Settings.Token, activePixelRatio);
 
-                if (request.result == UnityWebRequest.Result.Success)
+                // Buffer the response first, then decode it ourselves. UnityWebRequestTexture
+                // can report a DataProcessingError with HTTP 200 for otherwise valid Mapbox
+                // PNG/JPEG tiles on some Unity/Linux combinations.
+                MapTileFailureKind failure = MapTileFailureKind.None;
+                string retryAfter = null;
+                using (UnityWebRequest request = UnityWebRequest.Get(url))
                 {
-                    byte[] bytes = request.downloadHandler != null ? request.downloadHandler.data : null;
-                    tex = DecodeTile(bytes);
-                    if (tex == null)
-                        LogTileFailure(tileX, tileY, request, "Mapbox returned HTTP 200, but the response was not a supported PNG/JPEG tile");
+                    request.timeout = Mathf.Max(1, httpTimeoutSeconds);
+                    request.SetRequestHeader("Accept", "image/png,image/jpeg;q=0.9,*/*;q=0.1");
+                    yield return request.SendWebRequest();
+
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        byte[] bytes = request.downloadHandler != null ? request.downloadHandler.data : null;
+                        if (MapDownloadPolicy.LooksLikeImage(bytes))
+                        {
+                            tex = DecodeTile(bytes);
+                            if (tex != null) break;
+                        }
+                        failure = MapTileFailureKind.InvalidResponse;
+                        LogTileFailure(tileX, tileY, request,
+                            "Mapbox returned HTTP 200, but the response was not a supported PNG/JPEG tile");
+                    }
+                    else
+                    {
+                        failure = MapDownloadPolicy.Classify(request.result, request.responseCode,
+                            request.error, !string.IsNullOrEmpty(Settings.Token));
+                        retryAfter = request.GetResponseHeader("Retry-After");
+                        LogTileFailure(tileX, tileY, request);
+                    }
                 }
-                else
-                    LogTileFailure(tileX, tileY, request);
+
+                if (attempt >= attempts || !MapDownloadPolicy.IsRetryable(failure))
+                {
+                    NoteTileFailure(tileX, tileY, MapDownloadPolicy.Describe(failure));
+                    break;
+                }
+
+                yield return new WaitForSecondsRealtime(
+                    MapDownloadPolicy.RetryDelaySeconds(attempt, retryAfter, UnityEngine.Random.value));
             }
+        }
+
+        if (preferOfflineCache && Cache != null && tex == null && version == loadVersion)
+        {
+            if (Cache.authFailureDetected) authFailureDetected = true;
+            NoteTileFailure(tileX, tileY, string.IsNullOrWhiteSpace(Cache.lastFailureMessage)
+                ? "Map tiles are unavailable"
+                : Cache.lastFailureMessage);
         }
 
         if (version != loadVersion || tex == null)
@@ -448,12 +532,67 @@ public class MapTileLoader : MonoBehaviour
         CreateTileQuad(tex, offsetX, offsetY, tileX, tileY);
     }
 
+    /// <summary>
+    /// Records a tile that could not be shown. The tile under the bus is the one
+    /// that decides whether the map has failed: an outer-ring tile failing is a
+    /// gap the player may never see, but a missing centre tile is the loading
+    /// screen's business.
+    /// </summary>
+    void NoteTileFailure(int tileX, int tileY, string reason)
+    {
+        var key = new Vector2Int(tileX, tileY);
+        failedTiles.Add(key);
+        requestedTiles.Remove(key);
+        LastMapError = string.IsNullOrWhiteSpace(reason) ? "Map tiles are unavailable" : reason;
+
+        bool wasFailed = MapFailed;
+        bool isCentre = tileX == centerTileX && tileY == centerTileY;
+        if (isCentre || authFailureDetected)
+            MapFailed = true;
+
+        if (MapFailed != wasFailed || isCentre)
+            MapStateChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Re-requests the tiles that failed, from the current centre. Called by the
+    /// loading card's retry action and safe to call when nothing failed.
+    /// </summary>
+    public bool RetryFailedTiles()
+    {
+        if (failedTiles.Count == 0 && !MapFailed)
+            return false;
+
+        failedTiles.Clear();
+        MapFailed = false;
+        LastMapError = null;
+        requestedTiles.Clear();
+        authFailureDetected = false;
+        loggedAuthFailureHint = false;
+        tileFailureLogCount = 0;
+        MapStateChanged?.Invoke();
+        LoadMap(centreLat, centreLon, zoomLevel);
+        return true;
+    }
+
     void CreateTileQuad(Texture2D tex, int offsetX, int offsetY, int tileX, int tileY)
     {
         ApplyTileTextureSettings(tex);
 
+        // A displayed tile proves the credential and network are working; clear a
+        // halt caused by an earlier transient 401 so following tiles keep loading.
+        authFailureDetected = false;
+
         var key = new Vector2Int(tileX, tileY);
         requestedTiles.Remove(key);
+        failedTiles.Remove(key);
+        if (tileX == centerTileX && tileY == centerTileY)
+        {
+            bool wasFailed = MapFailed;
+            MapFailed = false;
+            LastMapError = null;
+            if (wasFailed) MapStateChanged?.Invoke();
+        }
         if (activeTiles.ContainsKey(key))
         {
             // A second response for the same tile can arrive if the window moved while
@@ -516,6 +655,15 @@ public class MapTileLoader : MonoBehaviour
             centerTileLoaded = true;
             HideFallbackPlane();
             Debug.Log("MapTileLoader: Center tile loaded. Fallback plane hidden.");
+        }
+        else if (MapFailed && centerTileLoaded)
+        {
+            // The centre is on screen and a later tile arrived, so a transient
+            // refusal that marked the whole map failed has cleared. Do not keep the
+            // loading card blocked on an error the map has already recovered from.
+            MapFailed = false;
+            LastMapError = null;
+            MapStateChanged?.Invoke();
         }
 
         if (!loggedFirstTile)
@@ -582,8 +730,11 @@ public class MapTileLoader : MonoBehaviour
         for (int i = 0; i < keys.Count; i++) DestroyTile(keys[i]);
         activeTiles.Clear();
         requestedTiles.Clear();
+        failedTiles.Clear();
         loggedFirstTile = false;
         centerTileLoaded = false;
+        MapFailed = false;
+        LastMapError = null;
         tileFailureLogCount = 0;
         loggedAuthFailureHint = false;
     }
@@ -638,11 +789,14 @@ public class MapTileLoader : MonoBehaviour
 
     static Texture2D DecodeTile(byte[] bytes)
     {
-        if (bytes == null || bytes.Length < 16)
+        if (!MapDownloadPolicy.LooksLikeImage(bytes))
             return null;
 
         var texture = new Texture2D(2, 2, TextureFormat.RGBA32, true);
-        if (texture.LoadImage(bytes, false))
+        // Map tiles are sampled by the ground material only; no gameplay code reads
+        // their pixels. A non-readable texture halves the CPU-side copy and lets
+        // Unity release the backing store after upload.
+        if (texture.LoadImage(bytes, true))
             return texture;
 
         Destroy(texture);

@@ -5,6 +5,15 @@ using UnityEngine;
 public class TrafficParticipant : MonoBehaviour
 {
     static readonly List<TrafficParticipant> active = new List<TrafficParticipant>();
+
+    /// <summary>
+    /// No following rule can matter beyond this distance: even at 100 km/h the
+    /// stopping envelope is well under 200 m. Rejecting those bodies with one
+    /// squared-distance compare avoids two dot products per vehicle per call,
+    /// which is most of the cost when 120 bodies share the road.
+    /// </summary>
+    const float MaxFollowingDistanceMeters = 220f;
+
     AIVehicleController ai;
     SplineVehicle spline;
     BusController bus;
@@ -68,6 +77,8 @@ public class TrafficParticipant : MonoBehaviour
             if (other == null || other.transform == vehicle) continue;
             if (ignore != null && other.transform == ignore) continue;
             Vector3 offset = other.transform.position - vehicle.position;
+            if (offset.x * offset.x + offset.z * offset.z >
+                MaxFollowingDistanceMeters * MaxFollowingDistanceMeters) continue;
             float ahead = Vector3.Dot(vehicle.forward, offset);
             if (ahead <= 0f || Mathf.Abs(offset.y) > 3f) continue;
 
@@ -135,6 +146,10 @@ public class TrafficParticipant : MonoBehaviour
         {
             if (other == null || other.transform == vehicle) continue;
             Vector3 offset = other.transform.position - vehicle.position;
+            // ahead <= distance and lateral <= halfWidth together bound the planar
+            // distance, so a body outside that circle cannot be a leader.
+            if (offset.x * offset.x + offset.z * offset.z > distance * distance + halfWidth * halfWidth)
+                continue;
             float ahead = Vector3.Dot(vehicle.forward, offset);
             if (ahead <= 0f || ahead > distance || Mathf.Abs(offset.y) > 3f) continue;
             if (Mathf.Abs(Vector3.Dot(vehicle.right, offset)) > halfWidth) continue;
@@ -152,12 +167,18 @@ public class TrafficParticipant : MonoBehaviour
         TrafficParticipant self = vehicle != null ? vehicle.GetComponent<TrafficParticipant>() : null;
         foreach (var other in active)
         {
-            if (other == null || other.transform == vehicle || other.SpeedKmh >= 2f) continue;
-            if (!other.IsPlayerVehicle && (other.ai == null || other.ai.vehicleType != AIVehicleController.VehicleType.Bus)) continue;
+            if (other == null || other.transform == vehicle) continue;
             Vector3 offset = other.transform.position - vehicle.position;
+            // ahead < distance and lateral < clearance bound the planar distance;
+            // reject the rest before asking for the leader's speed or type.
+            float clearance = LateralClearance(self, other);
+            if (offset.x * offset.x + offset.z * offset.z >
+                distance * distance + clearance * clearance) continue;
+            if (other.SpeedKmh >= 2f) continue;
+            if (!other.IsPlayerVehicle && (other.ai == null || other.ai.vehicleType != AIVehicleController.VehicleType.Bus)) continue;
             float ahead = Vector3.Dot(vehicle.forward, offset);
             if (ahead > 0f && ahead < distance &&
-                Mathf.Abs(Vector3.Dot(vehicle.right, offset)) < LateralClearance(self, other)) return other.transform;
+                Mathf.Abs(Vector3.Dot(vehicle.right, offset)) < clearance) return other.transform;
         }
         return null;
     }
@@ -183,11 +204,17 @@ public class TrafficParticipant : MonoBehaviour
     public static bool PassingLaneClear(Transform vehicle, float sideOffset, float length = 35f)
     {
         TrafficParticipant self = vehicle != null ? vehicle.GetComponent<TrafficParticipant>() : null;
+        float reach = Mathf.Max(1f, length);
         foreach (var other in active)
         {
             if (other == null || other.transform == vehicle) continue;
             float tolerance = Mathf.Max(2.3f, (WidthOf(self) + WidthOf(other)) * 0.5f + .35f);
             Vector3 offset = other.transform.position - vehicle.position;
+            // The candidate lane is sideOffset away; a body that is neither ahead
+            // within reach nor near that lane cannot block the pass.
+            float lateralLimit = Mathf.Abs(sideOffset) + tolerance;
+            if (offset.x * offset.x + offset.z * offset.z >
+                reach * reach + lateralLimit * lateralLimit) continue;
             if (Mathf.Abs(Vector3.Dot(vehicle.forward, offset)) < length &&
                 Mathf.Abs(Vector3.Dot(vehicle.right, offset) - sideOffset) < tolerance) return false;
         }
@@ -196,10 +223,16 @@ public class TrafficParticipant : MonoBehaviour
 
     public static bool HasVehicleAhead(Transform vehicle, float distance, float halfLaneWidth = 2.3f)
     {
+        float reach = Mathf.Max(0f, distance);
+        float halfWidth = Mathf.Max(0f, halfLaneWidth);
         foreach (var other in active)
         {
             if (other == null || other.transform == vehicle) continue;
             Vector3 offset = other.transform.position - vehicle.position;
+            // ahead < distance and lateral < halfLaneWidth, so anything outside
+            // that circle is not ahead in this lane.
+            if (offset.x * offset.x + offset.z * offset.z >
+                reach * reach + halfWidth * halfWidth) continue;
             float ahead = Vector3.Dot(vehicle.forward, offset);
             if (ahead > 0f && ahead < distance && Mathf.Abs(Vector3.Dot(vehicle.right, offset)) < halfLaneWidth) return true;
         }

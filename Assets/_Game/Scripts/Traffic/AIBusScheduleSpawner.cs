@@ -20,6 +20,17 @@ public class AIBusScheduleSpawner : MonoBehaviour
     public GameObject aiBusPrefab;
     public ScheduledAIBusRoute[] routes;
 
+    [Header("Density")]
+    [Tooltip("Chance that a route whose headway is due actually spawns a bus. Zero disables ambient buses without deleting the routes.")]
+    [Range(0f, 1f)] public float spawnProbability = TrafficBusPolicy.DefaultSpawnProbability;
+    [Tooltip("Hard ceiling for scheduled buses alive at once across every route. The mixed-traffic pool has its own bus budget.")]
+    public int maxActiveBuses = TrafficBusPolicy.DefaultMaxActiveBuses;
+    [Tooltip("Preferred distance band for a new scheduled bus around the player.")]
+    public float minSpawnDistanceMeters = TrafficBusPolicy.MinSpawnDistanceMeters;
+    public float maxSpawnDistanceMeters = TrafficBusPolicy.MaxSpawnDistanceMeters;
+    [Tooltip("Apply the bus's slower acceleration, longer following gap and wider turns.")]
+    public bool applyBusHandling = true;
+
     [Header("Spawn Safety")]
     [Tooltip("An ambient bus is never placed closer than this to the player's bus.")]
     public float minPlayerSpawnDistanceMeters = 80f;
@@ -38,6 +49,8 @@ public class AIBusScheduleSpawner : MonoBehaviour
     readonly Dictionary<int, int> activeByRoute = new Dictionary<int, int>();
     Transform playerBus;
     Vector2 aiBusSize = new Vector2(2.5f, 12f);
+    int totalActiveBuses;
+    int liverySlot;
 
     void Start()
     {
@@ -59,6 +72,9 @@ public class AIBusScheduleSpawner : MonoBehaviour
 
         int capacity = 0;
         foreach (var route in routes) if (route != null) capacity += Mathf.Max(1, route.maxConcurrentBuses);
+        // The pool is the ceiling: never instantiate more buses than the configured
+        // budget, however many per-route caps add up to.
+        capacity = TrafficBusPolicy.ScheduledPoolCapacity(capacity, maxActiveBuses);
         if (aiBusPrefab != null) for (int i = 0; i < capacity; i++)
         {
             var go = Instantiate(aiBusPrefab, transform);
@@ -92,13 +108,27 @@ public class AIBusScheduleSpawner : MonoBehaviour
             if (activeByRoute[i] >= Mathf.Max(1, route.maxConcurrentBuses))
                 continue;
 
+            int busCap = TrafficBusPolicy.ResolveMaxActiveBuses(maxActiveBuses);
             if (now >= nextSpawnTimeByRoute[i] && spare.Count > 0 &&
+                totalActiveBuses < busCap &&
                 AIVehicleController.ActiveCount < TrafficPerformancePolicy.FullAiCeiling)
             {
                 // A blocked spawn is retried on a real-time timer rather than a whole
                 // headway: ambient buses should fill a gap in the street, not skip it.
                 retryAfterRealtime.TryGetValue(i, out float retryAt);
                 if (Time.time < retryAt) continue;
+
+                // A probability below one thins the service without shortening the
+                // timetable: the route keeps its headway, it just skips a departure.
+                float chance = TrafficBusPolicy.SpawnProbability(
+                    spawnProbability, totalActiveBuses, maxActiveBuses);
+                if (chance <= 0f)
+                    continue;
+                if (Random.value > chance)
+                {
+                    nextSpawnTimeByRoute[i] = now + Mathf.Max(1f, route.headwayMinutes * 0.25f);
+                    continue;
+                }
 
                 bool spawned = SpawnBusOnRoute(i, route, resolvedSequence);
                 if (spawned)
@@ -132,6 +162,10 @@ public class AIBusScheduleSpawner : MonoBehaviour
         var spline = go.GetComponent<SplineVehicle>();
         if (spline == null) spline = go.AddComponent<SplineVehicle>();
         spline.vehicleWidth = aiBusSize.x;
+        if (applyBusHandling) TrafficBusPolicy.Apply(ai, spline);
+        // Scheduled buses get their own fleet paint instead of every instance of
+        // the same prefab sharing one colour.
+        TrafficLivery.Apply(go, aiBusPrefab != null ? aiBusPrefab.name : "Bus", liverySlot++);
         var rb = go.GetComponent<Rigidbody>();
         if (rb == null) rb = go.AddComponent<Rigidbody>();
         var participant = go.GetComponent<TrafficParticipant>();
@@ -174,11 +208,13 @@ public class AIBusScheduleSpawner : MonoBehaviour
         runner.Init(runSequence, () =>
         {
             activeByRoute[routeIndex] = Mathf.Max(0, activeByRoute[routeIndex] - 1);
+            totalActiveBuses = Mathf.Max(0, totalActiveBuses - 1);
             if (go != null) { go.SetActive(false); spare.Push(go); }
         });
 
         go.SetActive(true);
         activeByRoute[routeIndex]++;
+        totalActiveBuses++;
         return true;
     }
 
@@ -197,6 +233,10 @@ public class AIBusScheduleSpawner : MonoBehaviour
 
         int linkCount = sequence.Length - 1;
         int first = linkCount > 1 ? Random.Range(0, linkCount) : 0;
+        int fallbackIndex = -1;
+        int fallbackLane = 0;
+        Vector3 fallbackPoint = Vector3.zero;
+
         for (int offset = 0; offset < linkCount; offset++)
         {
             int index = (first + offset) % linkCount;
@@ -216,9 +256,37 @@ public class AIBusScheduleSpawner : MonoBehaviour
             if (!IsSpawnPointClear(candidatePoint))
                 continue;
 
+            // Prefer the configured band around the player, so a bus appears in
+            // the part of the route the player can actually reach. A route that
+            // lies entirely outside the band still gets a bus: the first clear
+            // link is kept as a fallback rather than silently starving the route.
+            if (playerBus != null)
+            {
+                float distance = Vector3.Distance(playerBus.position, candidatePoint);
+                float min = Mathf.Max(minPlayerSpawnDistanceMeters, minSpawnDistanceMeters);
+                if (!TrafficBusPolicy.WithinSpawnBand(distance, min, maxSpawnDistanceMeters))
+                {
+                    if (fallbackIndex < 0)
+                    {
+                        fallbackIndex = index;
+                        fallbackLane = candidateLane;
+                        fallbackPoint = candidatePoint;
+                    }
+                    continue;
+                }
+            }
+
             startIndex = index;
             lane = candidateLane;
             point = candidatePoint;
+            return true;
+        }
+
+        if (fallbackIndex >= 0)
+        {
+            startIndex = fallbackIndex;
+            lane = fallbackLane;
+            point = fallbackPoint;
             return true;
         }
 

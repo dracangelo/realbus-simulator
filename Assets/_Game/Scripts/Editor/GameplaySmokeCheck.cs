@@ -779,9 +779,15 @@ public static class GameplaySmokeCheck
         // or a shove from the car ahead can move one body off its line for a moment, so
         // up to a third of the steady samples may be wide, but never by more than a
         // lane width's worth.
+        //
+        // When fewer than three bodies are in the settled middle of a link, the only
+        // samples left are junction crossings, which are allowed to be wide: a car
+        // turning through a junction is not failing to hold a lane. Judge those
+        // against a lane width, not the tighter settled-line tolerance.
+        float laneWidth = pool.roadGraph != null ? pool.roadGraph.MinimumLaneWidth : 3f;
         bool laneOk = steadySamples >= 3
             ? offLane <= Mathf.Max(1, steadySamples / 3) && worstSteady <= 2.5f
-            : laneSamples > 0 && worstDeviation <= 3f;
+            : laneSamples > 0 && worstDeviation <= Mathf.Max(3f, laneWidth);
         bool texturedOk = untextured == 0;
         bool variedOk = models.Count >= 3;
 

@@ -30,6 +30,8 @@ public static class WorldReadiness
         public bool roadsBuilt;
         public bool buildingsRingReady;
         public bool tilesLoaded;
+        /// <summary>The map loader exhausted its retries; the ground has no imagery.</summary>
+        public bool mapFailed;
         /// <summary>Near/FOV assets are still being warmed (tiles, buildings, traffic, props).</summary>
         public bool preloadRequired;
         public bool preloadReady;
@@ -87,7 +89,17 @@ public static class WorldReadiness
             return new Snapshot { progress = 0.62f, status = "LOADING BUILDINGS...", ready = false };
 
         if (!milestones.tilesLoaded)
-            return new Snapshot { progress = 0.74f, status = "DOWNLOADING MAP TILES...", ready = false };
+        {
+            // A failed map is not a reason to keep saying "downloading": the bar
+            // stops at the honest value and the loading screen puts the real error
+            // and its retry action on the card.
+            return new Snapshot
+            {
+                progress = 0.74f,
+                status = milestones.mapFailed ? "MAP UNAVAILABLE" : "DOWNLOADING MAP TILES...",
+                ready = false
+            };
+        }
 
         if (milestones.preloadRequired && !milestones.preloadReady)
         {
@@ -142,7 +154,9 @@ public static class WorldReadiness
         // system should never be held back by this gate.
         milestones.buildingsRingReady = buildings == null || buildings.InitialRingReady;
 
-        milestones.tilesLoaded = MapTileLoader.Instance == null || MapTileLoader.Instance.CenterTileLoaded;
+        var map = MapTileLoader.Instance;
+        milestones.tilesLoaded = map == null || map.CenterTileLoaded;
+        milestones.mapFailed = map != null && map.MapFailed;
 
         var preload = WorldPreloadCoordinator.Instance;
         milestones.preloadRequired = preload != null && !preload.IsReady;
@@ -203,7 +217,7 @@ public static class WorldReadiness
         if (!milestones.gpsReady) pending.Add("gps");
         if (!milestones.roadsBuilt) pending.Add("roads");
         if (!milestones.buildingsRingReady) pending.Add("buildings");
-        if (!milestones.tilesLoaded) pending.Add("tiles");
+        if (!milestones.tilesLoaded) pending.Add(milestones.mapFailed ? "tiles (map download failed)" : "tiles");
         if (milestones.preloadRequired && !milestones.preloadReady) pending.Add("nearby assets");
         if (!milestones.hudReady) pending.Add("hud");
         if (milestones.depotRequired && !milestones.depotBuilt) pending.Add("depot");

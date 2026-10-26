@@ -109,6 +109,32 @@ public class WorldSystemsTests
         Assert.AreEqual(1f, previous, 0.0001f);
     }
 
+    [Test]
+    public void WorldReadiness_AFailedMapSaysSoInsteadOfDownloadingForever()
+    {
+        var milestones = new WorldReadiness.Milestones
+        {
+            saveLoaded = true,
+            audioReady = true,
+            busSpawned = true,
+            vehicleConfigured = true,
+            mapInitialised = true,
+            gpsReady = true,
+            roadsBuilt = true,
+            buildingsRingReady = true,
+            tilesLoaded = false,
+            mapFailed = true
+        };
+
+        var snapshot = WorldReadiness.Evaluate(milestones);
+        Assert.IsFalse(snapshot.ready, "a missing map must not report the world ready");
+        Assert.AreEqual("MAP UNAVAILABLE", snapshot.status,
+            "the player is told the download failed, not shown an endless download step");
+        Assert.AreEqual(0.74f, snapshot.progress, 0.0001f,
+            "the bar keeps the last honest milestone; it does not invent progress");
+        StringAssert.Contains("map download failed", WorldReadiness.DescribePending(milestones));
+    }
+
     static void ApplyStep(ref WorldReadiness.Milestones milestones, int step)
     {
         if (step >= 1) milestones.saveLoaded = true;

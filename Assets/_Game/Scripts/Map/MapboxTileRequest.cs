@@ -67,7 +67,20 @@ public static class MapboxTileRequest
     /// <summary>The raster tile URL the game requests. <paramref name="style"/> is a
     /// style id such as <c>mapbox/satellite-v9</c>.</summary>
     public static string BuildTileUrl(string style, int zoom, int tileX, int tileY, string token) =>
-        $"{TileEndpoint}/{style}/tiles/512/{zoom}/{tileX}/{tileY}@2x?access_token={token}";
+        BuildTileUrl(style, zoom, tileX, tileY, token, 2);
+
+    /// <summary>
+    /// The raster tile URL at an explicit pixel ratio. Mapbox's Styles raster
+    /// endpoint serves the 512 px tile without a suffix and the 1024 px tile with
+    /// <c>@2x</c>. The 1x form is a quarter of the texture memory and is what a
+    /// low-tier phone uses; the 2x form keeps the authored visual quality.
+    /// </summary>
+    public static string BuildTileUrl(string style, int zoom, int tileX, int tileY,
+        string token, int pixelRatio)
+    {
+        string suffix = pixelRatio >= 2 ? "@2x" : string.Empty;
+        return $"{TileEndpoint}/{style}/tiles/512/{zoom}/{tileX}/{tileY}{suffix}?access_token={token}";
+    }
 
     /// <summary>
     /// Describes a token without exposing it: Mapbox tokens are three dot-separated parts

@@ -39,6 +39,11 @@ public class LoadingScreenUI : MonoBehaviour
     /// <summary>Raised by the card at the dark point of its tip cycle, so the owner can swap the copy unnoticed.</summary>
     public event System.Action TipFaded;
 
+    /// <summary>Raised when the player asks to retry a failed map download.</summary>
+    public event System.Action MapRetryRequested;
+    /// <summary>Raised when the player accepts entering the city without map imagery.</summary>
+    public event System.Action MapContinueRequested;
+
     /// <summary>
     /// True from the moment a gameplay load starts until the world phase ends. The
     /// scene-loaded event must not dismiss the card while this is set, and a second
@@ -193,6 +198,26 @@ public class LoadingScreenUI : MonoBehaviour
             card.SetTip(message);
     }
 
+    /// <summary>True while the map error and its retry/continue actions are visible.</summary>
+    public bool MapFailureVisible => card != null && card.MapFailureVisible;
+
+    /// <summary>
+    /// Shows a real map failure without resetting the card. The bar keeps the value
+    /// the world has actually reached; only the wording and the two actions change.
+    /// </summary>
+    public void ShowMapFailure(string message)
+    {
+        if (card == null) return;
+        if (canvas != null) canvas.gameObject.SetActive(true);
+        card.Reveal(instant: true);
+        card.ShowMapFailure(message);
+    }
+
+    public void HideMapFailure()
+    {
+        if (card != null) card.HideMapFailure();
+    }
+
     public void Hide()
     {
         if (card != null) card.Dismiss(instant: true);
@@ -218,5 +243,7 @@ public class LoadingScreenUI : MonoBehaviour
 
         card = CinematicLoadingCard.Create(canvasGo.transform);
         card.TipFadedOut += () => TipFaded?.Invoke();
+        card.MapRetryRequested += () => MapRetryRequested?.Invoke();
+        card.MapContinueRequested += () => MapContinueRequested?.Invoke();
     }
 }

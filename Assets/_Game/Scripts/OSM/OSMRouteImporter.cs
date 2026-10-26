@@ -44,6 +44,10 @@ public class OSMRouteImporter : MonoBehaviour
     [Range(30, 300)] public int roadsTimeoutSec   = 120;
     [Tooltip("Timeout for bus routes query (seconds).")]
     [Range(30, 300)] public int routesTimeoutSec  = 120;
+    [Tooltip("Attempts per endpoint before moving to the next mirror.")]
+    [Range(1, 4)] public int attemptsPerEndpoint = OverpassDownloadPolicy.DefaultAttemptsPerEndpoint;
+    [Tooltip("Try the public Overpass mirrors when the configured endpoint fails.")]
+    public bool useEndpointFallback = true;
 
     [Header("Stop Snapping (3.7A)")]
     [Tooltip("Maximum distance a stop may be from its snapped road position.")]
@@ -52,6 +56,10 @@ public class OSMRouteImporter : MonoBehaviour
     [Header("State (read-only)")]
     public bool  importInProgress;
     public bool  importComplete;
+    /// <summary>True when the last attempt failed. Existing routes are kept.</summary>
+    public bool  importFailed;
+    /// <summary>Why the last attempt failed, for the route UI and diagnostics.</summary>
+    public string lastError;
     public int   routesFound;
     public int   routesAccepted;
     public string statusMessage = "Idle";
@@ -67,6 +75,10 @@ public class OSMRouteImporter : MonoBehaviour
     // ── Private ────────────────────────────────────────────────────────
 
     CoordinateConverter _converter;
+    UnityWebRequest activeRequest;
+    bool importCancelled;
+    string lastImportedCityCode;
+    string lastRoutesSignature;
 
     // ── Lifecycle ──────────────────────────────────────────────────────
 
@@ -85,14 +97,47 @@ public class OSMRouteImporter : MonoBehaviour
 
     // ── Public API ─────────────────────────────────────────────────────
 
-    public void TriggerImport() =>
-        StartCoroutine(ImportRoutesForCity(CityManager.Instance?.activeCity));
+    public void TriggerImport() => TriggerImport(CityManager.Instance?.activeCity);
 
     public void TriggerImport(CityDefinition city)
     {
-        if (city != null)
-            CityManager.Instance?.SetActiveCity(city);
-        StartCoroutine(ImportRoutesForCity(city ?? CityManager.Instance?.activeCity));
+        city ??= CityManager.Instance?.activeCity;
+        if (city == null)
+        {
+            SetStatus("No active city — import aborted.");
+            return;
+        }
+
+        if (importInProgress)
+        {
+            // Starting a second coroutine would duplicate every Overpass query and
+            // race two road graphs into the same city.
+            Debug.LogWarning("[OSMRouteImporter] Import already in progress; request ignored.");
+            return;
+        }
+
+        if (AlreadyImported(city))
+        {
+            Debug.Log($"[OSMRouteImporter] {city.cityName} already has {importedRoutes.Count} imported routes; " +
+                      "skipping the duplicate fetch.");
+            OnImportComplete?.Invoke(importedRoutes);
+            return;
+        }
+
+        CityManager.Instance?.SetActiveCity(city);
+        StartCoroutine(ImportRoutesForCity(city));
+    }
+
+    /// <summary>
+    /// Stops the current import between requests. Completed routes stay in place;
+    /// an aborted import never clears the route list the player is already using.
+    /// </summary>
+    public void CancelImport()
+    {
+        if (!importInProgress) return;
+        importCancelled = true;
+        activeRequest?.Abort();
+        SetStatus("Route import cancelled.");
     }
 
     // ── Main coroutine ─────────────────────────────────────────────────
@@ -118,10 +163,23 @@ public class OSMRouteImporter : MonoBehaviour
             yield break;
         }
 
+        if (AlreadyImported(city))
+        {
+            OnImportComplete?.Invoke(importedRoutes);
+            yield break;
+        }
+
         _converter = EnsureConverter(city);
         importInProgress = true;
         importComplete   = false;
-        importedRoutes.Clear();
+        importFailed     = false;
+        lastError        = null;
+        importCancelled  = false;
+
+        // New routes are built into a local list and only replace the visible
+        // list once the import has succeeded. A failed or cancelled fetch must not
+        // empty the routes the player is already driving.
+        var builtRoutes = new List<BusRoute>();
         try
         {
 
@@ -131,12 +189,13 @@ public class OSMRouteImporter : MonoBehaviour
             city.minLat, city.minLon, city.maxLat, city.maxLon, roadsTimeoutSec);
 
         string roadsJson = localRoadsJson != null ? localRoadsJson.text : ReadDownloadedOrBundled(city, "roads.json");
-        if (roadsJson == null) yield return FetchOverpass(roadsQuery, json => roadsJson = json);
+        if (roadsJson == null)
+            yield return FetchOverpass(roadsQuery, roadsTimeoutSec, json => roadsJson = json);
 
+        if (importCancelled) { SetStatus("Route import cancelled."); yield break; }
         if (string.IsNullOrEmpty(roadsJson))
         {
-            SetStatus("Road network fetch failed.");
-            importInProgress = false;
+            FailImport("Road network fetch failed.", "No usable roads response from any Overpass endpoint.");
             yield break;
         }
 
@@ -144,8 +203,18 @@ public class OSMRouteImporter : MonoBehaviour
         SetStatus("Building road graph…");
         yield return null; // breathe
 
-        var roadsResponse = OverpassResponse.Deserialize(roadsJson);
-        roadsResponse.Resolve();
+        OverpassResponse roadsResponse;
+        try
+        {
+            roadsResponse = OverpassResponse.Deserialize(roadsJson);
+            roadsResponse.Resolve();
+        }
+        catch (System.Exception exception)
+        {
+            FailImport("Road network data was malformed.", exception.Message);
+            yield break;
+        }
+
         var roadGraph = RoadGraph.BuildFromOverpassWays(roadsResponse, _converter);
         Debug.Log($"[OSMRouteImporter] Road graph: {roadGraph.nodes.Count} nodes.");
 
@@ -155,12 +224,13 @@ public class OSMRouteImporter : MonoBehaviour
             city.minLat, city.minLon, city.maxLat, city.maxLon, routesTimeoutSec);
 
         string routesJson = localRoutesJson != null ? localRoutesJson.text : ReadDownloadedOrBundled(city, "routes.json");
-        if (routesJson == null) yield return FetchOverpass(routesQuery, json => routesJson = json);
+        if (routesJson == null)
+            yield return FetchOverpass(routesQuery, routesTimeoutSec, json => routesJson = json);
 
+        if (importCancelled) { SetStatus("Route import cancelled."); yield break; }
         if (string.IsNullOrEmpty(routesJson))
         {
-            SetStatus("Bus routes fetch failed.");
-            importInProgress = false;
+            FailImport("Bus routes fetch failed.", "No usable routes response from any Overpass endpoint.");
             yield break;
         }
 
@@ -168,9 +238,19 @@ public class OSMRouteImporter : MonoBehaviour
         SetStatus("Parsing routes…");
         yield return null;
 
-        var routesResponse = OverpassResponse.Deserialize(routesJson);
-        routesResponse.Resolve();
-        var parsedRoutes = BusRouteParser.ParseRoutes(routesResponse);
+        List<BusRouteParser.ParsedBusRoute> parsedRoutes;
+        try
+        {
+            var routesResponse = OverpassResponse.Deserialize(routesJson);
+            routesResponse.Resolve();
+            parsedRoutes = BusRouteParser.ParseRoutes(routesResponse);
+        }
+        catch (System.Exception exception)
+        {
+            FailImport("Bus route data was malformed.", exception.Message);
+            yield break;
+        }
+
         routesFound = parsedRoutes.Count;
         Debug.Log($"[OSMRouteImporter] Parsed {routesFound} raw routes.");
 
@@ -178,10 +258,13 @@ public class OSMRouteImporter : MonoBehaviour
         var accepted = new List<BusRouteParser.ParsedBusRoute>();
         foreach (var route in parsedRoutes)
         {
+            if (importCancelled) break;
             if (RoadRoutePathBuilder.TryBuild(route, roadGraph, _converter, maxSnapDistanceMeters))
                 accepted.Add(route);
             yield return null;
         }
+        if (importCancelled) { SetStatus("Route import cancelled."); yield break; }
+
         bool filterImportedRoutes = applyRouteFilter && !IsExplicitSingleRouteDownload(city);
         parsedRoutes = filterImportedRoutes ? BusRouteParser.FilterRoutes(accepted) : accepted;
         if (generateReturnRoutes)
@@ -190,10 +273,12 @@ public class OSMRouteImporter : MonoBehaviour
             accepted = new List<BusRouteParser.ParsedBusRoute>();
             foreach (var route in returns)
             {
+                if (importCancelled) break;
                 if (RoadRoutePathBuilder.TryBuild(route, roadGraph, _converter, maxSnapDistanceMeters))
                     accepted.Add(route);
                 yield return null;
             }
+            if (importCancelled) { SetStatus("Route import cancelled."); yield break; }
             parsedRoutes.AddRange(filterImportedRoutes ? BusRouteParser.FilterRoutes(accepted) : accepted);
         }
 
@@ -203,23 +288,80 @@ public class OSMRouteImporter : MonoBehaviour
 
         foreach (var pr in parsedRoutes)
         {
+            if (importCancelled) break;
             var route = CreateBusRouteAsset(pr);
             route.sourceCityCode = city.cityCode;
-            importedRoutes.Add(route);
+            builtRoutes.Add(route);
         }
 
-        routesAccepted = importedRoutes.Count;
+        if (importCancelled) { SetStatus("Route import cancelled."); yield break; }
 
-        // ── Step 9: Register with city ────────────────────────────────
+        // ── Step 9: Publish and register with the city ────────────────
+        importedRoutes = builtRoutes;
+        routesAccepted = importedRoutes.Count;
         MergeIntoCity(city);
 
-        importInProgress = false;
-        importComplete   = true;
+        importComplete = true;
+        lastImportedCityCode = city.cityCode;
+        lastRoutesSignature = RoutesSignature(city);
         SetStatus($"Done — {routesAccepted} routes imported.");
         Debug.Log($"[OSMRouteImporter] Complete: {routesAccepted} routes for {city.cityName}.");
         OnImportComplete?.Invoke(importedRoutes);
         }
-        finally { importInProgress = false; }
+        finally
+        {
+            importInProgress = false;
+            activeRequest?.Dispose();
+            activeRequest = null;
+        }
+    }
+
+    /// <summary>
+    /// True when this exact city and route source were imported successfully in
+    /// this session. CitySelector asks for an import every time a city with a
+    /// routes.json is opened; without this check that re-fetched and re-built the
+    /// same road graph and route set on every visit.
+    /// </summary>
+    bool AlreadyImported(CityDefinition city)
+    {
+        if (!importComplete || importedRoutes == null || importedRoutes.Count == 0)
+            return false;
+        if (!string.Equals(lastImportedCityCode, city.cityCode, System.StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        string signature = RoutesSignature(city);
+        return signature == null || string.Equals(signature, lastRoutesSignature, System.StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Identity of the route source: the downloaded/bundled file's size and write
+    /// time, or the authored TextAsset. A new download changes the signature and
+    /// correctly forces a re-import.
+    /// </summary>
+    string RoutesSignature(CityDefinition city)
+    {
+        if (localRoutesJson != null) return "local:" + localRoutesJson.text.Length;
+
+        string path = RuntimeCityContentStore.ResolveReadPath(city, "routes.json");
+        try
+        {
+            if (File.Exists(path))
+            {
+                var info = new FileInfo(path);
+                return $"{info.Length}:{info.LastWriteTimeUtc.Ticks}";
+            }
+        }
+        catch (IOException) { }
+        catch (System.UnauthorizedAccessException) { }
+        return null;
+    }
+
+    void FailImport(string status, string error)
+    {
+        importFailed = true;
+        lastError = error;
+        SetStatus(string.IsNullOrWhiteSpace(error) ? status : $"{status} {error}");
+        Debug.LogError($"[OSMRouteImporter] {status} {error}");
     }
 
     public BusRoute CreateBusRouteAsset(BusRouteParser.ParsedBusRoute parsed)
@@ -267,29 +409,87 @@ public class OSMRouteImporter : MonoBehaviour
 
     // ── Overpass HTTP helper ───────────────────────────────────────────
 
-    IEnumerator FetchOverpass(string query, System.Action<string> onDone)
+    IEnumerator FetchOverpass(string query, int timeoutSeconds, System.Action<string> onDone)
     {
-        string body = "data=" + UnityWebRequest.EscapeURL(query);
-        byte[] raw  = System.Text.Encoding.UTF8.GetBytes(body);
-
-        using var req = new UnityWebRequest(overpassEndpoint, "POST");
-        req.uploadHandler   = new UploadHandlerRaw(raw);
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        req.timeout         = Mathf.Max(roadsTimeoutSec, routesTimeoutSec) + 10;
-
-        yield return req.SendWebRequest();
-
-        if (req.result != UnityWebRequest.Result.Success)
+        List<string> mirrors;
+        if (useEndpointFallback)
         {
-            Debug.LogError($"[OSMRouteImporter] Overpass request failed: {req.error}");
-            onDone?.Invoke(null);
-            yield break;
+            mirrors = OverpassDownloadPolicy.BuildEndpointList(overpassEndpoint);
+        }
+        else
+        {
+            mirrors = new List<string>(1)
+            {
+                string.IsNullOrWhiteSpace(overpassEndpoint)
+                    ? OverpassDownloadPolicy.PublicEndpoints[0]
+                    : overpassEndpoint.Trim()
+            };
         }
 
-        string json = req.downloadHandler.text;
-        Debug.Log($"[OSMRouteImporter] Overpass response: {json.Length:N0} bytes.");
-        onDone?.Invoke(json);
+        int attempts = Mathf.Clamp(attemptsPerEndpoint, 1, 4);
+        int timeout = Mathf.Max(30, timeoutSeconds) + 10;
+
+        for (int i = 0; i < mirrors.Count && !importCancelled; i++)
+        {
+            for (int attempt = 1; attempt <= attempts && !importCancelled; attempt++)
+            {
+                byte[] raw = System.Text.Encoding.UTF8.GetBytes(
+                    "data=" + UnityWebRequest.EscapeURL(query));
+
+                activeRequest = new UnityWebRequest(mirrors[i], "POST")
+                {
+                    uploadHandler = new UploadHandlerRaw(raw),
+                    downloadHandler = new DownloadHandlerBuffer(),
+                    timeout = timeout
+                };
+                activeRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                activeRequest.SetRequestHeader("Accept", "application/json");
+                activeRequest.SetRequestHeader("User-Agent", "RealBusSimulator/1.0");
+
+                yield return activeRequest.SendWebRequest();
+
+                string json = activeRequest.downloadHandler != null
+                    ? activeRequest.downloadHandler.text
+                    : null;
+                bool valid = activeRequest.result == UnityWebRequest.Result.Success &&
+                             OverpassDownloadPolicy.LooksLikeOverpassJson(json);
+                if (valid)
+                {
+                    Debug.Log($"[OSMRouteImporter] Overpass response via {mirrors[i]}: {json.Length:N0} bytes.");
+                    activeRequest.Dispose();
+                    activeRequest = null;
+                    onDone?.Invoke(json);
+                    yield break;
+                }
+
+                long status = activeRequest.responseCode;
+                string error = activeRequest.error;
+                string retryAfter = activeRequest.GetResponseHeader("Retry-After");
+                string reason = activeRequest.result == UnityWebRequest.Result.Success
+                    ? "the response was not a usable Overpass document"
+                    : OverpassDownloadPolicy.Describe(activeRequest.result, status, error);
+                Debug.LogWarning($"[OSMRouteImporter] Overpass failed via {mirrors[i]} " +
+                                 $"(attempt {attempt}/{attempts}): {reason}");
+
+                bool retryable = activeRequest.result == UnityWebRequest.Result.Success ||
+                                 OverpassDownloadPolicy.IsRetryable(activeRequest.result, status, error);
+                activeRequest.Dispose();
+                activeRequest = null;
+
+                if (!retryable || attempt >= attempts)
+                    break;
+
+                yield return new WaitForSecondsRealtime(
+                    OverpassDownloadPolicy.RetryDelaySeconds(attempt, retryAfter));
+            }
+
+            if (i + 1 < mirrors.Count && !importCancelled)
+                yield return new WaitForSecondsRealtime(1f + i);
+        }
+
+        if (!importCancelled)
+            Debug.LogError($"[OSMRouteImporter] Every Overpass endpoint failed for this query ({mirrors.Count} tried).");
+        onDone?.Invoke(null);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────

@@ -121,6 +121,14 @@ public class VehiclePool : MonoBehaviour
     public float peakWidthMinutes = 80f;
     public float rushMultiplier = 5f;
 
+    [Header("Buses")]
+    [Tooltip("Share of the mixed-traffic pool that may be buses. Buses are capped so a bus-heavy catalog cannot fill every lane.")]
+    [Range(0f, 0.5f)] public float busShare = TrafficBusPolicy.DefaultBusShare;
+    [Tooltip("Hard ceiling for buses created in this pool. Scheduled ambient buses have their own budget.")]
+    public int maxActiveBuses = TrafficBusPolicy.DefaultMaxActiveBuses;
+    [Tooltip("Apply the bus's slower acceleration, longer following gap and wider turns.")]
+    public bool applyBusHandling = true;
+
     [Header("Debug Gizmos")]
     public bool drawTierGizmos = true;
     public bool drawTierRings = true;
@@ -394,9 +402,17 @@ public class VehiclePool : MonoBehaviour
         int wheelCollidersRemoved = 0;
         int meshCollidersRemoved = 0;
         int animatorsDisabled = 0;
+        int busTarget = TrafficBusPolicy.PoolBusCount(
+            poolSizePerScene, busShare, maxActiveBuses);
+        int busesCreated = 0;
         for (int i = 0; i < poolSizePerScene; i++)
         {
             var picked = PickWeightedPrefab();
+            // The pool is created once. Capping the bus prefabs here is what makes
+            // maxActiveBuses a real ceiling rather than a per-frame hope.
+            if (picked != null && picked.type == AIVehicleController.VehicleType.Bus &&
+                busesCreated >= busTarget)
+                picked = PickWeightedPrefab(excludeBuses: true);
             if (picked == null || picked.prefab == null) continue;
 
             GameObject go = Instantiate(picked.prefab, transform);
@@ -434,6 +450,12 @@ public class VehiclePool : MonoBehaviour
             ai.desiredSpeedFactor = driverFactor;
             spline.desiredSpeedFactor = driverFactor;
             spline.vehicleWidth = modelWidth;
+
+            if (picked.type == AIVehicleController.VehicleType.Bus)
+            {
+                busesCreated++;
+                if (applyBusHandling) TrafficBusPolicy.Apply(ai, spline);
+            }
 
             var participant = go.GetComponent<TrafficParticipant>();
             if (participant == null) participant = go.AddComponent<TrafficParticipant>();
@@ -490,7 +512,8 @@ public class VehiclePool : MonoBehaviour
         initialTierFillPending = true;
         if (logSpawnEvents)
             Debug.Log($"[VehiclePool] Warmed pool: {created}/{poolSizePerScene} vehicles created " +
-                      $"(roadGraphNodes={roadGraph.NodeCount}, laneWidth={roadGraph.MinimumLaneWidth:0.00}m, " +
+                      $"(buses={busesCreated}/{busTarget}, roadGraphNodes={roadGraph.NodeCount}, " +
+                      $"laneWidth={roadGraph.MinimumLaneWidth:0.00}m, " +
                       $"wheelCollidersRemoved={wheelCollidersRemoved}, meshCollidersRemoved={meshCollidersRemoved}, " +
                       $"animatorsDisabled={animatorsDisabled}).");
     }
@@ -1349,22 +1372,33 @@ public class VehiclePool : MonoBehaviour
         return RealismRules.DailyDensity(now, morningPeakMinutes, eveningPeakMinutes, peakWidthMinutes, rushMultiplier);
     }
 
-    VehiclePrefabEntry PickWeightedPrefab()
+    VehiclePrefabEntry PickWeightedPrefab(bool excludeBuses = false)
     {
         if (prefabs == null || prefabs.Length == 0) return null;
 
         float sum = 0f;
+        int eligible = 0;
         for (int i = 0; i < prefabs.Length; i++)
+        {
+            if (prefabs[i] == null || prefabs[i].prefab == null) continue;
+            if (excludeBuses && prefabs[i].type == AIVehicleController.VehicleType.Bus) continue;
             sum += Mathf.Max(0.01f, prefabs[i].weight);
+            eligible++;
+        }
+        if (eligible == 0) return null;
 
         float roll = Random.Range(0f, sum);
         float acc = 0f;
+        VehiclePrefabEntry last = null;
         for (int i = 0; i < prefabs.Length; i++)
         {
+            if (prefabs[i] == null || prefabs[i].prefab == null) continue;
+            if (excludeBuses && prefabs[i].type == AIVehicleController.VehicleType.Bus) continue;
             acc += Mathf.Max(0.01f, prefabs[i].weight);
+            last = prefabs[i];
             if (roll <= acc) return prefabs[i];
         }
-        return prefabs[prefabs.Length - 1];
+        return last;
     }
 
     void OnDrawGizmos()

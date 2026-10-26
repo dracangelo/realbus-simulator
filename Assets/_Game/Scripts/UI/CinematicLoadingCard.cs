@@ -34,6 +34,16 @@ public class CinematicLoadingCard : MonoBehaviour
     public string RouteLine => routeText != null ? routeText.text : string.Empty;
     public float Progress { get; private set; }
 
+    /// <summary>True while the map error and its two actions are on screen.</summary>
+    public bool MapFailureVisible { get; private set; }
+    /// <summary>The reason shown under the status line, for diagnostics and tests.</summary>
+    public string MapFailureMessage => mapErrorText != null ? mapErrorText.text : string.Empty;
+
+    /// <summary>The player asked to download the failed tiles again.</summary>
+    public event System.Action MapRetryRequested;
+    /// <summary>The player chose to enter the city without map imagery.</summary>
+    public event System.Action MapContinueRequested;
+
     /// <summary>True once the card has finished closing and deactivated itself.</summary>
     public bool IsDismissed { get; private set; }
 
@@ -47,6 +57,8 @@ public class CinematicLoadingCard : MonoBehaviour
     CanvasGroup group;
     Image topBar, bottomBar, glow, vignette, accentRule, progressFill, progressHead;
     TextMeshProUGUI eyebrowText, titleText, routeText, statusText, percentText, tipText;
+    TextMeshProUGUI mapErrorText;
+    Button mapRetryButton, mapContinueButton;
 
     float open;
     float time;
@@ -132,6 +144,36 @@ public class CinematicLoadingCard : MonoBehaviour
     {
         EnsureBuilt();
         if (statusText != null) statusText.text = message;
+    }
+
+    /// <summary>
+    /// Puts the map's real failure on the card, with the two honest choices: try the
+    /// download again, or enter the city without imagery. Nothing here invents a
+    /// progress value; the bar keeps whatever the world has actually reached.
+    /// </summary>
+    public void ShowMapFailure(string message)
+    {
+        EnsureBuilt();
+        MapFailureVisible = true;
+        if (mapErrorText != null)
+        {
+            mapErrorText.text = string.IsNullOrWhiteSpace(message)
+                ? "Map tiles could not be downloaded."
+                : message;
+            mapErrorText.gameObject.SetActive(true);
+        }
+        if (mapRetryButton != null) mapRetryButton.gameObject.SetActive(true);
+        if (mapContinueButton != null) mapContinueButton.gameObject.SetActive(true);
+        if (tipText != null) tipText.text = "Check your connection, then retry. Your route, roads and traffic are unaffected.";
+    }
+
+    public void HideMapFailure()
+    {
+        EnsureBuilt();
+        MapFailureVisible = false;
+        if (mapErrorText != null) mapErrorText.gameObject.SetActive(false);
+        if (mapRetryButton != null) mapRetryButton.gameObject.SetActive(false);
+        if (mapContinueButton != null) mapContinueButton.gameObject.SetActive(false);
     }
 
     public void SetProgress(float value)
@@ -396,6 +438,25 @@ public class CinematicLoadingCard : MonoBehaviour
             new Vector2(1180f, 90f), UITheme.FontWeight.Regular);
         tipText.color = UITheme.WithAlpha(UITheme.TextSecondary, 0.85f);
 
+        // Map failure is the one loading state that needs input. It sits below the
+        // tip so it never competes with the progress readout, and both actions are
+        // explicit: retry the tiles, or accept the fallback ground and drive.
+        mapErrorText = MakeText("Map Error", content, "", 20f, new Vector2(0f, -318f),
+            new Vector2(1240f, 46f), UITheme.FontWeight.Medium);
+        mapErrorText.color = UITheme.Error;
+        mapErrorText.textWrappingMode = TextWrappingModes.Normal;
+        mapErrorText.gameObject.SetActive(false);
+
+        mapRetryButton = MakeButton("Retry Map", content, "RETRY MAP", UITheme.Accent,
+            new Vector2(-132f, -392f), new Vector2(236f, 54f));
+        mapRetryButton.onClick.AddListener(() => MapRetryRequested?.Invoke());
+        mapRetryButton.gameObject.SetActive(false);
+
+        mapContinueButton = MakeButton("Continue Without Map", content, "CONTINUE ANYWAY", UITheme.SurfaceHigh,
+            new Vector2(150f, -392f), new Vector2(264f, 54f));
+        mapContinueButton.onClick.AddListener(() => MapContinueRequested?.Invoke());
+        mapContinueButton.gameObject.SetActive(false);
+
         // Bars last so they cover the glow and the copy as the frame closes.
         topBar = MakeBar("Top Bar", true);
         bottomBar = MakeBar("Bottom Bar", false);
@@ -422,6 +483,32 @@ public class CinematicLoadingCard : MonoBehaviour
         image.color = color;
         image.raycastTarget = false;
         return image;
+    }
+
+    static Button MakeButton(string name, Transform parent, string label, Color color,
+        Vector2 position, Vector2 size)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+
+        var rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = size;
+        rect.anchoredPosition = position;
+
+        var image = go.GetComponent<Image>();
+        image.color = color;
+        image.raycastTarget = true;
+
+        var button = go.GetComponent<Button>();
+        button.targetGraphic = image;
+
+        TextMeshProUGUI text = MakeText("Label", go.transform, label, 16f,
+            Vector2.zero, size, UITheme.FontWeight.Bold);
+        text.color = color == UITheme.Accent ? UITheme.Background : UITheme.TextPrimary;
+        text.characterSpacing = 4f;
+        text.raycastTarget = false;
+        return button;
     }
 
     static TextMeshProUGUI MakeText(string name, Transform parent, string value, float size,

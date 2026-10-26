@@ -32,6 +32,8 @@ public class CityPredownloader : MonoBehaviour
 
     [Header("Mapbox")]
     public int    zoomLevel   = 15;
+    [Tooltip("1 = 512 px tiles, 2 = 1024 px @2x. 0 = copy the loader / platform policy.")]
+    [Range(0, 2)] public int tilePixelRatio = 0;
 
     /// <summary>
     /// The credential and the style are not authored here: they come from the one resolved
@@ -158,7 +160,18 @@ public class CityPredownloader : MonoBehaviour
 
         zoomLevel = loader.zoomLevel;
         tileWorldSize = loader.tileWorldSize;
+        // The pre-download has to write the same cache folder the loader will
+        // read. Copy the authored choice, not the loader's resolved value: the
+        // loader may not have run its first LoadMap yet, and both sides resolve
+        // platform/quality the same way when they actually use the ratio.
+        tilePixelRatio = loader.tilePixelRatio;
     }
+
+    /// <summary>The raster ratio this download is writing (1 or 2).</summary>
+    public int ActivePixelRatio => MapDownloadPolicy.ResolvePixelRatio(
+        tilePixelRatio, Application.isMobilePlatform, QualitySettings.GetQualityLevel());
+
+    float EstimatedMBPerTile => ActivePixelRatio >= 2 ? 0.22f : 0.06f;
 
     public void CancelDownload()
     {
@@ -175,7 +188,7 @@ public class CityPredownloader : MonoBehaviour
         if (_cache != null)
             foreach (var tile in GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize))
             {
-                string path = _cache.GetTileCachePath(Settings.Style, zoomLevel, tile.x, tile.y);
+                string path = _cache.GetTileCachePath(Settings.Style, zoomLevel, tile.x, tile.y, ActivePixelRatio);
                 try { if (System.IO.File.Exists(path)) System.IO.File.Delete(path); } catch (System.IO.IOException) { }
             }
         PlayerPrefs.DeleteKey(StatusKey(city)); PlayerPrefs.Save();
@@ -211,7 +224,7 @@ public class CityPredownloader : MonoBehaviour
         totalTiles = tiles.Count;
 
         // Initial estimate: 0.22 MB per @2x PNG tile (conservative)
-        estimatedMB = totalTiles * 0.22f;
+        estimatedMB = totalTiles * EstimatedMBPerTile;
         OnEstimatedMbChanged?.Invoke(estimatedMB);
         SaveStatus(city, false);
 
@@ -228,7 +241,7 @@ public class CityPredownloader : MonoBehaviour
                 inFlight++;
 
                 // Skip already-cached tiles immediately.
-                if (_cache != null && _cache.IsTileCached(Settings.Style, zoomLevel, tile.x, tile.y))
+                if (_cache != null && _cache.IsTileCached(Settings.Style, zoomLevel, tile.x, tile.y, ActivePixelRatio))
                 {
                     inFlight--;
                     completedTiles++;
@@ -261,7 +274,7 @@ public class CityPredownloader : MonoBehaviour
             // A successful response is not proof of offline availability after LRU eviction.
             completedTiles = 0;
             foreach (var tile in tiles)
-                if (_cache.IsTileCached(Settings.Style, zoomLevel, tile.x, tile.y)) completedTiles++;
+                if (_cache.IsTileCached(Settings.Style, zoomLevel, tile.x, tile.y, ActivePixelRatio)) completedTiles++;
             failedTiles = totalTiles - completedTiles;
             FireProgress();
         }
@@ -277,25 +290,31 @@ public class CityPredownloader : MonoBehaviour
     {
         if (_cache == null) { onDone?.Invoke(false, 0); yield break; }
 
-        bool  success   = false;
-        long  byteCount = 0;
+        bool success = false;
+        long byteCount = 0;
+        int ratio = ActivePixelRatio;
 
+        // The cache coalesces duplicate requests and retries transient failures
+        // itself. The outer loop only exists for a caller that wants one more
+        // attempt after the cache has given up.
         for (int attempt = 0; attempt <= retryAttempts && !success && !isCancelled; attempt++)
         {
             if (attempt > 0)
-                yield return new WaitForSeconds(0.5f * attempt); // back-off
+                yield return new WaitForSecondsRealtime(
+                    MapDownloadPolicy.RetryDelaySeconds(attempt, UnityEngine.Random.value));
 
-            Texture2D tex = null;
-            yield return _cache.GetTileTexture(zoomLevel, x, y, t => tex = t);
+            bool cached = false;
+            yield return _cache.EnsureTileCached(zoomLevel, x, y, ratio, c => cached = c);
+            if (!cached) continue;
 
-            if (tex != null)
+            success = true;
+            try
             {
-                // Rough byte estimate from texture dimensions (@2x PNG).
-                byteCount = (long)(tex.width * tex.height * 4 * 0.6f); // ~60 % PNG compression
-                success = _cache.IsTileCached(Settings.Style, zoomLevel, x, y);
-                if (success) byteCount = new System.IO.FileInfo(_cache.GetTileCachePath(Settings.Style, zoomLevel, x, y)).Length;
-                Destroy(tex);
+                byteCount = new System.IO.FileInfo(
+                    _cache.GetTileCachePath(Settings.Style, zoomLevel, x, y, ratio)).Length;
             }
+            catch (System.IO.IOException) { }
+            catch (System.UnauthorizedAccessException) { }
         }
 
         onDone?.Invoke(success, byteCount);
@@ -335,7 +354,7 @@ public class CityPredownloader : MonoBehaviour
         {
             status.mapStyle = Settings.Style; status.zoom = zoomLevel;
             status.total = GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize).Count;
-            status.estimatedMb = status.total * 0.22f;
+            status.estimatedMb = status.total * EstimatedMBPerTile;
         }
         if (verifyCache)
         {
@@ -344,7 +363,7 @@ public class CityPredownloader : MonoBehaviour
             {
                 int cached = 0;
                 var tiles = GetTilesInRadius(city.centreLat, city.centreLon, zoomLevel, radiusMeters, tileWorldSize);
-                for (int i = 0; i < tiles.Count; i++) if (_cache.IsTileCached(Settings.Style, zoomLevel, tiles[i].x, tiles[i].y)) cached++;
+                for (int i = 0; i < tiles.Count; i++) if (_cache.IsTileCached(Settings.Style, zoomLevel, tiles[i].x, tiles[i].y, ActivePixelRatio)) cached++;
                 status.cached = cached; status.total = tiles.Count; status.complete = cached == tiles.Count && tiles.Count > 0;
             }
         }

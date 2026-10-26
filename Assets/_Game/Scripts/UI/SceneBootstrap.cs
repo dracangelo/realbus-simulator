@@ -447,14 +447,28 @@ public class SceneBootstrap : MonoBehaviour
             // order stays stable out past the 950 m fog wall.
             roadBuilder.roadYOffset = Mathf.Max(mapLoader.tileSurfaceY + 0.12f, 0.12f);
             mapLoader.zoomLevel = Mathf.Max(mapLoader.zoomLevel, 17);
-            mapLoader.tilesX = Mathf.Max(mapLoader.tilesX, 7);
-            mapLoader.tilesY = Mathf.Max(mapLoader.tilesY, 7);
-            // Load the 5x5 window first, not just the centre cross: the
-            // loading overlay now waits for the near ring and the player
-            // should not land on a half-tiled street.
-            mapLoader.highPriorityRing = Mathf.Max(mapLoader.highPriorityRing, 2);
+
+            // A 7x7 window at zoom 17 is 49 tiles. At 1024 px RGBA32 with
+            // mipmaps that is roughly 260 MB of GPU texture, which is the single
+            // largest memory cost in the scene and a common Android OOM. A 5x5
+            // window is 25 tiles and still covers more ground than the 1 km far
+            // clip; the low-tier phone also gets 512 px tiles (a quarter of the
+            // memory). Both are configurable on the loader, and an explicit
+            // authored window smaller than the recommendation is kept.
+            bool mobile = Application.isMobilePlatform;
+            int quality = QualitySettings.GetQualityLevel();
+            int window = MapDownloadPolicy.RecommendedWindowSize(mobile, quality, mapLoader.tilesX);
+            mapLoader.tilesX = window;
+            mapLoader.tilesY = MapDownloadPolicy.RecommendedWindowSize(mobile, quality, mapLoader.tilesY);
+
+            // Load the centre 3x3 first on a 5x5 window, the centre 5x5 on a
+            // 7x7 window. The loading overlay waits for that ring, so the player
+            // lands on a tiled street while the outer ring streams behind it.
+            mapLoader.highPriorityRing = window <= 5 ? 1 : 2;
             mapLoader.forceSharpTileFiltering = true;
-            mapLoader.tileAnisoLevel = 16;
+            // 16x anisotropic filtering on the ground is a large surface; four
+            // samples is the point of diminishing returns on a phone.
+            mapLoader.tileAnisoLevel = Mathf.Min(mapLoader.tileAnisoLevel, mobile ? 4 : 8);
             // A negative mip bias sharpened the near ground but made the far
             // rows crawl as the bus moved. Zero keeps mip selection honest.
             mapLoader.tileMipMapBias = 0f;

@@ -42,6 +42,12 @@ public class WorldReadyLoadingScreen : MonoBehaviour
     int tipIndex = -1;
     string lastStatus;
 
+    MapTileLoader mapLoader;
+    bool mapFailureShown;
+    bool continueWithoutMap;
+    string lastMapFailure;
+    float waitDeadline;
+
     /// <summary>
     /// True once the world phase is over, whether the world reached readiness or the
     /// ceiling expired. Anything waiting to hand control to the player watches this.
@@ -88,6 +94,12 @@ public class WorldReadyLoadingScreen : MonoBehaviour
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
+        if (screen != null)
+        {
+            screen.TipFaded -= NextTip;
+            screen.MapRetryRequested -= RetryMap;
+            screen.MapContinueRequested -= ContinueWithoutMap;
+        }
         // Never leave the bus locked if this component is torn down mid-wait
         // (a scene reload, a failed load, exiting play mode).
         ReleaseInput();
@@ -103,7 +115,12 @@ public class WorldReadyLoadingScreen : MonoBehaviour
         // session, so this creates (and reveals) the same card.
         screen = LoadingScreenUI.EnsureExists();
         screen.BeginWorldPhase();
-        if (screen != null) screen.TipFaded += NextTip;
+        if (screen != null)
+        {
+            screen.TipFaded += NextTip;
+            screen.MapRetryRequested += RetryMap;
+            screen.MapContinueRequested += ContinueWithoutMap;
+        }
         NextTip();
         StartCoroutine(WaitForWorldReady());
     }
@@ -125,14 +142,27 @@ public class WorldReadyLoadingScreen : MonoBehaviour
 
     IEnumerator WaitForWorldReady()
     {
-        float deadline = Time.unscaledTime + timeoutSeconds;
+        waitDeadline = Time.unscaledTime + timeoutSeconds;
         bool worldReady = false;
 
-        while (Time.unscaledTime < deadline)
+        while (Time.unscaledTime < waitDeadline)
         {
             LockInput();
 
-            WorldReadiness.Snapshot snapshot = WorldReadiness.Evaluate(WorldReadiness.Capture());
+            if (mapLoader == null) mapLoader = MapTileLoader.Instance;
+            bool mapFailed = mapLoader != null && mapLoader.MapFailed;
+
+            WorldReadiness.Milestones milestones = WorldReadiness.Capture();
+            // "Continue anyway" is the player accepting the fallback ground. It
+            // satisfies the tile milestone for this run only; the loader's failure
+            // state is left untouched so a later retry can still succeed.
+            if (continueWithoutMap)
+            {
+                milestones.tilesLoaded = true;
+                milestones.mapFailed = false;
+            }
+
+            WorldReadiness.Snapshot snapshot = WorldReadiness.Evaluate(milestones);
             screen.SetStatus(snapshot.status);
             // One line per ladder step: when a load is slow, the log names the
             // milestone it is sitting on instead of leaving a silent gap.
@@ -145,7 +175,13 @@ public class WorldReadyLoadingScreen : MonoBehaviour
             // back (a re-bind, a streaming flag) cannot make the bar retreat.
             screen.SetWorldProgress(snapshot.progress);
 
-            if (snapshot.ready)
+            if (!continueWithoutMap && mapFailed) ShowMapFailure(mapLoader.LastMapError);
+            else if (mapFailureShown) ClearMapFailure();
+
+            // A failed map blocks the hand-over until the player retries or
+            // explicitly accepts the city without imagery. Everything else can
+            // still finish behind the card.
+            if (snapshot.ready && !(mapFailed && !continueWithoutMap))
             {
                 worldReady = true;
                 break;
@@ -156,10 +192,16 @@ public class WorldReadyLoadingScreen : MonoBehaviour
 
         if (worldReady)
         {
+            bool mapSkipped = continueWithoutMap && mapLoader != null && mapLoader.MapFailed;
             // 100% is only ever written here, after every milestone is true.
-            screen.SetStatus("WORLD READY");
+            screen.SetStatus(mapSkipped
+                ? "CITY READY — MAP IMAGERY UNAVAILABLE"
+                : "WORLD READY");
             screen.SetWorldProgress(1f);
-            Debug.Log($"WorldReadyLoadingScreen: world ready in {Time.unscaledTime - shownAt:0.0}s.");
+            screen.HideMapFailure();
+            Debug.Log(mapSkipped
+                ? $"WorldReadyLoadingScreen: world ready without map imagery in {Time.unscaledTime - shownAt:0.0}s."
+                : $"WorldReadyLoadingScreen: world ready in {Time.unscaledTime - shownAt:0.0}s.");
 
             float visibleFor = Time.unscaledTime - shownAt;
             float hold = Mathf.Max(0f, minimumVisibleSeconds - visibleFor) + holdAfterReadySeconds;
@@ -177,10 +219,16 @@ public class WorldReadyLoadingScreen : MonoBehaviour
             // The ceiling is a safety valve, not a success: the bar keeps the last
             // honest value and the card says what is still streaming, so the player
             // is never told 100% while work is outstanding.
+            bool mapFailed = mapLoader != null && mapLoader.MapFailed;
             Debug.LogWarning(
                 $"WorldReadyLoadingScreen: world not ready after {timeoutSeconds:0}s, still waiting on " +
-                $"{WorldReadiness.DescribePending(WorldReadiness.Capture())}. Showing the scene anyway.");
-            screen.SetStatus("STILL STREAMING — CONTINUING IN THE CITY");
+                $"{WorldReadiness.DescribePending(WorldReadiness.Capture())}." +
+                (mapFailed ? $" Map failure: {mapLoader.LastMapError}." : string.Empty) +
+                " Showing the scene anyway.");
+            screen.SetStatus(mapFailed
+                ? "MAP UNAVAILABLE — CONTINUING IN THE CITY"
+                : "STILL STREAMING — CONTINUING IN THE CITY");
+            screen.HideMapFailure();
             yield return new WaitForSecondsRealtime(holdAfterReadySeconds);
         }
 
@@ -198,9 +246,76 @@ public class WorldReadyLoadingScreen : MonoBehaviour
         Finish();
     }
 
+    /// <summary>
+    /// Puts the loader's real failure on the card. The status is the failure, not a
+    /// percentage: the bar stays at the last milestone that actually completed.
+    /// </summary>
+    void ShowMapFailure(string reason)
+    {
+        string message = string.IsNullOrWhiteSpace(reason) ? "Map tiles could not be downloaded." : reason;
+        if (mapFailureShown && message == lastMapFailure) return;
+
+        mapFailureShown = true;
+        lastMapFailure = message;
+        screen.SetStatus("MAP UNAVAILABLE — " + message.ToUpperInvariant());
+        screen.ShowMapFailure(message);
+        Debug.LogWarning($"WorldReadyLoadingScreen: map unavailable ({message}). " +
+                         "Waiting for the player to retry or continue without imagery.");
+    }
+
+    void ClearMapFailure()
+    {
+        if (!mapFailureShown) return;
+        mapFailureShown = false;
+        lastMapFailure = null;
+        screen.HideMapFailure();
+    }
+
+    /// <summary>The card's RETRY MAP action: ask the loader for the failed tiles again.</summary>
+    void RetryMap()
+    {
+        if (mapLoader == null) mapLoader = MapTileLoader.Instance;
+        if (mapLoader == null)
+        {
+            ContinueWithoutMap();
+            return;
+        }
+
+        ClearMapFailure();
+        if (!mapLoader.RetryFailedTiles())
+        {
+            screen.SetStatus("MAP RETRY NOT NEEDED");
+            return;
+        }
+
+        screen.SetStatus("RETRYING MAP TILES...");
+        // A retry at second 55 of a 60 second window deserves a fair chance; the
+        // ceiling is still bounded, and the continue action remains available.
+        waitDeadline = Mathf.Max(waitDeadline, Time.unscaledTime + 20f);
+        Debug.Log("WorldReadyLoadingScreen: map retry requested.");
+    }
+
+    /// <summary>
+    /// The card's CONTINUE ANYWAY action. The world is handed over with the fallback
+    /// ground; the status keeps saying that imagery is missing rather than pretending
+    /// the map arrived.
+    /// </summary>
+    void ContinueWithoutMap()
+    {
+        continueWithoutMap = true;
+        ClearMapFailure();
+        screen.SetStatus("CONTINUING WITHOUT MAP IMAGERY");
+        Debug.LogWarning("WorldReadyLoadingScreen: player chose to continue without map imagery.");
+    }
+
     void Finish()
     {
-        if (screen != null) screen.TipFaded -= NextTip;
+        if (screen != null)
+        {
+            screen.TipFaded -= NextTip;
+            screen.MapRetryRequested -= RetryMap;
+            screen.MapContinueRequested -= ContinueWithoutMap;
+        }
 
         // One owner for the transition: SceneLoader closes the session (which
         // releases the card) when it exists; a direct scene play closes it here.
