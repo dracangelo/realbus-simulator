@@ -162,6 +162,7 @@ public class AIBusScheduleSpawner : MonoBehaviour
         var spline = go.GetComponent<SplineVehicle>();
         if (spline == null) spline = go.AddComponent<SplineVehicle>();
         spline.vehicleWidth = aiBusSize.x;
+        spline.vehicleLength = aiBusSize.y;
         if (applyBusHandling) TrafficBusPolicy.Apply(ai, spline);
         // Scheduled buses get their own fleet paint instead of every instance of
         // the same prefab sharing one colour.

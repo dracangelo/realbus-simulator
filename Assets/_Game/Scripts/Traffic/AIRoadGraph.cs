@@ -20,6 +20,15 @@ public class AIRoadGraph : MonoBehaviour
         /// both directions share the same centred lane instead of each taking half
         /// a lane they do not have.</summary>
         public bool[] outgoingSharedLanes;
+        /// <summary>Per-link speed limit. A node can join a motorway to a residential
+        /// street; storing one node-wide value let a car carry the motorway limit
+        /// onto the slow road after the turn.</summary>
+        public float[] outgoingSpeedLimits;
+        /// <summary>Signal controlling this directed link as it approaches its end.
+        /// Signals are bound per approach where the scene provides them; the
+        /// node-level <see cref="trafficLight"/> remains the fallback for scenes
+        /// that only author one signal per junction.</summary>
+        public TrafficLight[] outgoingTrafficLights;
     }
 
     [Header("Road Graph")]
@@ -175,11 +184,130 @@ public class AIRoadGraph : MonoBehaviour
         return Mathf.Max(10f, nodes[index].speedLimitKmh);
     }
 
+    /// <summary>
+    /// Speed limit of one directed link. Falls back to the source node's value
+    /// when the graph was authored before per-link limits existed.
+    /// </summary>
+    public float GetSpeedLimitKmh(int fromNode, int toNode)
+    {
+        if (!IsValidNode(fromNode)) return 30f;
+        RoadNode node = nodes[fromNode];
+        int link = FindLinkIndex(node, toNode);
+        if (link >= 0 && node.outgoingSpeedLimits != null && link < node.outgoingSpeedLimits.Length)
+            return Mathf.Max(10f, node.outgoingSpeedLimits[link]);
+        return GetSpeedLimitKmh(fromNode);
+    }
+
     public bool IsRedSignal(int index)
     {
         if (!IsValidNode(index)) return false;
         var tl = nodes[index].trafficLight;
         return tl != null && tl.IsRed();
+    }
+
+    /// <summary>
+    /// The signal a vehicle on this directed link must obey as it reaches the
+    /// junction. Per-approach binding wins; the destination node's signal is the
+    /// fallback for a single-signal junction.
+    /// </summary>
+    public TrafficLight GetTrafficLight(int fromNode, int toNode)
+    {
+        if (IsValidNode(fromNode))
+        {
+            RoadNode node = nodes[fromNode];
+            int link = FindLinkIndex(node, toNode);
+            if (link >= 0 && node.outgoingTrafficLights != null &&
+                link < node.outgoingTrafficLights.Length && node.outgoingTrafficLights[link] != null)
+                return node.outgoingTrafficLights[link];
+        }
+        return IsValidNode(toNode) ? nodes[toNode].trafficLight : null;
+    }
+
+    public bool IsRedSignal(int fromNode, int toNode)
+    {
+        var tl = GetTrafficLight(fromNode, toNode);
+        return tl != null && tl.IsRed();
+    }
+
+    /// <summary>
+    /// Binds a scene signal to the approach whose direction it faces. A junction
+    /// with one signal keeps the node-wide fallback so every approach still stops;
+    /// a junction with several signals gets an independent phase per approach.
+    /// </summary>
+    public bool TryBindTrafficSignal(TrafficLight signal, float maxDistanceMeters = 25f)
+    {
+        if (signal == null || nodes == null || nodes.Length == 0) return false;
+
+        int nodeIndex = GetNearestNodeIndex(signal.transform.position);
+        if (!IsValidNode(nodeIndex)) return false;
+        if (Vector3.Distance(GetNodePosition(nodeIndex), signal.transform.position) >
+            Mathf.Max(1f, maxDistanceMeters)) return false;
+
+        return BindTrafficSignalToNode(signal, nodeIndex);
+    }
+
+    public bool BindTrafficSignalToNode(TrafficLight signal, int nodeIndex)
+    {
+        if (signal == null || !IsValidNode(nodeIndex)) return false;
+
+        Vector3 nodePosition = GetNodePosition(nodeIndex);
+        Vector3 toSignal = signal.transform.position - nodePosition;
+        toSignal.y = 0f;
+
+        // Find every directed link that enters this junction. The signal is on
+        // the stop-line side of the junction, so the approach it belongs to has
+        // the strongest dot product with the vector from the junction to the signal.
+        int bestSource = -1;
+        int bestLink = -1;
+        float bestDot = -2f;
+        for (int source = 0; source < nodes.Length; source++)
+        {
+            if (source == nodeIndex || !IsValidNode(source)) continue;
+            RoadNode candidate = nodes[source];
+            int link = FindLinkIndex(candidate, nodeIndex);
+            if (link < 0) continue;
+            if (candidate.outgoingTrafficLights != null &&
+                link < candidate.outgoingTrafficLights.Length &&
+                candidate.outgoingTrafficLights[link] != null) continue;
+
+            Vector3 approach = GetNodePosition(source) - nodePosition;
+            approach.y = 0f;
+            float dot = toSignal.sqrMagnitude > .0001f && approach.sqrMagnitude > .0001f
+                ? Vector3.Dot(toSignal.normalized, approach.normalized)
+                : 1f;
+            if (dot > bestDot)
+            {
+                bestDot = dot;
+                bestSource = source;
+                bestLink = link;
+            }
+        }
+
+        if (bestSource >= 0)
+        {
+            RoadNode sourceNode = nodes[bestSource];
+            EnsureSignalArray(sourceNode);
+            sourceNode.outgoingTrafficLights[bestLink] = signal;
+        }
+
+        // Keep a junction-wide fallback for any approach without its own signal,
+        // and for graphs that only ever author one signal per junction.
+        if (nodes[nodeIndex].trafficLight == null)
+            nodes[nodeIndex].trafficLight = signal;
+
+        return bestSource >= 0 || nodes[nodeIndex].trafficLight != null;
+    }
+
+    static void EnsureSignalArray(RoadNode node)
+    {
+        if (node.nextNodeIndices == null) return;
+        int required = node.nextNodeIndices.Length;
+        if (node.outgoingTrafficLights != null && node.outgoingTrafficLights.Length >= required) return;
+
+        var expanded = new TrafficLight[required];
+        if (node.outgoingTrafficLights != null)
+            System.Array.Copy(node.outgoingTrafficLights, expanded, node.outgoingTrafficLights.Length);
+        node.outgoingTrafficLights = expanded;
     }
 
     public int GetRandomNextNode(int currentIndex)

@@ -101,15 +101,48 @@ public class AIRoadGraphGenerator : EditorWindow
             var key = Quantize(graphNode.lat, graphNode.lon);
             nodeMetadata.TryGetValue(key, out var meta);
 
+            int[] next = graphNode.edges
+                .Select(e => e.to)
+                .Distinct()
+                .Where(idx => idx >= 0 && idx < graph.nodes.Count)
+                .ToArray();
+            var laneCounts = new int[next.Length];
+            var laneWidths = new float[next.Length];
+            var oneWays = new bool[next.Length];
+            var sharedLanes = new bool[next.Length];
+            var speedLimits = new float[next.Length];
+            for (int link = 0; link < next.Length; link++)
+            {
+                laneCounts[link] = Mathf.Max(1, meta.laneCount > 0 ? meta.laneCount : defaultLaneCount);
+                laneWidths[link] = meta.laneWidth > 0f ? meta.laneWidth : defaultLaneWidth;
+                speedLimits[link] = meta.speedLimitKmh > 0f ? meta.speedLimitKmh : GuessNodeSpeed(graphNode);
+            }
+            for (int edgeIndex = 0; edgeIndex < graphNode.edges.Count; edgeIndex++)
+            {
+                var edge = graphNode.edges[edgeIndex];
+                int link = System.Array.IndexOf(next, edge.to);
+                if (link < 0) continue;
+                laneCounts[link] = Mathf.Max(1, edge.laneCount);
+                laneWidths[link] = Mathf.Max(2.6f, edge.laneWidth);
+                oneWays[link] = edge.oneWay;
+                sharedLanes[link] = edge.sharedLane;
+                speedLimits[link] = Mathf.Max(10f, edge.speedLimitKmh);
+            }
+
             nodes[i] = new AIRoadGraph.RoadNode
             {
                 id = $"N{i:0000}",
                 point = pointTransforms[i],
-                laneCount = Mathf.Max(1, meta.laneCount > 0 ? meta.laneCount : defaultLaneCount),
-                laneWidth = meta.laneWidth > 0f ? meta.laneWidth : defaultLaneWidth,
+                laneCount = laneCounts.Length > 0 ? laneCounts[0] : Mathf.Max(1, meta.laneCount > 0 ? meta.laneCount : defaultLaneCount),
+                laneWidth = laneWidths.Length > 0 ? laneWidths[0] : (meta.laneWidth > 0f ? meta.laneWidth : defaultLaneWidth),
                 speedLimitKmh = meta.speedLimitKmh > 0f ? meta.speedLimitKmh : GuessNodeSpeed(graphNode),
                 trafficLight = null,
-                nextNodeIndices = graphNode.edges.Select(e => e.to).Distinct().Where(idx => idx >= 0 && idx < graph.nodes.Count).ToArray()
+                nextNodeIndices = next,
+                outgoingLaneCounts = laneCounts,
+                outgoingLaneWidths = laneWidths,
+                outgoingOneWays = oneWays,
+                outgoingSharedLanes = sharedLanes,
+                outgoingSpeedLimits = speedLimits
             };
         }
 

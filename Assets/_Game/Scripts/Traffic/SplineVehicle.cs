@@ -29,6 +29,9 @@ public class SplineVehicle : MonoBehaviour
     public float desiredSpeedFactor = 1f;
     /// <summary>Measured body width, written by VehiclePool. The spline tier uses it for the road-edge rail.</summary>
     public float vehicleWidth = 2f;
+    /// <summary>Measured body length, written by VehiclePool. Junction approach and
+    /// signal clearance must scale with a bus, not a hatchback.</summary>
+    public float vehicleLength = 4.2f;
 
     [Header("Path Cache")]
     public int lookaheadNodes = 8;
@@ -165,13 +168,13 @@ public class SplineVehicle : MonoBehaviour
         emergencyYieldSeconds = Mathf.Max(0f, emergencyYieldSeconds - dt);
 
         float distanceToJunction = Vector3.Distance(transform.position, nodeB);
-        float desired = roadGraph.GetSpeedLimitKmh(currentNodeIndex) *
+        float desired = roadGraph.GetSpeedLimitKmh(currentNodeIndex, targetNodeIndex) *
                         Mathf.Clamp(desiredSpeedFactor, 0.8f, 1.1f);
         float turnFactor = RealismRules.TurnSpeedFactor(
             roadGraph.GetLikelyTurnAngle(targetNodeIndex, segment, previousNodeIndex));
         if (turnFactor < .999f)
         {
-            float approach = Mathf.Clamp(speedKmh / 3.6f * 1.8f + 4f, 10f, 45f);
+            float approach = Mathf.Clamp(speedKmh / 3.6f * 1.8f + vehicleLength, 10f, 60f);
             desired = RealismRules.ApproachSpeedKmh(desired, desired * turnFactor,
                 distanceToJunction, approach);
         }
@@ -224,8 +227,13 @@ public class SplineVehicle : MonoBehaviour
             Vector3.Dot(transform.forward, dir));
 
         if (emergencyYieldSeconds > 0f) desired = Mathf.Min(desired, 8f);
-        if (roadGraph.IsRedSignal(targetNodeIndex))
-            desired = Mathf.Min(desired, RealismRules.StoppingSpeedKmh(dist, 5f, brakeKmhPerSec / 3.6f * 0.65f));
+        if (roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) &&
+            distanceToJunction <= redLightStopDistance + vehicleLength)
+        {
+            float signalClearance = vehicleLength * .5f + 3f;
+            desired = Mathf.Min(desired, RealismRules.StoppingSpeedKmh(
+                distanceToJunction, signalClearance, brakeKmhPerSec / 3.6f * 0.65f));
+        }
         if (IsOvertaking)
             desired = Mathf.Min(desired, AIVehicleController.OvertakeSpeedKmh(desired,
                 passTarget != null ? passTarget.SpeedKmh : 0f,
@@ -265,7 +273,7 @@ public class SplineVehicle : MonoBehaviour
     void UpdateStuckRecovery(float dt)
     {
         float moved = Vector3.Distance(transform.position, lastProgressPosition); lastProgressPosition = transform.position;
-        bool legitimateStop = emergencyYieldSeconds > 0f || roadGraph.IsRedSignal(targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, minHeadway + 2f);
+        bool legitimateStop = emergencyYieldSeconds > 0f || roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, minHeadway + 2f);
         if (moved > 0.025f || speedKmh > 1.5f || legitimateStop) { stuckSeconds = 0f; return; }
         stuckSeconds += dt;
         if (stuckSeconds >= 18f)
@@ -309,7 +317,7 @@ public class SplineVehicle : MonoBehaviour
             bool tooCloseToJunction = distanceToJunction < 7f;
             bool laneGone = overtakeLaneIndex < 0 || overtakeLaneIndex >= laneCount;
             if (targetGone || passed || tooCloseToJunction ||
-                roadGraph.IsRedSignal(targetNodeIndex) || laneGone ||
+                roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) || laneGone ||
                 overtakeTimer >= Mathf.Max(2f, maximumOvertakeSeconds))
             {
                 EndOvertake();
@@ -331,7 +339,7 @@ public class SplineVehicle : MonoBehaviour
             return;
         }
 
-        if (overtakeCooldown <= 0f && !roadGraph.IsRedSignal(targetNodeIndex) &&
+        if (overtakeCooldown <= 0f && !roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) &&
             RealismRules.HasOvertakeRunway(distanceToJunction, speedKmh))
         {
             int passLane = AIVehicleController.PassingLaneIndex(roadGraph, currentNodeIndex,

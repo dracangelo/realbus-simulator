@@ -11,6 +11,8 @@ public class OsmTrafficSignalSpawner : MonoBehaviour
     public string endpoint = "https://overpass-api.de/api/interpreter";
     public float radiusMeters = 2000f;
     [System.NonSerialized] public RoadGraph graph;
+    [Tooltip("AI graph the spawned signals control. When unset, the largest city graph is used.")]
+    public AIRoadGraph aiGraph;
     readonly HashSet<long> spawned = new HashSet<long>();
 
     [ContextMenu("Load traffic signals")]

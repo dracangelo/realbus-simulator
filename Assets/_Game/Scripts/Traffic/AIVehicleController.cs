@@ -690,7 +690,7 @@ public class AIVehicleController : MonoBehaviour
             bool tooCloseToJunction = distanceToJunction < Mathf.Max(7f, vehicleLength * 1.2f);
             bool laneGone = overtakeLaneIndex < 0 || overtakeLaneIndex >= laneCount;
             if (targetGone || passed || tooCloseToJunction ||
-                roadGraph.IsRedSignal(targetNodeIndex) || laneGone ||
+                roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) || laneGone ||
                 overtakeTimer >= Mathf.Max(2f, maximumOvertakeSeconds))
             {
                 EndOvertake();
@@ -717,7 +717,7 @@ public class AIVehicleController : MonoBehaviour
             return;
         }
 
-        if (overtakeCooldown <= 0f && !roadGraph.IsRedSignal(targetNodeIndex) &&
+        if (overtakeCooldown <= 0f && !roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) &&
             RealismRules.HasOvertakeRunway(distanceToJunction, currentSpeedKmh))
         {
             int passLane = PassingLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex, laneIndex);
@@ -870,7 +870,7 @@ public class AIVehicleController : MonoBehaviour
         lastProgressPosition = transform.position;
         recoveryLaneTimer = Mathf.Max(0f, recoveryLaneTimer - Time.fixedDeltaTime);
         if (recoveryLaneTimer <= 0f && !isOvertaking && !isYieldingToEmergency) laneShiftTarget = 0f;
-        bool legitimateStop = isYieldingToEmergency || roadGraph.IsRedSignal(targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, safeFollowingDistance + 2f);
+        bool legitimateStop = isYieldingToEmergency || roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) || TrafficParticipant.HasVehicleAhead(transform, safeFollowingDistance + 2f);
         if (moved > 0.04f || currentSpeedKmh > 2f || legitimateStop) { stuckSeconds = 0f; return; }
         stuckSeconds += Time.fixedDeltaTime;
         float shiftLimit = Mathf.Max(overtakingLaneShift,
@@ -896,7 +896,7 @@ public class AIVehicleController : MonoBehaviour
 
     float ResolveDesiredSpeedKmh()
     {
-        float speedLimit = obeySpeedLimits ? roadGraph.GetSpeedLimitKmh(currentNodeIndex) : 45f;
+        float speedLimit = obeySpeedLimits ? roadGraph.GetSpeedLimitKmh(currentNodeIndex, targetNodeIndex) : 45f;
         float typeFactor;
         switch (vehicleType)
         {
@@ -938,7 +938,7 @@ public class AIVehicleController : MonoBehaviour
 
         if (obeyTrafficSignals && vehicleType != VehicleType.Emergency)
         {
-            if (roadGraph.IsRedSignal(targetNodeIndex))
+            if (roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex))
             {
                 float distToSignal = Vector3.Distance(transform.position, roadGraph.GetNodePosition(targetNodeIndex));
                 result = Mathf.Min(result, RealismRules.StoppingSpeedKmh(distToSignal, vehicleLength * 0.5f + 3f, maxBrake * 0.65f));

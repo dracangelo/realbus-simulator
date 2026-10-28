@@ -305,9 +305,8 @@ public class PedestrianSpawner : MonoBehaviour
                 crossingId = $"RGX_{fromIndex}_{toIndex}",
                 spawnA = spawnA,
                 spawnB = spawnB,
-                controllingTrafficLight = graph.nodes[toIndex].trafficLight != null
-                    ? graph.nodes[toIndex].trafficLight
-                    : graph.nodes[fromIndex].trafficLight
+                controllingTrafficLight = graph.GetTrafficLight(fromIndex, toIndex)
+                    ?? graph.nodes[fromIndex].trafficLight
             });
         }
 

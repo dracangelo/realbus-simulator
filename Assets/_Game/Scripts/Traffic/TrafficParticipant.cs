@@ -49,7 +49,11 @@ public class TrafficParticipant : MonoBehaviour
         ai = GetComponent<AIVehicleController>();
         spline = GetComponent<SplineVehicle>();
         bus = GetComponent<BusController>();
-        if (bus != null) { length = 12f; width = 2.5f; }
+        if (bus != null)
+        {
+            length = Mathf.Max(1f, bus.vehicleLength);
+            width = Mathf.Max(1f, bus.vehicleWidth);
+        }
         ownerCached = true;
     }
     void OnDisable() { active.Remove(this); }

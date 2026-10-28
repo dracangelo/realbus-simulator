@@ -31,6 +31,12 @@ public class BusController : MonoBehaviour
     public Transform modelRoot;
     public bool replaceModelFromSpec = false;
 
+    [Header("Body")]
+    [Tooltip("Measured body length in metres. Traffic perception uses this so a following car keeps a real bumper gap behind the bus.")]
+    public float vehicleLength = 12f;
+    [Tooltip("Measured body width in metres, used by traffic perception and passing clearance.")]
+    public float vehicleWidth = 2.55f;
+
     [Header("Wheels")]
     public WheelCollider[] driveWheels;   // rear 4
     public WheelCollider[] allWheels;     // all 6
@@ -508,6 +514,13 @@ public class BusController : MonoBehaviour
         dragCoefficient = Mathf.Max(0f, spec.dragCoefficient);
         frontalArea = Mathf.Max(0.1f, spec.frontalArea);
         airDensity = Mathf.Max(0.1f, spec.airDensity);
+        vehicleLength = Mathf.Max(1f, spec.bodyLengthMeters > 0f ? spec.bodyLengthMeters : 12f);
+        vehicleWidth = Mathf.Max(1f, spec.bodyWidthMeters > 0f ? spec.bodyWidthMeters : 2.55f);
+
+        // The participant caches the bus's body size. Refresh it after the spec
+        // changes so following and passing rules use the real model.
+        if (TryGetComponent(out TrafficParticipant participant))
+            participant.RefreshOwner();
 
         if (rb == null)
             rb = GetComponent<Rigidbody>();

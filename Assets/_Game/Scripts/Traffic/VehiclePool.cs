@@ -450,6 +450,7 @@ public class VehiclePool : MonoBehaviour
             ai.desiredSpeedFactor = driverFactor;
             spline.desiredSpeedFactor = driverFactor;
             spline.vehicleWidth = modelWidth;
+            spline.vehicleLength = modelSize.y;
 
             if (picked.type == AIVehicleController.VehicleType.Bus)
             {
@@ -797,7 +798,10 @@ public class VehiclePool : MonoBehaviour
             if (offset.sqrMagnitude < clearSqr) return false;
         }
 
-        return true;
+        // Scheduled buses and any other external traffic are not in this pool.
+        // Check the shared participant list so a pooled car cannot materialise on
+        // top of one of them.
+        return TrafficParticipant.IsSpawnAreaClear(point, Mathf.Max(2f, vehicleSpawnClearanceMeters));
     }
 
     bool IsTrafficGraphDisabledByConfig()

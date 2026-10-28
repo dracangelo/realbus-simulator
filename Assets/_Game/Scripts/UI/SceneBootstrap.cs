@@ -1444,6 +1444,7 @@ public class SceneBootstrap : MonoBehaviour
             float[] laneWidths = sourceNode.edges != null ? new float[sourceNode.edges.Count] : System.Array.Empty<float>();
             bool[] oneWays = sourceNode.edges != null ? new bool[sourceNode.edges.Count] : System.Array.Empty<bool>();
             bool[] sharedLanes = sourceNode.edges != null ? new bool[sourceNode.edges.Count] : System.Array.Empty<bool>();
+            float[] speedLimits = sourceNode.edges != null ? new float[sourceNode.edges.Count] : System.Array.Empty<float>();
 
             if (sourceNode.edges != null)
             {
@@ -1455,6 +1456,7 @@ public class SceneBootstrap : MonoBehaviour
                     laneWidths[edgeIndex] = Mathf.Max(2.6f, edge.laneWidth);
                     oneWays[edgeIndex] = edge.oneWay;
                     sharedLanes[edgeIndex] = edge.sharedLane;
+                    speedLimits[edgeIndex] = Mathf.Max(10f, edge.speedLimitKmh);
                 }
             }
 
@@ -1470,7 +1472,8 @@ public class SceneBootstrap : MonoBehaviour
                 outgoingLaneCounts = laneCounts,
                 outgoingLaneWidths = laneWidths,
                 outgoingOneWays = oneWays,
-                outgoingSharedLanes = sharedLanes
+                outgoingSharedLanes = sharedLanes,
+                outgoingSpeedLimits = speedLimits
             };
         }
 

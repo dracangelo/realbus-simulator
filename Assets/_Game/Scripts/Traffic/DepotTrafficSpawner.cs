@@ -173,7 +173,8 @@ public class DepotTrafficSpawner : MonoBehaviour
             nextNodeIndices = new[] { next },
             outgoingLaneCounts = new[] { 1 },
             outgoingLaneWidths = new[] { 3.4f },
-            outgoingOneWays = new[] { true }
+            outgoingOneWays = new[] { true },
+            outgoingSpeedLimits = new[] { cruiseSpeedKmh }
         };
     }
 

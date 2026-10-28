@@ -27,6 +27,9 @@ public class BusSpec : ScriptableObject
     public int totalCapacity = 70;
     public int doorOpenCapacityLimit = 70;
     public float bodyLengthMeters = 12f;
+    /// <summary>Body width used by traffic perception. Imported models write their
+    /// measured width; the default matches the shipped fleet shell.</summary>
+    public float bodyWidthMeters = 2.55f;
 
     [Header("Energy")]
     public BusEnergyType energyType = BusEnergyType.Diesel;

@@ -115,6 +115,147 @@ public class RoadGraphTests
     }
 
     [Test]
+    public void AirRoadGraph_PerLinkSpeedLimit_DoesNotLeakFastRoadOntoSlowLink()
+    {
+        var root = new GameObject("Speed limit graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var junction = new GameObject("Junction").transform;
+        var fast = new GameObject("Fast").transform; fast.position = new Vector3(-30f, 0f, 0f);
+        var slow = new GameObject("Slow").transform; slow.position = new Vector3(0f, 0f, 30f);
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode
+            {
+                point = junction,
+                speedLimitKmh = 50f,
+                nextNodeIndices = new[] { 1, 2 },
+                outgoingSpeedLimits = new[] { 80f, 20f }
+            },
+            new AIRoadGraph.RoadNode { point = fast, nextNodeIndices = new[] { 0 } },
+            new AIRoadGraph.RoadNode { point = slow, nextNodeIndices = new[] { 0 } }
+        };
+
+        Assert.That(graph.GetSpeedLimitKmh(0, 1), Is.EqualTo(80f));
+        Assert.That(graph.GetSpeedLimitKmh(0, 2), Is.EqualTo(20f),
+            "the slow link must not inherit the node's fast outgoing limit");
+        graph.nodes[0].outgoingSpeedLimits = null;
+        Assert.That(graph.GetSpeedLimitKmh(0, 1), Is.EqualTo(50f),
+            "graphs authored before per-link limits fall back to the node value");
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(junction.gameObject);
+        Object.DestroyImmediate(fast.gameObject);
+        Object.DestroyImmediate(slow.gameObject);
+    }
+
+    [Test]
+    public void AirRoadGraph_TrafficSignalBinding_PrefersPerApproachOverNodeFallback()
+    {
+        var root = new GameObject("Signal graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var junction = new GameObject("Junction").transform;
+        var west = new GameObject("West").transform; west.position = new Vector3(-20f, 0f, 0f);
+        var north = new GameObject("North").transform; north.position = new Vector3(0f, 0f, 20f);
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode
+            {
+                point = junction,
+                nextNodeIndices = new[] { 1, 2 },
+                outgoingLaneCounts = new[] { 1, 1 }
+            },
+            new AIRoadGraph.RoadNode
+            {
+                point = west,
+                nextNodeIndices = new[] { 0 },
+                outgoingLaneCounts = new[] { 1 }
+            },
+            new AIRoadGraph.RoadNode
+            {
+                point = north,
+                nextNodeIndices = new[] { 0 },
+                outgoingLaneCounts = new[] { 1 }
+            }
+        };
+
+        var nodeLight = new GameObject("NodeLight").AddComponent<TrafficLight>();
+        nodeLight.currentState = TrafficLight.LightState.Red;
+        var approachLight = new GameObject("ApproachLight").AddComponent<TrafficLight>();
+        approachLight.currentState = TrafficLight.LightState.Green;
+        graph.nodes[0].trafficLight = nodeLight;
+        graph.nodes[1].outgoingTrafficLights = new[] { approachLight };
+
+        Assert.That(graph.GetTrafficLight(1, 0), Is.SameAs(approachLight));
+        Assert.That(graph.IsRedSignal(1, 0), Is.False,
+            "the west approach has its own green phase");
+        Assert.That(graph.GetTrafficLight(2, 0), Is.SameAs(nodeLight),
+            "an approach without its own binding falls back to the junction signal");
+        Assert.That(graph.IsRedSignal(2, 0), Is.True);
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(junction.gameObject);
+        Object.DestroyImmediate(west.gameObject);
+        Object.DestroyImmediate(north.gameObject);
+        Object.DestroyImmediate(nodeLight.gameObject);
+        Object.DestroyImmediate(approachLight.gameObject);
+    }
+
+    [Test]
+    public void AirRoadGraph_TryBindTrafficSignal_BindsTheApproachFacingTheSignal()
+    {
+        var root = new GameObject("Signal binding graph");
+        var graph = root.AddComponent<AIRoadGraph>();
+        var junction = new GameObject("Junction").transform;
+        var west = new GameObject("West").transform; west.position = new Vector3(-20f, 0f, 0f);
+        var north = new GameObject("North").transform; north.position = new Vector3(0f, 0f, 20f);
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode { point = junction, nextNodeIndices = new[] { 1, 2 } },
+            new AIRoadGraph.RoadNode { point = west, nextNodeIndices = new[] { 0 } },
+            new AIRoadGraph.RoadNode { point = north, nextNodeIndices = new[] { 0 } }
+        };
+
+        var signalGo = new GameObject("Signal");
+        signalGo.transform.position = new Vector3(-4f, 0f, 0f);
+        var signal = signalGo.AddComponent<TrafficLight>();
+
+        Assert.That(graph.TryBindTrafficSignal(signal, 25f), Is.True);
+        Assert.That(graph.GetTrafficLight(1, 0), Is.SameAs(signal),
+            "the signal on the west stop line controls the west approach");
+        Assert.That(graph.nodes[0].trafficLight, Is.SameAs(signal),
+            "the junction keeps a fallback for approaches without their own signal");
+
+        Object.DestroyImmediate(root);
+        Object.DestroyImmediate(junction.gameObject);
+        Object.DestroyImmediate(west.gameObject);
+        Object.DestroyImmediate(north.gameObject);
+        Object.DestroyImmediate(signalGo);
+    }
+
+    [Test]
+    public void TrafficParticipant_PlayerBus_UsesConfiguredBodySize()
+    {
+        var go = new GameObject("Player bus dimensions");
+        try
+        {
+            var bus = go.AddComponent<BusController>();
+            bus.vehicleLength = 18f;
+            bus.vehicleWidth = 2.62f;
+            var participant = go.GetComponent<TrafficParticipant>();
+            Assert.That(participant, Is.Not.Null);
+            participant.RefreshOwner();
+
+            Assert.That(participant.length, Is.EqualTo(18f).Within(.01f),
+                "following gaps must use the articulated bus length, not a 12 m default");
+            Assert.That(participant.width, Is.EqualTo(2.62f).Within(.01f));
+        }
+        finally
+        {
+            Object.DestroyImmediate(go);
+        }
+    }
+
+    [Test]
     public void PlayerCityLibrary_PersistsFavouriteStateByCityCode()
     {
         var city = ScriptableObject.CreateInstance<CityDefinition>();

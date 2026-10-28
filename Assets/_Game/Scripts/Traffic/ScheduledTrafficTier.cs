@@ -45,7 +45,16 @@ public class ScheduledTrafficTier : MonoBehaviour
         if (full == null || spline == null) return;
         if (Time.time < nextUpdate) return;
         nextUpdate = Time.time + 0.2f;
-        if (player == null) { var bus = FindAnyObjectByType<BusController>(); if (bus != null) player = bus.transform; }
+        if (player == null)
+        {
+            // Prefer the mission's bus: it is the body the player actually drives,
+            // and it stays valid after a runtime prefab swap. FindAnyObjectByType
+            // can return a stale scene bus that SceneBootstrap disabled.
+            var mission = MissionManager.Instance;
+            var bus = mission != null ? mission.busController : null;
+            if (bus == null) bus = FindAnyObjectByType<BusController>();
+            if (bus != null) player = bus.transform;
+        }
         if (player == null) return;
         float distance = Vector3.Distance(player.position, transform.position);
         if (distance > 400f) { GetComponent<AIBusRouteRunner>()?.Despawn(); return; }
