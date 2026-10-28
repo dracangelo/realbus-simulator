@@ -19,6 +19,66 @@ MonoBehaviour:
       m_Extent: {x: 23.164047, y: 15.771787, z: 9.482416}
     triangles: 184684
     sourceName: 10_f_building
+  - prefab: {fileID: 4616701546114729538, guid: 4409409c6bdc4ed16b1de88af59f3b2c, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 35.81446, z: -0.0000019073486}
+      m_Extent: {x: 45.43949, y: 35.81446, z: 31.900003}
+    triangles: 4502
+    sourceName: 45building
+  - prefab: {fileID: 6070700043444182093, guid: 2f91e1d540f44a26aba0d85f9243e630, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 35.81446, z: 0}
+      m_Extent: {x: 13.769268, y: 35.81446, z: 18.157108}
+    triangles: 1437
+    sourceName: 45building.001
+  - prefab: {fileID: 7237035064920729059, guid: 10f13cbcfe95a1889bf59e94cb40814a, type: 3}
+    bounds:
+      m_Center: {x: -0.0000009536743, y: 35.81446, z: -0.000005722046}
+      m_Extent: {x: 15.898057, y: 35.81446, z: 19.37808}
+    triangles: 1277
+    sourceName: 45building.002
+  - prefab: {fileID: 1957435775992375731, guid: 0e573a22cca2414a3bfd0cdc8ee4da51, type: 3}
+    bounds:
+      m_Center: {x: -0.00000667572, y: 12.448441, z: 0.0000038146973}
+      m_Extent: {x: 14.70305, y: 12.448441, z: 23.49001}
+    triangles: 815
+    sourceName: AIT01W2W1
+  - prefab: {fileID: 5591830634358767846, guid: d035dfb36f2be8b62a0ac64cc3920fde, type: 3}
+    bounds:
+      m_Center: {x: 0.0000038146973, y: 27.42865, z: 0.0000019073486}
+      m_Extent: {x: 16.000008, y: 27.42865, z: 15.080757}
+    triangles: 1423
+    sourceName: AIT01W2W2
+  - prefab: {fileID: 634200474890749322, guid: 10799cfebb20bef44b01b0ff69762105, type: 3}
+    bounds:
+      m_Center: {x: -0.0000038146973, y: 30.487366, z: 0}
+      m_Extent: {x: 16.62485, y: 30.487366, z: 26.270838}
+    triangles: 1084
+    sourceName: AIT01W2W2.001
+  - prefab: {fileID: 6918356654216295248, guid: 9b03e53f69250956681f9f64e72c1cca, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 34.665714, z: -0.0000076293945}
+      m_Extent: {x: 16.624878, y: 34.66571, z: 28.03742}
+    triangles: 1154
+    sourceName: AIT01W2W2.002
+  - prefab: {fileID: 5660613824036226309, guid: 8a7c2de2e8e7d4aa5a99c6bb7650c714, type: 3}
+    bounds:
+      m_Center: {x: 0.0000009536743, y: 12.496073, z: 0}
+      m_Extent: {x: 15.853544, y: 12.496073, z: 44.70884}
+    triangles: 2754
+    sourceName: AIT01W2W6
+  - prefab: {fileID: 3665480099000390742, guid: 0a7522e7e35836c98b2a2f371145b155, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 24.725012, z: -0.0000038146973}
+      m_Extent: {x: 16.645157, y: 24.725012, z: 16.00001}
+    triangles: 1893
+    sourceName: AIT01W2W7
+  - prefab: {fileID: 8600651518975395865, guid: a1ae7eefb001568c6a9faca61287438d, type: 3}
+    bounds:
+      m_Center: {x: 0.000002861023, y: 16.362833, z: -0.0000019073486}
+      m_Extent: {x: 15.856186, y: 16.362833, z: 21.123827}
+    triangles: 2616
+    sourceName: AIT01W2W8
   - prefab: {fileID: 6689346043942117837, guid: 7c5b3c5355921cb1886fefe9f5f2a70d, type: 3}
     bounds:
       m_Center: {x: 0, y: 35.07775, z: 0}
@@ -55,12 +115,42 @@ MonoBehaviour:
       m_Extent: {x: 6.4424386, y: 14.25, z: 6.44244}
     triangles: 150664
     sourceName: Building-Small
+  - prefab: {fileID: 1699453359747609535, guid: 647b21a9965f4674c8b36f38988e193a, type: 3}
+    bounds:
+      m_Center: {x: 0.0000038146973, y: 54.78, z: 0}
+      m_Extent: {x: 12.100006, y: 54.78, z: 20}
+    triangles: 24238
+    sourceName: Group24
+  - prefab: {fileID: 7050423355657719668, guid: d09190e6d981b12189b8b9ba51dc9784, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 62.105, z: 0}
+      m_Extent: {x: 14.99004, y: 62.105, z: 33.727585}
+    triangles: 91060
+    sourceName: Group3
+  - prefab: {fileID: 2685818460494953183, guid: 3f65e25e21b608b41be8e0fb51e95f14, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 12.998859, z: -0.0000019073486}
+      m_Extent: {x: 21.8, y: 12.998859, z: 30.910975}
+    triangles: 3284
+    sourceName: LOWRISEMODERNCONDO2.001
+  - prefab: {fileID: 1091345305505635973, guid: 9ef408570fda8652eaafa3cbc225428b, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 18.981424, z: 0.0000019073486}
+      m_Extent: {x: 44.35738, y: 18.981424, z: 23.612164}
+    triangles: 4262
+    sourceName: LOWRISEMODERNCONDO3
   - prefab: {fileID: 3093488636482113536, guid: 2dad61d925954e69e8efaf1fb30862b6, type: 3}
     bounds:
       m_Center: {x: 0, y: 14.020804, z: 0}
       m_Extent: {x: 6.7818003, y: 14.020804, z: 8.783832}
     triangles: 58453
     sourceName: Mixed Use Building_2_FBX
+  - prefab: {fileID: 3434996668642792548, guid: 7cfa60d51707469b8b8db7cd8d29d5e2, type: 3}
+    bounds:
+      m_Center: {x: -0.0000076293945, y: 14.614131, z: 0.0000038146973}
+      m_Extent: {x: 32.756805, y: 14.614131, z: 28.31002}
+    triangles: 1702
+    sourceName: Plane001
   - prefab: {fileID: 4304072701455034142, guid: cb55716b081f4615cbeba7dd92749bff, type: 3}
     bounds:
       m_Center: {x: 0, y: 49.983963, z: 0}
@@ -103,3 +193,51 @@ MonoBehaviour:
       m_Extent: {x: 16.645159, y: 24.725014, z: 16.000011}
     triangles: 1893
     sourceName: bina9
+  - prefab: {fileID: 838895725714175847, guid: 64cb3399dcf904464af86dbe2a9003ed, type: 3}
+    bounds:
+      m_Center: {x: -0.0000019073486, y: 73.77645, z: 0}
+      m_Extent: {x: 27.004808, y: 73.77645, z: 31.77218}
+    triangles: 5719
+    sourceName: hirise1
+  - prefab: {fileID: 7672366491992383731, guid: a14d045ec91df55918c1cc9947f3bd0e, type: 3}
+    bounds:
+      m_Center: {x: 0.000005722046, y: 74.268005, z: -0.0000038146973}
+      m_Extent: {x: 27.001875, y: 74.268005, z: 27.043308}
+    triangles: 3715
+    sourceName: hirise12
+  - prefab: {fileID: 2745316269001610389, guid: 2b0abdfd3bef0b40ea6a0c2d046e7ff5, type: 3}
+    bounds:
+      m_Center: {x: 0.0000019073486, y: 125.11315, z: 0}
+      m_Extent: {x: 27.000017, y: 125.11315, z: 27.00003}
+    triangles: 6037
+    sourceName: hirise13
+  - prefab: {fileID: 402336648304334142, guid: 5759e33feeb672696ad992069a61d8a5, type: 3}
+    bounds:
+      m_Center: {x: -0.0000019073486, y: 59.506958, z: 0.0000019073486}
+      m_Extent: {x: 24.267199, y: 59.506958, z: 24.339294}
+    triangles: 3769
+    sourceName: hirise7
+  - prefab: {fileID: 5202847613543462619, guid: 2f93de16f6671ca69a19dae0b51212e9, type: 3}
+    bounds:
+      m_Center: {x: 0.0000019073486, y: 81.49544, z: 0.0000038146973}
+      m_Extent: {x: 26.46127, y: 81.49544, z: 36.332024}
+    triangles: 7682
+    sourceName: hirise8
+  - prefab: {fileID: 474672609027276262, guid: e4178de972a33000f9413d3bc12cc342, type: 3}
+    bounds:
+      m_Center: {x: -0.0000038146973, y: 95.58321, z: -0.0000038146973}
+      m_Extent: {x: 51.00003, y: 95.58321, z: 54.43978}
+    triangles: 8026
+    sourceName: hithepeak
+  - prefab: {fileID: 6958233578937597980, guid: bb01b94d6807a5e069b0baa80d3338d5, type: 3}
+    bounds:
+      m_Center: {x: 0.0000076293945, y: 76.26303, z: -0.0000038146973}
+      m_Extent: {x: 51.862316, y: 76.26303, z: 47.485558}
+    triangles: 8926
+    sourceName: hivizcayne
+  - prefab: {fileID: 8917818061544069867, guid: 44443a8b6546ae20ea6a12eda36fe562, type: 3}
+    bounds:
+      m_Center: {x: 0, y: 19.952831, z: -0.0000038146973}
+      m_Extent: {x: 41.811188, y: 19.952831, z: 49.292946}
+    triangles: 10524
+    sourceName: nationalarchives

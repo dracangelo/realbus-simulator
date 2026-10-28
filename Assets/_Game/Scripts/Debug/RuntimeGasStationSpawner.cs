@@ -15,6 +15,18 @@ public class RuntimeGasStationSpawner : MonoBehaviour
     public float yOffset = 0f;
     public bool logSpawns = true;
 
+    [Header("Drive-in service")]
+    [Tooltip("Lifts the station above the map tiles so its apron is not buried. Map tiles sit at 0.15 m and generated roads at 0.25 m.")]
+    public float groundClearance = 0.28f;
+    [Tooltip("Maximum radius of the trigger the bus has to enter to refuel or charge. Clamped to the station footprint.")]
+    public float serviceRadius = 11f;
+    public float refuelLitresPerSecond = 22f;
+    public float rechargeKWhPerSecond = 55f;
+    [Tooltip("Paves a drive-in apron around each station with the imported low-poly road modules.")]
+    public bool addForecourt = true;
+    [Tooltip("Station colliders become triggers so the bus can drive under the canopy instead of hitting a solid box.")]
+    public bool makeCollidersTriggers = true;
+
     [Header("Imported model fallback")]
     [Tooltip("Applied only to untextured near-white materials on imported station models.")]
     public Color importedFallbackColor = new Color(0.72f, 0.73f, 0.70f, 1f);
@@ -75,14 +87,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             if (!IsFarEnough(world, placed))
                 continue;
 
-            world.y += yOffset;
-            var station = Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
-            ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
-            ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
-            ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
-            foreach (var renderer in station.GetComponentsInChildren<Renderer>(true))
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            station.AddComponent<DistanceVisibility>().visibleDistance = 340f;
+            SpawnStation(prefabs[spawned % prefabs.Length], world);
             placed.Add(world);
             spawned++;
 
@@ -130,20 +135,114 @@ public class RuntimeGasStationSpawner : MonoBehaviour
             if (!IsFarEnough(world, placed))
                 continue;
 
-            world.y += yOffset;
-            var station = Instantiate(prefabs[spawned % prefabs.Length], world, Quaternion.identity, transform);
-            ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
-            ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
-            ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
-            foreach (var renderer in station.GetComponentsInChildren<Renderer>(true))
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            station.AddComponent<DistanceVisibility>().visibleDistance = 340f;
+            SpawnStation(prefabs[spawned % prefabs.Length], world);
             placed.Add(world);
             spawned++;
         }
 
         if (logSpawns)
             Debug.Log($"[RuntimeGasStationSpawner] Gas stations spawned from fuel.json: {spawned}.");
+    }
+
+    void SpawnStation(GameObject prefab, Vector3 world)
+    {
+        if (prefab == null) return;
+
+        world.y = Mathf.Max(0f, world.y) + yOffset + groundClearance;
+        var station = Instantiate(prefab, world, Quaternion.identity, transform);
+        ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
+        ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
+        ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
+
+        if (makeCollidersTriggers)
+        {
+            foreach (var collider in station.GetComponentsInChildren<Collider>(true))
+                collider.isTrigger = true;
+        }
+
+        Bounds localBounds = LocalBounds(station);
+        if (localBounds.size.sqrMagnitude <= .0001f)
+            localBounds = new Bounds(new Vector3(0f, 1.5f, 0f), new Vector3(8f, 3f, 8f));
+
+        // The station is a 130k-triangle hero prop. Put its full mesh in LOD0 and
+        // let the shared box proxies take over before the player reaches it.
+        int triangles = TriangleCount(station);
+        if (SceneryLodPolicy.NeedsLod(triangles, SceneryLodPolicy.BuildingLodTriangleThreshold))
+        {
+            SceneryLodBuilder.Attach(station, localBounds,
+                SceneryLodPolicy.BuildingLod1ScreenHeight,
+                SceneryLodPolicy.BuildingLod2ScreenHeight,
+                new Color(.55f, .56f, .58f), castShadows: false);
+        }
+
+        if (addForecourt)
+            GasStationForecourt.Build(station.transform, localBounds);
+
+        AddServicePoint(station, localBounds);
+
+        // Caches every renderer, including the forecourt, and toggles only those,
+        // so the trigger keeps working while the station is off screen.
+        station.AddComponent<DistanceVisibility>().visibleDistance = 340f;
+    }
+
+    void AddServicePoint(GameObject station, Bounds localBounds)
+    {
+        var serviceObject = new GameObject("ServicePoint");
+        serviceObject.transform.SetParent(station.transform, false);
+        serviceObject.transform.localPosition = new Vector3(
+            localBounds.center.x,
+            Mathf.Max(1f, localBounds.center.y),
+            localBounds.center.z);
+
+        var trigger = serviceObject.AddComponent<SphereCollider>();
+        trigger.isTrigger = true;
+        // Keep the trigger inside the station footprint. A fixed 11 m sphere is
+        // right for the 34 m forecourt but would let the bus refuel while passing
+        // a small roadside pump.
+        float footprint = Mathf.Max(localBounds.extents.x, localBounds.extents.z);
+        trigger.radius = Mathf.Clamp(serviceRadius, 2f, Mathf.Max(2f, footprint));
+
+        var point = serviceObject.AddComponent<GasStationServicePoint>();
+        point.refuelLitresPerSecond = Mathf.Max(0f, refuelLitresPerSecond);
+        point.rechargeKWhPerSecond = Mathf.Max(0f, rechargeKWhPerSecond);
+    }
+
+    static Bounds LocalBounds(GameObject root)
+    {
+        var renderers = root.GetComponentsInChildren<Renderer>(true);
+        Bounds bounds = new Bounds();
+        bool has = false;
+        foreach (var renderer in renderers)
+        {
+            if (renderer == null) continue;
+            Bounds world = renderer.bounds;
+            Vector3 center = world.center;
+            Vector3 extents = world.extents;
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Vector3 point = center + new Vector3(
+                    (corner & 1) == 0 ? -extents.x : extents.x,
+                    (corner & 2) == 0 ? -extents.y : extents.y,
+                    (corner & 4) == 0 ? -extents.z : extents.z);
+                Vector3 local = root.transform.InverseTransformPoint(point);
+                if (!has) { bounds = new Bounds(local, Vector3.zero); has = true; }
+                else bounds.Encapsulate(local);
+            }
+        }
+        return bounds;
+    }
+
+    static int TriangleCount(GameObject root)
+    {
+        int total = 0;
+        foreach (var filter in root.GetComponentsInChildren<MeshFilter>(true))
+        {
+            Mesh mesh = filter.sharedMesh;
+            if (mesh == null) continue;
+            for (int i = 0; i < mesh.subMeshCount; i++)
+                total += (int)mesh.GetIndexCount(i) / 3;
+        }
+        return total;
     }
 
     bool IsFuelWay(OSMWay way)
@@ -166,7 +265,13 @@ public class RuntimeGasStationSpawner : MonoBehaviour
     GameObject[] LoadStationPrefabs()
     {
         GameObject[] generated = Resources.LoadAll<GameObject>(generatedGasStationResourcesPath);
-        if (generated != null && generated.Length > 0) return generated;
+        if (generated != null && generated.Length > 0)
+        {
+            // Resources.LoadAll order is not guaranteed. Sorting by name keeps the
+            // prefab chosen for each OSM station stable between sessions.
+            System.Array.Sort(generated, (a, b) => string.CompareOrdinal(a != null ? a.name : string.Empty, b != null ? b.name : string.Empty));
+            return generated;
+        }
         GameObject fallback = Resources.Load<GameObject>(gasStationResourcePath);
         return fallback != null ? new[] { fallback } : System.Array.Empty<GameObject>();
     }

@@ -299,7 +299,11 @@ public class LiveCityStreamer : MonoBehaviour
             float scale = ScaleFor(candidate.seed, entry.kind);
             float radius = Mathf.Max(.4f, new Vector2(entry.bounds.extents.x, entry.bounds.extents.z).magnitude) * scale;
             Vector3 right = Vector3.Cross(Vector3.up, candidate.direction);
-            Vector3 position = candidate.center + right * candidate.side * (candidate.segment.halfWidth + radius + 1.8f);
+            // A street light's bounds include its cantilever arm, which reaches over
+            // the carriageway. Set the pole close to the kerb and let the arm span
+            // the road instead of pushing the whole model back by half its width.
+            float setback = entry.kind == LiveCityCatalog.Kind.StreetLight ? Mathf.Min(radius, .9f) : radius;
+            Vector3 position = candidate.center + right * candidate.side * (candidate.segment.halfWidth + setback + 1.8f);
             position.y = .08f;
             if (!Clear(position, radius, buildings)) continue;
             if (walking)
@@ -330,9 +334,25 @@ public class LiveCityStreamer : MonoBehaviour
                 if (FlatDistanceSquared(position, item.center) < Mathf.Pow(radius + item.radius + (walking ? 0.2f : 0.8f), 2)) { space = false; break; }
             }
             if (!space) continue;
-            Quaternion rotation = Quaternion.LookRotation(-right * candidate.side);
+            Vector3 towardRoad = -right * candidate.side;
+            Quaternion rotation = Quaternion.LookRotation(towardRoad);
             if (entry.kind == LiveCityCatalog.Kind.Tree || entry.kind == LiveCityCatalog.Kind.Plant || entry.kind == LiveCityCatalog.Kind.Rock)
                 rotation = Quaternion.Euler(0, candidate.seed % 360, 0);
+            else if (entry.kind == LiveCityCatalog.Kind.StreetLight)
+            {
+                // The imported lamp posts carry their arm on local +X. LookRotation
+                // puts local +Z on the target, so build the forward vector from the
+                // kerb direction to put local +X (the arm) over the road.
+                Vector3 forward = Vector3.Cross(towardRoad, Vector3.up);
+                if (forward.sqrMagnitude > .001f)
+                    rotation = Quaternion.LookRotation(forward, Vector3.up);
+            }
+            else if (entry.kind == LiveCityCatalog.Kind.RoadSign)
+            {
+                // Signs face the traffic that approaches them. Both kerbs get the
+                // same treatment, so a sign reads from the lane beside it.
+                rotation = Quaternion.LookRotation(candidate.side > 0 ? -candidate.direction : candidate.direction);
+            }
             var go = Instantiate(entry.prefab, position, rotation, transform);
             // Street planting does not need a shadow pass of its own: the ground now
             // receives the building shadows, which are the ones that give the street
@@ -420,15 +440,21 @@ public class LiveCityStreamer : MonoBehaviour
         int roll = (int)(seed % 100);
         LiveCityCatalog.Kind kind;
         // Vegetation first, because it is what makes a street look lived in:
-        // 52% Trees, 37% Plants/Shrubs (lush tropical look), then street furniture.
+        // 52% Trees, 36% Plants/Shrubs (lush tropical look), then street furniture.
+        // Street lights and road signs take a small share of the kerb samples so a
+        // street has furniture without turning into a sign farm.
         if (roll < 52) kind = LiveCityCatalog.Kind.Tree;
-        else if (roll < 89) kind = LiveCityCatalog.Kind.Plant;
-        else if (roll < 90) kind = LiveCityCatalog.Kind.Pedestrian;
-        else if (roll < 93) kind = LiveCityCatalog.Kind.Bench;
+        else if (roll < 88) kind = LiveCityCatalog.Kind.Plant;
+        else if (roll < 89) kind = LiveCityCatalog.Kind.Pedestrian;
+        else if (roll < 91) kind = LiveCityCatalog.Kind.StreetLight;
+        else if (roll < 92) kind = LiveCityCatalog.Kind.RoadSign;
+        else if (roll < 94) kind = LiveCityCatalog.Kind.Bench;
         else if (roll < 97) kind = LiveCityCatalog.Kind.Billboard;
         else kind = LiveCityCatalog.Kind.Rock;
 
         var picked = PickWeighed(catalog.entries, kind, seed / 10);
+        // The new pack is optional. If a kind has not been imported yet, fall back
+        // to planting rather than dropping the kerb sample.
         return picked != null ? picked : SelectVegetationEntry(seed);
     }
 
@@ -667,6 +693,8 @@ public class LiveCityStreamer : MonoBehaviour
             case LiveCityCatalog.Kind.Bench:
             case LiveCityCatalog.Kind.Billboard:
             case LiveCityCatalog.Kind.Rock:
+            case LiveCityCatalog.Kind.StreetLight:
+            case LiveCityCatalog.Kind.RoadSign:
                 return tinyPropRenderDistance;
             default:
                 return propRenderDistance;

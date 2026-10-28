@@ -46,7 +46,13 @@ public static class ImportedModelWiringGenerator
     {
         EditorApplication.delayCall += () =>
         {
-            if (!Application.isPlaying && NeedsGeneration()) GenerateAll(false);
+            if (Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            // The new city/sign/light/road packs are imported first because they
+            // append their own entries to the shared catalogs. The gas station is
+            // still owned by this generator, so a missing station prefab is picked
+            // up by NeedsGeneration() afterwards.
+            if (NewModelPackImporter.NeedsBuild()) NewModelPackImporter.Build();
+            if (NeedsGeneration()) GenerateAll(false);
         };
     }
 
@@ -66,8 +72,35 @@ public static class ImportedModelWiringGenerator
     public static void GenerateContentFromBatch()
     {
         GenerateAll(false);
+        NewModelPackImporter.Build();
         LiveCityModelImporter.Build();
         RouteAssetRegistry.RepairImportedRoutes(true);
+    }
+
+    /// <summary>Regenerates only the fuel-station prefabs, for the new pack menu item.</summary>
+    public static void GenerateGasStationsFromBatch()
+    {
+        if (generating) return;
+        generating = true;
+        try
+        {
+            EnsureFolders();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            foreach (string path in FindFbxFiles(GasStationSources, SearchOption.AllDirectories))
+            {
+                string output = GenerateGasStation(path, out string message);
+                if (string.IsNullOrEmpty(output))
+                    Debug.LogWarning($"[RealBus] Gas-station model '{path}' was skipped: {message}");
+                else
+                    Debug.Log($"[RealBus] Generated gas-station prefab: {output}");
+            }
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+        finally
+        {
+            generating = false;
+        }
     }
 
     public static void GenerateRoadsFromBatch()
@@ -106,7 +139,7 @@ public static class ImportedModelWiringGenerator
 
             BusSource[] busSources = FindBusSources();
             string[] stopPaths = FindStopSources();
-            string[] gasStationPaths = FindFbxFiles(GasStationSources);
+            string[] gasStationPaths = FindFbxFiles(GasStationSources, SearchOption.AllDirectories);
             string[] roadPaths = FindFbxFiles(RoadSources);
             string[] depotPaths = FindFbxFiles(DepotSources);
             ImportedModelImportSettings.EnsureStandard(
@@ -183,7 +216,8 @@ public static class ImportedModelWiringGenerator
         if (!Directory.Exists(BusSources)) return false;
         BusSource[] busSources = FindBusSources();
         int stopCount = FindStopSources().Length;
-        int gasStationCount = FindFbxFiles(GasStationSources).Length;
+        string[] gasStationSources = FindFbxFiles(GasStationSources, SearchOption.AllDirectories);
+        int gasStationCount = gasStationSources.Length;
         int roadCount = FindFbxFiles(RoadSources).Length;
         int depotCount = FindFbxFiles(DepotSources).Length;
         int wiredBuses = Directory.Exists(BusPrefabs) ? Directory.GetFiles(BusPrefabs, "*.prefab").Length : 0;
@@ -192,6 +226,11 @@ public static class ImportedModelWiringGenerator
         int wiredRoads = Directory.Exists(RoadPrefabs) ? Directory.GetFiles(RoadPrefabs, "*.prefab").Length : 0;
         int wiredDepots = Directory.Exists(DepotPrefabs) ? Directory.GetFiles(DepotPrefabs, "*.prefab").Length : 0;
         if (busSources.Length > wiredBuses || stopCount > wiredStops || gasStationCount > wiredGasStations || roadCount > wiredRoads || depotCount > wiredDepots || !File.Exists(ReportPath)) return true;
+        // A source added inside a nested pack folder does not change the count of
+        // already-wired prefabs. Check each station source by its expected name so
+        // the new gas station is generated even while the two legacy prefabs remain.
+        foreach (string source in gasStationSources)
+            if (!File.Exists($"{GasStationPrefabs}/{UniqueStem(source)}.prefab")) return true;
         foreach (BusSource source in busSources)
         {
             string specPath = $"{BusSpecs}/{UniqueStem(source.identityPath)}.asset";
@@ -313,6 +352,7 @@ public static class ImportedModelWiringGenerator
         spec.modelPrefab = visualPrefab;
         spec.drivablePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         spec.bodyLengthMeters = length;
+        spec.bodyWidthMeters = width;
         spec.rigidbodyMassKg = configuredMass;
         spec.centerOfMassY = configuredCenterOfMassY;
         spec.engineProfile = bus.engineData;
@@ -354,13 +394,20 @@ public static class ImportedModelWiringGenerator
         GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
         if (source == null) { message = "Unity did not import this FBX as a GameObject."; return string.Empty; }
         string displayName = ObjectNames.NicifyVariableName(Path.GetFileNameWithoutExtension(sourcePath));
-        string output = $"{GasStationPrefabs}/{UniqueStem(sourcePath)}.prefab";
+        string stem = UniqueStem(sourcePath);
+        string output = $"{GasStationPrefabs}/{stem}.prefab";
         GameObject root = new GameObject(displayName);
         GameObject model = PrefabUtility.InstantiatePrefab(source) as GameObject;
         if (model == null) { UnityEngine.Object.DestroyImmediate(root); message = "The model could not be instantiated."; return string.Empty; }
         model.name = "Model";
         model.transform.SetParent(root.transform, false);
+        // The source is a prefab instance of the FBX. Unpacking it makes the saved
+        // station a standalone prefab instead of an empty instance that would
+        // rebuild the 322-renderer source hierarchy on every load.
+        PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
         StripImportedPhysics(model);
+        GasStationMaterialBinder.Bind(model, "Assets/_Game/Generated/Materials/GasStations", stem);
+        ImportedModelMeshCombiner.CombineByMaterial(model, "Assets/_Game/Generated/Meshes/GasStations", stem);
         if (!NormalizeGasStationVisual(root, model.transform, displayName, out Bounds bounds))
         {
             UnityEngine.Object.DestroyImmediate(root); message = "No renderable mesh was found."; return string.Empty;
@@ -368,6 +415,10 @@ public static class ImportedModelWiringGenerator
         BoxCollider collider = root.AddComponent<BoxCollider>();
         collider.center = bounds.center;
         collider.size = new Vector3(Mathf.Max(.2f, bounds.size.x), Mathf.Max(.2f, bounds.size.y), Mathf.Max(.2f, bounds.size.z));
+        // The bus has to drive under the canopy, so the station body must never
+        // act as a solid wall. RuntimeGasStationSpawner also forces every imported
+        // station collider to a trigger so the two legacy prefabs behave the same.
+        collider.isTrigger = true;
         PrefabUtility.SaveAsPrefabAsset(root, output);
         UnityEngine.Object.DestroyImmediate(root);
         message = string.Empty;
@@ -515,8 +566,21 @@ public static class ImportedModelWiringGenerator
         if (!HasUsableBounds(bounds)) return false;
         bool pumpOnly = string.Equals(displayName.Replace(" ", ""), "Gas", StringComparison.OrdinalIgnoreCase);
         float sourceMeasure = pumpOnly ? bounds.size.y : Mathf.Max(bounds.size.x, bounds.size.z);
-        float targetMeasure = pumpOnly ? 2.2f : 18f;
-        model.localScale *= targetMeasure / Mathf.Max(.001f, sourceMeasure);
+        if (pumpOnly)
+        {
+            // The legacy pump-only prefab is a single dispenser and needs to read at
+            // bus scale. A complete station keeps its authored size: the new pack's
+            // 35 m forecourt is already correct and shrinking it would bury the pumps.
+            model.localScale *= 2.2f / Mathf.Max(.001f, sourceMeasure);
+        }
+        else if (sourceMeasure < 6f)
+        {
+            model.localScale *= 18f / Mathf.Max(.001f, sourceMeasure);
+        }
+        else if (sourceMeasure > 80f)
+        {
+            model.localScale *= 60f / Mathf.Max(.001f, sourceMeasure);
+        }
         bounds = GetBounds(root);
         model.localPosition += new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z);
         bounds = GetBounds(root);

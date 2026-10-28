@@ -18,6 +18,7 @@
 *.opendb
 *.VC.db
 *.md
+*.md.meta
 *.pdf
 
 # Unity cache / auto-generated project files

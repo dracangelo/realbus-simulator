@@ -50,6 +50,8 @@ public static class SceneryLodPolicy
             case LiveCityCatalog.Kind.Bench:
             case LiveCityCatalog.Kind.Billboard:
             case LiveCityCatalog.Kind.Rock:
+            case LiveCityCatalog.Kind.StreetLight:
+            case LiveCityCatalog.Kind.RoadSign:
                 return TinyPropRenderDistance;
             default:
                 return VegetationRenderDistance;
@@ -70,6 +72,8 @@ public static class SceneryLodPolicy
             case LiveCityCatalog.Kind.Rock: return new Color(.38f, .36f, .33f);
             case LiveCityCatalog.Kind.Bench: return new Color(.32f, .24f, .16f);
             case LiveCityCatalog.Kind.Billboard: return new Color(.55f, .57f, .60f);
+            case LiveCityCatalog.Kind.StreetLight: return new Color(.26f, .27f, .28f);
+            case LiveCityCatalog.Kind.RoadSign: return new Color(.72f, .74f, .76f);
             default: return new Color(.30f, .32f, .35f);
         }
     }

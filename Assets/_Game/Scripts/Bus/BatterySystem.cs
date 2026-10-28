@@ -91,14 +91,42 @@ public class BatterySystem : MonoBehaviour
         SyncSessionDisplay();
     }
 
+    public float GetMissingChargeKWh()
+    {
+        return Mathf.Max(0f, batteryCapacityKWh - currentChargeKWh);
+    }
+
+    /// <summary>Price of a given amount of energy at the current unit price.</summary>
+    public float PriceForKWh(float kWh)
+    {
+        return Mathf.Max(0f, kWh) * Mathf.Max(0f, electricityPricePerKWhKES);
+    }
+
+    /// <summary>
+    /// Adds charge without charging for it. Returns the amount actually accepted,
+    /// which is less than <paramref name="kWh"/> when the battery is nearly full.
+    /// </summary>
+    public float Recharge(float kWh)
+    {
+        float added = Mathf.Min(Mathf.Max(0f, kWh), GetMissingChargeKWh());
+        if (added <= 0f)
+            return 0f;
+
+        currentChargeKWh = Mathf.Min(batteryCapacityKWh, currentChargeKWh + added);
+        if (busController != null && currentChargeKWh > 0f) busController.FuelDepleted = false;
+        PersistUsage(0f);
+        SyncSessionDisplay();
+        return added;
+    }
+
     public float AutoRechargeAtDepot()
     {
-        float kWhNeeded = Mathf.Max(0f, batteryCapacityKWh - currentChargeKWh);
+        float kWhNeeded = GetMissingChargeKWh();
         if (kWhNeeded <= 0.01f)
             return 0f;
 
-        float cost = kWhNeeded * electricityPricePerKWhKES;
-        currentChargeKWh = batteryCapacityKWh;
+        float added = Recharge(kWhNeeded);
+        float cost = PriceForKWh(added);
 
         if (GameState.Instance != null)
         {

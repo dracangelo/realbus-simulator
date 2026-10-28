@@ -220,7 +220,22 @@ public static class BuildingModelImporter
             catalog = ScriptableObject.CreateInstance<BuildingCatalog>();
             AssetDatabase.CreateAsset(catalog, CatalogPath);
         }
-        catalog.entries = entries.ToArray();
+        // The city pack appends its buildings to this catalog from another output
+        // folder. Rebuilding the original building pack must not delete them.
+        var preserved = new List<BuildingCatalog.Entry>();
+        if (catalog.entries != null)
+        {
+            foreach (var entry in catalog.entries)
+            {
+                if (entry == null || entry.prefab == null) continue;
+                string path = AssetDatabase.GetAssetPath(entry.prefab);
+                if (path.StartsWith(Output + "/", StringComparison.OrdinalIgnoreCase)) continue;
+                preserved.Add(entry);
+            }
+        }
+        preserved.AddRange(entries);
+        preserved.Sort((a, b) => string.CompareOrdinal(a.sourceName, b.sourceName));
+        catalog.entries = preserved.ToArray();
         EditorUtility.SetDirty(catalog);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();

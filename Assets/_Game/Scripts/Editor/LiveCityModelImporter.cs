@@ -112,10 +112,23 @@ public static class LiveCityModelImporter
         }
         var catalog = AssetDatabase.LoadAssetAtPath<LiveCityCatalog>(CatalogPath);
         if (catalog == null) { catalog = ScriptableObject.CreateInstance<LiveCityCatalog>(); AssetDatabase.CreateAsset(catalog, CatalogPath); }
-        catalog.entries = entries.ToArray();
+        // The city and road-sign packs append their own prefabs to this catalog.
+        // Rebuilding the original environment pack must not delete them.
+        var preserved = new List<LiveCityCatalog.Entry>();
+        if (catalog.entries != null)
+        {
+            foreach (var entry in catalog.entries)
+            {
+                if (entry == null || entry.prefab == null) continue;
+                string path = AssetDatabase.GetAssetPath(entry.prefab);
+                if (path.StartsWith(Output + "/", StringComparison.OrdinalIgnoreCase)) continue;
+                preserved.Add(entry);
+            }
+        }
+        catalog.entries = preserved.Concat(entries).ToArray();
         EditorUtility.SetDirty(catalog);
         AssetDatabase.SaveAssets();
-        Debug.Log($"[LiveCity] Prepared {entries.Count} imported scenery models. Sources and bus prefabs were not modified.");
+        Debug.Log($"[LiveCity] Prepared {entries.Count} imported scenery models and kept {preserved.Count} external pack entries. Sources and bus prefabs were not modified.");
     }
 
     static bool NeedsBuild()

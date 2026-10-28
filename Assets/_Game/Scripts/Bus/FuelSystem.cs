@@ -152,15 +152,39 @@ public class FuelSystem : MonoBehaviour
         return Mathf.Max(0f, tankCapacityLitres - currentFuelLitres);
     }
 
+    /// <summary>Price of a given amount of fuel at the current unit price.</summary>
+    public float PriceForLitres(float litres)
+    {
+        return Mathf.Max(0f, litres) * Mathf.Max(0f, dieselPricePerLitreKES);
+    }
+
+    /// <summary>
+    /// Adds fuel without charging for it. Returns the amount actually accepted,
+    /// which is less than <paramref name="litres"/> when the tank is nearly full.
+    /// Drive-in stations call this every frame with a small amount and deduct the
+    /// price themselves, so a part fill never pays for fuel that did not fit.
+    /// </summary>
+    public float Refuel(float litres)
+    {
+        float added = Mathf.Min(Mathf.Max(0f, litres), GetMissingFuelLitres());
+        if (added <= 0f)
+            return 0f;
+
+        currentFuelLitres = Mathf.Min(tankCapacityLitres, currentFuelLitres + added);
+        if (busController != null && currentFuelLitres > 0f) busController.FuelDepleted = false;
+        PersistFuelUsage(0f);
+        SyncSessionFuelDisplay();
+        return added;
+    }
+
     public float AutoRefuelAtDepot()
     {
         float litresNeeded = GetMissingFuelLitres();
         if (litresNeeded <= 0.01f)
             return 0f;
 
-        float cost = litresNeeded * dieselPricePerLitreKES;
-        currentFuelLitres = tankCapacityLitres;
-        if (busController != null) busController.FuelDepleted = false;
+        float added = Refuel(litresNeeded);
+        float cost = PriceForLitres(added);
 
         if (GameState.Instance != null)
         {
