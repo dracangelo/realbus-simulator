@@ -1,0 +1,51 @@
+﻿#include "pch-c.h"
+
+
+#include "codegen/il2cpp-codegen-metadata.h"
+
+
+
+
+
+extern void EmbeddedAttribute__ctor_m12AF6D40113BB5E8D50D5ED1BA1FA18A1A7C2AD1 (void);
+extern void RefSafetyRulesAttribute__ctor_m01B901B2E56165E7C59756AFC95989DC9C87768D (void);
+extern void AssetBundle__ctor_m12989CA081324BB49ED893BDA5E3B4E758D61410 (void);
+extern void AssetBundle_LoadFromFile_Internal_m806E92FA35F9FF7F9868058055FB347B9E35BD74 (void);
+extern void AssetBundle_LoadFromFile_mAFD7B0E8F0A0A88E9BB60180EBA0A99B8B3F2629 (void);
+extern void AssetBundle_LoadAllAssets_m0A8F41292C96F658A89B0E8D0ADB2E8395DD7F62 (void);
+extern void AssetBundle_Unload_m0A189871E61A0D6735A2B41B3360A1F0677B636B (void);
+extern void AssetBundle_LoadAssetWithSubAssets_Internal_m14AE2B2D7696182CBDF12087E8D3FEA867290DA8 (void);
+extern void AssetBundle_LoadFromFile_Internal_Injected_mB5231D12AE72D34D4ADAA04C100D7264519645FA (void);
+extern void AssetBundle_Unload_Injected_m214D08772AB2E1E1136D1E6E96B843254BB756F0 (void);
+extern void AssetBundle_LoadAssetWithSubAssets_Internal_Injected_mFAA7ABADDE741F5C6C57F33F50AF01CB79F2295F (void);
+static Il2CppMethodPointer s_methodPointers[13] = 
+{
+	EmbeddedAttribute__ctor_m12AF6D40113BB5E8D50D5ED1BA1FA18A1A7C2AD1,
+	RefSafetyRulesAttribute__ctor_m01B901B2E56165E7C59756AFC95989DC9C87768D,
+	AssetBundle__ctor_m12989CA081324BB49ED893BDA5E3B4E758D61410,
+	AssetBundle_LoadFromFile_Internal_m806E92FA35F9FF7F9868058055FB347B9E35BD74,
+	AssetBundle_LoadFromFile_mAFD7B0E8F0A0A88E9BB60180EBA0A99B8B3F2629,
+	NULL,
+	NULL,
+	AssetBundle_LoadAllAssets_m0A8F41292C96F658A89B0E8D0ADB2E8395DD7F62,
+	AssetBundle_Unload_m0A189871E61A0D6735A2B41B3360A1F0677B636B,
+	AssetBundle_LoadAssetWithSubAssets_Internal_m14AE2B2D7696182CBDF12087E8D3FEA867290DA8,
+	AssetBundle_LoadFromFile_Internal_Injected_mB5231D12AE72D34D4ADAA04C100D7264519645FA,
+	AssetBundle_Unload_Injected_m214D08772AB2E1E1136D1E6E96B843254BB756F0,
+	AssetBundle_LoadAssetWithSubAssets_Internal_Injected_mFAA7ABADDE741F5C6C57F33F50AF01CB79F2295F,
+};
+IL2CPP_EXTERN_C const Il2CppCodeGenModule g_UnityEngine_AssetBundleModule_CodeGenModule;
+const Il2CppCodeGenModule g_UnityEngine_AssetBundleModule_CodeGenModule = 
+{
+	"UnityEngine.AssetBundleModule.dll",
+	13,
+	s_methodPointers,
+	0,
+	NULL,
+	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};

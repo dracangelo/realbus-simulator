@@ -152,6 +152,44 @@ public class RealismSystemsTests
     }
 
     [Test]
+    public void FullBusServesAStopWhereNobodyAlightsWithoutStrandingTheRoute()
+    {
+        var go = new GameObject("Refused doors service test");
+        var spawn = new GameObject("Density test");
+        try
+        {
+            var manager = go.AddComponent<PassengerManager>();
+            manager.useCapacityOverride = true;
+            manager.maxBusCapacity = manager.doorOpenCapacityLimit = manager.seatedCapacity = 2;
+            manager.wheelchairChance = 0f;
+            manager.logBoardingSummary = false;
+            manager.passengerSpawner = spawn.AddComponent<PassengerSpawner>();
+            manager.passengerSpawner.baselineSpawnMin = manager.passengerSpawner.baselineSpawnMax = 6;
+
+            // Full bus, everyone riding past stop 2 to stop 3.
+            manager.RestoreCheckpointState(2, 1f, 0, 0f, 0f, 0f, currentStopIndex: 2, routeStopCount: 5);
+            Assert.AreEqual(2, manager.currentPassengers);
+            Assert.IsFalse(manager.CanOpenDoorsForStop(2, 5),
+                "a full bus with nobody alighting here cannot open its doors");
+
+            manager.HandleRefusedDoorsStopArrival(new BusStopData { stopName = "Mid" }, 2, 5);
+
+            Assert.IsFalse(manager.doorsOpen, "the doors must stay shut at a refused stop");
+            Assert.AreEqual(2, manager.currentPassengers, "nobody may board a full bus");
+            Assert.AreEqual(0, manager.lastBoardingCount);
+            Assert.AreEqual(0, manager.lastAlightingCount);
+            Assert.AreEqual(manager.WaitingPassengers.Count, manager.waitingAtCurrentStop);
+            Assert.Greater(manager.waitingAtCurrentStop, 0, "the queue left behind is still at the stop");
+            Assert.LessOrEqual(manager.GetRequiredDwellTimeSeconds(), PassengerManager.RefusedDoorsDwellSeconds + 0.01f,
+                "a stop nobody can board at must not charge a boarding dwell");
+            Assert.IsFalse(manager.HasServiceAnimations, "nothing was served, so no animation may hold the stop open");
+            Assert.IsTrue(manager.CanOpenDoorsForStop(3, 5),
+                "a full bus must still let its passengers off at their own stop");
+        }
+        finally { Object.DestroyImmediate(go); Object.DestroyImmediate(spawn); }
+    }
+
+    [Test]
     public void DoorLockingAfterBoardingDisengagesInterlockAndClosesDoors()
     {
         var busGo = new GameObject("Bus");

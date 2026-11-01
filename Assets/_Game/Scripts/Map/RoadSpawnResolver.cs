@@ -136,7 +136,8 @@ public static class RoadSpawnResolver
         return manager.activeCountry;
     }
 
-    public static Vector3 RouteHeading(BusRoute route, Vector3 requested, Vector3 fallback)
+    public static Vector3 RouteHeading(BusRoute route, Vector3 requested, Vector3 fallback,
+        Vector3 approachHint = default)
     {
         if (route == null) return fallback;
         // The driven path is the authority on travel order: it is the line the
@@ -144,16 +145,86 @@ public static class RoadSpawnResolver
         // the stop list) can be stored in an order that does not match the drive, and
         // a reversed tangent puts a kerb-side prop on the opposite side of the road.
         if (route.EnsureWorldPathPoints() && route.pathPoints != null && route.pathPoints.Length >= 2)
-            return PathHeading(route.pathPoints, requested, fallback);
+            return PathHeading(route.pathPoints, requested, fallback, approachHint);
 
         var geometry = route.geometryLatLonFlat;
         if (GPSManager.Instance != null && geometry != null && geometry.Length >= 4)
         {
             var points = new Vector3[geometry.Length / 2];
             for (int i = 0; i < points.Length; i++) points[i] = GPSManager.Instance.GpsToWorld(geometry[i * 2], geometry[i * 2 + 1]);
-            return PathHeading(points, requested, fallback);
+            return PathHeading(points, requested, fallback, approachHint);
         }
         return fallback;
+    }
+
+    /// <summary>
+    /// The direction the player actually arrives at a stop from. A loop or
+    /// out-and-back route passes the same kerb twice, so the nearest path segment
+    /// is ambiguous and the first one found can point back along the return leg;
+    /// that mirrors the shelter onto the oncoming side. The road-graph path from
+    /// the previous stop is the same approach the mission drives, so it breaks the
+    /// tie in favour of the pass the bus actually uses.
+    /// </summary>
+    public static Vector3 StopApproachHeading(BusRoute route, int stopIndex, Vector3 stopWorld,
+        Vector3 fallback, AIRoadGraph graph)
+    {
+        if (route == null || route.stops == null || GPSManager.Instance == null)
+            return RouteHeading(route, stopWorld, fallback);
+
+        Vector3 hint = Vector3.zero;
+        if (graph != null)
+        {
+            if (stopIndex > 0 && stopIndex < route.stops.Length)
+            {
+                Vector3 previous = GpsToWorld(route.stops[stopIndex - 1]);
+                hint = LastPathDirection(graph, previous, stopWorld);
+            }
+            else if (stopIndex == 0 && route.stops.Length > 1)
+            {
+                // The first stop has no previous stop; the departure direction is
+                // the same carriageway and therefore the same kerb side.
+                Vector3 next = GpsToWorld(route.stops[1]);
+                hint = FirstPathDirection(graph, stopWorld, next);
+            }
+        }
+
+        return RouteHeading(route, stopWorld, fallback, hint);
+    }
+
+    static Vector3 GpsToWorld(BusStopData stop)
+    {
+        if (stop == null || GPSManager.Instance == null) return Vector3.zero;
+        return GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude);
+    }
+
+    static Vector3 LastPathDirection(AIRoadGraph graph, Vector3 from, Vector3 to)
+    {
+        if (graph == null || !graph.TryFindPathWorld(from, to, out var path) || path == null)
+            return Vector3.zero;
+
+        // The graph appends the exact stop point, which can leave a 2 m stub at the
+        // end. Walk back to the last segment long enough to carry a real bearing.
+        for (int i = path.Count - 1; i > 0; i--)
+        {
+            Vector3 segment = Vector3.ProjectOnPlane(path[i] - path[i - 1], Vector3.up);
+            if (segment.sqrMagnitude >= 9f)
+                return segment.normalized;
+        }
+        return Vector3.zero;
+    }
+
+    static Vector3 FirstPathDirection(AIRoadGraph graph, Vector3 from, Vector3 to)
+    {
+        if (graph == null || !graph.TryFindPathWorld(from, to, out var path) || path == null)
+            return Vector3.zero;
+
+        for (int i = 1; i < path.Count; i++)
+        {
+            Vector3 segment = Vector3.ProjectOnPlane(path[i] - path[i - 1], Vector3.up);
+            if (segment.sqrMagnitude >= 9f)
+                return segment.normalized;
+        }
+        return Vector3.zero;
     }
 
     /// <summary>
@@ -185,19 +256,44 @@ public static class RoadSpawnResolver
         return found;
     }
 
-    public static Vector3 PathHeading(Vector3[] points, Vector3 requested, Vector3 fallback)
+    public static Vector3 PathHeading(Vector3[] points, Vector3 requested, Vector3 fallback,
+        Vector3 approachHint = default)
     {
         float nearest = 150f * 150f;
         Vector3 heading = fallback;
         if (points == null) return heading;
+
+        // A route that runs out and back on the same street has two segments at the
+        // same distance from a stop, pointing opposite ways. Keeping only the first
+        // one mirrors the shelter whenever the return leg happens to be listed
+        // first, so collect the near-ties and let the known approach pick one.
+        const float TieToleranceSquared = 1f;
+        var candidates = new List<Vector3>(4);
         for (int i = 1; i < points.Length; i++)
         {
             Vector3 a = points[i - 1], b = points[i]; a.y = b.y = requested.y;
-            if ((b - a).sqrMagnitude < 1f) continue;
+            Vector3 segment = b - a;
+            if (segment.sqrMagnitude < 1f) continue;
             float distance = (ProjectOnSegment(requested, a, b) - requested).sqrMagnitude;
-            if (distance >= nearest) continue;
-            nearest = distance;
-            heading = (b - a).normalized;
+            if (distance > nearest + TieToleranceSquared) continue;
+            if (distance < nearest - TieToleranceSquared)
+            {
+                candidates.Clear();
+                nearest = distance;
+            }
+            candidates.Add(segment.normalized);
+        }
+
+        if (candidates.Count == 0) return heading;
+        if (approachHint.sqrMagnitude < 0.01f) return candidates[0];
+
+        float bestAlignment = float.NegativeInfinity;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            float alignment = Vector3.Dot(candidates[i], approachHint);
+            if (alignment <= bestAlignment) continue;
+            bestAlignment = alignment;
+            heading = candidates[i];
         }
         return heading;
     }

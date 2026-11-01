@@ -50,6 +50,21 @@ public static class GameplaySmokeCheck
     static int routeServiced;
     static int routeAdvanced;
     static int routeDocked;
+    // Stops the bus reached too full to open its doors at. They must still be served:
+    // that refusal is what used to freeze currentStopIndex and strand the route.
+    static int routeDoorsRefused;
+    static bool routeCurrentStopDoorsRefused;
+    // The refused-door case only appears when the random destinations happen to line
+    // up (nobody alighting at a stop the bus arrives at, full), which is exactly why
+    // it survived until a full-route run hit it. At this stop the runner sets the
+    // case up deliberately and restores it once the stop has advanced.
+    const int RouteRefusedDoorProbeStopIndex = 4;
+    static bool routeRefusedDoorProbeApplied;
+    static bool routeRefusedDoorProbeRan;
+    static int routeProbeCapacityRestore;
+    static int routeProbeDoorLimitRestore;
+    static readonly List<PassengerAgent> routeProbePassengers = new List<PassengerAgent>();
+    static readonly List<int> routeProbeDestinations = new List<int>();
     static int routeFailures;
     static int routeGuidanceVersionBeforeService;
     static bool routeCurrentStopDocked;
@@ -82,6 +97,32 @@ public static class GameplaySmokeCheck
     const float RouteOverallBudgetSeconds = 1800f;
     static readonly List<string> routeFailureLog = new List<string>();
     static readonly List<float> routeServiceSeconds = new List<float>();
+
+    // ---- Machine-readable route report ----------------------------------------
+    // A CI job must be able to gate on this run without parsing the log, so the
+    // verdict is also written as JSON next to the log, and the exit status says
+    // which kind of failure happened. Both are a contract: see TESTING.md.
+    public const int ExitRoutePassed = 0;
+    public const int ExitRouteFailed = 2;
+    public const int ExitRouteNoResult = 3;
+    public const string DefaultRouteResultPath = "TestResults/route-smoke.json";
+    const int RouteResultSchemaVersion = 1;
+    static System.DateTime routeWallStartedAt;
+    static string routeAbortReason;
+    static int perfSamples;
+    static float perfAvgFps, perfP50Ms, perfP95Ms;
+
+    /// <summary>One served stop, reported so the JSON carries per-stop evidence.</summary>
+    struct RouteStopReport
+    {
+        public int index;
+        public string name;
+        public bool advanced;
+        public bool doorsRefused;
+        public float serviceSeconds;
+    }
+
+    static readonly List<RouteStopReport> routeStops = new List<RouteStopReport>();
     static readonly List<Transform> trafficMotionBodies = new List<Transform>();
     static readonly List<Vector3> trafficMotionStarts = new List<Vector3>();
     static float trafficMotionAt = -1f;
@@ -142,6 +183,10 @@ public static class GameplaySmokeCheck
             Debug.LogError("GameplaySmokeCheck.RunRoute is a batch-only check; it exits Unity when finished.");
             return;
         }
+        ResetRouteRunState();
+        routeWallStartedAt = System.DateTime.UtcNow;
+        // A result left by a previous run would let a crashed run read as a pass.
+        ClearStaleRouteResult();
         SessionState.SetBool("RealBus.SmokeRoute", true);
         Run();
     }
@@ -423,13 +468,21 @@ public static class GameplaySmokeCheck
                     // An anchor that cannot be measured is a failure, not a pass: a
                     // missing path used to skip every stop and look clean.
                     if (!RoadSpawnResolver.NearestPathFrame(stopPath, anchor.position,
-                            out Vector3 pathPoint, out Vector3 pathTangent))
+                            out Vector3 pathPoint, out _))
                     {
                         stopsUnmeasured++;
                         continue;
                     }
 
-                    Vector3 kerbSide = RoadSpawnResolver.KerbSide(pathTangent, drivesOnLeft);
+                    // Placement and audit must use the same heading. A loop route
+                    // has two path segments at the same distance from a stop; the
+                    // raw nearest tangent can be the return leg, which is exactly
+                    // how a shelter ends up on the oncoming kerb. The graph approach
+                    // is the pass the mission actually drives.
+                    int stopIndex = anchor.GetComponent<StopTrigger>().stopIndex;
+                    Vector3 approach = RoadSpawnResolver.StopApproachHeading(stopRoute, stopIndex,
+                        anchor.position, Vector3.forward, AIRoadGraph.FindCityGraph());
+                    Vector3 kerbSide = RoadSpawnResolver.KerbSide(approach, drivesOnLeft);
                     if (kerbSide.sqrMagnitude < .5f)
                     {
                         stopsUnmeasured++;
@@ -452,7 +505,7 @@ public static class GameplaySmokeCheck
                     }
                     Vector3 sample = model != null ? model.bounds.center : anchor.position;
                     float lateral = Vector3.Dot(sample - pathPoint, kerbSide);
-                    float facing = Vector3.Dot(anchor.forward, pathTangent);
+                    float facing = Vector3.Dot(anchor.forward, approach);
                     if (facing < 0.5f) stopsBackwards++;
                     // On the correct kerb the shelter stands beyond the path on the
                     // kerb side; a negative lateral puts it across the carriageway.
@@ -468,6 +521,34 @@ public static class GameplaySmokeCheck
         passed &= stopSidesOk;
         Debug.Log($"SMOKE stopSides anchors={stopAnchors} wrongSide={stopsWrongSide} " +
             $"backwards={stopsBackwards} unmeasured={stopsUnmeasured} leftTraffic={drivesOnLeft} passed={stopSidesOk}");
+
+        // Waiting passengers read the same registry anchor the stop prop used. Audit
+        // the slots the visual pool actually stands on: the old queue offset used
+        // world axes, so on a street running at an angle it dropped passengers into
+        // the carriageway even though the shelter itself was correctly placed.
+        int waitingPlatforms = 0, waitingSlots = 0, waitingOnRoad = 0;
+        if (roadIndex != null && stopRoute != null && stopRoute.stops != null)
+        {
+            for (int i = 0; i < stopRoute.stops.Length; i++)
+            {
+                if (!BusStopPlatformRegistry.TryGet(i, out BusStopPlatformRegistry.Anchor platform)) continue;
+                waitingPlatforms++;
+                for (int slot = 0; slot < 15; slot++)
+                {
+                    Vector3 waiting = BusStopPlatformRegistry.LayoutSlot(platform.position,
+                        platform.outward, platform.along, slot);
+                    waitingSlots++;
+                    if (!roadIndex.Contains(waiting, .2f)) continue;
+                    waitingOnRoad++;
+                    Debug.Log($"SMOKE waitingOnRoad stop={i} slot={slot} " +
+                        $"position={new Vector3(waiting.x, 0f, waiting.z)}");
+                }
+            }
+        }
+        bool waitingOk = waitingPlatforms > 0 && waitingOnRoad == 0;
+        passed &= waitingOk;
+        Debug.Log($"SMOKE waitingPlatforms anchors={waitingPlatforms} slots={waitingSlots} " +
+            $"onRoad={waitingOnRoad} passed={waitingOk}");
 
         // Depot geometry must sit on its own yard (and its driveways), never on the
         // city carriageway. The audit measures each prop's real footprint and skips
@@ -913,6 +994,10 @@ public static class GameplaySmokeCheck
         var mission = MissionManager.Instance;
         var bus = mission != null ? mission.busController : Object.FindAnyObjectByType<BusController>();
         if (routeStartedAt <= 0f) routeStartedAt = Time.time;
+        // Entering play mode reloads the domain, which resets the static fields set in
+        // RunRoute; this tick is the first code that runs afterwards, so the wall clock
+        // is captured here too or the report would claim a zero-length run.
+        if (routeWallStartedAt == default) routeWallStartedAt = System.DateTime.UtcNow;
 
         if (Time.time - routeStartedAt > RouteOverallBudgetSeconds)
         {
@@ -1182,6 +1267,7 @@ public static class GameplaySmokeCheck
         {
             routeAdvanced++;
             routeServiceSeconds.Add(served);
+            if (routeRefusedDoorProbeApplied) RestoreRefusedDoorProbe(PassengerManager.Instance);
             string stopName = mission.currentRoute != null && routeStopIndex < mission.currentRoute.stops.Length
                 ? mission.currentRoute.stops[routeStopIndex].stopName
                 : zone.stopName;
@@ -1200,6 +1286,14 @@ public static class GameplaySmokeCheck
                 $"service={served:F1}s indexAfter={mission.currentStopIndex} state={mission.missionState} " +
                 $"guidanceVersion={routeGuidanceVersionBeforeService}->{versionAfter} rebuilt={guidanceRebuilt} " +
                 $"routeActive={mission.routeActive} passengers={PassengerManager.Instance?.currentPassengers}");
+            routeStops.Add(new RouteStopReport
+            {
+                index = routeStopIndex,
+                name = stopName,
+                advanced = true,
+                doorsRefused = routeCurrentStopDoorsRefused,
+                serviceSeconds = served,
+            });
             routeStopIndex++;
             routePhase = RoutePhaseTravel;
             routePhaseAt = Time.time;
@@ -1229,6 +1323,61 @@ public static class GameplaySmokeCheck
                 $"passengers={PassengerManager.Instance?.currentPassengers}");
     }
 
+    /// <summary>
+    /// Puts the bus into the state that dead-ended the route: at its doorway limit
+    /// with nobody alighting at this stop. The capacity limits and the shifted
+    /// destinations are restored once the stop advances, so the rest of the route is
+    /// served exactly as it would have been.
+    /// </summary>
+    static void ApplyRefusedDoorProbe(PassengerManager passengers, int stopIndex, int stopCount)
+    {
+        if (passengers == null || stopCount <= 1) return;
+        int onboard = passengers.currentPassengers;
+        if (onboard <= 0)
+        {
+            Debug.LogWarning($"SMOKE routeDoorsProbe index={stopIndex} skipped: no passengers onboard to fill the bus");
+            return;
+        }
+
+        routeProbeCapacityRestore = passengers.maxBusCapacity;
+        routeProbeDoorLimitRestore = passengers.doorOpenCapacityLimit;
+        passengers.useCapacityOverride = true;
+        passengers.maxBusCapacity = onboard;
+        passengers.doorOpenCapacityLimit = onboard;
+
+        routeProbePassengers.Clear();
+        routeProbeDestinations.Clear();
+        int lastStop = stopCount - 1;
+        foreach (var passenger in passengers.OnboardPassengers)
+        {
+            if (passenger == null) continue;
+            routeProbePassengers.Add(passenger);
+            // Anyone who would have alighted here rides on to the terminus instead,
+            // so the probe stop really is a stop nobody gets off at.
+            routeProbeDestinations.Add(passenger.destinationStopIndex == stopIndex
+                ? lastStop : passenger.destinationStopIndex);
+            passenger.destinationStopIndex = lastStop;
+        }
+
+        routeRefusedDoorProbeApplied = routeRefusedDoorProbeRan = true;
+        Debug.Log($"SMOKE routeDoorsProbe index={stopIndex} onboard={onboard}/{passengers.GetMaxCapacity()} " +
+            "— bus at its doorway limit, nobody alighting here");
+    }
+
+    static void RestoreRefusedDoorProbe(PassengerManager passengers)
+    {
+        if (!routeRefusedDoorProbeApplied || passengers == null) return;
+        int count = Mathf.Min(routeProbePassengers.Count, routeProbeDestinations.Count);
+        for (int i = 0; i < count; i++)
+            if (routeProbePassengers[i] != null)
+                routeProbePassengers[i].destinationStopIndex = routeProbeDestinations[i];
+        passengers.maxBusCapacity = routeProbeCapacityRestore;
+        passengers.doorOpenCapacityLimit = routeProbeDoorLimitRestore;
+        routeProbePassengers.Clear();
+        routeProbeDestinations.Clear();
+        routeRefusedDoorProbeApplied = false;
+    }
+
     static void OpenRouteDoors(MissionManager mission, DockingZone zone)
     {
         // A stop reached by the runner would otherwise be many minutes early, and the
@@ -1241,6 +1390,23 @@ public static class GameplaySmokeCheck
             if (scheduled > 0f && scheduled > schedule.currentTimeMinutes)
                 schedule.currentTimeMinutes = scheduled;
         }
+        // Recorded before the doors are asked for: the refusal is a property of the
+        // bus as it stands at the kerb, and service clears the queue afterwards.
+        var passengers = PassengerManager.Instance;
+        int stopCount = mission.currentRoute != null && mission.currentRoute.stops != null
+            ? mission.currentRoute.stops.Length : 0;
+        if (routeStopIndex == RouteRefusedDoorProbeStopIndex && !routeRefusedDoorProbeApplied)
+            ApplyRefusedDoorProbe(passengers, routeStopIndex, stopCount);
+        routeCurrentStopDoorsRefused = passengers != null &&
+            !passengers.CanOpenDoorsForStop(mission.currentStopIndex, stopCount);
+        if (routeCurrentStopDoorsRefused)
+        {
+            routeDoorsRefused++;
+            Debug.Log($"SMOKE routeDoorsRefused index={routeStopIndex} onboard={passengers.currentPassengers}/" +
+                $"{passengers.GetMaxCapacity()} waiting={passengers.WaitingPassengers.Count} " +
+                "— the stop must still be served and the route must continue");
+        }
+
         bool opened = mission.TryOpenDoorsAtCurrentStop();
         routeGuidanceVersionBeforeService = mission.GuidancePathVersion;
         if (!opened)
@@ -1448,12 +1614,16 @@ public static class GameplaySmokeCheck
         bool trafficOk = trafficMotionSampled && trafficMotionActive >= 3 &&
             trafficMotionMoved >= Mathf.Max(2, trafficMotionActive / 4);
         bool navigatorOk = routeNavigatorChecks > 0 && routeNavigatorFailures == 0;
+        // The refused-door case is asserted, not hoped for: the runner forces it at one
+        // stop, so a pass means the full-bus path was really driven.
+        bool refusedDoorsOk = routeRefusedDoorProbeRan && routeDoorsRefused >= 1;
         bool routeOk = completed && routeFailures == 0 && routeAdvanced == stopCount && stopCount > 0 &&
-            trafficOk && trafficLaneChecked && trafficLaneOk && navigatorOk;
+            trafficOk && trafficLaneChecked && trafficLaneOk && navigatorOk && refusedDoorsOk;
         float total = Time.time - routeStartedAt;
         float average = routeServiceSeconds.Count > 0 ? routeServiceSeconds.Average() : 0f;
         float longest = routeServiceSeconds.Count > 0 ? routeServiceSeconds.Max() : 0f;
         Debug.Log($"SMOKE routeResult stops={stopCount} serviced={routeServiced} docked={routeDocked} advanced={routeAdvanced} " +
+            $"doorsRefused={routeDoorsRefused} " +
             $"failures={routeFailures} shortcuts={routeShortcuts} serviceAvg={average:F1}s serviceLongest={longest:F1}s " +
             $"seconds={total:F0} completed={completed} trafficMoved={trafficMotionMoved}/{trafficMotionActive} " +
             $"trafficLaneChecked={trafficLaneChecked} trafficLanes={trafficLaneOk} " +
@@ -1462,12 +1632,17 @@ public static class GameplaySmokeCheck
             $"arrows={routeNavigatorArrows} beacon={routeNavigatorBeacon} banner={routeNavigatorHud} passed={navigatorOk}");
         foreach (string failure in routeFailureLog) Debug.Log($"SMOKE routeFailure {failure}");
         LogPerformance();
+        // One verdict, two renderings: the log lines above for a human, and the JSON
+        // below for the CI job that decides whether the build may continue.
+        bool published = PublishRouteResult(routeOk, routeOk ? ExitRoutePassed : ExitRouteFailed);
         ClearRouteSession();
-        EditorApplication.Exit(routeOk ? 0 : 2);
+        EditorApplication.Exit(!published ? ExitRouteNoResult
+            : routeOk ? ExitRoutePassed : ExitRouteFailed);
     }
 
     static void FailRoute(string reason)
     {
+        routeAbortReason = reason;
         Debug.LogError($"SMOKE route failed: {reason}");
         Debug.Log($"SMOKE routeResult stops={(MissionManager.Instance?.currentRoute?.stops?.Length ?? 0)} " +
             $"serviced={routeServiced} docked={routeDocked} advanced={routeAdvanced} failures={routeFailures + 1} " +
@@ -1475,8 +1650,9 @@ public static class GameplaySmokeCheck
             $"seconds={(Time.time - routeStartedAt):F0} completed=False passed=False");
         foreach (string failure in routeFailureLog) Debug.Log($"SMOKE routeFailure {failure}");
         LogPerformance();
+        bool published = PublishRouteResult(false, ExitRouteFailed);
         ClearRouteSession();
-        EditorApplication.Exit(2);
+        EditorApplication.Exit(published ? ExitRouteFailed : ExitRouteNoResult);
     }
 
     static void ClearRouteSession()
@@ -1485,6 +1661,270 @@ public static class GameplaySmokeCheck
         SessionState.SetBool("RealBus.SmokeCheck", false);
         SessionState.SetBool("RealBus.SmokeExtended", false);
         Time.timeScale = 1f;
+    }
+
+    /// <summary>
+    /// Clears the per-run route bookkeeping. The counters are static because the
+    /// runner tics from an editor callback, so a second run in the same process (or a
+    /// rerun after a manual stop) must start from zero or it would inherit the last
+    /// run's progress and service times.
+    /// </summary>
+    static void ResetRouteRunState()
+    {
+        routePhase = RoutePhaseBoot;
+        routeStartedAt = 0f;
+        routeBootAt = 0f;
+        routeBootLogAt = 0f;
+        routeStopIndex = 0;
+        routeServiced = 0;
+        routeAdvanced = 0;
+        routeDocked = 0;
+        routeDoorsRefused = 0;
+        routeCurrentStopDoorsRefused = false;
+        routeRefusedDoorProbeApplied = false;
+        routeRefusedDoorProbeRan = false;
+        routeProbePassengers.Clear();
+        routeProbeDestinations.Clear();
+        routeFailures = 0;
+        routeShortcuts = 0;
+        routeHops = 0;
+        routeStallHops = 0;
+        routeLegRescued = false;
+        routeClosestRemaining = float.MaxValue;
+        routeDockAttempts = 0;
+        routeCurrentStopDocked = false;
+        routeTravelLogAt = 0f;
+        routeStopTravelAt = 0f;
+        routeServiceSeconds.Clear();
+        routeFailureLog.Clear();
+        routeStops.Clear();
+        routeAbortReason = null;
+        trafficMotionBodies.Clear();
+        trafficMotionStarts.Clear();
+        trafficMotionAt = -1f;
+        trafficMotionSampled = false;
+        trafficMotionMoved = 0;
+        trafficMotionActive = 0;
+        trafficLaneChecked = false;
+        trafficLaneOk = true;
+        routeNavigatorAt = -1f;
+        routeNavigatorReadyAt = -1f;
+        routeNavigatorChecks = 0;
+        routeNavigatorFailures = 0;
+        routeNavigatorArrows = false;
+        routeNavigatorBeacon = false;
+        routeNavigatorHud = false;
+        frameTimes.Clear();
+    }
+
+    /// <summary>Where the JSON verdict goes: REALBUS_SMOKE_RESULT if a CI job sets it.</summary>
+    static string ResolveRouteResultPath()
+    {
+        string configured = System.Environment.GetEnvironmentVariable("REALBUS_SMOKE_RESULT");
+        if (!string.IsNullOrEmpty(configured))
+            return System.IO.Path.IsPathRooted(configured)
+                ? configured
+                : System.IO.Path.Combine(ProjectRoot(), configured);
+        return System.IO.Path.Combine(ProjectRoot(), DefaultRouteResultPath);
+    }
+
+    static string ProjectRoot()
+    {
+        var parent = System.IO.Directory.GetParent(Application.dataPath);
+        return parent != null ? parent.FullName : Application.dataPath;
+    }
+
+    static void ClearStaleRouteResult()
+    {
+        string path = ResolveRouteResultPath();
+        try
+        {
+            if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        }
+        catch (System.Exception exception)
+        {
+            // A result that cannot be cleared would be read as this run's verdict, so
+            // say so loudly rather than continue with a possibly stale pass.
+            Debug.LogError($"SMOKE routeJson could not clear the previous result at {path}: " +
+                $"{exception.GetType().Name}: {exception.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Every reason the run did not pass, in one list. Aborted runs record the reason
+    /// that stopped them; a completed run that failed adds the predicate that failed,
+    /// which the log only ever showed as `passed=False`.
+    /// </summary>
+    static List<string> RouteFailureList(bool passed)
+    {
+        var failures = new List<string>(routeFailureLog);
+        if (!string.IsNullOrEmpty(routeAbortReason) && !failures.Contains(routeAbortReason))
+            failures.Insert(0, routeAbortReason);
+        if (passed) return failures;
+
+        var mission = MissionManager.Instance;
+        int stopCount = mission != null && mission.currentRoute != null && mission.currentRoute.stops != null
+            ? mission.currentRoute.stops.Length : 0;
+        if (stopCount == 0) failures.Add("the route has no stops");
+        if (routeAdvanced != stopCount)
+            failures.Add($"stop progression advanced {routeAdvanced}/{stopCount} stops");
+        if (mission == null || mission.missionState != MissionState.Completed || mission.routeActive)
+            failures.Add($"the route did not complete: state={mission?.missionState} active={mission?.routeActive}");
+        bool trafficMoved = trafficMotionSampled && trafficMotionActive >= 3 &&
+            trafficMotionMoved >= Mathf.Max(2, trafficMotionActive / 4);
+        if (!trafficMoved)
+            failures.Add($"traffic did not move: {trafficMotionMoved}/{trafficMotionActive} bodies moved in 6s");
+        if (!trafficLaneChecked) failures.Add("the traffic lane/side audit never ran");
+        else if (!trafficLaneOk) failures.Add("the traffic lane/side audit failed");
+        if (!routeRefusedDoorProbeRan || routeDoorsRefused == 0)
+            failures.Add($"the refused-door stop was never exercised (probeRan={routeRefusedDoorProbeRan}, " +
+                $"doorsRefused={routeDoorsRefused})");
+        if (routeNavigatorChecks == 0) failures.Add("the route navigator was never sampled");
+        else if (routeNavigatorFailures > 0)
+            failures.Add($"the route navigator was missing on {routeNavigatorFailures}/{routeNavigatorChecks} samples");
+        if (failures.Count == 0) failures.Add("the route check failed without a recorded reason");
+        return failures;
+    }
+
+    /// <summary>
+    /// Writes the verdict as JSON. Returns false when the file could not be written,
+    /// which the caller reports as <see cref="ExitRouteNoResult"/>: a run whose result
+    /// cannot be read must never look like a pass.
+    /// </summary>
+    static bool PublishRouteResult(bool passed, int exitCode)
+    {
+        string path = ResolveRouteResultPath();
+        var mission = MissionManager.Instance;
+        int stopCount = mission != null && mission.currentRoute != null && mission.currentRoute.stops != null
+            ? mission.currentRoute.stops.Length : 0;
+        bool completed = mission != null && mission.missionState == MissionState.Completed && !mission.routeActive;
+        bool trafficMoved = trafficMotionSampled && trafficMotionActive >= 3 &&
+            trafficMotionMoved >= Mathf.Max(2, trafficMotionActive / 4);
+        var failures = RouteFailureList(passed);
+        System.DateTime finishedAt = System.DateTime.UtcNow;
+        System.DateTime startedAt = routeWallStartedAt == default ? finishedAt : routeWallStartedAt;
+
+        var json = new System.Text.StringBuilder(2048);
+        json.Append("{\n");
+        json.Append("  \"schemaVersion\": ").Append(RouteResultSchemaVersion).Append(",\n");
+        json.Append("  \"check\": \"route-smoke\",\n");
+        json.Append("  \"passed\": ").Append(passed ? "true" : "false").Append(",\n");
+        json.Append("  \"exitCode\": ").Append(exitCode).Append(",\n");
+        json.Append("  \"unityVersion\": ");
+        AppendJsonString(json, Application.unityVersion);
+        json.Append(",\n  \"startedAtUtc\": ");
+        AppendJsonString(json, startedAt.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+        json.Append(",\n  \"finishedAtUtc\": ");
+        AppendJsonString(json, finishedAt.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+        // durationSeconds is wall clock (what a CI job waits for); gameSeconds is the
+        // route served at Time.timeScale, which is what the stop timings are measured in.
+        json.Append(",\n  \"durationSeconds\": ");
+        AppendNumber(json, (float)(finishedAt - startedAt).TotalSeconds, "F1");
+        json.Append(",\n  \"gameSeconds\": ");
+        AppendNumber(json, Time.time - routeStartedAt, "F1");
+        json.Append(",\n  \"completed\": ").Append(completed ? "true" : "false").Append(",\n");
+        json.Append("  \"stops\": { \"total\": ").Append(stopCount)
+            .Append(", \"serviced\": ").Append(routeServiced)
+            .Append(", \"docked\": ").Append(routeDocked)
+            .Append(", \"advanced\": ").Append(routeAdvanced)
+            .Append(", \"doorsRefused\": ").Append(routeDoorsRefused).Append(" },\n");
+
+        json.Append("  \"stopProgression\": [");
+        for (int i = 0; i < routeStops.Count; i++)
+        {
+            if (i > 0) json.Append(", ");
+            json.Append("{ \"index\": ").Append(routeStops[i].index).Append(", \"name\": ");
+            AppendJsonString(json, routeStops[i].name);
+            json.Append(", \"advanced\": ").Append(routeStops[i].advanced ? "true" : "false");
+            json.Append(", \"doorsRefused\": ").Append(routeStops[i].doorsRefused ? "true" : "false");
+            json.Append(", \"serviceSeconds\": ");
+            AppendNumber(json, routeStops[i].serviceSeconds, "F1");
+            json.Append(" }");
+        }
+        json.Append("],\n");
+
+        json.Append("  \"shortcuts\": ").Append(routeShortcuts).Append(",\n");
+        json.Append("  \"traffic\": { \"sampled\": ").Append(trafficMotionSampled ? "true" : "false")
+            .Append(", \"active\": ").Append(trafficMotionActive)
+            .Append(", \"moved\": ").Append(trafficMotionMoved)
+            .Append(", \"passed\": ").Append(trafficMoved ? "true" : "false")
+            .Append(", \"lanesChecked\": ").Append(trafficLaneChecked ? "true" : "false")
+            .Append(", \"lanesPassed\": ").Append(trafficLaneOk ? "true" : "false").Append(" },\n");
+        json.Append("  \"navigator\": { \"checks\": ").Append(routeNavigatorChecks)
+            .Append(", \"failures\": ").Append(routeNavigatorFailures)
+            .Append(", \"passed\": ")
+            .Append(routeNavigatorChecks > 0 && routeNavigatorFailures == 0 ? "true" : "false").Append(" },\n");
+        json.Append("  \"performance\": { \"samples\": ").Append(perfSamples).Append(", \"avgFps\": ");
+        AppendNumber(json, perfAvgFps, "F1");
+        json.Append(", \"p50Ms\": ");
+        AppendNumber(json, perfP50Ms, "F1");
+        json.Append(", \"p95Ms\": ");
+        AppendNumber(json, perfP95Ms, "F1");
+        json.Append(" },\n");
+
+        json.Append("  \"failureCount\": ").Append(failures.Count).Append(",\n");
+        json.Append("  \"failures\": [");
+        for (int i = 0; i < failures.Count; i++)
+        {
+            if (i > 0) json.Append(", ");
+            AppendJsonString(json, failures[i]);
+        }
+        json.Append("],\n");
+        json.Append("  \"abortReason\": ");
+        if (string.IsNullOrEmpty(routeAbortReason)) json.Append("null");
+        else AppendJsonString(json, routeAbortReason);
+        json.Append(",\n  \"logPath\": ");
+        AppendJsonString(json, string.IsNullOrEmpty(Application.consoleLogPath) ? null : Application.consoleLogPath);
+        json.Append(",\n  \"resultPath\": ");
+        AppendJsonString(json, path);
+        json.Append("\n}\n");
+
+        try
+        {
+            string directory = System.IO.Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory)) System.IO.Directory.CreateDirectory(directory);
+            System.IO.File.WriteAllText(path, json.ToString());
+            Debug.Log($"SMOKE routeJson {path} passed={passed} exit={exitCode}");
+            return true;
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogError($"SMOKE routeJson could not write {path}: " +
+                $"{exception.GetType().Name}: {exception.Message}");
+            return false;
+        }
+    }
+
+    static void AppendJsonString(System.Text.StringBuilder builder, string value)
+    {
+        if (value == null)
+        {
+            builder.Append("null");
+            return;
+        }
+        builder.Append('"');
+        foreach (char c in value)
+        {
+            switch (c)
+            {
+                case '"': builder.Append("\\\""); break;
+                case '\\': builder.Append("\\\\"); break;
+                case '\n': builder.Append("\\n"); break;
+                case '\r': builder.Append("\\r"); break;
+                case '\t': builder.Append("\\t"); break;
+                default:
+                    if (c < ' ') builder.Append("\\u").Append(((int)c).ToString("x4"));
+                    else builder.Append(c);
+                    break;
+            }
+        }
+        builder.Append('"');
+    }
+
+    static void AppendNumber(System.Text.StringBuilder builder, float value, string format)
+    {
+        // Invariant culture: a de-DE editor would otherwise write 12,5 and break the JSON.
+        builder.Append(value.ToString(format, System.Globalization.CultureInfo.InvariantCulture));
     }
 
     static float EmissionRate(ParticleSystem system)
@@ -1507,6 +1947,8 @@ public static class GameplaySmokeCheck
     {
         if (frameTimes.Count == 0)
         {
+            perfSamples = 0;
+            perfAvgFps = perfP50Ms = perfP95Ms = 0f;
             Debug.Log("SMOKE perf no samples");
             return;
         }
@@ -1523,6 +1965,10 @@ public static class GameplaySmokeCheck
         }
         int p50 = Mathf.Clamp(Mathf.RoundToInt(sorted.Count * 0.50f) - 1, 0, sorted.Count - 1);
         int p95 = Mathf.Clamp(Mathf.RoundToInt(sorted.Count * 0.95f) - 1, 0, sorted.Count - 1);
+        perfSamples = sorted.Count;
+        perfAvgFps = sorted.Count / Mathf.Max(0.001f, total);
+        perfP50Ms = sorted[p50] * 1000f;
+        perfP95Ms = sorted[p95] * 1000f;
         int renderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Exclude).Length;
         Camera mainCamera = Camera.main;
         float farClip = mainCamera != null ? mainCamera.farClipPlane : 0f;

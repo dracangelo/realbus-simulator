@@ -33,6 +33,7 @@ Generated from `Assets/unity models`. Re-run `Tools > RealBus > Setup > Wire All
 
 ## Gas-station props
 
+- **Gas station** — `Assets/_Game/Resources/GasStationsGenerated/gas_station_966fb802.prefab`
 - **Gas** — `Assets/_Game/Resources/GasStationsGenerated/Gas_fd071b77.prefab`
 - **Gasstation** — `Assets/_Game/Resources/GasStationsGenerated/gasstation_3a29cada.prefab`
 

@@ -18,6 +18,11 @@ public class NewModelPackGameplayTests
             if (gameObject != null) Object.DestroyImmediate(gameObject);
         created.Clear();
         ResetSingleton<GameState>();
+        // A failed session test must not leave a station owning the global session
+        // slot for the next test.
+        var session = typeof(GasStationServicePoint).GetProperty("ActiveSession",
+            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        session?.SetValue(null, null);
     }
 
     T Create<T>(string name) where T : Component
@@ -259,6 +264,253 @@ public class NewModelPackGameplayTests
         Assert.That(point.Service(1f), Is.False);
         Assert.That(point.SessionCostKES, Is.EqualTo(0f));
         Assert.That(state.economy.balanceKES, Is.EqualTo(5000f).Within(.01f));
+    }
+
+    [Test]
+    public void GasStationSession_RequiresAStoppedBusAndStartsOnlyOnce()
+    {
+        NewGameState(100000f);
+        var bus = CreateBus();
+        var fuel = bus.GetComponent<FuelSystem>();
+        fuel.tankCapacityLitres = 300f;
+        fuel.dieselPricePerLitreKES = 180f;
+        SetPrivate(fuel, "currentFuelLitres", 100f);
+
+        var point = CreateServicePoint();
+        point.serviceBattery = false;
+        point.logService = false;
+        point.BindBus(bus);
+
+        bus.currentSpeedKmh = 12f;
+        Assert.That(point.BeginSession(50f, out string reason), Is.False,
+            "A moving bus must not open a paid session.");
+        Assert.That(reason, Is.EqualTo("station.tooFast"));
+
+        bus.currentSpeedKmh = 0f;
+        Assert.That(point.BeginSession(50f, out reason), Is.True);
+        Assert.That(reason, Is.Null);
+        Assert.That(point.SessionActive, Is.True);
+        Assert.That(point.TargetAmount, Is.EqualTo(50f).Within(.01f));
+
+        Assert.That(point.BeginSession(20f, out reason), Is.False,
+            "A second start must not open a duplicate session.");
+        Assert.That(reason, Is.EqualTo("station.active"));
+        Assert.That(point.TargetAmount, Is.EqualTo(50f).Within(.01f));
+    }
+
+    [Test]
+    public void GasStationSession_StopsAtTheTargetAndChargesOnlyDeliveredEnergy()
+    {
+        var state = NewGameState(100000f);
+        var bus = CreateBus();
+        var fuel = bus.GetComponent<FuelSystem>();
+        fuel.tankCapacityLitres = 300f;
+        fuel.dieselPricePerLitreKES = 180f;
+        SetPrivate(fuel, "currentFuelLitres", 100f);
+
+        var point = CreateServicePoint();
+        point.serviceBattery = false;
+        point.logService = false;
+        point.BindBus(bus);
+
+        Assert.That(point.BeginSession(30f), Is.True);
+        Assert.That(point.Service(1f), Is.True);
+        Assert.That(fuel.CurrentFuelLitres, Is.EqualTo(122f).Within(.01f));
+        Assert.That(point.SessionAmount, Is.EqualTo(22f).Within(.01f));
+        Assert.That(point.Progress01, Is.EqualTo(22f / 30f).Within(.001f));
+        Assert.That(point.SessionActive, Is.True);
+
+        Assert.That(point.Service(1f), Is.True, "The final tick buys only the remaining 8 L.");
+        Assert.That(fuel.CurrentFuelLitres, Is.EqualTo(130f).Within(.01f));
+        Assert.That(point.SessionActive, Is.False, "The session closes when the target is reached.");
+        Assert.That(state.economy.balanceKES, Is.EqualTo(100000f - 30f * 180f).Within(.5f),
+            "Thirty litres must be charged once, at the station price.");
+        Assert.That(point.LastSessionAmount, Is.EqualTo(30f).Within(.01f));
+    }
+
+    [Test]
+    public void GasStationSession_CancelsWhenTheBusDrivesAwayAndKeepsOnlyWhatItBought()
+    {
+        var state = NewGameState(100000f);
+        var bus = CreateBus();
+        var fuel = bus.GetComponent<FuelSystem>();
+        fuel.tankCapacityLitres = 300f;
+        fuel.dieselPricePerLitreKES = 180f;
+        SetPrivate(fuel, "currentFuelLitres", 100f);
+
+        var point = CreateServicePoint();
+        point.serviceBattery = false;
+        point.logService = false;
+        point.BindBus(bus);
+        Assert.That(point.BeginSession(100f), Is.True);
+
+        Assert.That(point.Service(.5f), Is.True);
+        Assert.That(fuel.CurrentFuelLitres, Is.EqualTo(111f).Within(.01f));
+
+        bus.currentSpeedKmh = 8f;
+        Assert.That(point.Service(.5f), Is.False, "A moving bus must end the session.");
+        Assert.That(point.SessionActive, Is.False);
+        Assert.That(fuel.CurrentFuelLitres, Is.EqualTo(111f).Within(.01f),
+            "Cancelling must not deliver or charge for any extra fuel.");
+        Assert.That(state.economy.balanceKES, Is.EqualTo(100000f - 11f * 180f).Within(.5f));
+    }
+
+    [Test]
+    public void GasStationSession_RejectsFullTanksAndEmptyBalancesWithReasons()
+    {
+        var state = NewGameState(0f);
+        var bus = CreateBus();
+        var fuel = bus.GetComponent<FuelSystem>();
+        fuel.tankCapacityLitres = 300f;
+        fuel.dieselPricePerLitreKES = 180f;
+        SetPrivate(fuel, "currentFuelLitres", 300f);
+
+        var point = CreateServicePoint();
+        point.serviceBattery = false;
+        point.logService = false;
+        point.BindBus(bus);
+
+        Assert.That(point.BeginSession(10f, out string reason), Is.False);
+        Assert.That(reason, Is.EqualTo("station.full"));
+
+        SetPrivate(fuel, "currentFuelLitres", 100f);
+        Assert.That(point.BeginSession(10f, out reason), Is.False);
+        Assert.That(reason, Is.EqualTo("station.noFunds"));
+        Assert.That(state.economy.balanceKES, Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void GasStationSession_OnlyOneStationCanOwnAPaidSession()
+    {
+        NewGameState(100000f);
+        var bus = CreateBus();
+        var fuel = bus.GetComponent<FuelSystem>();
+        fuel.tankCapacityLitres = 300f;
+        fuel.dieselPricePerLitreKES = 180f;
+        SetPrivate(fuel, "currentFuelLitres", 100f);
+
+        var first = CreateServicePoint();
+        first.serviceBattery = false;
+        first.logService = false;
+        first.BindBus(bus);
+
+        var second = CreateServicePoint();
+        second.serviceBattery = false;
+        second.logService = false;
+        second.BindBus(bus);
+
+        Assert.That(first.BeginSession(40f), Is.True);
+        Assert.That(second.BeginSession(40f, out string reason), Is.False);
+        Assert.That(reason, Is.EqualTo("station.busy"));
+        Assert.That(GasStationServicePoint.ActiveSession, Is.SameAs(first));
+        first.StopSession(cancelled: true);
+    }
+
+    [Test]
+    public void GasStationSession_RefusesAnIncompatibleStation()
+    {
+        NewGameState(100000f);
+        var bus = CreateBus();
+        var battery = bus.GetComponent<BatterySystem>();
+        battery.batteryCapacityKWh = 420f;
+        battery.electricityPricePerKWhKES = 64f;
+        SetPrivate(battery, "currentChargeKWh", 100f);
+
+        // An electric bus carries no tank, so a fuel-only site cannot serve it.
+        Object.DestroyImmediate(bus.GetComponent<FuelSystem>());
+
+        var fuelOnly = CreateServicePoint();
+        fuelOnly.supportsFuel = true;
+        fuelOnly.supportsCharging = false;
+        fuelOnly.logService = false;
+        fuelOnly.BindBus(bus);
+
+        Assert.That(fuelOnly.Mode, Is.EqualTo(GasStationServicePoint.ServiceMode.None));
+        Assert.That(fuelOnly.BeginSession(10f, out string reason), Is.False);
+        Assert.That(reason, Is.EqualTo("station.unsupported"));
+
+        var dualService = CreateServicePoint();
+        dualService.supportsFuel = true;
+        dualService.supportsCharging = true;
+        dualService.logService = false;
+        dualService.BindBus(bus);
+        Assert.That(dualService.Mode, Is.EqualTo(GasStationServicePoint.ServiceMode.Charge),
+            "A dual-service site must charge the electric bus instead of trying the tank.");
+        Assert.That(dualService.BeginSession(10f), Is.True);
+        dualService.StopSession();
+    }
+
+    [Test]
+    public void GasStationSession_ChargesAnElectricBusAndPersistsTheBatteryState()
+    {
+        var state = NewGameState(100000f);
+        var bus = CreateBus();
+        var fuel = bus.GetComponent<FuelSystem>();
+        var battery = bus.GetComponent<BatterySystem>();
+        fuel.tankCapacityLitres = 300f;
+        SetPrivate(fuel, "currentFuelLitres", 120f);
+        battery.batteryCapacityKWh = 420f;
+        battery.electricityPricePerKWhKES = 64f;
+        SetPrivate(battery, "currentChargeKWh", 300f);
+
+        var point = CreateServicePoint();
+        point.logService = false;
+        point.BindBus(bus);
+        Assert.That(point.Mode, Is.EqualTo(GasStationServicePoint.ServiceMode.Charge));
+
+        Assert.That(point.BeginSession(50f), Is.True);
+        Assert.That(point.Service(1f), Is.True);
+        Assert.That(battery.CurrentChargeKWh, Is.EqualTo(350f).Within(.01f));
+        Assert.That(fuel.CurrentFuelLitres, Is.EqualTo(120f).Within(.01f),
+            "Charging must not touch the diesel tank.");
+        Assert.That(state.economy.balanceKES, Is.EqualTo(100000f - 50f * 64f).Within(.5f));
+
+        Assert.That(state.vehicleState.isElectricBus, Is.True);
+        Assert.That(state.vehicleState.fuelLitres, Is.EqualTo(350f).Within(.01f));
+        Assert.That(state.vehicleState.fuelCapacityLitres, Is.EqualTo(420f).Within(.01f));
+    }
+
+    [Test]
+    public void GasStationSession_PersistsFuelThroughTheExistingVehicleState()
+    {
+        var state = NewGameState(100000f);
+        var bus = CreateBus();
+        var fuel = bus.GetComponent<FuelSystem>();
+        fuel.tankCapacityLitres = 300f;
+        fuel.dieselPricePerLitreKES = 180f;
+        SetPrivate(fuel, "currentFuelLitres", 100f);
+
+        var point = CreateServicePoint();
+        point.serviceBattery = false;
+        point.logService = false;
+        point.BindBus(bus);
+        point.BeginSession(25f);
+        point.Service(1f);
+
+        Assert.That(state.vehicleState.isElectricBus, Is.False);
+        Assert.That(state.vehicleState.fuelLitres, Is.EqualTo(122f).Within(.01f));
+        Assert.That(state.vehicleState.fuelCapacityLitres, Is.EqualTo(300f).Within(.01f));
+
+        // A reload constructs the system again and reads the same state.
+        var reloaded = Create<FuelSystem>("ReloadedFuel");
+        reloaded.tankCapacityLitres = 1f;
+        SetPrivate(reloaded, "currentFuelLitres", 0f);
+        var load = typeof(FuelSystem).GetMethod("LoadFromGameState",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(load, Is.Not.Null);
+        load.Invoke(reloaded, null);
+        Assert.That(reloaded.CurrentFuelLitres, Is.EqualTo(122f).Within(.01f));
+        Assert.That(reloaded.tankCapacityLitres, Is.EqualTo(300f).Within(.01f));
+    }
+
+    [Test]
+    public void GasStationTargetAmountFor_ClampsFractionsToTheMissingCapacity()
+    {
+        Assert.That(GasStationServicePoint.TargetAmountFor(1f, 80f), Is.EqualTo(80f).Within(.001f));
+        Assert.That(GasStationServicePoint.TargetAmountFor(.5f, 80f), Is.EqualTo(40f).Within(.001f));
+        Assert.That(GasStationServicePoint.TargetAmountFor(-1f, 80f), Is.EqualTo(0f));
+        Assert.That(GasStationServicePoint.TargetAmountFor(2f, 80f), Is.EqualTo(80f).Within(.001f));
+        Assert.That(GasStationServicePoint.TargetAmountFor(.5f, -10f), Is.EqualTo(0f));
     }
 
     GameState NewGameState(float balance)

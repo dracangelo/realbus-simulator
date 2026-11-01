@@ -34,6 +34,10 @@ public class LiveCityStreamer : MonoBehaviour
     [Min(1)] public int instancesPerFrame = 16;
     [Tooltip("Chance a kerb sample plants the first row of greenery behind it, so streets have depth instead of a single line of trees.")]
     [Range(0f, 1f)] public float secondRowChance = 0.95f;
+    [Tooltip("Share of kerb samples that become a street light, in percent.")]
+    [Range(0, 20)] public int streetLightPercent = 2;
+    [Tooltip("Share of kerb samples that become a road sign, in percent. Keep it low: signs should mark real road features, not fill every kerb.")]
+    [Range(0, 20)] public int roadSignPercent = 1;
     [Tooltip("Extra distance behind the kerb row for the first planting row, in metres.")]
     public float secondRowOffset = 3.2f;
     [Tooltip("How many planting rows may stand behind the kerb row, each half as likely as the one in front of it.")]
@@ -441,13 +445,15 @@ public class LiveCityStreamer : MonoBehaviour
         LiveCityCatalog.Kind kind;
         // Vegetation first, because it is what makes a street look lived in:
         // 52% Trees, 36% Plants/Shrubs (lush tropical look), then street furniture.
-        // Street lights and road signs take a small share of the kerb samples so a
-        // street has furniture without turning into a sign farm.
+        // Street lights and road signs take a configurable share of the kerb
+        // samples so a street has furniture without turning into a sign farm.
+        int lightEnd = Mathf.Min(96, 89 + Mathf.Clamp(streetLightPercent, 0, 20));
+        int signEnd = Mathf.Min(97, lightEnd + Mathf.Clamp(roadSignPercent, 0, 20));
         if (roll < 52) kind = LiveCityCatalog.Kind.Tree;
         else if (roll < 88) kind = LiveCityCatalog.Kind.Plant;
         else if (roll < 89) kind = LiveCityCatalog.Kind.Pedestrian;
-        else if (roll < 91) kind = LiveCityCatalog.Kind.StreetLight;
-        else if (roll < 92) kind = LiveCityCatalog.Kind.RoadSign;
+        else if (roll < lightEnd) kind = LiveCityCatalog.Kind.StreetLight;
+        else if (roll < signEnd) kind = LiveCityCatalog.Kind.RoadSign;
         else if (roll < 94) kind = LiveCityCatalog.Kind.Bench;
         else if (roll < 97) kind = LiveCityCatalog.Kind.Billboard;
         else kind = LiveCityCatalog.Kind.Rock;

@@ -14,6 +14,12 @@ public class RuntimeGasStationSpawner : MonoBehaviour
     public float minSpacingMeters = 120f;
     public float yOffset = 0f;
     public bool logSpawns = true;
+    [Tooltip("Turns each station so its frontage runs parallel to the nearest road, the way a real forecourt faces the street.")]
+    public bool alignToRoad = true;
+    [Tooltip("Keeps the station body this far back from the road centreline once its own half-depth is accounted for. The apron may still reach the kerb.")]
+    public float roadClearanceMeters = 2f;
+    [Tooltip("Half the carriageway the clearance is measured from.")]
+    public float roadHalfWidthMeters = 5f;
 
     [Header("Drive-in service")]
     [Tooltip("Lifts the station above the map tiles so its apron is not buried. Map tiles sit at 0.15 m and generated roads at 0.25 m.")]
@@ -149,7 +155,25 @@ public class RuntimeGasStationSpawner : MonoBehaviour
         if (prefab == null) return;
 
         world.y = Mathf.Max(0f, world.y) + yOffset + groundClearance;
-        var station = Instantiate(prefab, world, Quaternion.identity, transform);
+
+        // Sit the station on the street it serves: frontage parallel to the
+        // nearest road, then pushed back far enough that its body does not sit in
+        // the carriageway. A station whose centroid lands on the road would
+        // otherwise put its canopy over live traffic.
+        Quaternion rotation = Quaternion.identity;
+        Vector3 awayFromRoad = Vector3.zero;
+        float roadDistance = 0f;
+        if (alignToRoad && TryFindNearestRoad(world, out Vector3 roadPoint, out Vector3 roadDirection, out roadDistance))
+        {
+            awayFromRoad = world - roadPoint;
+            awayFromRoad.y = 0f;
+            if (awayFromRoad.sqrMagnitude < .01f)
+                awayFromRoad = Vector3.Cross(Vector3.up, roadDirection);
+            awayFromRoad.Normalize();
+            rotation = Quaternion.LookRotation(awayFromRoad, Vector3.up);
+        }
+
+        var station = Instantiate(prefab, world, rotation, transform);
         ImportedVehicleVisualRepair.DisableEmbeddedCameras(station.transform);
         ImportedMaterialPalette.ApplyFallback(station, importedFallbackColor);
         ImportedMaterialPalette.RegisterImportedRoot(transform, importedFallbackColor);
@@ -163,6 +187,15 @@ public class RuntimeGasStationSpawner : MonoBehaviour
         Bounds localBounds = LocalBounds(station);
         if (localBounds.size.sqrMagnitude <= .0001f)
             localBounds = new Bounds(new Vector3(0f, 1.5f, 0f), new Vector3(8f, 3f, 8f));
+
+        if (awayFromRoad.sqrMagnitude > .5f)
+        {
+            float halfDepth = Mathf.Abs(awayFromRoad.x) * localBounds.extents.x +
+                              Mathf.Abs(awayFromRoad.z) * localBounds.extents.z;
+            float required = halfDepth + Mathf.Max(0f, roadHalfWidthMeters) + Mathf.Max(0f, roadClearanceMeters);
+            if (roadDistance < required)
+                station.transform.position += awayFromRoad * (required - roadDistance);
+        }
 
         // The station is a 130k-triangle hero prop. Put its full mesh in LOD0 and
         // let the shared box proxies take over before the player reaches it.
@@ -351,5 +384,53 @@ public class RuntimeGasStationSpawner : MonoBehaviour
                 return false;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Nearest directed road link in the live traffic graph. Used only to orient
+    /// and clear a station, so a graph that has not been built yet simply leaves
+    /// the station at its authored heading.
+    /// </summary>
+    static bool TryFindNearestRoad(Vector3 world, out Vector3 point, out Vector3 direction,
+        out float distance)
+    {
+        point = world;
+        direction = Vector3.forward;
+        distance = float.MaxValue;
+
+        var graph = AIRoadGraph.FindCityGraph();
+        if (graph == null || graph.nodes == null) return false;
+
+        bool found = false;
+        for (int i = 0; i < graph.nodes.Length; i++)
+        {
+            if (!graph.IsValidNode(i)) continue;
+            var links = graph.nodes[i].nextNodeIndices;
+            if (links == null) continue;
+
+            Vector3 a = graph.GetNodePosition(i);
+            for (int l = 0; l < links.Length; l++)
+            {
+                int j = links[l];
+                if (j < 0 || j == i || !graph.IsValidNode(j)) continue;
+
+                Vector3 b = graph.GetNodePosition(j);
+                Vector3 ab = b - a;
+                float lengthSq = ab.sqrMagnitude;
+                if (lengthSq < .01f) continue;
+
+                float t = Mathf.Clamp01(Vector3.Dot(world - a, ab) / lengthSq);
+                Vector3 projected = a + ab * t;
+                float candidate = Vector3.Distance(world, projected);
+                if (candidate >= distance) continue;
+
+                distance = candidate;
+                point = projected;
+                direction = ab / Mathf.Sqrt(lengthSq);
+                found = true;
+            }
+        }
+
+        return found;
     }
 }

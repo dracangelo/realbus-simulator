@@ -48,8 +48,12 @@ public class Phase6ProgressionTests
     public void UpgradeManager_PurchaseDeductsFunds_PersistsAndChangesConsumption()
     {
         GameState gameState = CreateComponent<GameState>("GameState");
+        SetSingleton(gameState);
         gameState.economy.balanceKES = 200000f;
         XPSystem xpSystem = CreateComponent<XPSystem>("XPSystem");
+        // EditMode does not run the gameplay bootstrap, so the singletons that
+        // TryPurchase reads must be published explicitly in the fixture.
+        SetSingleton(xpSystem);
         xpSystem.EnsureInitialized();
         xpSystem.SetTotalXP(5400, saveLocalBackup: false);
         UpgradeManager manager = CreateComponent<UpgradeManager>("UpgradeManager");
@@ -101,6 +105,13 @@ public class Phase6ProgressionTests
     }
 
     static T CreateComponent<T>(string name) where T : Component => new GameObject(name).AddComponent<T>();
+
+    static void SetSingleton<T>(T instance) where T : MonoBehaviour
+    {
+        FieldInfo field = typeof(T).GetField("<Instance>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null, $"Expected singleton backing field for '{typeof(T).Name}' to exist.");
+        field.SetValue(null, instance);
+    }
 
     static void ResetSingleton<T>() where T : MonoBehaviour
     {

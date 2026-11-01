@@ -24,6 +24,7 @@ MonoBehaviour:
   totalCapacity: 70
   doorOpenCapacityLimit: 70
   bodyLengthMeters: 12
+  bodyWidthMeters: 4.148489
   energyType: 0
   energyCapacityUnits: 300
   energyUnitLabel: L

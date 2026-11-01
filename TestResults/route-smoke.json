@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "check": "route-smoke",
+  "passed": true,
+  "exitCode": 0,
+  "unityVersion": "6000.6.0f1",
+  "startedAtUtc": "2026-11-01T06:49:40.7795950Z",
+  "finishedAtUtc": "2026-11-01T06:54:44.5956300Z",
+  "durationSeconds": 303.8,
+  "gameSeconds": 736.5,
+  "completed": true,
+  "stops": { "total": 17, "serviced": 17, "docked": 17, "advanced": 17, "doorsRefused": 1 },
+  "stopProgression": [{ "index": 0, "name": "3rd Parklands Avenue/Aga Kan Hospital Junction", "advanced": true, "doorsRefused": false, "serviceSeconds": 54.9 }, { "index": 1, "name": "Oilibya/2nd Parklands Avenue", "advanced": true, "doorsRefused": false, "serviceSeconds": 67.8 }, { "index": 2, "name": "OiLibya/2nd Parklands Avenue", "advanced": true, "doorsRefused": false, "serviceSeconds": 33.7 }, { "index": 3, "name": "Aga Khan Academy", "advanced": true, "doorsRefused": false, "serviceSeconds": 17.3 }, { "index": 4, "name": "Wambugu Road Bus stop", "advanced": true, "doorsRefused": true, "serviceSeconds": 4.3 }, { "index": 5, "name": "Stima Plaza Stage", "advanced": true, "doorsRefused": false, "serviceSeconds": 14.8 }, { "index": 6, "name": "Stima Plaza", "advanced": true, "doorsRefused": false, "serviceSeconds": 8.7 }, { "index": 7, "name": "Stima Plaza", "advanced": true, "doorsRefused": false, "serviceSeconds": 40.1 }, { "index": 8, "name": "Stima Plaza", "advanced": true, "doorsRefused": false, "serviceSeconds": 8.6 }, { "index": 9, "name": "JamhurI High", "advanced": true, "doorsRefused": false, "serviceSeconds": 30.3 }, { "index": 10, "name": "Jamhuri High School", "advanced": true, "doorsRefused": false, "serviceSeconds": 16.6 }, { "index": 11, "name": "Ngara", "advanced": true, "doorsRefused": false, "serviceSeconds": 36.3 }, { "index": 12, "name": "Fig Tree", "advanced": true, "doorsRefused": false, "serviceSeconds": 90.0 }, { "index": 13, "name": "Globe", "advanced": true, "doorsRefused": false, "serviceSeconds": 40.7 }, { "index": 14, "name": "Koja", "advanced": true, "doorsRefused": false, "serviceSeconds": 69.9 }, { "index": 15, "name": "Koja", "advanced": true, "doorsRefused": false, "serviceSeconds": 84.0 }, { "index": 16, "name": "Trufi Stop", "advanced": true, "doorsRefused": false, "serviceSeconds": 59.9 }],
+  "shortcuts": 0,
+  "traffic": { "sampled": true, "active": 12, "moved": 10, "passed": true, "lanesChecked": true, "lanesPassed": true },
+  "navigator": { "checks": 136, "failures": 0, "passed": true },
+  "performance": { "samples": 2134, "avgFps": 8.2, "p50Ms": 63.3, "p95Ms": 399.8 },
+  "failureCount": 0,
+  "failures": [],
+  "abortReason": null,
+  "logPath": "/home/drac/Documents/coding/realbus-simulator/TestResults/route-smoke.log",
+  "resultPath": "/home/drac/Documents/coding/realbus-simulator/TestResults/route-smoke.json"
+}

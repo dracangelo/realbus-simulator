@@ -87,6 +87,10 @@ public class PassengerManager : MonoBehaviour
     public IReadOnlyList<PassengerAgent> AlightingPassengers => alightingPassengers;
     public IReadOnlyList<PassengerAgent> WaitingPassengers => waitingPassengers;
     public Vector3 WaitingPlatformWorld { get; private set; }
+    /// <summary>Pavement direction for the waiting queue; never a world axis.</summary>
+    public Vector3 WaitingPlatformOutward { get; private set; } = Vector3.zero;
+    /// <summary>Along-kerb direction for the waiting queue, in travel order.</summary>
+    public Vector3 WaitingPlatformAlong { get; private set; } = Vector3.forward;
     int preparedStop = -1;
     float completedSatisfaction;
     int completedPassengerCount;
@@ -183,9 +187,60 @@ public class PassengerManager : MonoBehaviour
             ReturnPassenger(waitingPassengers[i]);
         waitingPassengers.Clear();
         preparedStop = index;
-        WaitingPlatformWorld = GPSManager.Instance != null ? GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude) : transform.position;
+        ResolveWaitingPlatform(stop, index);
         SpawnWaitingPassengers(stop, index, count);
         waitingAtCurrentStop = waitingPassengers.Count;
+    }
+
+    /// <summary>
+    /// Resolves where the queue stands. The stop's GPS point is the carriageway
+    /// centreline, so using it directly (plus a world-axis offset) put passengers
+    /// in the road. The stop spawner registers the pavement anchor it chose for the
+    /// shelter; when that is unavailable (free drive, a test fixture, a stop whose
+    /// prop was skipped), resolve the same kerb from the road mesh using the bus's
+    /// actual approach heading.
+    /// </summary>
+    void ResolveWaitingPlatform(BusStopData stop, int index)
+    {
+        Vector3 stopWorld = GPSManager.Instance != null && stop != null
+            ? GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude)
+            : transform.position;
+
+        if (BusStopPlatformRegistry.TryGet(index, out BusStopPlatformRegistry.Anchor anchor) &&
+            (anchor.position - stopWorld).sqrMagnitude < 60f * 60f)
+        {
+            WaitingPlatformWorld = anchor.position;
+            WaitingPlatformOutward = anchor.outward;
+            WaitingPlatformAlong = anchor.along;
+            return;
+        }
+
+        bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
+        Vector3 approach = busController != null ? busController.transform.forward : Vector3.forward;
+        Vector3 outward = RoadSpawnResolver.KerbSide(approach, leftTraffic);
+        Vector3 along = approach;
+
+        var roads = OSMRoadMeshBuilder.Instance != null ? OSMRoadMeshBuilder.Instance.SurfaceIndex : null;
+        if (roads != null && roads.TryRoadside(stopWorld, approach, leftTraffic,
+                out Vector3 kerb, out Quaternion rotation))
+        {
+            outward = RoadSpawnResolver.KerbSide(rotation * Vector3.forward, leftTraffic);
+            along = rotation * Vector3.forward;
+            // TryRoadside returns the kerb itself; the queue stands 1.4 m onto
+            // the pavement, clear of the bus door swing.
+            stopWorld = kerb + outward * 1.4f;
+        }
+        else
+        {
+            // No road mesh yet: keep the queue on the kerb side of the bus rather
+            // than on a fixed world axis. This is the same convention TryRoadside
+            // uses, so the fallback cannot mirror the queue.
+            stopWorld += outward * 2.6f;
+        }
+
+        WaitingPlatformWorld = stopWorld;
+        WaitingPlatformOutward = outward;
+        WaitingPlatformAlong = along;
     }
 
     void TrackDistance()
@@ -444,6 +499,50 @@ public class PassengerManager : MonoBehaviour
             Debug.Log(
                 $"[PassengerBoarding] {stopLabel}: {stop.stopName} | Boarded={boarding}, Alighted={alighting}, LeftBehind={leftBehind}, " +
                 $"Onboard={currentPassengers}/{GetMaxCapacity()}, Fare+={fareCollected:F0}, Dwell={latestRequiredDwellSeconds:F1}s, WheelchairBoarding={hadWheelchairBoarding}");
+        }
+    }
+
+    /// <summary>
+    /// Time the bus stands at a stop whose doors could not open. Nobody alights
+    /// and nobody boards, so there is no service work to wait for: the stop is a
+    /// kerb stop, not a boarding stop.
+    /// </summary>
+    public const float RefusedDoorsDwellSeconds = 3f;
+
+    /// <summary>
+    /// Called by MissionManager when the bus reaches a stop it cannot open its
+    /// doors at: packed past the doorway limit with nobody alighting here.
+    /// Refusing the doors must not refuse the stop. The queue on the platform is
+    /// shown and counted as left behind, nobody boards, and the stop still counts
+    /// as served so the route can continue; otherwise currentStopIndex never
+    /// advanced and the game kept sending the player back to the stop just left.
+    /// </summary>
+    public void HandleRefusedDoorsStopArrival(BusStopData stop, int stopIndex, int totalStops)
+    {
+        if (stop == null) return;
+
+        // The platform queue is the reason the stop exists, so it is prepared and
+        // left standing here even though the doors stay shut.
+        if (preparedStop != stopIndex || stopIndex < 0)
+            PrepareWaiting(stop, stopIndex, totalStops);
+        waitingAtCurrentStop = waitingPassengers.Count;
+
+        doorsOpen = false;
+        lastAlightingCount = 0;
+        lastBoardingCount = 0;
+        hadWheelchairBoarding = false;
+        latestRequiredDwellSeconds = RefusedDoorsDwellSeconds;
+
+        RecalculateSatisfaction();
+
+        if (logBoardingSummary)
+        {
+            string stopLabel = stopIndex >= 0 && totalStops > 0
+                ? $"Stop {stopIndex + 1}/{totalStops}"
+                : "Stop";
+            Debug.Log(
+                $"[PassengerBoarding] {stopLabel}: {stop.stopName} | Boarded=0, Alighted=0, LeftBehind={waitingAtCurrentStop}, " +
+                $"Onboard={currentPassengers}/{GetMaxCapacity()}, DoorsRefused=True, Dwell={latestRequiredDwellSeconds:F1}s");
         }
     }
 
@@ -887,7 +986,9 @@ public class PassengerManager : MonoBehaviour
         if (MissionManager.Instance != null && MissionManager.Instance.routeActive)
         {
             bool opened = MissionManager.Instance.TryOpenDoorsAtCurrentStop();
-            if (opened)
+            // A stop served with the doors refused still reports opened, but the
+            // doors never moved: no servo sound for a bus that stayed shut.
+            if (opened && doorsOpen)
             {
                 RealBusAudioManager.Instance?.PlayDoorOperated(false);
                 AccessibilityManager.EnsureExists().Pulse(HapticCue.Docking);

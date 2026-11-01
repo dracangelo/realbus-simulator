@@ -168,6 +168,33 @@ public class StopPropSpawner : MonoBehaviour
         ImportedMaterialPalette.RegisterImportedRoot(transform, importedPropFallbackColor);
         bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
 
+        // Stop sides are decided from the approach the mission actually drives.
+        // The city graph is created by the traffic bootstrap, which can finish a
+        // frame or two after the road mesh; wait briefly so the first stop is not
+        // placed from the ambiguous route tangent. A missing graph still falls
+        // back rather than blocking the loading card forever.
+        AIRoadGraph approachGraph = AIRoadGraph.FindCityGraph();
+        int graphWaitFrames = 0;
+        for (; approachGraph == null && graphWaitFrames < 120; graphWaitFrames++)
+        {
+            yield return null;
+            approachGraph = AIRoadGraph.FindCityGraph();
+        }
+        if (approachGraph == null)
+            approachGraph = route.stops.Length > 0
+                ? AIRoadGraph.ResolveCityGraph(GPSManager.Instance.GpsToWorld(
+                    route.stops[0].latitude, route.stops[0].longitude), 2500f)
+                : null;
+        if (logSpawns)
+        {
+            if (approachGraph == null)
+                Debug.Log("[StopPropSpawner] No city road graph yet; stop sides fall back to the route path tangent.");
+            else if (graphWaitFrames >= 120)
+                Debug.Log($"[StopPropSpawner] City graph resolved from the stop position after {graphWaitFrames} frames; stop sides follow the driven approach.");
+            else
+                Debug.Log($"[StopPropSpawner] City graph ready after {graphWaitFrames} frames; stop sides follow the driven approach.");
+        }
+
         int stopCount = spawnOnlyFirstStopAtMissionStart ? Mathf.Min(1, route.stops.Length) : route.stops.Length;
         List<int> stopOrder = ResolveStopOrder(route, stopCount);
         SpawnedStopCount = 0;
@@ -205,12 +232,15 @@ public class StopPropSpawner : MonoBehaviour
                 ? Quaternion.Euler(0f, GetRouteYaw(route, i), 0f)
                 : Quaternion.identity;
             // The kerb side is chosen from the heading, so the heading has to be the
-            // direction the player actually drives. RouteHeading follows the driven
-            // path; the stop list is not a safe substitute, because many imported
-            // routes list stops out of path order and folding a correct tangent onto
-            // that chord mirrors the shelter onto the opposite kerb for those stops.
-            Vector3 heading = RoadSpawnResolver.RouteHeading(route, stopPos,
-                routeRotation * Vector3.forward);
+            // direction the player actually drives. A loop route passes the same
+            // kerb twice and the nearest path segment can be the return leg; the
+            // graph path from the previous stop is the approach the mission uses,
+            // so it breaks that tie. RouteHeading still owns the actual tangent.
+            Vector3 heading = RoadSpawnResolver.StopApproachHeading(route, i, stopPos,
+                routeRotation * Vector3.forward, approachGraph);
+            if (logSpawns)
+                Debug.Log($"[StopPropSpawner] stopSide index={i} '{stop.stopName}' " +
+                    $"headingYaw={Mathf.Atan2(heading.x, heading.z) * Mathf.Rad2Deg:F1} graph={approachGraph != null}");
             if (!roads.TryRoadside(stopPos, heading, leftTraffic, out Vector3 worldPos, out routeRotation))
             {
                 Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; skipping its prop rather than blocking a lane.");
@@ -221,6 +251,13 @@ public class StopPropSpawner : MonoBehaviour
             // The bus's door target stays just inside the road edge so the
             // chassis never has to climb the physical kerb to finish docking.
             worldPos -= outward * 1.2f;
+
+            // Waiting passengers are placed from this anchor, not from the stop's
+            // GPS point: that point is the road centreline, so the old world-axis
+            // offset dropped the queue into the carriageway. 1.2 m back to the
+            // kerb plus 1.4 m onto the pavement keeps the whole queue off the road.
+            BusStopPlatformRegistry.Set(i, worldPos + outward * (1.2f + 1.4f), outward,
+                routeRotation * Vector3.forward);
 
             var stopRoot = new GameObject($"RuntimeStop_{i:00}_{SanitizeName(stop.stopName)}");
             stopRoot.transform.SetParent(transform, false);
@@ -424,6 +461,9 @@ public class StopPropSpawner : MonoBehaviour
 
     void ClearSpawnedProps()
     {
+        // The anchors belong to the props being removed; a new route must not
+        // inherit the previous route's pavements.
+        BusStopPlatformRegistry.Clear();
         for (int i = transform.childCount - 1; i >= 0; i--)
             Destroy(transform.GetChild(i).gameObject);
     }

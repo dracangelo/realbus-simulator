@@ -454,24 +454,33 @@ public class MissionManager : MonoBehaviour
         Debug.Log($"Next stop: {stop.stopName} — {distanceToNextStop:F0}m away");
     }
 
-    void ArrivedAtStop()
+    void ArrivedAtStop(bool doorsRefused = false)
     {
         if (isProcessingStop) return;
-        StartCoroutine(ProcessStopArrival());
+        StartCoroutine(ProcessStopArrival(doorsRefused));
     }
 
-    IEnumerator ProcessStopArrival()
+    IEnumerator ProcessStopArrival(bool doorsRefused)
     {
         isProcessingStop = true;
         earlyDepartureRequested = false;
         busController.ServiceBrakeInterlock = true;
-        busController.RequestKneelingSuspension(true);
+        // No doors, no step: kneeling is part of the door cycle.
+        busController.RequestKneelingSuspension(!doorsRefused);
 
         var stop = currentRoute.stops[currentStopIndex];
         SetMissionState(MissionState.AtStop);
-        Debug.Log($"Arrived at: {stop.stopName}");
+        Debug.Log($"Arrived at: {stop.stopName}{(doorsRefused ? " (doors refused: bus full)" : string.Empty)}");
         if (StopApproachUI.Instance != null)
-            StopApproachUI.Instance.ShowDocked(stop.stopName);
+        {
+            if (doorsRefused)
+                StopApproachUI.Instance.ShowDoorsRefused(stop.stopName);
+            else
+                StopApproachUI.Instance.ShowDocked(stop.stopName);
+        }
+        if (doorsRefused)
+            SubtitleManager.EnsureExists().Show("Doors",
+                "Bus full — no room to board. Stopping, then continuing to the next stop.", 4f);
 
         PunctualityStatus status = PunctualityStatus.OnTime;
         if (ScheduleManager.Instance != null)
@@ -481,8 +490,14 @@ public class MissionManager : MonoBehaviour
 
         // Handle passenger boarding and alighting immediately on door open
         if (PassengerManager.Instance != null)
-            PassengerManager.Instance.HandleStopArrival(
-                stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length);
+        {
+            if (doorsRefused)
+                PassengerManager.Instance.HandleRefusedDoorsStopArrival(
+                    stop, currentStopIndex, currentRoute.stops.Length);
+            else
+                PassengerManager.Instance.HandleStopArrival(
+                    stop, currentRoute.baseFare, currentStopIndex, currentRoute.stops.Length);
+        }
 
         // Update score
         if (ScoreTracker.Instance != null)
@@ -505,7 +520,7 @@ public class MissionManager : MonoBehaviour
         while (dwellTimer < maxDwell && !earlyDepartureRequested)
         {
             dwellTimer += Time.deltaTime;
-            if (status == PunctualityStatus.Early && ScheduleManager.Instance != null && StopApproachUI.Instance != null)
+            if (!doorsRefused && status == PunctualityStatus.Early && ScheduleManager.Instance != null && StopApproachUI.Instance != null)
             {
                 float remainingEarlyWait = ScheduleManager.Instance.GetEarlyWaitSecondsRequired(currentStopIndex);
                 if (remainingEarlyWait > 0.5f)
@@ -613,11 +628,18 @@ public class MissionManager : MonoBehaviour
             return false;
 
         if (!IsReadyToProcessDockedStop(out _)) return false;
-        if (PassengerManager.Instance != null && !PassengerManager.Instance.CanOpenDoorsForStop(currentStopIndex, currentRoute.stops.Length)) return false;
+
+        // A bus at its doorway limit cannot open its doors. That is a door state,
+        // not a reason to skip the stop: returning false here left the mission
+        // waiting at a stop it had already reached, so currentStopIndex never
+        // advanced and every guidance rebuild steered the player back to the stop
+        // just left. The stop is still served, with the doors shut.
+        bool doorsRefused = PassengerManager.Instance != null &&
+            !PassengerManager.Instance.CanOpenDoorsForStop(currentStopIndex, currentRoute.stops.Length);
         pendingDoorOpenRequest = true;
         PassengerManager.Instance?.AcknowledgeStopRequest();
 
-        ArrivedAtStop();
+        ArrivedAtStop(doorsRefused);
         return true;
     }
 

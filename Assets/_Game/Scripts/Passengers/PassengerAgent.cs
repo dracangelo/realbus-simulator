@@ -32,6 +32,14 @@ public class PassengerAgent
     public float boardingLerp;
     public float standingSway;
 
+    /// <summary>
+    /// Incremented every time this pooled agent becomes a new passenger. The
+    /// visual pool compares it so a proxy resets even when the same agent object
+    /// is rented again in the same frame (reference equality alone would keep the
+    /// previous passenger's pose).
+    /// </summary>
+    public int reuseVersion { get; private set; }
+
     public PassengerAgent(int originStop, int destinationStop, float initialPatience, bool wheelchair, PassengerArchetype passengerArchetype = PassengerArchetype.Commuter)
     {
         ResetForReuse(originStop, destinationStop, initialPatience, wheelchair, passengerArchetype);
@@ -44,6 +52,7 @@ public class PassengerAgent
     /// </summary>
     public void ResetForReuse(int originStop, int destinationStop, float initialPatience, bool wheelchair, PassengerArchetype passengerArchetype = PassengerArchetype.Commuter)
     {
+        reuseVersion++;
         originStopIndex = originStop;
         destinationStopIndex = destinationStop;
         patienceSeconds = initialPatience;

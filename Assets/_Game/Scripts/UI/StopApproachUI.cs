@@ -115,6 +115,22 @@ public class StopApproachUI : MonoBehaviour
             panelBackground.color = UITheme.Accent;
     }
 
+    public void ShowDoorsRefused(string stopName)
+    {
+        if (approachPanel != null)
+            approachPanel.SetActive(true);
+        if (stopNameText != null)
+            stopNameText.text = stopName;
+        if (distanceText != null)
+            distanceText.text = "FULL";
+        if (statusText != null)
+            statusText.text = "DOORS REFUSED";
+        if (guidanceText != null)
+            guidanceText.text = "NO ROOM TO BOARD — CONTINUE";
+        if (panelBackground != null)
+            panelBackground.color = UITheme.Error;
+    }
+
     public void HideApproach()
     {
         if (approachPanel != null)

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.4063834">
+  <test-suite type="TestSuite" id="1000" name="My-project" fullname="My-project" runstate="Runnable" testcasecount="819" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.406383" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1941" name="GameScriptsTests.Editor.dll" fullname="/home/drac/Documents/coding/realbus-simulator/Library/ScriptAssemblies/GameScriptsTests.Editor.dll" runstate="Runnable" testcasecount="714" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.297297" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="246083" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1886" name="TrafficSignalTests" fullname="TrafficSignalTests" classname="TrafficSignalTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.243855" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1887" name="AxisForHeading_PutsOppositeDirectionsOnOneAxisAndCrossTrafficOnTheOther" fullname="TrafficSignalTests.AxisForHeading_PutsOppositeDirectionsOnOneAxisAndCrossTrafficOnTheOther" methodname="AxisForHeading_PutsOppositeDirectionsOnOneAxisAndCrossTrafficOnTheOther" classname="TrafficSignalTests" runstate="Runnable" seed="33815274" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.080032" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1892" name="BuildAt_IsIdempotent_SoARebuildCannotStackDuplicateSignals" fullname="TrafficSignalTests.BuildAt_IsIdempotent_SoARebuildCannotStackDuplicateSignals" methodname="BuildAt_IsIdempotent_SoARebuildCannotStackDuplicateSignals" classname="TrafficSignalTests" runstate="Runnable" seed="1570425228" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.062429" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1890" name="BuildAt_SignalsEveryApproach_AndBindsEachToItsOwnLink" fullname="TrafficSignalTests.BuildAt_SignalsEveryApproach_AndBindsEachToItsOwnLink" methodname="BuildAt_SignalsEveryApproach_AndBindsEachToItsOwnLink" classname="TrafficSignalTests" runstate="Runnable" seed="922823025" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.007264" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1894" name="FindJunctions_RespectsTheRouteCorridor" fullname="TrafficSignalTests.FindJunctions_RespectsTheRouteCorridor" methodname="FindJunctions_RespectsTheRouteCorridor" classname="TrafficSignalTests" runstate="Runnable" seed="619124041" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.011255" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1893" name="FindJunctions_SkipsThroughRoads_AndStaysWithinTheRouteCorridor" fullname="TrafficSignalTests.FindJunctions_SkipsThroughRoads_AndStaysWithinTheRouteCorridor" methodname="FindJunctions_SkipsThroughRoads_AndStaysWithinTheRouteCorridor" classname="TrafficSignalTests" runstate="Runnable" seed="593402787" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.004681" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1891" name="JunctionPhases_StopTheCrossingApproachAndReleaseTheOther" fullname="TrafficSignalTests.JunctionPhases_StopTheCrossingApproachAndReleaseTheOther" methodname="JunctionPhases_StopTheCrossingApproachAndReleaseTheOther" classname="TrafficSignalTests" runstate="Runnable" seed="889527702" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.004562" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1889" name="PhaseAt_HoldsAnAllRedGapBeforeReleasingTheCrossingAxis" fullname="TrafficSignalTests.PhaseAt_HoldsAnAllRedGapBeforeReleasingTheCrossingAxis" methodname="PhaseAt_HoldsAnAllRedGapBeforeReleasingTheCrossingAxis" classname="TrafficSignalTests" runstate="Runnable" seed="1012270971" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.003095" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1888" name="PhaseAt_NeverReleasesBothAxesTogether" fullname="TrafficSignalTests.PhaseAt_NeverReleasesBothAxesTogether" methodname="PhaseAt_NeverReleasesBothAxesTogether" classname="TrafficSignalTests" runstate="Runnable" seed="1156422185" result="Passed" start-time="2026-10-29 05:04:45Z" end-time="2026-10-29 05:04:45Z" duration="0.004454" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: /home/drac/Documents/coding/realbus-simulator/TestResults/signal-results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

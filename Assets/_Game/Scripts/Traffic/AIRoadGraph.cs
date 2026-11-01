@@ -298,6 +298,25 @@ public class AIRoadGraph : MonoBehaviour
         return bestSource >= 0 || nodes[nodeIndex].trafficLight != null;
     }
 
+    /// <summary>
+    /// Removes every binding to <paramref name="signal"/>. Used when a junction
+    /// turns out not to have a usable phase for both axes: a lamp left bound with
+    /// no controller driving it would hold that approach at red forever.
+    /// </summary>
+    public void UnbindTrafficSignal(TrafficLight signal)
+    {
+        if (signal == null || nodes == null) return;
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            RoadNode node = nodes[i];
+            if (node == null) continue;
+            if (node.trafficLight == signal) node.trafficLight = null;
+            if (node.outgoingTrafficLights == null) continue;
+            for (int slot = 0; slot < node.outgoingTrafficLights.Length; slot++)
+                if (node.outgoingTrafficLights[slot] == signal) node.outgoingTrafficLights[slot] = null;
+        }
+    }
+
     static void EnsureSignalArray(RoadNode node)
     {
         if (node.nextNodeIndices == null) return;

@@ -68,13 +68,24 @@ public class OsmTrafficSignalSpawner : MonoBehaviour
     }
 
     public static TrafficLight CreateSignal(Transform parent, Vector3 position, Quaternion rotation, float phase)
+        => CreateSignal(parent, position, rotation, phase, 4f, true);
+
+    /// <summary>
+    /// Builds one signal head. <paramref name="lateralOffset"/> is where the pole
+    /// and housing sit beside the stop line: positive is the driver's left, which
+    /// is the kerb on a left-hand-drive-side country. Junction signals pass a
+    /// mirrored value there, and build mode turns the imported housing off for
+    /// cheap procedural heads.
+    /// </summary>
+    public static TrafficLight CreateSignal(Transform parent, Vector3 position, Quaternion rotation, float phase,
+        float lateralOffset, bool importedHousing)
     {
         var root = new GameObject("Traffic signal");
         root.transform.SetParent(parent, false); root.transform.position = position; root.transform.rotation = rotation;
         var light = root.AddComponent<TrafficLight>(); light.phaseOffset = phase;
         var detector = root.AddComponent<SignalViolationDetector>(); detector.trafficLight = light;
 
-        GameObject housing = LoadImportedSignal();
+        GameObject housing = importedHousing ? LoadImportedSignal() : null;
         Renderer[] lenses = new Renderer[3];
         if (housing != null)
         {
@@ -84,21 +95,21 @@ public class OsmTrafficSignalSpawner : MonoBehaviour
             // traffic approaching from the other direction.
             var instance = Object.Instantiate(housing, root.transform);
             instance.name = "Signal housing";
-            instance.transform.localPosition = new Vector3(4f, 2.15f, 0f);
+            instance.transform.localPosition = new Vector3(lateralOffset, 2.15f, 0f);
             // The model's face points along its local +Z. Turning it to root -Z
             // points the face back along the road, at the traffic approaching the
             // junction from behind the signal.
             instance.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            AddPole(root.transform, 4f);
+            AddPole(root.transform, lateralOffset);
             // The housing's three lens openings sit in its top 0.68 m, one per
             // 0.23 m slice, and its face is 0.17 m in front of the pivot line. The
             // emissive spheres go on those openings rather than on the mast.
             for (int i = 0; i < 3; i++)
             {
                 var lens = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                Object.Destroy(lens.GetComponent<Collider>());
+                DestroyComponent(lens.GetComponent<Collider>());
                 lens.transform.SetParent(root.transform, false);
-                lens.transform.localPosition = new Vector3(4f, 4.76f - i * 0.23f, -0.17f);
+                lens.transform.localPosition = new Vector3(lateralOffset, 4.76f - i * 0.23f, -0.17f);
                 lens.transform.localScale = Vector3.one * 0.20f;
                 lenses[i] = lens.GetComponent<Renderer>();
             }
@@ -110,9 +121,9 @@ public class OsmTrafficSignalSpawner : MonoBehaviour
             for (int i = 0; i < 3; i++)
             {
                 var lens = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                Object.Destroy(lens.GetComponent<Collider>());
+                DestroyComponent(lens.GetComponent<Collider>());
                 lens.transform.SetParent(root.transform, false);
-                lens.transform.localPosition = new Vector3(4f, 4f - i * 0.6f, 0f);
+                lens.transform.localPosition = new Vector3(lateralOffset, 4f - i * 0.6f, 0f);
                 lens.transform.localScale = Vector3.one * 0.45f;
                 lenses[i] = lens.GetComponent<Renderer>();
             }
@@ -125,7 +136,7 @@ public class OsmTrafficSignalSpawner : MonoBehaviour
     static void AddPole(Transform parent, float localX)
     {
         var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        Object.Destroy(pole.GetComponent<Collider>());
+        DestroyComponent(pole.GetComponent<Collider>());
         pole.name = "Signal pole";
         pole.transform.SetParent(parent, false);
         pole.transform.localPosition = new Vector3(localX, 1.075f, 0f);
@@ -134,6 +145,18 @@ public class OsmTrafficSignalSpawner : MonoBehaviour
         if (renderer == null) return;
         renderer.sharedMaterial = PoleMaterial();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    }
+
+    /// <summary>
+    /// Removes a helper collider from a generated part. The editor needs the
+    /// immediate form: the deferred one logs an error outside play mode, which is
+    /// where the junction builder is exercised by the EditMode suite.
+    /// </summary>
+    static void DestroyComponent(Object target)
+    {
+        if (target == null) return;
+        if (Application.isPlaying) Object.Destroy(target);
+        else Object.DestroyImmediate(target);
     }
 
     static Material PoleMaterial()

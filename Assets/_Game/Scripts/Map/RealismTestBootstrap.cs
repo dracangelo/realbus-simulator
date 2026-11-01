@@ -38,7 +38,9 @@ public class RealismTestBootstrap : MonoBehaviour
         passengers.doorLocalPosition = new Vector3(1.3f, 1.1f, 3.5f);
         passengers.platformLocalPosition = new Vector3(2.2f, 0.85f, 3.5f);
         passengers.passengerSpawner = new GameObject("Passenger density").AddComponent<PassengerSpawner>();
-        var visuals = new GameObject("Passenger visual pool").AddComponent<PassengerVisualPool>();
+        var visuals = FindAnyObjectByType<PassengerVisualPool>();
+        if (visuals == null)
+            visuals = new GameObject("Passenger visual pool").AddComponent<PassengerVisualPool>();
         visuals.passengers = passengers; visuals.bus = bus;
         // An open-top fixture exposes the agents; the body collider remains in place.
         if (bus.modelRoot != null) bus.modelRoot.GetComponent<Renderer>().enabled = false;

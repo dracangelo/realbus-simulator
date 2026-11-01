@@ -533,6 +533,20 @@ public class SceneBootstrap : MonoBehaviour
 
         if (passengerManager.passengerSpawner == null)
             passengerManager.passengerSpawner = FindAnyObjectByType<PassengerSpawner>();
+
+        // The pool is the only owner of passenger visuals. It reads the manager's
+        // lists and never simulates boarding itself, so it cannot compete with
+        // the stop logic.
+        PassengerVisualPool visualPool = FindAnyObjectByType<PassengerVisualPool>();
+        if (visualPool == null)
+        {
+            var poolGo = new GameObject("PassengerVisualPool");
+            visualPool = poolGo.AddComponent<PassengerVisualPool>();
+        }
+
+        visualPool.passengers = passengerManager;
+        if (visualPool.bus == null)
+            visualPool.bus = FindAnyObjectByType<BusController>();
     }
 
     void EnsureAiTrafficSystems()
@@ -1322,6 +1336,20 @@ public class SceneBootstrap : MonoBehaviour
         if (usableGraph != null)
             usableGraph.SyncDrivingSide();
 
+        // Signals are placed after the graph is resolved, whether it was reused or
+        // rebuilt: a head binds to one approach (directed link), so it cannot be
+        // part of the node copy itself. Before this step the graph rebuild cleared
+        // every node's trafficLight and nothing ever set one, so the imported
+        // signal pack existed in the project but no live junction used it.
+        if (usableGraph != null && !usableGraph.privateLaneCircuit)
+        {
+            int signals = CityTrafficSignals.Rebuild(usableGraph, route);
+            if (signals > 0)
+                Debug.Log($"SceneBootstrap: Placed {signals} traffic signal heads at city junctions.");
+            else
+                Debug.LogWarning("SceneBootstrap: No city junction accepted a traffic signal; check the road graph nodes.");
+        }
+
         var vehiclePool = FindAnyObjectByType<VehiclePool>();
         if (vehiclePool != null)
         {
@@ -1467,6 +1495,8 @@ public class SceneBootstrap : MonoBehaviour
                 laneCount = laneCounts.Length > 0 ? laneCounts[0] : 1,
                 laneWidth = laneWidths.Length > 0 ? laneWidths[0] : 3.1f,
                 speedLimitKmh = speedLimit,
+                // One signal per approach is bound after the node array is built;
+                // a node-wide light is only the fallback for an unsignalled approach.
                 trafficLight = null,
                 nextNodeIndices = nextNodeIndices,
                 outgoingLaneCounts = laneCounts,

@@ -18,10 +18,10 @@
 <tr><th>Assembly:</th><td>GameScripts</td></tr>
 <tr><th>File(s):</th><td><a href="#homedracDocumentscodingrealbussimulatorAssets_GameScriptsOSMOSMLoadercs" class="navigatetohash">File 1: /home/drac/Documents/coding/realbus-simulator/Assets/_Game/Scripts/OSM/OSMLoader.cs</a><br /><a href="#homevng370DocumentscodingpythonMyprojectAssets_GameScriptsOSMOSMLoadercs" class="navigatetohash">File 2: /home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/OSM/OSMLoader.cs</a></td></tr>
 <tr><th>Covered lines:</th><td>0</td></tr>
-<tr><th>Uncovered lines:</th><td>61</td></tr>
-<tr><th>Coverable lines:</th><td>61</td></tr>
+<tr><th>Uncovered lines:</th><td>63</td></tr>
+<tr><th>Coverable lines:</th><td>63</td></tr>
 <tr><th>Total lines:</th><td>76</td></tr>
-<tr><th>Line coverage:</th><td>0% (0 of 61)</td></tr>
+<tr><th>Line coverage:</th><td>0% (0 of 63)</td></tr>
 <tr><th>Covered branches:</th><td>0</td></tr>
 <tr><th>Total branches:</th><td>0</td></tr>
 <tr><th>Covered methods:</th><td>0</td></tr>
@@ -110,9 +110,9 @@
 <tr class="" title="Not coverable" data-coverage="{'AllTestMethods': {'VC': '', 'LVS': 'gray'}}"><td class="gray">&nbsp;</td><td class="leftmargin rightmargin right"></td><td class="rightmargin right"><a id="file0_line60"></a><code>60</code></td><td></td><td class="lightgray"><code></code></td></tr>
 <tr class="coverableline" title="Not covered (0 visits)" data-coverage="{'AllTestMethods': {'VC': '0', 'LVS': 'red'}}"><td class="red">&nbsp;</td><td class="leftmargin rightmargin right">0</td><td class="rightmargin right"><a id="file0_line61"></a><code>61</code></td><td></td><td class="lightred"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Log($&quot;OSM:&nbsp;Loaded&nbsp;{raw.Length}&nbsp;bytes&nbsp;from&nbsp;disk&quot;);</code></td></tr>
 <tr class="" title="Not coverable" data-coverage="{'AllTestMethods': {'VC': '', 'LVS': 'gray'}}"><td class="gray">&nbsp;</td><td class="leftmargin rightmargin right"></td><td class="rightmargin right"><a id="file0_line62"></a><code>62</code></td><td></td><td class="lightgray"><code></code></td></tr>
-<tr class="coverableline" title="Not covered (0 visits)" data-coverage="{'AllTestMethods': {'VC': '0', 'LVS': 'red'}}"><td class="red">&nbsp;</td><td class="leftmargin rightmargin right">0</td><td class="rightmargin right"><a id="file0_line63"></a><code>63</code></td><td></td><td class="lightred"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;osmData&nbsp;=&nbsp;preferredPath.EndsWith(&quot;.json&quot;)</code></td></tr>
-<tr class="" title="Not coverable" data-coverage="{'AllTestMethods': {'VC': '', 'LVS': 'gray'}}"><td class="gray">&nbsp;</td><td class="leftmargin rightmargin right"></td><td class="rightmargin right"><a id="file0_line64"></a><code>64</code></td><td></td><td class="lightgray"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?&nbsp;OSMParser.ParseOverpassJson(raw)</code></td></tr>
-<tr class="" title="Not coverable" data-coverage="{'AllTestMethods': {'VC': '', 'LVS': 'gray'}}"><td class="gray">&nbsp;</td><td class="leftmargin rightmargin right"></td><td class="rightmargin right"><a id="file0_line65"></a><code>65</code></td><td></td><td class="lightgray"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;OSMParser.Parse(raw);</code></td></tr>
+<tr class="coverableline" title="Not covered (0 visits)" data-coverage="{'AllTestMethods': {'VC': '0', 'LVS': 'red'}}"><td class="red">&nbsp;</td><td class="leftmargin rightmargin right">0</td><td class="rightmargin right"><a id="file0_line63"></a><code>63</code></td><td></td><td class="lightred"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OSMData&nbsp;parsed&nbsp;=&nbsp;null;</code></td></tr>
+<tr class="coverableline" title="Not covered (0 visits)" data-coverage="{'AllTestMethods': {'VC': '0', 'LVS': 'red'}}"><td class="red">&nbsp;</td><td class="leftmargin rightmargin right">0</td><td class="rightmargin right"><a id="file0_line64"></a><code>64</code></td><td></td><td class="lightred"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yield&nbsp;return&nbsp;OSMParser.ParseInBackground(raw,&nbsp;preferredPath.EndsWith(&quot;.json&quot;),&nbsp;result&nbsp;=&gt;&nbsp;parsed&nbsp;=&nbsp;result);</code></td></tr>
+<tr class="coverableline" title="Not covered (0 visits)" data-coverage="{'AllTestMethods': {'VC': '0', 'LVS': 'red'}}"><td class="red">&nbsp;</td><td class="leftmargin rightmargin right">0</td><td class="rightmargin right"><a id="file0_line65"></a><code>65</code></td><td></td><td class="lightred"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;osmData&nbsp;=&nbsp;parsed;</code></td></tr>
 <tr class="coverableline" title="Not covered (0 visits)" data-coverage="{'AllTestMethods': {'VC': '0', 'LVS': 'red'}}"><td class="red">&nbsp;</td><td class="leftmargin rightmargin right">0</td><td class="rightmargin right"><a id="file0_line66"></a><code>66</code></td><td></td><td class="lightred"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dataLoaded&nbsp;=&nbsp;osmData&nbsp;!=&nbsp;null&nbsp;&amp;&amp;&nbsp;osmData.ways&nbsp;!=&nbsp;null&nbsp;&amp;&amp;&nbsp;osmData.ways.Count&nbsp;&gt;&nbsp;0;</code></td></tr>
 <tr class="" title="Not coverable" data-coverage="{'AllTestMethods': {'VC': '', 'LVS': 'gray'}}"><td class="gray">&nbsp;</td><td class="leftmargin rightmargin right"></td><td class="rightmargin right"><a id="file0_line67"></a><code>67</code></td><td></td><td class="lightgray"><code></code></td></tr>
 <tr class="coverableline" title="Not covered (0 visits)" data-coverage="{'AllTestMethods': {'VC': '0', 'LVS': 'red'}}"><td class="red">&nbsp;</td><td class="leftmargin rightmargin right">0</td><td class="rightmargin right"><a id="file0_line68"></a><code>68</code></td><td></td><td class="lightred"><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!dataLoaded)</code></td></tr>
@@ -128,7 +128,7 @@
 </table>
 <h2 id="homevng370DocumentscodingpythonMyprojectAssets_GameScriptsOSMOSMLoadercs">/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/OSM/OSMLoader.cs</h2>
 <p>File &#39;/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/OSM/OSMLoader.cs&#39; does not exist (any more).</p>
-<div class="footer">Generated by: ReportGenerator 5.0.4.0<br />10/23/2026 - 2:11:52 PM<br /><a href="https://github.com/danielpalme/ReportGenerator">GitHub</a> | <a href="http://www.palmmedia.de">www.palmmedia.de</a></div></div>
+<div class="footer">Generated by: ReportGenerator 5.0.4.0<br />11/1/2026 - 9:58:20 AM<br /><a href="https://github.com/danielpalme/ReportGenerator">GitHub</a> | <a href="http://www.palmmedia.de">www.palmmedia.de</a></div></div>
 <div class="containerright">
 <div class="containerrightfixed">
 <h1>Methods/Properties</h1>

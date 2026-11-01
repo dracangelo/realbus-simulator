@@ -80,3 +80,42 @@ Re-run `Tools > RealBus > Setup > Import New Model Packs` after replacing a sour
 - **Plane.013** — `Assets/_Game/Resources/RoadModulesGenerated/Plane_013.prefab`; 2.50×5.00 m, 42 tris, kind `Sidewalk`
 - **Plane.014** — `Assets/_Game/Resources/RoadModulesGenerated/Plane_014.prefab`; 2.50×5.00 m, 42 tris, kind `Sidewalk`
 - **Plane.015** — `Assets/_Game/Resources/RoadModulesGenerated/Plane_015.prefab`; 7.40×24.25 m, 2 tris, kind `RoadTileLong`
+
+## Live integration
+
+- **City infill** — the imported towers, low-rises, palms, trees and street lights are appended to `BuildingCatalog` / `LiveCityCatalog`; the Mapbox tile meshes, OSM ribbons, route graph and bus prefabs are untouched.
+- **Road signs** — the 13 sign prefabs are `LiveCityCatalog.Kind.RoadSign` entries. `LiveCityStreamer` samples kerbs and places a small share of signs facing the approaching lane; `streetLightPercent` and `roadSignPercent` (defaults 2% and 1% of kerb samples) set the density, and the streamer clears its pool on reload, so signs are never duplicated.
+- **Traffic lights** — `CityTrafficSignals.Rebuild(graph, route)` runs after `SceneBootstrap` resolves the road graph. It finds 3+ way junctions near the route (default 10), builds one head per approach at the stop line, binds each head to its directed link with `AIRoadGraph.BindTrafficSignalToNode`, and gives the junction one `TrafficSignalJunction` two-phase clock. `TrafficLight.externallyControlled` stops the lamps from cycling on their own, so the lens and the red-signal query read from the same phase. The imported housing is a ~174k-triangle prop and is reserved for the first junction (`maxImportedHousingJunctions = 1`); every other head uses the procedural three-lens head with the same state.
+- **Road modules** — `RoadModuleCatalog` keeps the imported tiles for kerbs, sidewalks and the station apron. They are decorative only; `RoadsGenerated` still owns the drivable carriageway.
+- **Fuel / charging stations** — `gas_station_966fb802.prefab` (combined meshes, trigger colliders, ~131k triangles) is spawned by `RuntimeGasStationSpawner` from OSM fuel tags. Each station is turned to face the nearest road, pushed clear of the carriageway, paved with the low-poly road modules and given a `GasStationServicePoint` trigger. `StationInteractionPanel` is the only entry point to a paid session.
+- **Service point contract** — a session starts only when the bus is stopped, the tank/battery is not full, the balance can buy at least a unit and no other station owns a session. The station meters the target amount, charges only the delivered litres/kWh through `GameState.economy`, stops on target/full tank, cancels when the bus moves or leaves, and writes through the existing `FuelSystem`/`BatterySystem` persistence. Diesel buses never use the battery path and electric buses never use the tank path.
+
+## Performance caveats
+
+- Measured triangle counts are editor mesh counts, not device frame times. No Android device measurement has been run for this integration; frame rate, frame time and memory are unverified on hardware.
+- The two heaviest imports are the signal housing (173,904 tris, LOD group) and the station (131,479 tris, LOD group, `DistanceVisibility` at 340 m). The housing is limited to one junction and both props drop to box proxies with distance.
+- Imported textures keep their authored 1K/2K sizes; the importer sets mipmaps and platform compression, and materials reuse a small shared palette. Re-check texture memory on device before shipping.
+
+## Known limits
+
+- No PlayMode test assembly exists; station drive-in, panel layout and signal visibility are covered by EditMode logic tests and the headless route smoke check, not by an interactive device run.
+- Android frame time, draw calls and memory have not been measured on hardware.
+- The shipped spawner makes every station dual-service (diesel and charge). `GasStationServicePoint.supportsFuel` / `supportsCharging` are available for fuel-only or charge-only sites, but no site is configured that way yet because the pack has no separate charger model and stranding an electric bus was the greater risk.
+- Imported signal housing is limited to one junction per city load; the rest of the network uses the procedural head. Raise `maxImportedHousingJunctions` only after measuring the extra triangles on the target device.
+
+## Verification log
+
+- EditMode suite (`GameScriptsTests.Editor`): 724 tests, 716 passed, 8 failed. The eight remaining failures are the pre-existing fleet-default, mission-data/result (three), passenger alighting/dwell, schedule-arrival and upgrade-purchase assertions, which are unrelated to the imported packs. The traffic-light visual test was corrected to read the lamp's `MaterialPropertyBlock` (the mechanism the lamp uses) and now passes.
+- Route smoke (`tools/run_route_smoke.sh`): **passed** — 17/17 stops advanced (17 serviced, 17 docked), traffic moved on 10/12 lanes, navigator 142 samples with 0 failures, 0 shortcuts, duration 292.3 s, editor frame time p50 29.8 ms / p95 69.7 ms.
+- The p50/p95 figures are from a headless editor run on the development machine, not an Android device, and are not a shipping performance claim.
+
+## Android release build fix
+
+- **Symptom** — `assembleRelease` failed in `:unityLibrary:compileReleaseJavaWithJavac` and `:launcher:checkReleaseDuplicateClasses` with `AmbiguousStringJetifierException` on the literal `android.support.v4`, thrown while transforming `Assets/Mapbox/Core/Plugins/Android/support-v4-25.1.0.aar`.
+- **Root cause** — the Mapbox Unity SDK ships seven legacy Android Support 25.1.0 AARs. Unity 6 already injects AndroidX (`appcompat 1.6.1`, `core 1.9.0`, `constraintlayout`, `games-activity`). Jetifier rewrites the legacy AARs into the same AndroidX packages, so the build collides (`support-core-ui` vs `androidx.viewpager`, `support-compat` vs `androidx.core`) and the old jetified `ViewCompat` lacks `getRootWindowInsets`, which Unity's generated `UnityPlayerGameActivity.java` requires. The `support-v4` stub also contains a `BuildConfig` string literal Jetifier refuses to rewrite.
+- **Fix** — removed the seven legacy support AARs and their `.meta` files from `Assets/Mapbox/Core/Plugins/Android/` (`support-v4`, `support-compat`, `support-core-ui`, `support-core-utils`, `support-media-compat`, `support-vector-drawable`, `animated-vector-drawable`, `appcompat-v7`). Unity's AndroidX dependencies replace them. The only Mapbox Java reference is `android.support.v4.content.ContextCompat` in `AndroidGps.class`; with `android.enableJetifier=true` it is rewritten to `androidx.core.content.ContextCompat`. Originals are backed up outside the project at `/tmp/opencode/mapbox-legacy-support-backup/`.
+- **Not changed** — `android.useAndroidX=true`, `android.enableJetifier=true`, AGP 9.0.0, Gradle 9.1.0, compile/target SDK 36, min SDK 26, arm64-v8a, and the Mapbox/telemetry/okhttp jars.
+- **Gradle validation** — `assembleRelease` in `Library/Bee/Android/Prj/IL2CPP/Gradle` completed in 6m12s (`BUILD SUCCESSFUL`, 89 tasks).
+- **Full Unity validation** — batchmode release build regenerated the Gradle project without the legacy AARs and finished in 9m26s: `Build Finished, Result: Success`, 0 errors, 5 warnings. APK `Builds/Android/RealBus-release.apk`, 907,389,367 bytes, SHA-256 `fbf6a65dc4844099037665fea753b30f15b32b83ac8017a17213f0fa10d1e655`, package `com.DefaultCompany.Myproject`, versionCode 1, targetSdk 36, arm64-v8a.
+- **Expected residue** — the APK still contains a few `android.support.v4.*` AIDL classes (`INotificationSideChannel`, `ResultReceiver`, `IconCompatParcelizer`). These are deliberately shipped inside `androidx.core:core:1.9.0` for wire compatibility; they are not the removed legacy libraries.
+- **Not verified** — the APK has not been installed or exercised on an Android device; device frame time, draw calls and memory remain unmeasured.

@@ -394,6 +394,46 @@ public class ImportedGameplayRegressionTests
     }
 
     [Test]
+    public void PathHeading_BreaksATieWithTheDrivenApproach()
+    {
+        // An out-and-back route has two segments at the same distance from a stop,
+        // pointing opposite ways. The old first-match rule could pick the return
+        // leg and mirror the shelter onto the oncoming kerb.
+        var path = new[] { new Vector3(0, 0, 0), new Vector3(0, 0, 20), new Vector3(0, 0, 0) };
+        Vector3 requested = new Vector3(2, 0, 10);
+
+        Assert.That(RoadSpawnResolver.PathHeading(path, requested, Vector3.back, Vector3.forward),
+            Is.EqualTo(Vector3.forward));
+        Assert.That(RoadSpawnResolver.PathHeading(path, requested, Vector3.forward, Vector3.back),
+            Is.EqualTo(Vector3.back));
+        // With no approach hint the first segment stays the deterministic fallback.
+        Assert.That(RoadSpawnResolver.PathHeading(path, requested, Vector3.back),
+            Is.EqualTo(Vector3.forward));
+    }
+
+    [Test]
+    public void WaitingQueue_IsLaidOutOnThePavementSideOfTheKerb()
+    {
+        var anchor = new Vector3(10, 0, -4);
+        var outward = new Vector3(0, 0, 1);
+        var along = new Vector3(1, 0, 0);
+        var seen = new System.Collections.Generic.HashSet<Vector3>();
+
+        for (int i = 0; i < 15; i++)
+        {
+            Vector3 slot = BusStopPlatformRegistry.LayoutSlot(anchor, outward, along, i);
+            Assert.That(Vector3.Dot(slot - anchor, outward), Is.GreaterThanOrEqualTo(0f),
+                $"passenger {i} must never stand on the carriageway side of the kerb");
+            Assert.That(seen.Add(slot), Is.True, $"passenger {i} shares a slot with another passenger");
+        }
+
+        // The queue also spreads along the kerb instead of stacking on one point.
+        Vector3 first = BusStopPlatformRegistry.LayoutSlot(anchor, outward, along, 0);
+        Vector3 last = BusStopPlatformRegistry.LayoutSlot(anchor, outward, along, 4);
+        Assert.That(Vector3.Dot(last - first, along), Is.GreaterThan(1f));
+    }
+
+    [Test]
     public void RightAngleRoadJoin_MaintainsBothRoadWidths()
     {
         var points = new[] { Vector3.back * 10, Vector3.zero, Vector3.right * 10 };

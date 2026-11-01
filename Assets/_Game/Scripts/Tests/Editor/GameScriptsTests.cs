@@ -121,7 +121,9 @@ public class GameScriptsTests
         scheduleManager.currentTimeMinutes = 501.5f;
         Assert.That(scheduleManager.RecordArrival(2), Is.EqualTo(PunctualityStatus.Late));
         Assert.That(scheduleManager.GetArrivalDeltaSeconds(2), Is.EqualTo(90f).Within(0.001f));
-        Assert.That(scheduleManager.GetLatePenaltyPercent(2), Is.EqualTo(6f).Within(0.001f));
+        // The canonical curve in GameplayRulesTests is 60 s grace then 2% per
+        // 30 s: 90 s late is 2%, not the older 6% expectation.
+        Assert.That(scheduleManager.GetLatePenaltyPercent(2), Is.EqualTo(2f).Within(0.001f));
     }
 
     [Test]
@@ -252,6 +254,13 @@ public class GameScriptsTests
         freeDriveSession.distanceDrivenKm = 12.5f;
         freeDriveSession.sessionTimeSeconds = 930f;
 
+        // MissionResult reads the mission session clock, not the free-drive one:
+        // a mission result is only generated while MissionManager owns the run.
+        var missionManager = CreateComponent<MissionManager>("MissionManager");
+        SetSingleton(missionManager);
+        SetPrivateField(missionManager, "<DistanceDrivenKm>k__BackingField", 12.5f);
+        SetPrivateField(missionManager, "<ElapsedSeconds>k__BackingField", 930f);
+
         var result = MissionResult.Generate(route);
 
         Assert.That(result.routeName, Is.EqualTo("NBO CBD - Westlands"));
@@ -361,6 +370,7 @@ public class GameScriptsTests
         var missionManager = CreateComponent<MissionManager>("MissionManager");
         missionManager.missionData = missionData;
         missionManager.currentRoute = route;
+        SetSingleton(missionManager);
 
         var scoreTracker = CreateComponent<ScoreTracker>("ScoreTracker");
         SetSingleton(scoreTracker);
@@ -901,7 +911,7 @@ public class GameScriptsTests
         passengerManager.stopRequestActive = true;
         passengerManager.stopRequestAcknowledged = true;
 
-        int alighting = (int)InvokePrivateMethodWithResult(passengerManager, "ProcessAlighting", 2);
+        int alighting = (int)InvokePrivateMethodWithResult(passengerManager, "ProcessAlighting", 2, false);
         InvokePrivateMethod(passengerManager, "ClearStopRequestsAtStop", 2);
 
         var exitingPassengers = GetPrivateField<List<PassengerAgent>>(passengerManager, "alightingPassengers");
@@ -923,7 +933,9 @@ public class GameScriptsTests
         SetSingleton(passengerManager);
 
         var busController = CreateComponent<BusController>("BusController");
-        SetPrivateField(passengerManager, "busController", busController);
+        // busController is a public serialized field on PassengerManager; the old
+        // private-field helper cannot see it.
+        passengerManager.busController = busController;
 
         var onboardPassengers = GetPrivateField<List<PassengerAgent>>(passengerManager, "onboardPassengers");
         var wheelchairPassenger = new PassengerAgent(0, 3, 90f, true);
@@ -1088,7 +1100,10 @@ public class GameScriptsTests
         Assert.That(missionData.minPassengersTarget, Is.EqualTo(30));
         Assert.That(missionData.stretchPassengersTarget, Is.EqualTo(45));
         Assert.That(missionData.punctualityTarget, Is.EqualTo(0.8f));
-        Assert.That(missionData.baseXP, Is.EqualTo(200));
+        // 0 means "derive 200-1000 XP from route difficulty"; MissionResult
+        // performs that derivation. A hard 200 here would override the tooltip
+        // contract and make every default mission worth the same XP.
+        Assert.That(missionData.baseXP, Is.EqualTo(0));
         Assert.That(missionData.difficultyMultiplier, Is.EqualTo(1f));
         Assert.That(missionData.timeBonusXP, Is.EqualTo(50));
         Assert.That(missionData.missionName, Is.EqualTo("CBD to Westlands"));
@@ -1180,18 +1195,27 @@ public class GameScriptsTests
         trafficLight.greenLight = CreateRenderer("GreenLight");
         trafficLight.amberLight = CreateRenderer("AmberLight");
         trafficLight.currentState = TrafficLight.LightState.Green;
-        const string materialInstantiationMessage =
-            "Instantiating material due to calling renderer.material during edit mode. This will leak materials into the scene. You most likely want to use renderer.sharedMaterial instead.";
-
-        LogAssert.Expect(LogType.Error, materialInstantiationMessage);
-        LogAssert.Expect(LogType.Error, materialInstantiationMessage);
-        LogAssert.Expect(LogType.Error, materialInstantiationMessage);
 
         InvokePrivateMethod(trafficLight, "UpdateVisuals");
 
-        AssertColorApproximately(trafficLight.redLight.material.color, TrafficLight.Unlit);
-        AssertColorApproximately(trafficLight.greenLight.material.color, TrafficLight.LitGreen);
-        AssertColorApproximately(trafficLight.amberLight.material.color, TrafficLight.Unlit);
+        // The lamp writes a MaterialPropertyBlock instead of instancing a material
+        // per lens, so the colour lives in the block rather than renderer.material.
+        AssertColorApproximately(LensColor(trafficLight.redLight), TrafficLight.Unlit);
+        AssertColorApproximately(LensColor(trafficLight.greenLight), TrafficLight.LitGreen);
+        AssertColorApproximately(LensColor(trafficLight.amberLight), TrafficLight.Unlit);
+
+        // A junction controller drives this entry point; it must repaint at once.
+        trafficLight.SetState(TrafficLight.LightState.Red);
+        AssertColorApproximately(LensColor(trafficLight.redLight), TrafficLight.LitRed);
+        AssertColorApproximately(LensColor(trafficLight.greenLight), TrafficLight.Unlit);
+        AssertColorApproximately(LensColor(trafficLight.amberLight), TrafficLight.Unlit);
+    }
+
+    static Color LensColor(Renderer renderer)
+    {
+        var block = new MaterialPropertyBlock();
+        renderer.GetPropertyBlock(block);
+        return block.GetColor("_Color");
     }
 
     [Test]
@@ -1687,7 +1711,7 @@ public class GameScriptsTests
     }
 
     [Test]
-    public void BusFleetManager_DefaultFleet_IncludesFiveTypes_AndStartsWithStandardBusSelected()
+    public void BusFleetManager_DefaultFleet_IncludesFiveTypes_AndStartsWithAnOwnedDrivableBusSelected()
     {
         var gameState = CreateComponent<GameState>("GameState");
         SetSingleton(gameState);
@@ -1703,7 +1727,18 @@ public class GameScriptsTests
         var specs = fleetManager.GetAllBusSpecs();
 
         Assert.That(specs.Count, Is.GreaterThanOrEqualTo(5));
-        Assert.That(specs[0].displayName, Does.Contain("Single-Decker"));
+
+        // The built-in balanced fleet must survive model imports, and the default
+        // selection must be an owned, drivable entry. Model-backed specs sort
+        // ahead of the placeholder standard bus on purpose (see GetFirstOwnedBus),
+        // so the first entry is not necessarily the "Standard Single-Decker".
+        bool hasStandard = false;
+        for (int i = 0; i < specs.Count; i++)
+            if (specs[i] != null && specs[i].displayName != null &&
+                specs[i].displayName.Contains("Single-Decker"))
+                hasStandard = true;
+
+        Assert.That(hasStandard, Is.True, "the built-in standard bus must stay in the fleet");
         Assert.That(fleetManager.IsBusOwned(specs[0]), Is.True);
         Assert.That(fleetManager.GetSelectedBusSpec(), Is.EqualTo(specs[0]));
         Assert.That(gameState.vehicleState.activeBusId, Is.EqualTo(specs[0].busId));

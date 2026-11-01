@@ -14,6 +14,9 @@ public class TrafficLight : MonoBehaviour
     public LightState currentState = LightState.Red;
     public float timeInState = 0f;
 
+    [Tooltip("Set by a junction controller that owns this lamp's phase. A light driven this way never advances its own cycle, so two approaches of one junction can never both show green.")]
+    public bool externallyControlled = false;
+
     [Header("Visuals")]
     public Renderer redLight;
     public Renderer greenLight;
@@ -32,7 +35,23 @@ public class TrafficLight : MonoBehaviour
 
     void Update()
     {
+        // A junction controller drives this lamp from one clock shared by every
+        // approach. Advancing the lamp locally as well would desynchronise the
+        // phases and could turn a crossing approach green at the same moment.
+        if (externallyControlled) return;
         AdvanceTime(Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Sets the lamp from an external junction controller. The visual state is
+    /// written immediately so the lit lens always matches the right of way the
+    /// traffic graph reads from <see cref="IsRed"/>.
+    /// </summary>
+    public void SetState(LightState state, float timeInState = 0f)
+    {
+        currentState = state;
+        this.timeInState = Mathf.Max(0f, timeInState);
+        UpdateVisuals();
     }
 
     public void AdvanceTime(float seconds)
@@ -92,6 +111,7 @@ public class TrafficLight : MonoBehaviour
 
     void ApplyPhaseOffset()
     {
+        if (externallyControlled) return;
         currentState = LightState.Red;
         timeInState = 0f;
         AdvanceTime(phaseOffset);

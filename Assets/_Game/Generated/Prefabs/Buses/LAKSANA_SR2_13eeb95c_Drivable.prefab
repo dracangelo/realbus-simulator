@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3070404341881791964}
   - component: {fileID: 1934459102573073724}
   - component: {fileID: 3536638487607749260}
+  - component: {fileID: 3100496123366217779}
   - component: {fileID: 3346493550276544672}
   - component: {fileID: 6886508699407195033}
   - component: {fileID: 2705223005519115876}
@@ -94,6 +95,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.2366824, y: 2.79991, z: 11.04}
   m_Center: {x: 0, y: 1.8438433, z: 0}
+--- !u!114 &3100496123366217779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456483614323628656}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81d2b8496de541beb048ef32ec65be37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameScripts::TrafficParticipant
+  length: 4.2
+  width: 2
 --- !u!114 &3346493550276544672
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -124,6 +139,8 @@ MonoBehaviour:
   transmissionData: {fileID: 11400000, guid: f3a5fb6e7040f5aaabbd3cb6c624f929, type: 2}
   modelRoot: {fileID: 3161413380281904010}
   replaceModelFromSpec: 0
+  vehicleLength: 12
+  vehicleWidth: 2.55
   driveWheels:
   - {fileID: 922486734705854505}
   - {fileID: 2718939465972182508}
@@ -148,6 +165,7 @@ MonoBehaviour:
   brakeInput: 0
   currentSpeedKmh: 0
   kneelingSuspensionActive: 0
+  inputLocked: 0
   kneelingDropMeters: 0.08
   kneelingLerpSpeed: 4
   dockingReference: {fileID: 5759546240611840086}

@@ -14,10 +14,25 @@ If Unity is installed somewhere else, override the executable path:
 UNITY_BIN="/path/to/Unity" bash tools/run_editmode_tests.sh
 ```
 
+On this machine the 6000.6 editor fails to start with `libxml2.so.2: cannot open shared object file`.
+The Android NDK bundled with the editor ships a compatible copy, so export it first:
+
+```bash
+export LD_LIBRARY_PATH="/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/linux-x86_64/lib:$LD_LIBRARY_PATH"
+```
+
 By default the script runs only the project's EditMode suite in `GameScriptsTests.Editor`. Override that if you want a different assembly list:
 
 ```bash
 TEST_ASSEMBLIES="GameScriptsTests.Editor" bash tools/run_editmode_tests.sh
+```
+
+To run one fixture while iterating (much faster than the whole suite):
+
+```bash
+"$UNITY_BIN" -batchmode -projectPath "$PWD" -runTests -testPlatform editmode \
+  -assemblyNames GameScriptsTests.Editor -testFilter TrafficSignalTests \
+  -testResults "$PWD/TestResults/signal-results.xml" -logFile "$PWD/TestResults/signal-unity.log"
 ```
 
 ## What You Get
@@ -156,7 +171,129 @@ The run is served in game time with `Time.timeScale = 3` (Unity keeps the author
 `fixedDeltaTime`, so the same number of physics steps happen per game second), which is
 what keeps a 17-stop service to roughly 12 minutes of wall clock instead of 35.
 
-**Latest route run (2026-10-26, Nairobi, 17 stops):** `Route check PASSED`, exit `0`.
+### CI gate: exit status and JSON verdict
+
+`tools/run_route_smoke.sh` is meant to be the gate itself, so the run writes a machine-readable
+verdict next to its log: `TestResults/route-smoke.json` (override the path with
+`REALBUS_SMOKE_RESULT`; the script sets it and the editor reads it). The script deletes both the
+log and the JSON before launching, and the editor deletes the JSON again when the run starts, so
+neither a stale pass nor a stale failure can be read as this run's result.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | route check passed (`"passed": true`, no listed failures) |
+| 1 | the check could not run: Unity missing, compile error, no `jq`/`python3` |
+| 2 | the check ran and failed |
+| 3 | no readable result: crash, licence (`Unity` exited `198`), early exit, or a verdict that contradicts the exit status |
+| 4 | exceeded `ROUTE_TIMEOUT_SECONDS` (default 2700) and was killed |
+
+Exit `3` is the point of the split: a run that dies before writing a verdict is not a pass. A
+runner-level failure (compile error, timeout, licence, missing file) also writes a JSON with
+`"source": "runner"`, so a job can read one file for every outcome instead of special-casing blank
+output or grepping the log. A result that says `"passed": true` while Unity exited non-zero, or
+while `failures` is non-empty, is refused as `3` rather than believed, and the rejected file is kept
+as `route-smoke.previous.json` so the contradiction stays readable while the primary file always
+agrees with the exit status.
+
+The verdict is JSON, `schemaVersion` 1:
+
+```json
+{
+  "schemaVersion": 1,
+  "check": "route-smoke",
+  "passed": true,
+  "exitCode": 0,
+  "unityVersion": "6000.6.0f1",
+  "startedAtUtc": "2026-10-29T09:12:41.1234567Z",
+  "finishedAtUtc": "2026-10-29T09:26:03.7654321Z",
+  "durationSeconds": 291.6,
+  "gameSeconds": 763.3,
+  "completed": true,
+  "stops": { "total": 17, "serviced": 17, "docked": 17, "advanced": 17, "doorsRefused": 0 },
+  "stopProgression": [
+    { "index": 0, "name": "…", "advanced": true, "doorsRefused": false, "serviceSeconds": 44.9 }
+  ],
+  "shortcuts": 0,
+  "traffic": { "sampled": true, "active": 12, "moved": 6, "passed": true, "lanesChecked": true, "lanesPassed": true },
+  "navigator": { "checks": 158, "failures": 0, "passed": true },
+  "performance": { "samples": 113, "avgFps": 20.9, "p50Ms": 41.2, "p95Ms": 88.0 },
+  "failureCount": 0,
+  "failures": [],
+  "abortReason": null,
+  "logPath": "/…/TestResults/route-smoke.log",
+  "resultPath": "/…/TestResults/route-smoke.json"
+}
+```
+
+Every field a job needs to gate without reading prose: `passed`, `stops.{total,serviced,docked,advanced,doorsRefused}`,
+the per-stop `stopProgression[]` (`index`, `name`, `advanced`, `doorsRefused`, `serviceSeconds`), `completed`,
+`shortcuts`, `traffic.*`, `navigator.*`, `performance.*`, and `failureCount`/`failures[]`. `doorsRefused` counts
+the stops the bus reached packed past its doorway limit with nobody alighting. Those stops must still be served
+with the doors shut, so a non-zero count is evidence the fix below ran, not a failure.
+`durationSeconds` is wall clock (what the CI job waits for) and `gameSeconds` is the route served
+at `Time.timeScale = 3`, which is what the per-stop service times are measured in. A failed
+run names the predicate that failed (`stop progression advanced 4/17 stops`, `the route did not
+complete: state=InProgress active=True`, `traffic did not move: 0/12 bodies moved in 6s`) instead of
+only logging `passed=False`. `abortReason` carries the reason a run stopped early.
+
+A CI job only needs:
+
+```bash
+bash tools/run_route_smoke.sh || exit $?
+jq -e '.passed and (.stops.advanced == .stops.total) and (.failures | length == 0)' \
+  TestResults/route-smoke.json
+```
+
+`jq` is preferred and `python3` is used as the reader if `jq` is absent. The runtime is bounded at
+both ends: the runner's own budget is 1800 game seconds (about 600 s of wall clock at
+`Time.timeScale = 3`) after a 300 s world-boot ceiling, and the wrapper kills the editor after
+`ROUTE_TIMEOUT_SECONDS` (default 2700) so a hung job cannot sit in CI forever.
+
+**Verified here (2026-10-29).** Run 1 of the Nairobi route passed: 17/17 stops advanced,
+`trafficMoved=11/12`, navigator 147 samples with 0 failures, 763.3 game seconds, a JSON verdict with
+`"passed": true`, and the `jq` gate command above returned `true`. The wrapper was also exercised
+against fixtures for the paths a real run cannot be made to produce on demand: a missing verdict
+file, malformed JSON, a verdict that claims `passed: true` while Unity exits `2`, and a normal
+failing verdict — producing exit `3`, `3`, `3` and `2` respectively, with a passing fixture returning
+`0`. Exit `1` (missing editor, compile error, no JSON reader) and exit `4` (timeout) were not
+exercised; both are single-branch guards with no result file to parse.
+
+Run 2 of the same route found a game bug, not a reporting bug, and it is worth recording because it
+was the reason this gate failed intermittently: the bus reached stop 6 of 17 fully loaded (70/70)
+where nobody was alighting, so `PassengerManager.CanOpenDoorsForStop` refused the doors
+(`SMOKE routeDoors index=6 opened=False isProcessingStop=False state=InProgress docked=True
+passengers=70`), `MissionManager` never entered `ArrivedAtStop`, and `currentStopIndex` could never
+advance — a player was dead-ended at that stop. The JSON said exactly that, without a log reader:
+`"failures": ["stop 6 did not advance after 35.1s (processing=False state=InProgress index=6
+doors=False animations=False dwell=0.0 budget=35.0)", "stop progression advanced 6/17 stops", "the
+route did not complete: state=InProgress active=True"]` with `"stops": {"advanced": 6}` and
+`"abortReason"` set, while `traffic` and `navigator` still reported independently and passed.
+
+The cause was that the door rule was allowed to decide route progress: `TryOpenDoorsAtCurrentStop`
+returned `false` before the stop coroutine ever started. The door rule stays — a bus packed past its
+doorway limit really cannot open its doors, and `CanOpenDoorsForStop` is still pinned by
+`RealismSystemsTests.BoardingHonorsCapacityRemovesWaitingAgentsAndUnloadsAtTerminus` — but the stop
+is now served regardless: doors shut, nobody boards, the platform queue is counted as left behind,
+the panel reads `DOORS REFUSED` and the stop completes, so `currentStopIndex` advances and the
+navigator moves on. `PassengerManager.HandleRefusedDoorsStopArrival` holds that rule, and
+`RealismSystemsTests.FullBusServesAStopWhereNobodyAlightsWithoutStrandingTheRoute` covers it at unit
+level; a full route run covers the progression.
+
+Because that case only shows up when the random destinations happen to line up (it did not appear in
+the 17/17 run that preceded the fix), the runner now forces it at stop index 4: it pins the bus to its
+doorway limit, sends anyone bound for that stop on to the terminus, and restores the capacity limits
+and destinations once the stop advances. A pass therefore requires `stops.doorsRefused >= 1`, and a
+run where the probe could not be set up fails with `the refused-door stop was never exercised`
+rather than passing without coverage. **Verified after the fix (2026-10-29, Nairobi, 17 stops):**
+`SMOKE routeDoorsProbe index=4 onboard=70/70 — bus at its doorway limit, nobody alighting here`, then
+`SMOKE routeDoorsRefused index=4 onboard=70/70 waiting=28 — the stop must still be served and the
+route must continue`, then `SMOKE routeStop index=4 … advanced=True service=3.0s indexAfter=5
+state=InProgress guidanceVersion=6->7 rebuilt=True`. `Route check PASSED`, exit `0`, 17/17 stops
+advanced, `stops.doorsRefused: 1`, `traffic moved 6/12`, navigator 139 samples / 0 failures,
+285.7 s wall clock. `RealismSystemsTests` (22 tests) passes, including the new case and the capacity
+and door-lock cases it guards.
+
+**Previous route run (2026-10-26, Nairobi, 17 stops):** `Route check PASSED`, exit `0`.
 `SMOKE routeResult stops=17 serviced=17 docked=17 advanced=17 failures=0 shortcuts=0
 serviceAvg=45.0s serviceLongest=86.6s seconds=809 completed=True trafficMoved=6/12
 trafficLaneChecked=True trafficLanes=True navigator=True passed=True`, with every stop
