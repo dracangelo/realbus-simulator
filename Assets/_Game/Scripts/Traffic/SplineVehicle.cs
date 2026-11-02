@@ -185,16 +185,13 @@ public class SplineVehicle : MonoBehaviour
         // The same lane line the full-physics controller drives: a lane point at each
         // end of this link, and a lookahead on it, so a low-detail car also stays in
         // its lane instead of cutting diagonally towards the next junction.
-        float offset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex) + laneShift;
-        Vector3 lateral = Vector3.Cross(Vector3.up, segment) * offset;
-        Vector3 laneA = nodeA + lateral;
-        Vector3 laneB = nodeB + lateral;
-        Vector3 lane = laneB - laneA;
-        float laneLength = lane.magnitude;
-        Vector3 laneDir = laneLength > .01f ? lane / laneLength : segment;
-        float along = laneLength > .01f
-            ? Mathf.Clamp01(Vector3.Dot(transform.position - laneA, laneDir) / laneLength)
-            : 1f;
+        LaneFrame frame = TrafficLane.Frame(roadGraph, currentNodeIndex, targetNodeIndex,
+            laneIndex, laneShift);
+        Vector3 laneA = frame.IsValid ? frame.Start : nodeA;
+        Vector3 laneB = frame.IsValid ? frame.End : nodeB;
+        Vector3 laneDir = frame.IsValid ? frame.Direction : segment;
+        float laneLength = frame.IsValid ? frame.Length : 0f;
+        float along = frame.IsValid ? frame.AlongOf(transform.position) : 1f;
         float lookahead = Mathf.Clamp(speedKmh / 3.6f * 1.1f, 4f, 12f);
         Vector3 target = laneA + laneDir * Mathf.Min(laneLength, along * laneLength + lookahead);
 
@@ -421,9 +418,10 @@ public class SplineVehicle : MonoBehaviour
         if (targetLane < 0 || targetLane >= lanes || targetLane == laneIndex)
             return;
 
-        float oldOffset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex);
-        float newOffset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, targetLane);
-        laneShift += oldOffset - newOffset;
+        // Ease across from the old lane line to the new one, using the shared
+        // offset geometry for both instead of a second local computation.
+        laneShift -= TrafficLane.OffsetDelta(roadGraph, currentNodeIndex, targetNodeIndex,
+            laneIndex, targetLane);
         laneIndex = targetLane;
         laneShiftTarget = 0f;
     }

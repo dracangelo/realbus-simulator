@@ -71,6 +71,7 @@
     <Compile Include="Assets/_Game/Scripts/Bus/RuntimeVehiclePackDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DynamicEventSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/BusRouteParser.cs" />
+    <Compile Include="Assets/_Game/Scripts/Traffic/TrafficLane.cs" />
     <Compile Include="Assets/_Game/Scripts/Util/RuntimeDistanceCuller.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficDebugHUD.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusFleetManager.cs" />

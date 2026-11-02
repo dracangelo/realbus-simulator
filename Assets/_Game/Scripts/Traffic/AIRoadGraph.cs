@@ -497,6 +497,11 @@ public class AIRoadGraph : MonoBehaviour
         return GetRandomNextNode(currentIndex, avoidNode);
     }
 
+    /// <summary>
+    /// Node-level fallback used only where no directed link is known. Directed
+    /// placement always goes through <see cref="TrafficLane"/>; this keeps the
+    /// single-carriageway centring convention for callers that have one node.
+    /// </summary>
     public float GetLaneOffset(int nodeIndex, int laneIndex)
     {
         if (!IsValidNode(nodeIndex)) return 0f;
@@ -504,7 +509,6 @@ public class AIRoadGraph : MonoBehaviour
         laneIndex = Mathf.Clamp(laneIndex, 0, lanes - 1);
         float width = Mathf.Max(MinimumLaneWidth, nodes[nodeIndex].laneWidth);
 
-        // Center lanes around road middle: e.g. 2 lanes -> -0.5,+0.5 multipliers.
         float centered = laneIndex - (lanes - 1) * 0.5f;
         return centered * width;
     }
@@ -629,32 +633,13 @@ public class AIRoadGraph : MonoBehaviour
         return -1;
     }
 
+    /// <summary>Signed lateral offset of one lane line from the OSM centreline.</summary>
     public float GetLaneOffset(int fromNode, int toNode, int laneIndex)
     {
-        if (!IsValidNode(fromNode) || !IsValidNode(toNode)) return 0f;
-        RoadNode node = nodes[fromNode];
-        int link = FindLinkIndex(node, toNode);
-        int lanes = GetLaneCount(fromNode, toNode);
-        float width = GetLaneWidth(fromNode, toNode);
-        bool oneWay = link >= 0 && node.outgoingOneWays != null && link < node.outgoingOneWays.Length && node.outgoingOneWays[link];
-        bool shared = link >= 0 && node.outgoingSharedLanes != null && link < node.outgoingSharedLanes.Length && node.outgoingSharedLanes[link];
-        laneIndex = Mathf.Clamp(laneIndex, 0, lanes - 1);
-
-        // A single-lane road used in both directions has no half to belong to: both
-        // directions keep to the middle of the same lane.
-        if (shared) return 0f;
-
-        if (oneWay)
-            return (laneIndex - (lanes - 1) * .5f) * width;
-
-        // A directed link uses only its real direction of travel, and lanes are laid
-        // out across that carriageway: lane 0 is the one nearest the centre line and
-        // every further lane is one full width outboard. The old formula measured from
-        // the middle of a carriageway that did not exist, putting every vehicle metres
-        // off the road it was meant to drive on.
-        bool left = drivesOnLeft;
-        float side = left ? -1f : 1f;
-        return side * (laneIndex + .5f) * width;
+        // Delegated so there is exactly one lane-geometry implementation in the
+        // project. Controllers, spawn placement, stops, queues and probes all read
+        // the same numbers from the same function.
+        return TrafficLane.Offset(this, fromNode, toNode, laneIndex);
     }
 
     /// <summary>

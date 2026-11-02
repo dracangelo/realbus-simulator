@@ -1,31 +1,31 @@
 ﻿# Summary
 |||
 |:---|:---|
-| Generated on: | 11/1/2026 - 9:58:32 AM |
+| Generated on: | 11/2/2026 - 9:42:22 AM |
 | Parser: | MultiReportParser (4x OpenCoverParser) |
 | Assemblies: | 2 |
-| Classes: | 300 |
-| Files: | 395 |
-| Covered lines: | 16058 |
-| Uncovered lines: | 50772 |
-| Coverable lines: | 66830 |
-| Total lines: | 78755 |
-| Line coverage: | 24% (16058 of 66830) |
+| Classes: | 302 |
+| Files: | 396 |
+| Covered lines: | 16099 |
+| Uncovered lines: | 50760 |
+| Coverable lines: | 66859 |
+| Total lines: | 78952 |
+| Line coverage: | 24% (16099 of 66859) |
 | Covered branches: | 0 |
 | Total branches: | 0 |
-| Covered methods: | 1966 |
-| Total methods: | 6248 |
-| Method coverage: | 31.4% (1966 of 6248) |
+| Covered methods: | 1986 |
+| Total methods: | 6269 |
+| Method coverage: | 31.6% (1986 of 6269) |
 
 |**Name**|**Covered**|**Uncovered**|**Coverable**|**Total**|**Line coverage**|**Covered**|**Total**|**Branch coverage**|**Covered**|**Total**|**Method coverage**|
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-|**GameScripts**|**16052**|**38604**|**54656**|**73416**|**29.3%**|**0**|**0**|****|**1964**|**5493**|**35.7%**|
+|**GameScripts**|**16093**|**38592**|**54685**|**73883**|**29.4%**|**0**|**0**|****|**1984**|**5514**|**35.9%**|
 |AccessibilityManager|11|31|42|82|26.1%|0|0||5|11|45.4%|
 |AerodynamicsSystem|3|10|13|29|23%|0|0||1|4|25%|
 |AIBusRouteRunner|0|62|62|456|0%|0|0||0|9|0%|
 |AIBusScheduleSpawner|0|364|364|456|0%|0|0||0|20|0%|
-|AIRoadGraph|515|267|782|857|65.8%|0|0||51|68|75%|
-|AIVehicleController|239|578|817|1053|29.2%|0|0||27|60|45%|
+|AIRoadGraph|504|265|769|842|65.5%|0|0||51|68|75%|
+|AIVehicleController|187|568|755|986|24.7%|0|0||27|60|45%|
 |AmbientCommuterMotion|0|8|8|863|0%|0|0||0|2|0%|
 |AmbulanceBehaviour|0|112|112|90|0%|0|0||0|14|0%|
 |BalanceTelemetryRecorder|1|60|61|104|1.6%|0|0||1|19|5.2%|
@@ -33,7 +33,7 @@
 |BuildingCatalog|1|0|1|25|100%|0|0||1|1|100%|
 |BuiltInShaders|13|3|16|84|81.2%|0|0||5|6|83.3%|
 |BusController|156|501|657|646|23.7%|0|0||27|79|34.1%|
-|BusDepotManager|663|190|853|1486|77.7%|0|0||50|59|84.7%|
+|BusDepotManager|663|190|853|1488|77.7%|0|0||50|59|84.7%|
 |BusFleetManager|456|152|608|665|75%|0|0||55|68|80.8%|
 |BusInputActions|0|262|262|655|0%|0|0||0|73|0%|
 |BusLiveryPaint|132|65|197|320|67%|0|0||14|19|73.6%|
@@ -58,7 +58,7 @@
 |CityPredownloader|4|318|322|397|1.2%|0|0||2|33|6%|
 |CitySelector|0|181|181|208|0%|0|0||0|16|0%|
 |CitySelectUI|0|454|454|269|0%|0|0||0|30|0%|
-|CityTrafficSignals|139|65|204|355|68.1%|0|0||6|11|54.5%|
+|CityTrafficSignals|139|65|204|357|68.1%|0|0||6|11|54.5%|
 |CockpitInteractionPanel|0|66|66|99|0%|0|0||0|14|0%|
 |CoordinateConverter|149|203|352|321|42.3%|0|0||22|34|64.7%|
 |CosmeticDamageSystem|1|26|27|46|3.7%|0|0||1|5|20%|
@@ -96,6 +96,7 @@
 |ImportedMaterialPalette|90|8|98|213|91.8%|0|0||14|14|100%|
 |ImportedVehicleVisualRepair|184|19|203|337|90.6%|0|0||10|12|83.3%|
 |Json|589|127|716|688|82.2%|0|0||48|48|100%|
+|LaneFrame|21|0|21|270|100%|0|0||6|6|100%|
 |LiveCityCatalog|1|0|1|20|100%|0|0||1|1|100%|
 |LiveCityStreamer|58|404|462|734|12.5%|0|0||9|36|25%|
 |LiveryCodeCodec|45|3|48|361|93.7%|0|0||5|5|100%|
@@ -133,7 +134,7 @@
 |OSMData|30|46|76|315|39.4%|0|0||3|10|30%|
 |OSMLoader|0|63|63|76|0%|0|0||0|12|0%|
 |OSMParser|63|253|316|252|19.9%|0|0||2|13|15.3%|
-|OSMRoadMeshBuilder|374|913|1287|1434|29%|0|0||28|88|31.8%|
+|OSMRoadMeshBuilder|374|913|1287|1439|29%|0|0||28|88|31.8%|
 |OSMRouteImporter|0|504|504|537|0%|0|0||0|39|0%|
 |OsmTrafficSignalSpawner|27|82|109|173|24.7%|0|0||2|10|20%|
 |OSMWay|91|162|253|315|35.9%|0|0||10|30|33.3%|
@@ -147,7 +148,7 @@
 |PassengerData|14|0|14|18|100%|0|0||4|4|100%|
 |PassengerFeedbackSystem|2|58|60|90|3.3%|0|0||2|16|12.5%|
 |PassengerLoadDynamics|6|20|26|46|23%|0|0||2|4|50%|
-|PassengerManager|579|666|1245|1096|46.5%|0|0||56|106|52.8%|
+|PassengerManager|580|665|1245|1096|46.5%|0|0||56|106|52.8%|
 |PassengerReactionLibrary|0|7|7|26|0%|0|0||0|1|0%|
 |PassengerSpawner|89|35|124|103|71.7%|0|0||9|11|81.8%|
 |PassengerStoryManager|1|68|69|118|1.4%|0|0||1|23|4.3%|
@@ -178,7 +179,7 @@
 |RoadModuleCatalog|24|0|24|55|100%|0|0||3|3|100%|
 |RoadNetworkSurface|0|66|66|81|0%|0|0||0|8|0%|
 |RoadRoutePathBuilder|51|6|57|80|89.4%|0|0||3|3|100%|
-|RoadSpawnResolver|75|126|201|300|37.3%|0|0||7|12|58.3%|
+|RoadSpawnResolver|73|126|199|300|36.6%|0|0||7|12|58.3%|
 |RoadSurfaceDetector|10|188|198|168|5%|0|0||2|16|12.5%|
 |RoadSurfaceFrictionController|6|90|96|82|6.2%|0|0||1|8|12.5%|
 |RoadSurfaceIndex|117|11|128|177|91.4%|0|0||12|13|92.3%|
@@ -229,7 +230,7 @@
 |SkyReflectionEnvironment|80|7|87|191|91.9%|0|0||11|11|100%|
 |SlippyTileCoverage|28|1|29|42|96.5%|0|0||1|1|100%|
 |SnowController|179|64|243|300|73.6%|0|0||20|28|71.4%|
-|SplineVehicle|119|325|444|507|26.8%|0|0||16|34|47%|
+|SplineVehicle|119|321|440|505|27%|0|0||16|34|47%|
 |StationInteractionPanel|0|307|307|455|0%|0|0||0|23|0%|
 |SteeringWheelControl|0|16|16|25|0%|0|0||0|8|0%|
 |StopApproachUI|0|197|197|168|0%|0|0||0|26|0%|
@@ -244,6 +245,7 @@
 |TrafficBusPolicy|56|0|56|160|100%|0|0||9|9|100%|
 |TrafficCatalog|8|0|8|41|100%|0|0||3|3|100%|
 |TrafficDebugHUD|0|110|110|79|0%|0|0||0|10|0%|
+|TrafficLane|90|5|95|270|94.7%|0|0||14|15|93.3%|
 |TrafficLight|103|23|126|119|81.7%|0|0||19|23|82.6%|
 |TrafficLivery|59|1|60|149|98.3%|0|0||7|7|100%|
 |TrafficModelRules|74|8|82|197|90.2%|0|0||14|15|93.3%|
@@ -263,7 +265,7 @@
 |VehicleDistanceLod|0|17|17|29|0%|0|0||0|3|0%|
 |VehiclePersistentState|53|2|55|123|96.3%|0|0||4|4|100%|
 |VehiclePolishEffects|0|25|25|40|0%|0|0||0|4|0%|
-|VehiclePool|658|657|1315|1442|50%|0|0||38|62|61.2%|
+|VehiclePool|652|657|1309|1444|49.8%|0|0||38|62|61.2%|
 |ViewPriority|32|15|47|82|68%|0|0||3|3|100%|
 |VisualQualityController|0|108|108|175|0%|0|0||0|15|0%|
 |WeatherLighting|12|0|12|67|100%|0|0||7|7|100%|

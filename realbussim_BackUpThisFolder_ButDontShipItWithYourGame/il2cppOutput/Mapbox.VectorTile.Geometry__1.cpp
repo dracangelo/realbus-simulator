@@ -640,7 +640,7 @@ IL2CPP_EXTERN_C IL2CPP_NO_INLINE IL2CPP_METHOD_ATTR void List_1_AddWithResize_m2
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 82435
+// Method Definition Index: 82493
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR double ClipperOffset_get_ArcTolerance_m1735C70D8BB6AA95BE25A9E69FA5FCFCBAAB277C (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -649,7 +649,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR double ClipperOffset_get_ArcTolerance_m1735C7
 		return L_0;
 	}
 }
-// Method Definition Index: 82436
+// Method Definition Index: 82494
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_set_ArcTolerance_mDD0946A5D33F4A3290C076F8ECCE23AFBEAD5DB0 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, double ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -659,7 +659,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_set_ArcTolerance_mDD0946A5
 		return;
 	}
 }
-// Method Definition Index: 82437
+// Method Definition Index: 82495
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR double ClipperOffset_get_MiterLimit_m567254A5FB44011ABE74EA1D9C02D58046FF6C20 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -668,7 +668,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR double ClipperOffset_get_MiterLimit_m567254A5
 		return L_0;
 	}
 }
-// Method Definition Index: 82438
+// Method Definition Index: 82496
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_set_MiterLimit_m1F6414CEB169667D22B1296E3D429A93B6455D66 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, double ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -678,7 +678,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_set_MiterLimit_m1F6414CEB1
 		return;
 	}
 }
-// Method Definition Index: 82439
+// Method Definition Index: 82497
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset__ctor_m2E652A243E523688BF59D37BE7B631087B9EC7FC (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, double ___0_miterLimit, double ___1_arcTolerance, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -710,7 +710,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset__ctor_m2E652A243E523688BF5
 		return;
 	}
 }
-// Method Definition Index: 82440
+// Method Definition Index: 82498
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_Clear_m9741210902A621D20087764DE087EE70547D713B (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -727,7 +727,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_Clear_m9741210902A621D2008
 		return;
 	}
 }
-// Method Definition Index: 82441
+// Method Definition Index: 82499
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int64_t ClipperOffset_Round_mBE8BCCF48851B7112ED3F5DEDC4334DBE6349EAB (double ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -766,7 +766,7 @@ IL_002a:
 		return L_5;
 	}
 }
-// Method Definition Index: 82442
+// Method Definition Index: 82500
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_AddPath_m7BA13C6264BD4645E12DBD6E23270A79F6F69D94 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, List_1_tEBA2E1C4348DA4BFCD7AEE4FDB1C7D35BB61BD0E* ___0_path, int32_t ___1_joinType, int32_t ___2_endType, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -1267,7 +1267,7 @@ IL_0264:
 		return;
 	}
 }
-// Method Definition Index: 82443
+// Method Definition Index: 82501
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_AddPaths_m93A0491A49DF1DFB82C98CFAAAD943FE59DFE9A6 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, List_1_t8661F1A91323C50104A63830C3D822E0F3F0D034* ___0_paths, int32_t ___1_joinType, int32_t ___2_endType, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -1336,7 +1336,7 @@ IL_0037:
 		return;
 	}
 }
-// Method Definition Index: 82444
+// Method Definition Index: 82502
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_FixOrientations_m38E12295C7F8E062F33969859500E0BDE870661A (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -1586,7 +1586,7 @@ IL_010d:
 		return;
 	}
 }
-// Method Definition Index: 82445
+// Method Definition Index: 82503
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR DoublePoint_t780B233072AF0279B29883BFF2025D5484450E2F ClipperOffset_GetUnitNormal_m869D46C3E2B86434627D2D01CD5D4E0E1B16E39A (IntPoint_tBA0C61843152B427745EB59641356CA047AC1748 ___0_pt1, IntPoint_tBA0C61843152B427745EB59641356CA047AC1748 ___1_pt2, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -1683,7 +1683,7 @@ IL_0077:
 		return L_26;
 	}
 }
-// Method Definition Index: 82446
+// Method Definition Index: 82504
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_DoOffset_mB8428EED4C63221FC54201CD783DF203751D4AAC (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, double ___0_delta, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -2955,7 +2955,7 @@ IL_0a04:
 		return;
 	}
 }
-// Method Definition Index: 82447
+// Method Definition Index: 82505
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_Execute_mA8568CDFC47A4EF757DD1BFE224DCE643ED32400 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, List_1_t8661F1A91323C50104A63830C3D822E0F3F0D034** ___0_solution, double ___1_delta, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -3107,7 +3107,7 @@ IL_011d:
 		return;
 	}
 }
-// Method Definition Index: 82448
+// Method Definition Index: 82506
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_Execute_mB440FFC9C9D90BECD7D1B4F6EACAAF41641A23F8 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, PolyTree_t5BF37457B814F09AB6A6C7BFB36B3B7DD59F1A5A** ___0_solution, double ___1_delta, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -3381,7 +3381,7 @@ IL_01bf:
 		return;
 	}
 }
-// Method Definition Index: 82449
+// Method Definition Index: 82507
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_OffsetPoint_m72CC51EAF406E7385485A077B21BFDF556ECA508 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, int32_t ___0_j, int32_t* ___1_k, int32_t ___2_jointype, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -3772,7 +3772,7 @@ IL_0374:
 		return;
 	}
 }
-// Method Definition Index: 82450
+// Method Definition Index: 82508
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_DoSquare_mFD3A8E25B59582216B517387E5F95C007B9B4298 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, int32_t ___0_j, int32_t ___1_k, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -3924,7 +3924,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_DoSquare_mFD3A8E25B5958221
 		return;
 	}
 }
-// Method Definition Index: 82451
+// Method Definition Index: 82509
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_DoMiter_m4F3FF4B8CEBDF037AAB640F6F5F485CD4A90CC6E (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, int32_t ___0_j, int32_t ___1_k, double ___2_r, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -3992,7 +3992,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_DoMiter_m4F3FF4B8CEBDF037A
 		return;
 	}
 }
-// Method Definition Index: 82452
+// Method Definition Index: 82510
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperOffset_DoRound_mF1B7EA1FE7A47C2DB7BC695A8A7FA1B91C436293 (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, int32_t ___0_j, int32_t ___1_k, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -4176,7 +4176,7 @@ IL_011b:
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 82453
+// Method Definition Index: 82511
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperException__ctor_m33F89DFCC7DCA8AAB9CDD5F462592A27A21902FF (ClipperException_tD3C7FDAC3B10BAD36DEC8E9707F6EE62076BEF9A* __this, String_t* ___0_description, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(Exception_t_StaticInit);
@@ -4191,7 +4191,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ClipperException__ctor_m33F89DFCC7DCA8AA
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-// Method Definition Index: 82438
+// Method Definition Index: 82496
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ClipperOffset_set_MiterLimit_m1F6414CEB169667D22B1296E3D429A93B6455D66_inline (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, double ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -4201,7 +4201,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ClipperOffset_set_MiterLimit
 		return;
 	}
 }
-// Method Definition Index: 82436
+// Method Definition Index: 82494
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ClipperOffset_set_ArcTolerance_mDD0946A5D33F4A3290C076F8ECCE23AFBEAD5DB0_inline (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, double ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -4211,7 +4211,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ClipperOffset_set_ArcToleran
 		return;
 	}
 }
-// Method Definition Index: 82437
+// Method Definition Index: 82495
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR double ClipperOffset_get_MiterLimit_m567254A5FB44011ABE74EA1D9C02D58046FF6C20_inline (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -4220,7 +4220,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR double ClipperOffset_get_MiterLim
 		return L_0;
 	}
 }
-// Method Definition Index: 82435
+// Method Definition Index: 82493
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR double ClipperOffset_get_ArcTolerance_m1735C70D8BB6AA95BE25A9E69FA5FCFCBAAB277C_inline (ClipperOffset_t59F337DE4F617915C8601F42229D80CB9D246AF4* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -4229,7 +4229,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR double ClipperOffset_get_ArcToler
 		return L_0;
 	}
 }
-// Method Definition Index: 82331
+// Method Definition Index: 82389
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Clipper_set_ReverseSolution_m3C9C8BCC84B1736CCA35A37BDAFFC2EB2AB3C3DE_inline (Clipper_tF64C5EEF0D316AB83E8F643B025F5A66986B2D31* __this, bool ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>

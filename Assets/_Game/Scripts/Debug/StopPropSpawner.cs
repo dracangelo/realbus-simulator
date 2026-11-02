@@ -273,7 +273,7 @@ public class StopPropSpawner : MonoBehaviour
             docking.stopIndex = i;
             docking.dockingRadius = triggerDockingRadius;
             docking.kerbToleranceMeters = triggerKerbTolerance;
-            docking.roadsideDockingSide = leftTraffic ? -1 : 1;
+            docking.roadsideDockingSide = (int)TrafficLane.SideSign(leftTraffic);
 
             var model = Instantiate(prefab, stopRoot.transform);
             ImportedVehicleVisualRepair.DisableEmbeddedCameras(model.transform);

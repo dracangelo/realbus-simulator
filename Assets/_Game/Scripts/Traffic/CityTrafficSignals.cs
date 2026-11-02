@@ -122,7 +122,9 @@ public static class CityTrafficSignals
 
             var firstAxis = new List<TrafficLight>();
             var secondAxis = new List<TrafficLight>();
-            float lateral = graph.drivesOnLeft ? KerbOffsetMeters : -KerbOffsetMeters;
+            // Kerb side for the signal head comes from the shared traffic-side
+            // authority rather than a local sign branch.
+            float lateral = TrafficLane.SideSign(graph.drivesOnLeft) * KerbOffsetMeters;
 
             for (int i = 0; i < approaches.Count; i++)
             {

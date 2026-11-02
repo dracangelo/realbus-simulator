@@ -174,7 +174,7 @@ public static class BusStopPosterBuilder
         int backPoster = (stopIndex + 1) % PosterCount;
 
         // Position City-Light Totem on sidewalk beside the shelter along the road
-        float sideSign = leftTraffic ? -1f : 1f;
+        float sideSign = TrafficLane.SideSign(leftTraffic);
         Vector3 totemLocalPos = shelterModel != null
             ? stopRoot.transform.InverseTransformPoint(bounds.center)
             : Vector3.zero;
@@ -190,7 +190,7 @@ public static class BusStopPosterBuilder
         // Attach an additional route map / timetable poster directly to the shelter's side or rear wall
         if (shelterModel != null)
         {
-            AttachShelterWallPoster(shelterModel, (stopIndex + 3) % PosterCount, leftTraffic ? -1f : 1f);
+            AttachShelterWallPoster(shelterModel, (stopIndex + 3) % PosterCount, TrafficLane.SideSign(leftTraffic));
         }
 
         // Spawn ambient waiting commuters
@@ -201,7 +201,7 @@ public static class BusStopPosterBuilder
     public static void SpawnStandalonePosterTotem(GameObject stopRoot, int stopIndex, bool leftTraffic)
     {
         if (stopRoot == null) return;
-        float sideSign = leftTraffic ? -1f : 1f;
+        float sideSign = TrafficLane.SideSign(leftTraffic);
         // The docking root is deliberately inset toward the kerb so the bus can
         // reach the door trigger. The totem therefore has to sit further out on
         // the pavement: at 1.5 m its 1.15 m-wide base still clipped a narrow

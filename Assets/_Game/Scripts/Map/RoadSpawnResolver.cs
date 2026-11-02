@@ -107,7 +107,9 @@ public static class RoadSpawnResolver
         // four-lane road. A shared single-lane road has no separate left/right lane.
         float offset = lanes <= 1 ? 0f : width * .5f - width / lanes * .5f;
         offset = Mathf.Clamp(offset, 0f, Mathf.Max(0f, (width - busWidth) * .5f - .35f));
-        return leftHandTraffic ? -offset : offset;
+        // The sign comes from the shared traffic-side authority, so OSM-data road
+        // placement and graph lane placement cannot end up on opposite sides.
+        return TrafficLane.SideSign(leftHandTraffic) * offset;
     }
 
     /// <summary>
@@ -119,9 +121,7 @@ public static class RoadSpawnResolver
     /// </summary>
     public static Vector3 KerbSide(Vector3 heading, bool leftHandTraffic)
     {
-        Vector3 forward = Vector3.ProjectOnPlane(heading, Vector3.up);
-        if (forward.sqrMagnitude < 1e-4f) return Vector3.zero;
-        return Vector3.Cross(Vector3.up, forward.normalized) * (leftHandTraffic ? -1f : 1f);
+        return TrafficLane.KerbDirection(heading, leftHandTraffic);
     }
 
     public static CountryDefinition ResolveCountry()

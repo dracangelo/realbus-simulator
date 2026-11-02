@@ -87,6 +87,7 @@
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusRouteDataTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/OfflineMapTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusLiveryTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/TrafficLaneTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/TrafficPerformanceTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/CinematicGradeTests.cs" />

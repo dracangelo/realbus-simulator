@@ -478,7 +478,9 @@ public class VehiclePool : MonoBehaviour
                 // will place it once there is room.
                 startNode = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
                 targetNode = roadGraph.GetRandomNextNode(startNode, -1);
-                lane = 0;
+                // Lane 0 is the centre-line lane of a two-way link, so the old
+                // hardcoded 0 parked the fallback body on the wrong half of the road.
+                lane = TrafficLane.CruiseLane(roadGraph, startNode, targetNode);
                 along01 = 0.5f;
                 if (!roadGraph.IsValidNode(startNode) || !roadGraph.IsValidNode(targetNode))
                     continue;
@@ -761,14 +763,14 @@ public class VehiclePool : MonoBehaviour
 
     Vector3 GetSpawnPoint(int startNode, int targetNode, int lane, float along01 = 0f)
     {
-        Vector3 start = roadGraph.GetNodePosition(startNode);
-        Vector3 end = roadGraph.GetNodePosition(targetNode);
-        Vector3 segment = end - start;
-        segment.y = 0f;
-        if (segment.sqrMagnitude < .0001f) return start;
-        segment.Normalize();
-        Vector3 point = Vector3.Lerp(start, end, Mathf.Clamp(along01, 0.02f, 0.98f));
-        return point + Vector3.Cross(Vector3.up, segment) * roadGraph.GetLaneOffset(startNode, targetNode, lane);
+        // The spawn point is read off the same lane frame the controllers steer down,
+        // so a new body starts exactly where its controller expects it. Building it
+        // from a separate lerp + cross product put newly spawned cars a fraction of a
+        // lane off their line, and on a short link in the middle of the junction.
+        LaneFrame frame = TrafficLane.Frame(roadGraph, startNode, targetNode, lane);
+        return frame.IsValid
+            ? frame.PointAt(Mathf.Clamp(along01, 0.02f, 0.98f))
+            : roadGraph.GetNodePosition(startNode);
     }
 
     bool IsSpawnPointClear(Vector3 point, PooledVehicle ignore)

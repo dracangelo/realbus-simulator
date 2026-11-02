@@ -75,30 +75,10 @@ public class AIVehicleController : MonoBehaviour
     /// </summary>
     public static float OvertakeShift(AIRoadGraph graph, int fromNode, int toNode, int laneIndex, float maxShift)
     {
-        if (graph == null) return 0f;
-        int lanes = graph.GetLaneCount(fromNode, toNode);
-        if (lanes <= 1) return 0f;
-        int current = Mathf.Clamp(laneIndex, 0, lanes - 1);
-        int target;
-        if (graph.IsOneWay(fromNode, toNode))
-        {
-            target = graph.DrivesOnLeft ? current + 1 : current - 1;
-            if (target < 0 || target >= lanes)
-                target = graph.DrivesOnLeft ? current - 1 : current + 1;
-        }
-        else
-        {
-            // Moving outboard on a two-way road means pulling into the kerb
-            // lane beside the vehicle being passed. Wait behind instead when
-            // already in the inner lane.
-            target = current - 1;
-        }
-        if (target < 0 || target >= lanes) return 0f;
-
-        float shift = graph.GetLaneOffset(fromNode, toNode, target) -
-                      graph.GetLaneOffset(fromNode, toNode, current);
-        float limit = Mathf.Abs(maxShift);
-        return Mathf.Clamp(shift, -limit, limit);
+        int target = PassingLaneIndex(graph, fromNode, toNode, laneIndex);
+        if (target < 0) return 0f;
+        return Mathf.Clamp(LaneOffsetDelta(graph, fromNode, toNode, laneIndex, target),
+            -Mathf.Abs(maxShift), Mathf.Abs(maxShift));
     }
 
     /// <summary>
@@ -109,19 +89,10 @@ public class AIVehicleController : MonoBehaviour
     /// </summary>
     public static float KerbShift(AIRoadGraph graph, int fromNode, int toNode, int laneIndex, float maxShift)
     {
-        if (graph == null) return 0f;
-        int lanes = graph.GetLaneCount(fromNode, toNode);
-        if (lanes <= 1) return 0f;
-        int current = Mathf.Clamp(laneIndex, 0, lanes - 1);
-        int target = graph.IsOneWay(fromNode, toNode)
-            ? (graph.DrivesOnLeft ? current - 1 : current + 1)
-            : current + 1;
-        if (target < 0 || target >= lanes) return 0f;
-
-        float shift = graph.GetLaneOffset(fromNode, toNode, target) -
-                      graph.GetLaneOffset(fromNode, toNode, current);
-        float limit = Mathf.Abs(maxShift);
-        return Mathf.Clamp(shift, -limit, limit);
+        int target = KerbLaneIndex(graph, fromNode, toNode, laneIndex);
+        if (target < 0) return 0f;
+        return Mathf.Clamp(LaneOffsetDelta(graph, fromNode, toNode, laneIndex, target),
+            -Mathf.Abs(maxShift), Mathf.Abs(maxShift));
     }
 
     /// <summary>
@@ -132,35 +103,13 @@ public class AIVehicleController : MonoBehaviour
     /// </summary>
     public static int PassingLaneIndex(AIRoadGraph graph, int fromNode, int toNode, int laneIndex)
     {
-        if (graph == null) return -1;
-        int lanes = graph.GetLaneCount(fromNode, toNode);
-        if (lanes <= 1) return -1;
-        int current = Mathf.Clamp(laneIndex, 0, lanes - 1);
-        int target;
-        if (graph.IsOneWay(fromNode, toNode))
-        {
-            target = graph.DrivesOnLeft ? current + 1 : current - 1;
-            if (target < 0 || target >= lanes)
-                target = graph.DrivesOnLeft ? current - 1 : current + 1;
-        }
-        else
-        {
-            target = current - 1;
-        }
-        return target >= 0 && target < lanes && target != current ? target : -1;
+        return TrafficLane.PassingLane(graph, fromNode, toNode, laneIndex);
     }
 
     /// <summary>Lane to pull into for a kerbside yield, as a persistent lane index.</summary>
     public static int KerbLaneIndex(AIRoadGraph graph, int fromNode, int toNode, int laneIndex)
     {
-        if (graph == null) return -1;
-        int lanes = graph.GetLaneCount(fromNode, toNode);
-        if (lanes <= 1) return -1;
-        int current = Mathf.Clamp(laneIndex, 0, lanes - 1);
-        int target = graph.IsOneWay(fromNode, toNode)
-            ? (graph.DrivesOnLeft ? current - 1 : current + 1)
-            : current + 1;
-        return target >= 0 && target < lanes && target != current ? target : -1;
+        return TrafficLane.KerbYieldLane(graph, fromNode, toNode, laneIndex);
     }
 
     /// <summary>
@@ -171,20 +120,13 @@ public class AIVehicleController : MonoBehaviour
     /// </summary>
     public static int CruiseLaneIndex(AIRoadGraph graph, int fromNode, int toNode)
     {
-        if (graph == null) return 0;
-        int lanes = graph.GetLaneCount(fromNode, toNode);
-        if (lanes <= 1) return 0;
-        if (graph.IsOneWay(fromNode, toNode))
-            return graph.DrivesOnLeft ? 0 : lanes - 1;
-        return lanes - 1;
+        return TrafficLane.CruiseLane(graph, fromNode, toNode);
     }
 
     /// <summary>Signed lateral distance from one lane line to another on the same directed link.</summary>
     public static float LaneOffsetDelta(AIRoadGraph graph, int fromNode, int toNode, int fromLane, int toLane)
     {
-        if (graph == null) return 0f;
-        return graph.GetLaneOffset(fromNode, toNode, toLane) -
-               graph.GetLaneOffset(fromNode, toNode, fromLane);
+        return TrafficLane.OffsetDelta(graph, fromNode, toNode, fromLane, toLane);
     }
 
     public static bool CanOvertakeOn(AIRoadGraph graph, int fromNode, int toNode, int laneIndex = 0,
@@ -420,20 +362,7 @@ public class AIVehicleController : MonoBehaviour
     /// <summary>The lane on this directed link whose line is nearest a lateral body offset.</summary>
     public static int NearestLaneIndex(AIRoadGraph graph, int fromNode, int toNode, float bodyOffset)
     {
-        if (graph == null) return 0;
-        int lanes = Mathf.Max(1, graph.GetLaneCount(fromNode, toNode));
-        int best = 0;
-        float bestDistance = float.MaxValue;
-        for (int lane = 0; lane < lanes; lane++)
-        {
-            float distance = Mathf.Abs(bodyOffset - graph.GetLaneOffset(fromNode, toNode, lane));
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                best = lane;
-            }
-        }
-        return best;
+        return TrafficLane.NearestLane(graph, fromNode, toNode, bodyOffset);
     }
 
     /// <summary>
@@ -448,21 +377,23 @@ public class AIVehicleController : MonoBehaviour
         targetNodeIndex = targetIndex;
         previousNodeIndex = previousIndex;
         laneIndex = lane;
-        Vector3 start = roadGraph.GetNodePosition(nodeIndex);
-        Vector3 point = start;
+        Vector3 point = roadGraph.GetNodePosition(nodeIndex);
         Quaternion facing = transform.rotation;
-        if (roadGraph.IsValidNode(targetIndex))
+        // Placing on the shared lane frame puts the body exactly on the line its
+        // controller will steer down, instead of on the centreline offset by a
+        // separately computed lateral vector.
+        LaneFrame frame = TrafficLane.Frame(roadGraph, nodeIndex, targetIndex, lane);
+        if (frame.IsValid)
         {
-            Vector3 target = roadGraph.GetNodePosition(targetIndex);
-            Vector3 segment = target - start;
+            point = frame.PointAt(Mathf.Clamp(along01, 0.02f, 0.98f));
+            facing = Quaternion.LookRotation(frame.Direction, Vector3.up);
+        }
+        else if (roadGraph.IsValidNode(targetIndex))
+        {
+            Vector3 segment = roadGraph.GetNodePosition(targetIndex) - point;
             segment.y = 0f;
-            point = Vector3.Lerp(start, target, Mathf.Clamp(along01, 0.02f, 0.98f));
             if (segment.sqrMagnitude > .0001f)
-            {
-                segment.Normalize();
-                point += Vector3.Cross(Vector3.up, segment) * roadGraph.GetLaneOffset(nodeIndex, targetIndex, lane);
-                facing = Quaternion.LookRotation(segment, Vector3.up);
-            }
+                facing = Quaternion.LookRotation(segment.normalized, Vector3.up);
         }
         transform.SetPositionAndRotation(point, facing);
         if (rb != null)
@@ -580,16 +511,17 @@ public class AIVehicleController : MonoBehaviour
             }
         }
 
-        float offset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex) + laneShift;
-        Vector3 lateral = right * offset;
-        Vector3 laneA = nodeA + lateral;
-        Vector3 laneB = nodeB + lateral;
-        Vector3 lane = laneB - laneA;
-        float laneLength = lane.magnitude;
-        Vector3 laneDir = laneLength > .01f ? lane / laneLength : segment;
-        float along = laneLength > .01f
-            ? Mathf.Clamp01(Vector3.Dot(current - laneA, laneDir) / laneLength)
-            : 1f;
+        // The lane line comes from the shared frame, which is the same geometry the
+        // spline tier, the pool's spawn placement and the headless audit read. The
+        // old local cross product could not disagree with itself, but it could - and
+        // did - disagree with the other three.
+        LaneFrame frame = TrafficLane.Frame(roadGraph, currentNodeIndex, targetNodeIndex,
+            laneIndex, laneShift);
+        Vector3 laneA = frame.IsValid ? frame.Start : nodeA;
+        Vector3 laneB = frame.IsValid ? frame.End : nodeB;
+        float laneLength = frame.IsValid ? frame.Length : 0f;
+        Vector3 laneDir = frame.IsValid ? frame.Direction : segment;
+        float along = frame.IsValid ? frame.AlongOf(current) : 1f;
 
         float lateralError = Vector3.Dot(current - laneA, right);
         LateralLaneError = Mathf.Abs(lateralError);
@@ -804,9 +736,10 @@ public class AIVehicleController : MonoBehaviour
         if (targetLane < 0 || targetLane >= lanes || targetLane == laneIndex)
             return;
 
-        float oldOffset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, laneIndex);
-        float newOffset = roadGraph.GetLaneOffset(currentNodeIndex, targetNodeIndex, targetLane);
-        laneShift += oldOffset - newOffset;
+        // Ease across from the old lane line to the new one, using the shared
+        // offset geometry for both instead of a second local computation.
+        laneShift -= TrafficLane.OffsetDelta(roadGraph, currentNodeIndex, targetNodeIndex,
+            laneIndex, targetLane);
         laneIndex = targetLane;
         laneShiftTarget = 0f;
         laneChangeActive = true;

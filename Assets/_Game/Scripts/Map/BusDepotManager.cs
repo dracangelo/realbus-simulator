@@ -608,7 +608,9 @@ public class BusDepotManager : MonoBehaviour
         kerbPos.y = groundY;
 
         Vector3 roadFwd = roadFacing * Vector3.forward;
-        Vector3 outward = roadFacing * (leftTraffic ? Vector3.left : Vector3.right);
+        // Kerb side from the shared traffic-side authority, so a depot apron and
+        // the street it opens onto cannot disagree about which way traffic keeps.
+        Vector3 outward = roadFacing * Vector3.right * TrafficLane.SideSign(leftTraffic);
         // +1 when the street lies on the yard's local +X, matching the aisle
         // builder. Yard structures are placed on the far side of the depot from it.
         float streetSide = Mathf.Sign(Vector3.Dot(roadFacing * Vector3.right, -outward));

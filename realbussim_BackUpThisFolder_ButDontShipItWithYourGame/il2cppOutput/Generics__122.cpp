@@ -15363,8 +15363,8 @@ IL_00f8:
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 45982
-// Method Definition Index: 45983
+// Method Definition Index: 46040
+// Method Definition Index: 46041
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR AsyncTaskMethodBuilder_1_tF0BDBC54D5EB433C1205550D0F9819F43C9D4019 TaskSocketAsyncEventArgs_1_GetCompletionResponsibility_m6567C4DB5B1FE07B600E6EA1FB6303666B5E97B5 (TaskSocketAsyncEventArgs_1_tBF4E736DC8FCB94FF74068992FE40D092F521E90* __this, bool* ___0_responsibleForReturningToPool, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(AsyncTaskMethodBuilder_1_t05430F5EA37BFC4837067849AFAE7105DE5CC5EE_StaticInit);
@@ -15441,8 +15441,8 @@ IL_003a:
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 45982
-// Method Definition Index: 45983
+// Method Definition Index: 46040
+// Method Definition Index: 46041
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR AsyncTaskMethodBuilder_1_t31704F68930DF2486DF918AE675E24CF970AD016 TaskSocketAsyncEventArgs_1_GetCompletionResponsibility_mBF3E831A051AC28CD36B29DFAF8F46B3CE84DC1D_gshared (TaskSocketAsyncEventArgs_1_t23D2205428108A011DF00EAA6FA768E03F90E8E9* __this, bool* ___0_responsibleForReturningToPool, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(AsyncTaskMethodBuilder_1_t05430F5EA37BFC4837067849AFAE7105DE5CC5EE_StaticInit);
@@ -15519,7 +15519,7 @@ IL_003a:
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 45982
+// Method Definition Index: 46040
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void TaskSocketAsyncEventArgs_1__ctor_mD523E66FB86F8916B7CC84E9BF26304AC2500C67_fshared (TaskSocketAsyncEventArgs_1_t469108EDA49471DE9AF3FB9110FA49DFAA12E3C1* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15528,7 +15528,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void TaskSocketAsyncEventArgs_1__ctor_mD523E6
 		return;
 	}
 }
-// Method Definition Index: 45983
+// Method Definition Index: 46041
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR AsyncTaskMethodBuilder_1_t9A3ADCFF6503F4230FFD38F6C333EBCF1A034AF4 TaskSocketAsyncEventArgs_1_GetCompletionResponsibility_mDBBDA9DFC99BC113A36D91A508332E7BC9E9025E_fshared (TaskSocketAsyncEventArgs_1_t469108EDA49471DE9AF3FB9110FA49DFAA12E3C1* __this, bool* ___0_responsibleForReturningToPool, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(AsyncTaskMethodBuilder_1_t05430F5EA37BFC4837067849AFAE7105DE5CC5EE_StaticInit);

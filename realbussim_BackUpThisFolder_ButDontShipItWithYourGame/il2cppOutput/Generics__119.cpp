@@ -14012,7 +14012,7 @@ IL_013b:
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77493
+// Method Definition Index: 77551
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineComputeBufferScope_1__ctor_m8F48E1BD9F4BDC71DD6E21A285AE893CBB23FCAA_fshared (SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342* __this, Il2CppFullySharedGenericAny ___0_spline, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -14043,7 +14043,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineComputeBufferScope_1__ctor_m8F48E1
 		return;
 	}
 }
-// Method Definition Index: 77494
+// Method Definition Index: 77552
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineComputeBufferScope_1_Bind_m3182383C7DC883C3ACE39002447DB9368EFEFCCA_fshared (SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342* __this, ComputeShader_tA7BDD0F6EE879D149480F5890BA2E665C50CFBF8* ___0_shader, int32_t ___1_kernel, String_t* ___2_info, String_t* ___3_curves, String_t* ___4_lengths, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -14154,7 +14154,7 @@ IL_004f:
 		return;
 	}
 }
-// Method Definition Index: 77495
+// Method Definition Index: 77553
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineComputeBufferScope_1_Dispose_mEE876909B6B78A54045C60584F3A053F7753E13F_fshared (SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -14211,7 +14211,7 @@ IL2CPP_EXTERN_C  void SplineComputeBufferScope_1_Dispose_mEE876909B6B78A54045C60
 	_thisAdjusted = il2cpp_codegen_get_raw_data<SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342>(__this);
 	SplineComputeBufferScope_1_Dispose_mEE876909B6B78A54045C60584F3A053F7753E13F(_thisAdjusted, method);
 }
-// Method Definition Index: 77496
+// Method Definition Index: 77554
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineComputeBufferScope_1_Upload_mC043A0BACC1453A7A5B34ABEC56F7CA2541E7C4E_fshared (SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -14381,7 +14381,7 @@ IL_0100:
 		return;
 	}
 }
-// Method Definition Index: 77497
+// Method Definition Index: 77555
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR Vector4_t58B63D32F48C0DBF50DE2C60794C4676C80EDBE3 SplineComputeBufferScope_1_get_Info_m12134AE806940D911AC481C33FDAA9AFDF0D1561_fshared (SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -14410,7 +14410,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR Vector4_t58B63D32F48C0DBF50DE2C60794C4676C80E
 		return L_17;
 	}
 }
-// Method Definition Index: 77498
+// Method Definition Index: 77556
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR ComputeBuffer_t51EADA9015EBCC1B982C5584E9AB2734415A8233* SplineComputeBufferScope_1_get_Curves_m0FC66ADC585E75868C2AF065624C5CF751DA8535_fshared (SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -14420,7 +14420,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR ComputeBuffer_t51EADA9015EBCC1B982C5584E9AB27
 		return L_0;
 	}
 }
-// Method Definition Index: 77499
+// Method Definition Index: 77557
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR ComputeBuffer_t51EADA9015EBCC1B982C5584E9AB2734415A8233* SplineComputeBufferScope_1_get_CurveLengths_m528B0DF05C8A1CE75959BAE3D12D9C39C6E94F7A_fshared (SplineComputeBufferScope_1_tA9DD1D45FB91693C1CB0B18DBA4745FD7759B342* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -14438,7 +14438,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR ComputeBuffer_t51EADA9015EBCC1B982C5584E9AB27
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77196
+// Method Definition Index: 77254
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Keys_m5C216935B4974411FDB33257ACDF0C7183D87E5F (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -14480,7 +14480,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77197
+// Method Definition Index: 77255
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Values_m0D02A5E4CFCB0018542510ABF6233FBC4837441C (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -14522,7 +14522,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77198
+// Method Definition Index: 77256
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineDataDictionary_1_FindIndex_m3C9D9E07E5635720B36AD4CE7A7F477974BB5DAD (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14579,7 +14579,7 @@ IL_002f:
 		return (-1);
 	}
 }
-// Method Definition Index: 77199
+// Method Definition Index: 77257
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_TryGetValue_m84476EB484CB3F0EB56D6540D99461BE091828D5 (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, String_t* ___0_key, SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C** ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14629,7 +14629,7 @@ IL_0021:
 		return (bool)((((int32_t)L_8) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77200
+// Method Definition Index: 77258
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* SplineDataDictionary_1_GetOrCreate_m06ACF8DB18381D6A8FB821013923D42403435CF4 (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14686,7 +14686,7 @@ IL_0042:
 		return L_12;
 	}
 }
-// Method Definition Index: 77201
+// Method Definition Index: 77259
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* SplineDataDictionary_1_get_Item_m9F20FD0A11BBA39DD2495C7C940213E4803D2045 (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14710,7 +14710,7 @@ IL_000d:
 		return L_2;
 	}
 }
-// Method Definition Index: 77202
+// Method Definition Index: 77260
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_set_Item_m23B303615E7CE54799FBFB306313480DCC0514A0 (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, String_t* ___0_key, SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14764,7 +14764,7 @@ IL_0032:
 		return;
 	}
 }
-// Method Definition Index: 77203
+// Method Definition Index: 77261
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_mF75D1D7CFE51CB503B76D7EBBA47C30E039CE1AF (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14775,7 +14775,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_mF75D1D7
 		return (bool)((((int32_t)L_1) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77204
+// Method Definition Index: 77262
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnumerator_m75809286D87C61DFBB5A400F4CEEEF87F5076A1C (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14789,8 +14789,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnum
 		return (RuntimeObject*)L_3;
 	}
 }
-// Method Definition Index: 77205
-// Method Definition Index: 77206
+// Method Definition Index: 77263
+// Method Definition Index: 77264
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Remove_m7D04DA5B6754A8C9CEA9D0C25ECF9BE22B317D83 (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14819,7 +14819,7 @@ IL_000e:
 		return (bool)1;
 	}
 }
-// Method Definition Index: 77207
+// Method Definition Index: 77265
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_RemoveEmpty_mFED4513686F209E0C8E2019AE4ED12B7E5EDCE91 (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -14939,7 +14939,7 @@ IL_0084:
 		return;
 	}
 }
-// Method Definition Index: 77208
+// Method Definition Index: 77266
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m158CEBF8C9059B5380B4613EC048FADD9EA0FE83 (SplineDataDictionary_1_t63E81D65AEDBA30FE245B04BBBBE83697C65F30F* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -14960,7 +14960,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m158CEBF8C9
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77196
+// Method Definition Index: 77254
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Keys_mF195D5439B7A698F489A73FC63C06D81AC595CDB (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -15002,7 +15002,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77197
+// Method Definition Index: 77255
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Values_m8CB1FBD938FCDD7496B6F4C8B900650AD0D59D72 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -15044,7 +15044,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77198
+// Method Definition Index: 77256
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineDataDictionary_1_FindIndex_m8B56F1F0750F90D63AC02CD3FF2902E13D21C367 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15101,7 +15101,7 @@ IL_002f:
 		return (-1);
 	}
 }
-// Method Definition Index: 77199
+// Method Definition Index: 77257
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_TryGetValue_m5A21AB284CD20BA722EA9B4F621083D4BC7EB651 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, String_t* ___0_key, SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6** ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15151,7 +15151,7 @@ IL_0021:
 		return (bool)((((int32_t)L_8) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77200
+// Method Definition Index: 77258
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* SplineDataDictionary_1_GetOrCreate_m0EBFE69297B6CFA3342C61EAC0A12FC1A92C3A35 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15208,7 +15208,7 @@ IL_0042:
 		return L_12;
 	}
 }
-// Method Definition Index: 77201
+// Method Definition Index: 77259
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* SplineDataDictionary_1_get_Item_mE2018120FA907D626B7A669AC342573B4992B2FD (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15232,7 +15232,7 @@ IL_000d:
 		return L_2;
 	}
 }
-// Method Definition Index: 77202
+// Method Definition Index: 77260
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_set_Item_m409B2B05A3A5F522138219AE74312096895C24B1 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, String_t* ___0_key, SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15286,7 +15286,7 @@ IL_0032:
 		return;
 	}
 }
-// Method Definition Index: 77203
+// Method Definition Index: 77261
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_m2FE04FDF5729F9CA0AA8CA8F33469F1BEA3FF40D (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15297,7 +15297,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_m2FE04FD
 		return (bool)((((int32_t)L_1) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77204
+// Method Definition Index: 77262
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnumerator_m8AB5438F1C0900469D5761D51F3BB64D64DE56D2 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15311,8 +15311,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnum
 		return (RuntimeObject*)L_3;
 	}
 }
-// Method Definition Index: 77205
-// Method Definition Index: 77206
+// Method Definition Index: 77263
+// Method Definition Index: 77264
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Remove_m5883082970E0FDBA07F18CC2FE5BFD3CD4951D03 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15341,7 +15341,7 @@ IL_000e:
 		return (bool)1;
 	}
 }
-// Method Definition Index: 77207
+// Method Definition Index: 77265
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_RemoveEmpty_m5BC7F86B966BBFAC7BEC633497BC7A429840AC09 (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -15461,7 +15461,7 @@ IL_0084:
 		return;
 	}
 }
-// Method Definition Index: 77208
+// Method Definition Index: 77266
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m9C16AE726B4927FAAED76BCD0B0C232352FAE14D (SplineDataDictionary_1_t6198DA9EDDEBC198D3781372B0314FF27D7335AF* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15482,7 +15482,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m9C16AE726B
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77196
+// Method Definition Index: 77254
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Keys_m05F58248B6C13F6415C96820651C6AD19E5F2047_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -15524,7 +15524,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77197
+// Method Definition Index: 77255
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Values_m5016CD77A850FD089957EFE4E7EDA5D4F436C9A0_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -15566,7 +15566,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77198
+// Method Definition Index: 77256
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineDataDictionary_1_FindIndex_m851F8CCC4BF313DD6E24A6F79CD871F00FE61C03_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15623,7 +15623,7 @@ IL_002f:
 		return (-1);
 	}
 }
-// Method Definition Index: 77199
+// Method Definition Index: 77257
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_TryGetValue_m20FC6B5B7CF310D68B533FA2A34A1B196D0BB857_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, String_t* ___0_key, SplineData_1_tA22EF83D25A9841E37E9D6DF91053944D9C3B1F4** ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15673,7 +15673,7 @@ IL_0021:
 		return (bool)((((int32_t)L_8) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77200
+// Method Definition Index: 77258
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_tA22EF83D25A9841E37E9D6DF91053944D9C3B1F4* SplineDataDictionary_1_GetOrCreate_m7134FFA02E6FD58EED8EC94785D75417A22AA52B_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15730,7 +15730,7 @@ IL_0042:
 		return L_12;
 	}
 }
-// Method Definition Index: 77201
+// Method Definition Index: 77259
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_tA22EF83D25A9841E37E9D6DF91053944D9C3B1F4* SplineDataDictionary_1_get_Item_m2771A15F64B558DA642EA2A9E301F9E5067C107D_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15754,7 +15754,7 @@ IL_000d:
 		return L_2;
 	}
 }
-// Method Definition Index: 77202
+// Method Definition Index: 77260
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_set_Item_m210F4DDC72EC4C7E6340878C34D6FD7C82D0986E_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, String_t* ___0_key, SplineData_1_tA22EF83D25A9841E37E9D6DF91053944D9C3B1F4* ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15808,7 +15808,7 @@ IL_0032:
 		return;
 	}
 }
-// Method Definition Index: 77203
+// Method Definition Index: 77261
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_m6D393B9B1DBE78A01FE2BFBD7A50759F01AF16FF_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15819,7 +15819,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_m6D393B9
 		return (bool)((((int32_t)L_1) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77204
+// Method Definition Index: 77262
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnumerator_mCF1252448E7B7F58ABADD5391E3B717C0EC4E6EE_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15833,8 +15833,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnum
 		return (RuntimeObject*)L_3;
 	}
 }
-// Method Definition Index: 77205
-// Method Definition Index: 77206
+// Method Definition Index: 77263
+// Method Definition Index: 77264
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Remove_m45DFB11CE6B1800B415326C2F7645849B622BBB5_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -15863,7 +15863,7 @@ IL_000e:
 		return (bool)1;
 	}
 }
-// Method Definition Index: 77207
+// Method Definition Index: 77265
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_RemoveEmpty_m8CE0C3630DA8C05459E8FE2E521946076E2C3030_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -15983,7 +15983,7 @@ IL_0084:
 		return;
 	}
 }
-// Method Definition Index: 77208
+// Method Definition Index: 77266
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_mBE43D7BAFA0EAEB146708481A8D07D1D92848C0D_gshared (SplineDataDictionary_1_t4BA4866DA5068FBBA312303B5ED69F749DA250FA* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16004,7 +16004,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_mBE43D7BAFA
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77196
+// Method Definition Index: 77254
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Keys_m26DFC6E023D6F46495A2AAE99D6101BB55766953_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -16046,7 +16046,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77197
+// Method Definition Index: 77255
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Values_m12C6EF3755B052A69FD079FB1F0E03698658DEEE_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -16088,7 +16088,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77198
+// Method Definition Index: 77256
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineDataDictionary_1_FindIndex_mD5D635A23760D7671E731090214B3A8F2FFC60F5_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16145,7 +16145,7 @@ IL_002f:
 		return (-1);
 	}
 }
-// Method Definition Index: 77199
+// Method Definition Index: 77257
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_TryGetValue_mE93A8054A3560C9F6B06AD95F26B63EA1548E06A_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, String_t* ___0_key, SplineData_1_t5A8AEB81C09C644A42275D7C08D086BF9B2F365E** ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16195,7 +16195,7 @@ IL_0021:
 		return (bool)((((int32_t)L_8) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77200
+// Method Definition Index: 77258
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_t5A8AEB81C09C644A42275D7C08D086BF9B2F365E* SplineDataDictionary_1_GetOrCreate_m2EC98078253048C2A4DDCE02B66A02FE0A1FEBD1_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16252,7 +16252,7 @@ IL_0042:
 		return L_12;
 	}
 }
-// Method Definition Index: 77201
+// Method Definition Index: 77259
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_t5A8AEB81C09C644A42275D7C08D086BF9B2F365E* SplineDataDictionary_1_get_Item_m786C8846FF68543C2501811DF3A526E04D65C130_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16276,7 +16276,7 @@ IL_000d:
 		return L_2;
 	}
 }
-// Method Definition Index: 77202
+// Method Definition Index: 77260
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_set_Item_mCC574E2EFA96012722BA84F26ABDCFD6449212B2_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, String_t* ___0_key, SplineData_1_t5A8AEB81C09C644A42275D7C08D086BF9B2F365E* ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16330,7 +16330,7 @@ IL_0032:
 		return;
 	}
 }
-// Method Definition Index: 77203
+// Method Definition Index: 77261
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_mDF00FFF4DB53C0D848B03830AB4232493FE99731_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16341,7 +16341,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_mDF00FFF
 		return (bool)((((int32_t)L_1) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77204
+// Method Definition Index: 77262
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnumerator_m08FED401050F568CA61C228F8C76AAABE3BF2D90_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16355,7 +16355,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnum
 		return (RuntimeObject*)L_3;
 	}
 }
-// Method Definition Index: 77205
+// Method Definition Index: 77263
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_System_Collections_IEnumerable_GetEnumerator_mCE941951DF766F9E658DBB94D3C3A427200EE1A6_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -16373,7 +16373,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_System_
 		return L_1;
 	}
 }
-// Method Definition Index: 77206
+// Method Definition Index: 77264
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Remove_mDD1C1C993A2E748EAAEF23EFEF3D399FB1842EF7_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16402,7 +16402,7 @@ IL_000e:
 		return (bool)1;
 	}
 }
-// Method Definition Index: 77207
+// Method Definition Index: 77265
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_RemoveEmpty_mC75463DB84E4E22CAB7181C49C0686BDEFEA2DEB_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -16522,7 +16522,7 @@ IL_0084:
 		return;
 	}
 }
-// Method Definition Index: 77208
+// Method Definition Index: 77266
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_mEC2EBE8171A03008D29AAE9DCA059AED03F7C758_fshared (SplineDataDictionary_1_t9959BD230179BFA6DE786C2920D1445EFC835958* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16543,7 +16543,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_mEC2EBE8171
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77196
+// Method Definition Index: 77254
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Keys_mE000E43BD5BB8A3B68C619A1FA65049BAE04E380 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -16585,7 +16585,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77197
+// Method Definition Index: 77255
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_get_Values_mF1C7133C28A3A94CD942FCCB5835466CED70EEC0 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_tF0909B9F1002F7050DEE70B4973A14A824356998_StaticInit);
@@ -16627,7 +16627,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77198
+// Method Definition Index: 77256
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineDataDictionary_1_FindIndex_m64CC8A1FD55C9BFCEE7ADB7F3B25E8D116FE2021 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16684,7 +16684,7 @@ IL_002f:
 		return (-1);
 	}
 }
-// Method Definition Index: 77199
+// Method Definition Index: 77257
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_TryGetValue_mD970B5BB32E01307907A5360376D460861F1F9AC (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, String_t* ___0_key, SplineData_1_t5A0434EB8372FD206E3A6FFAA3D98EA4852E0912** ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16734,7 +16734,7 @@ IL_0021:
 		return (bool)((((int32_t)L_8) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77200
+// Method Definition Index: 77258
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_t5A0434EB8372FD206E3A6FFAA3D98EA4852E0912* SplineDataDictionary_1_GetOrCreate_mF1F114450D6FC56F3EAE95EFAD8C791EC8D74980 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16791,7 +16791,7 @@ IL_0042:
 		return L_12;
 	}
 }
-// Method Definition Index: 77201
+// Method Definition Index: 77259
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SplineData_1_t5A0434EB8372FD206E3A6FFAA3D98EA4852E0912* SplineDataDictionary_1_get_Item_m035592552FB8B522B215DE0CFE6AD6B09A62B4AF (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16815,7 +16815,7 @@ IL_000d:
 		return L_2;
 	}
 }
-// Method Definition Index: 77202
+// Method Definition Index: 77260
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_set_Item_mD9D1A4C69408E8C28F2BF1018D31BAF5F93E3B02 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, String_t* ___0_key, SplineData_1_t5A0434EB8372FD206E3A6FFAA3D98EA4852E0912* ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16869,7 +16869,7 @@ IL_0032:
 		return;
 	}
 }
-// Method Definition Index: 77203
+// Method Definition Index: 77261
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_mA2E1725DFE9065256621D4E6674083FA4B684B1F (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16880,7 +16880,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Contains_mA2E1725
 		return (bool)((((int32_t)L_1) > ((int32_t)(-1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 77204
+// Method Definition Index: 77262
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnumerator_m6C5C1036C8EF3B104248CE4245E695ED658F7465 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16894,8 +16894,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineDataDictionary_1_GetEnum
 		return (RuntimeObject*)L_3;
 	}
 }
-// Method Definition Index: 77205
-// Method Definition Index: 77206
+// Method Definition Index: 77263
+// Method Definition Index: 77264
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineDataDictionary_1_Remove_m112EA06BE6120662844BCFA67AB8D0FEFA3AF905 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, String_t* ___0_key, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16924,7 +16924,7 @@ IL_000e:
 		return (bool)1;
 	}
 }
-// Method Definition Index: 77207
+// Method Definition Index: 77265
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1_RemoveEmpty_m6104B087F4E3049F875154E40AFA63F0A4F82F55 (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -17044,7 +17044,7 @@ IL_0084:
 		return;
 	}
 }
-// Method Definition Index: 77208
+// Method Definition Index: 77266
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m0D7B39405D010845B00D0140D35E5C1A31484B3C (SplineDataDictionary_1_tFE43609CA78818B102246E8609BA4D67A80BA2F9* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17065,7 +17065,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m0D7B39405D
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77195
+// Method Definition Index: 77253
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -17074,7 +17074,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m0D7B39405D
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77195
+// Method Definition Index: 77253
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -17083,7 +17083,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m0D7B39405D
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77195
+// Method Definition Index: 77253
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -17092,7 +17092,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataDictionary_1__ctor_m0D7B39405D
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77195
+// Method Definition Index: 77253
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataKeyValuePair_1__ctor_m125D91F3C089C1E976C139C4B8DE417B0EB19A56_fshared (SplineDataKeyValuePair_1_t51A4569093A996A46188A11B7D5055EB019E438C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17109,7 +17109,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataKeyValuePair_1__ctor_m125D91F3
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77195
+// Method Definition Index: 77253
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -17118,7 +17118,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineDataKeyValuePair_1__ctor_m125D91F3
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77144
+// Method Definition Index: 77202
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE SplineData_1_get_Item_mDC87C0349AE718541374E45EB6E0322C087FCA5A (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_index, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17131,7 +17131,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84
 		return L_2;
 	}
 }
-// Method Definition Index: 77145
+// Method Definition Index: 77203
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_Item_mF4439514D160833E6BB76A63A8FC889AC1B7787C (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_index, DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17142,7 +17142,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_Item_mF4439514D160833E6
 		return;
 	}
 }
-// Method Definition Index: 77146
+// Method Definition Index: 77204
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_PathIndexUnit_mAFC6B45F2F486987410E8953F34F6AB64670A6B9 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17151,7 +17151,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_PathIndexUnit_mAFC6B
 		return L_0;
 	}
 }
-// Method Definition Index: 77147
+// Method Definition Index: 77205
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_PathIndexUnit_mD59727B0D36B153D02D16A6DE5E5C8B0B767D352 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17161,7 +17161,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_PathIndexUnit_mD59727B0
 		return;
 	}
 }
-// Method Definition Index: 77148
+// Method Definition Index: 77206
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_DefaultValue_m04833F66B0D7A17461DBD0F72E612115F4239E7A (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17170,7 +17170,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_DefaultValue_m04833F
 		return L_0;
 	}
 }
-// Method Definition Index: 77149
+// Method Definition Index: 77207
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_DefaultValue_mEA64C5CF1DACAF1F9B8B492AC825A7EEB3801A05 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17180,7 +17180,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_DefaultValue_mEA64C5CF1
 		return;
 	}
 }
-// Method Definition Index: 77150
+// Method Definition Index: 77208
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_Count_mE8FD1023A49410263923F7750AA1BA94E9E95853 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17192,7 +17192,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_Count_mE8FD1023A4941
 		return L_1;
 	}
 }
-// Method Definition Index: 77151
+// Method Definition Index: 77209
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_get_Indexes_mA5D6BD3E070539F824B16822DBD23EE0B633BF9F (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_t70EC8801BC7CB9E64B93E4EB33C0453860C69023_StaticInit);
@@ -17234,7 +17234,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77152
+// Method Definition Index: 77210
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_add_changed_mA6166A42A4BE2620B48B6102F62C13BFC2E11C87 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -17278,7 +17278,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77153
+// Method Definition Index: 77211
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_remove_changed_m22FFE86F5D367268B21334024A5A5A94132DF8C1 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -17322,7 +17322,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77154
+// Method Definition Index: 77212
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_add_Changed_mCBD377B2A3E8DA7E98D0B1E88D01E2CA778B262A (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -17366,7 +17366,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77155
+// Method Definition Index: 77213
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_remove_Changed_m42D199E2C99B9C89E2673A2A7908B39D899CE2BE (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -17410,7 +17410,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77156
+// Method Definition Index: 77214
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m55149545B8862663AEB7C404D276DAE8E8AE6360 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17424,7 +17424,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m55149545B8862663AEB7
 		return;
 	}
 }
-// Method Definition Index: 77157
+// Method Definition Index: 77215
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m55C6A7D9EEB35A143C703F94496F151A2E887062 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_init, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17441,7 +17441,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m55C6A7D9EEB35A143C70
 		return;
 	}
 }
-// Method Definition Index: 77158
+// Method Definition Index: 77216
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m5B5008A2F25C582B2C887D46913981B4F9D21B75 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, RuntimeObject* ___0_dataPoints, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -17542,7 +17542,7 @@ IL_0044:
 		return;
 	}
 }
-// Method Definition Index: 77159
+// Method Definition Index: 77217
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SetDirty_m80F395545F12D247C4997CE49897BB7AB7E36B83 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17592,7 +17592,7 @@ IL_001c:
 		return;
 	}
 }
-// Method Definition Index: 77160
+// Method Definition Index: 77218
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Add_m4848FAED6A3DC574F4AD4E5DCF85C44F13E05F2F (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, float ___0_t, int32_t ___1_data, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17607,7 +17607,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Add_m4848FAED6A3DC574F4AD4E
 		return;
 	}
 }
-// Method Definition Index: 77161
+// Method Definition Index: 77219
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_Add_m227C3AE9A28B47BEDB460E8E97AD427B67ED702B (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE ___0_dataPoint, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -17656,7 +17656,7 @@ IL_0022:
 		return L_11;
 	}
 }
-// Method Definition Index: 77162
+// Method Definition Index: 77220
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_AddDataPointWithDefaultValue_mE47CCACAF1D2FB5586A6ABCF83DFDF434846B83F (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, float ___0_t, bool ___1_useDefaultValue, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -17795,7 +17795,7 @@ IL_00a3:
 		return L_31;
 	}
 }
-// Method Definition Index: 77163
+// Method Definition Index: 77221
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_RemoveAt_mCB5B9616421C6BE18255DDECF13DE1CBCBE4ED3F (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_index, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17833,7 +17833,7 @@ IL_0018:
 		return;
 	}
 }
-// Method Definition Index: 77164
+// Method Definition Index: 77222
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineData_1_RemoveDataPoint_mF75F996580F2C3E165A4FE659A53D342F19884C0 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, float ___0_t, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17876,7 +17876,7 @@ IL_0038:
 		return G_B2_0;
 	}
 }
-// Method Definition Index: 77165
+// Method Definition Index: 77223
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_MoveDataPoint_mD43A0E0F8D2FA2C82E4D2AF8BC0FA5C34D25E5E4 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_index, float ___1_newIndex, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17941,7 +17941,7 @@ IL_0036:
 		return L_14;
 	}
 }
-// Method Definition Index: 77166
+// Method Definition Index: 77224
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Clear_mE0F6E9F088E61C0C2F85CAB204915362BF6D6E66 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -17953,8 +17953,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Clear_mE0F6E9F088E61C0C2F85
 		return;
 	}
 }
-// Method Definition Index: 77167
-// Method Definition Index: 77168
+// Method Definition Index: 77225
+// Method Definition Index: 77226
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_ResolveBinaryIndex_m1F08E2C94453A8EB19F752B6FE99E334328905E5 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_index, bool ___1_wrap, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -18008,7 +18008,7 @@ IL_0021:
 		return L_9;
 	}
 }
-// Method Definition Index: 77169
+// Method Definition Index: 77227
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR ValueTuple_3_t1A3956B782758FC028515D772875B7F3F2AAD307 SplineData_1_GetIndex_m67702B6CE53378F8E60D6213DD10BC1C07B49A20 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, float ___0_t, float ___1_splineLength, int32_t ___2_knotCount, bool ___3_closed, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -18305,7 +18305,7 @@ IL_015b:
 		return L_79;
 	}
 }
-// Method Definition Index: 77172
+// Method Definition Index: 77230
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SetDataPoint_m80E5C4B14CAF080FE3D97EEDE9D35C4587C676C5 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_index, DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -18344,7 +18344,7 @@ IL_0018:
 		return;
 	}
 }
-// Method Definition Index: 77173
+// Method Definition Index: 77231
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SetDataPointNoSort_mF0A5A6DB55A087E6C84BF3A4F61BEE38A3944815 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, int32_t ___0_index, DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -18383,7 +18383,7 @@ IL_0018:
 		return;
 	}
 }
-// Method Definition Index: 77174
+// Method Definition Index: 77232
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SortIfNecessary_m2164662ADED11525E54180C676DD7BA46325D81E (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -18408,7 +18408,7 @@ IL_0009:
 		return;
 	}
 }
-// Method Definition Index: 77175
+// Method Definition Index: 77233
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_ForceSort_mD1D8019B69CAAD4D242CF0E2B83BCD2FA2C42309 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -18418,7 +18418,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_ForceSort_mD1D8019B69CAAD4D
 		return;
 	}
 }
-// Method Definition Index: 77178
+// Method Definition Index: 77236
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_GetEnumerator_m2BAFA9399FB48AD1C792F473D039189FB8C0CE44 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -18432,7 +18432,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_GetEnumerator_m2B
 		return L_1;
 	}
 }
-// Method Definition Index: 77179
+// Method Definition Index: 77237
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_System_Collections_IEnumerable_GetEnumerator_m85F9B073DFE531A849287D3FD609EC1FD21E47D3 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -18442,7 +18442,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_System_Collection
 		return L_0;
 	}
 }
-// Method Definition Index: 77180
+// Method Definition Index: 77238
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float SplineData_1_WrapInt_m42E5F3278FABBE4D39144EDEB0C75C3401B271D2 (float ___0_index, int32_t ___1_lowerBound, int32_t ___2_upperBound, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -18465,8 +18465,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float SplineData_1_WrapInt_m42E5F3278FABBE4D3
 		return ((float)il2cpp_codegen_add(L_6, L_8));
 	}
 }
-// Method Definition Index: 77181
-// Method Definition Index: 77182
+// Method Definition Index: 77239
+// Method Definition Index: 77240
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_UnityEngine_Splines_ISplineModificationHandler_OnSplineModified_m41B2897D70D37D592D57F740F561DF609CBE4AA5 (SplineData_1_tF29E811708B706899A292A38A9FFA70C7F10141C* __this, SplineModificationData_tD468243C2B8D1D2837DFBD9A04B7601EDC28C2AF ___0_data, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19068,7 +19068,7 @@ IL_02ec:
 		return;
 	}
 }
-// Method Definition Index: 77183
+// Method Definition Index: 77241
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__cctor_mDA69EF589E7CDF91198242AA55B8AEDD3FF952C0 (const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -19089,7 +19089,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__cctor_mDA69EF589E7CDF91198
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 77144
+// Method Definition Index: 77202
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761 SplineData_1_get_Item_m358BCDBA6CEC4268F9C47DA8C92E9AE932222D9A (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_index, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19102,7 +19102,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR DataPoint_1_t6B7B80D91DA21439876F6D0784049FBE
 		return L_2;
 	}
 }
-// Method Definition Index: 77145
+// Method Definition Index: 77203
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_Item_mFE6C7E3BD23B6643469BDE12B34A478D289D4C1D (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_index, DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761 ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19113,7 +19113,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_Item_mFE6C7E3BD23B66434
 		return;
 	}
 }
-// Method Definition Index: 77146
+// Method Definition Index: 77204
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_PathIndexUnit_m230012A3840C994B62D956DAAF0513A544DBB06E (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19122,7 +19122,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_PathIndexUnit_m23001
 		return L_0;
 	}
 }
-// Method Definition Index: 77147
+// Method Definition Index: 77205
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_PathIndexUnit_m83ED06F17B80D346F1085A756315A160876D414F (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19132,7 +19132,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_PathIndexUnit_m83ED06F1
 		return;
 	}
 }
-// Method Definition Index: 77148
+// Method Definition Index: 77206
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float SplineData_1_get_DefaultValue_mDD82003E41E28B8563C0C3F419473269396DE0D5 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19141,7 +19141,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float SplineData_1_get_DefaultValue_mDD82003E
 		return L_0;
 	}
 }
-// Method Definition Index: 77149
+// Method Definition Index: 77207
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_DefaultValue_m8D408E7634892F36FD4D23F20545D8B9C2A93C16 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, float ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19151,7 +19151,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_set_DefaultValue_m8D408E763
 		return;
 	}
 }
-// Method Definition Index: 77150
+// Method Definition Index: 77208
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_Count_m9CA59F1EE706A934FF03BAD2322530CEF5811E10 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19163,7 +19163,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_get_Count_m9CA59F1EE706A
 		return L_1;
 	}
 }
-// Method Definition Index: 77151
+// Method Definition Index: 77209
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_get_Indexes_mC8B8B9AB6289D33AC49B5639CFF7524D6C167C65 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(U3CU3Ec_t70EC8801BC7CB9E64B93E4EB33C0453860C69023_StaticInit);
@@ -19205,7 +19205,7 @@ IL_0025:
 		return L_6;
 	}
 }
-// Method Definition Index: 77152
+// Method Definition Index: 77210
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_add_changed_m81543E4A56BC000B6F3A4736EFCF5CED8241CEA9 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19249,7 +19249,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77153
+// Method Definition Index: 77211
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_remove_changed_m074DC7E4A66843B015102D049F66DCE3BC59FD23 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19293,7 +19293,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77154
+// Method Definition Index: 77212
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_add_Changed_mF6F293585A589DDDC8EE5028DD0B8268FBCC6E89 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19337,7 +19337,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77155
+// Method Definition Index: 77213
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_remove_Changed_mC393670A4443E53F71658F4A7AE599274A56652A (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, Action_tD00B0A84D7945E50C2DFFC28EFEE6ED44ED2AD07* ___0_value, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19381,7 +19381,7 @@ IL_0007:
 		return;
 	}
 }
-// Method Definition Index: 77156
+// Method Definition Index: 77214
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m8FD89716EB18E4110552459A5EB446B27193B043 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19395,7 +19395,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m8FD89716EB18E4110552
 		return;
 	}
 }
-// Method Definition Index: 77157
+// Method Definition Index: 77215
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_mF1B010305BD727BA81D679B11C703DDBA1360341 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, float ___0_init, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19412,7 +19412,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_mF1B010305BD727BA81D6
 		return;
 	}
 }
-// Method Definition Index: 77158
+// Method Definition Index: 77216
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__ctor_m9C0EC0B04C1EA6B7F961E38D9B3388A16D1F3937 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, RuntimeObject* ___0_dataPoints, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19513,7 +19513,7 @@ IL_0044:
 		return;
 	}
 }
-// Method Definition Index: 77159
+// Method Definition Index: 77217
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SetDirty_mCBA40E7747E8093C762353324E59BFC50939E705 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19563,7 +19563,7 @@ IL_001c:
 		return;
 	}
 }
-// Method Definition Index: 77160
+// Method Definition Index: 77218
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Add_m723558A5880B20AC8ACC2C26D9264161D4991B9D (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, float ___0_t, float ___1_data, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19578,7 +19578,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Add_m723558A5880B20AC8ACC2C
 		return;
 	}
 }
-// Method Definition Index: 77161
+// Method Definition Index: 77219
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_Add_m0D25BF76B3854DB308C789C3C96ED85F83D26B57 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761 ___0_dataPoint, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -19627,7 +19627,7 @@ IL_0022:
 		return L_11;
 	}
 }
-// Method Definition Index: 77162
+// Method Definition Index: 77220
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_AddDataPointWithDefaultValue_mBCABD8F25E36811C45BD349AA3FEA22F708E0F43 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, float ___0_t, bool ___1_useDefaultValue, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -19766,7 +19766,7 @@ IL_00a3:
 		return L_31;
 	}
 }
-// Method Definition Index: 77163
+// Method Definition Index: 77221
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_RemoveAt_m42841AFFBB9DE30651A6F322B9064C03193493E2 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_index, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19804,7 +19804,7 @@ IL_0018:
 		return;
 	}
 }
-// Method Definition Index: 77164
+// Method Definition Index: 77222
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool SplineData_1_RemoveDataPoint_mBFB690E27961A46E688A3F709DF60D5755779861 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, float ___0_t, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19847,7 +19847,7 @@ IL_0038:
 		return G_B2_0;
 	}
 }
-// Method Definition Index: 77165
+// Method Definition Index: 77223
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_MoveDataPoint_mA3A5E0F88C04085B5C1621F2D1B0471F2F02699A (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_index, float ___1_newIndex, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19912,7 +19912,7 @@ IL_0036:
 		return L_14;
 	}
 }
-// Method Definition Index: 77166
+// Method Definition Index: 77224
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Clear_mF94A73A25BB4C78DD801AC9510CCA4C4BE5F4D64 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -19924,8 +19924,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_Clear_mF94A73A25BB4C78DD801
 		return;
 	}
 }
-// Method Definition Index: 77167
-// Method Definition Index: 77168
+// Method Definition Index: 77225
+// Method Definition Index: 77226
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t SplineData_1_ResolveBinaryIndex_mA13B5CA5245045ADC678A59AA34A8747F3DFF6AF (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_index, bool ___1_wrap, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -19979,7 +19979,7 @@ IL_0021:
 		return L_9;
 	}
 }
-// Method Definition Index: 77169
+// Method Definition Index: 77227
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR ValueTuple_3_t1A3956B782758FC028515D772875B7F3F2AAD307 SplineData_1_GetIndex_m922CD8185C39F2464573A9937317AA484E1B6CC7 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, float ___0_t, float ___1_splineLength, int32_t ___2_knotCount, bool ___3_closed, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(SplineData_1_tCFB34AD86B46002E99234C0CA6B3CD3035C14674_StaticInit);
@@ -20276,7 +20276,7 @@ IL_015b:
 		return L_79;
 	}
 }
-// Method Definition Index: 77172
+// Method Definition Index: 77230
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SetDataPoint_mF8328B1427E588279C80F7A50F883FB6E7C9F76E (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_index, DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761 ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -20315,7 +20315,7 @@ IL_0018:
 		return;
 	}
 }
-// Method Definition Index: 77173
+// Method Definition Index: 77231
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SetDataPointNoSort_m3BE394E43497D836734D835F6059D7A4054AB6A2 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, int32_t ___0_index, DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761 ___1_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -20354,7 +20354,7 @@ IL_0018:
 		return;
 	}
 }
-// Method Definition Index: 77174
+// Method Definition Index: 77232
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_SortIfNecessary_mD2ACE0613459F9DB4FC10D08F22D2686CF72ECC1 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -20379,7 +20379,7 @@ IL_0009:
 		return;
 	}
 }
-// Method Definition Index: 77175
+// Method Definition Index: 77233
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_ForceSort_m204D945E0D012E29F28D3EE1D6A66B61BE0C79CC (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -20389,7 +20389,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_ForceSort_m204D945E0D012E29
 		return;
 	}
 }
-// Method Definition Index: 77178
+// Method Definition Index: 77236
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_GetEnumerator_m9E691BA96EB0ACB5CD59A67D2574C63B58DED522 (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -20403,7 +20403,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_GetEnumerator_m9E
 		return L_1;
 	}
 }
-// Method Definition Index: 77179
+// Method Definition Index: 77237
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_System_Collections_IEnumerable_GetEnumerator_mE6FD1740DBD241D659EC2F25DEFD25D194C71AEE (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -20413,7 +20413,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* SplineData_1_System_Collection
 		return L_0;
 	}
 }
-// Method Definition Index: 77180
+// Method Definition Index: 77238
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float SplineData_1_WrapInt_m75A768D6B02FC5B310DC4879A8122E5E09803E94 (float ___0_index, int32_t ___1_lowerBound, int32_t ___2_upperBound, const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -20436,8 +20436,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float SplineData_1_WrapInt_m75A768D6B02FC5B31
 		return ((float)il2cpp_codegen_add(L_6, L_8));
 	}
 }
-// Method Definition Index: 77181
-// Method Definition Index: 77182
+// Method Definition Index: 77239
+// Method Definition Index: 77240
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1_UnityEngine_Splines_ISplineModificationHandler_OnSplineModified_m5BEEAB933290738FCC43B5CACBC102285091D3BA (SplineData_1_t76C1101E75006280CD34A238E2294898514C06A6* __this, SplineModificationData_tD468243C2B8D1D2837DFBD9A04B7601EDC28C2AF ___0_data, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21039,7 +21039,7 @@ IL_02ec:
 		return;
 	}
 }
-// Method Definition Index: 77183
+// Method Definition Index: 77241
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SplineData_1__cctor_m72D54DB9D4E1B2E177FEDE0D5D24E12ED8E03878 (const RuntimeMethod* method) 
 {
 	CHECKED_LOCAL(classRgctxInit);
@@ -21067,7 +21067,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR uint8_t* Array_GetRawSzArrayData_
 		return L_1;
 	}
 }
-// Method Definition Index: 55899
+// Method Definition Index: 55957
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Vector4__ctor_m96B2CD8B862B271F513AF0BDC2EABD58E4DBC813_inline (Vector4_t58B63D32F48C0DBF50DE2C60794C4676C80EDBE3* __this, float ___0_x, float ___1_y, float ___2_z, float ___3_w, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -21090,7 +21090,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Action_Invoke_m7126A54DACA72
 	typedef void (*FunctionPointerType) (RuntimeObject*, const RuntimeMethod*);
 	((FunctionPointerType)__this->___invoke_impl)((Il2CppObject*)__this->___method_code, reinterpret_cast<RuntimeMethod*>(__this->___method));
 }
-// Method Definition Index: 55808
+// Method Definition Index: 55866
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Mathf_Approximately_m1DADD012A8FC82E11FB282501AE2EBBF9A77150B_inline (float ___0_a, float ___1_b, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -21113,7 +21113,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Mathf_Approximately_m1DADD01
 		return (bool)((((float)L_2) < ((float)L_9))? 1 : 0);
 	}
 }
-// Method Definition Index: 86108
+// Method Definition Index: 86183
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t math_clamp_mAC089580E6D865AEFD963A6629C5D63F79FFED80_inline (int32_t ___0_valueToClamp, int32_t ___1_lowerBound, int32_t ___2_upperBound, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -21128,7 +21128,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t math_clamp_mAC089580E6D86
 		return L_4;
 	}
 }
-// Method Definition Index: 86126
+// Method Definition Index: 86201
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_ceil_m06DEF6827759F405C10166F2C9E8047AE7C09179_inline (float ___0_x, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21150,7 +21150,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_ceil_m06DEF6827759F405
 		return L_4;
 	}
 }
-// Method Definition Index: 86102
+// Method Definition Index: 86177
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_max_mC2D5D2F0EB91D3A908AE964BE8BF5EA443C3BF64_inline (float ___0_x, float ___1_y, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -21182,7 +21182,7 @@ IL_000e:
 		return L_5;
 	}
 }
-// Method Definition Index: 86109
+// Method Definition Index: 86184
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_clamp_m625E0B30E9E71372670DC5FF9032A5ABB340D1B8_inline (float ___0_valueToClamp, float ___1_lowerBound, float ___2_upperBound, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -21197,7 +21197,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_clamp_m625E0B30E9E7137
 		return L_4;
 	}
 }
-// Method Definition Index: 86113
+// Method Definition Index: 86188
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_abs_m3D34AACC3E00CB5ABD5408B8A005D72435D2C51C_inline (float ___0_x, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -21210,7 +21210,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_abs_m3D34AACC3E00CB5AB
 		return L_2;
 	}
 }
-// Method Definition Index: 86124
+// Method Definition Index: 86199
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_floor_mA14E7C30508D82A8766C2C6EC71948DA38E20EC4_inline (float ___0_x, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21232,7 +21232,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_floor_mA14E7C30508D82A
 		return L_4;
 	}
 }
-// Method Definition Index: 86127
+// Method Definition Index: 86202
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_frac_mCA3B80EEBBA7CAE2AE8191DE6A32934083FCD28A_inline (float ___0_x, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -21244,7 +21244,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_frac_mCA3B80EEBBA7CAE2
 		return ((float)il2cpp_codegen_subtract(L_0, L_2));
 	}
 }
-// Method Definition Index: 76956
+// Method Definition Index: 77014
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Spline_get_Closed_m7017D6D64D461D2AFAA4984D4266184FF8D8CD1A_inline (Spline_tD349F2899F32C08E5590738A6C7A7C17FADFED76* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22111,7 +22111,7 @@ IL_0034:
 		return;
 	}
 }
-// Method Definition Index: 76784
+// Method Definition Index: 76842
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t DataPoint_1_get_Value_mFCF84A1BF31D7E1D4AF92968BD667C2DA8FDDD50_inline (DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22120,7 +22120,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t DataPoint_1_get_Value_mFC
 		return L_0;
 	}
 }
-// Method Definition Index: 76785
+// Method Definition Index: 76843
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void DataPoint_1_set_Value_mE06FE9DCB50D9768ECE69BAC26878C77F05010C1_inline (DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22130,7 +22130,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void DataPoint_1_set_Value_mE06FE
 		return;
 	}
 }
-// Method Definition Index: 76782
+// Method Definition Index: 76840
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float DataPoint_1_get_Index_m2C311E99E35DC3156700A4D2CD11B4747FB45F53_inline (DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22139,7 +22139,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float DataPoint_1_get_Index_m2C31
 		return L_0;
 	}
 }
-// Method Definition Index: 76783
+// Method Definition Index: 76841
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void DataPoint_1_set_Index_mEA321B65777E20A623EA7384FD482CF8F09FF2A1_inline (DataPoint_1_tC38A0A55D491338BA0D06FDD08D22F84E99773CE* __this, float ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22210,7 +22210,7 @@ IL_0034:
 		return;
 	}
 }
-// Method Definition Index: 76784
+// Method Definition Index: 76842
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float DataPoint_1_get_Value_m88FF41FDF83D4F5D75EDC757E9F6B1D6CE843C03_inline (DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22219,7 +22219,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float DataPoint_1_get_Value_m88FF
 		return L_0;
 	}
 }
-// Method Definition Index: 76785
+// Method Definition Index: 76843
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void DataPoint_1_set_Value_m06380A41A2DB480A81EA391787B8D57D0919C27F_inline (DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761* __this, float ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22229,7 +22229,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void DataPoint_1_set_Value_m06380
 		return;
 	}
 }
-// Method Definition Index: 76782
+// Method Definition Index: 76840
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float DataPoint_1_get_Index_mF2E1A76797F08A1E4BB4EFF199CE558775EE5368_inline (DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22238,7 +22238,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float DataPoint_1_get_Index_mF2E1
 		return L_0;
 	}
 }
-// Method Definition Index: 76783
+// Method Definition Index: 76841
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void DataPoint_1_set_Index_mC560A6F8249C4C2A97DF06A8EA30A69DB8766173_inline (DataPoint_1_t6B7B80D91DA21439876F6D0784049FBEDDB60761* __this, float ___0_value, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22269,7 +22269,7 @@ IL_003c:
 		return;
 	}
 }
-// Method Definition Index: 55785
+// Method Definition Index: 55843
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Max_mF5379E63D2BBAC76D090748695D833934F8AD051_inline (float ___0_a, float ___1_b, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22292,7 +22292,7 @@ IL_0006:
 		return L_3;
 	}
 }
-// Method Definition Index: 86096
+// Method Definition Index: 86171
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t math_min_m0D183243301588F5000801E35B451374CD10DFC1_inline (int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22315,7 +22315,7 @@ IL_0006:
 		return L_3;
 	}
 }
-// Method Definition Index: 86101
+// Method Definition Index: 86176
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t math_max_m5EE58D9462EC2A39BDE97B0C27BB14CF4A0DB651_inline (int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22349,7 +22349,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Single_IsNaN_mFE637F6ECA9F76
 		return (bool)((((int32_t)((int32_t)(L_1&((int32_t)2147483647LL)))) > ((int32_t)((int32_t)2139095040)))? 1 : 0);
 	}
 }
-// Method Definition Index: 86097
+// Method Definition Index: 86172
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_min_m6AF1FAD0C7D0231E06EB29D9CDB7B19AB11E7C21_inline (float ___0_x, float ___1_y, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22381,7 +22381,7 @@ IL_000e:
 		return L_5;
 	}
 }
-// Method Definition Index: 86084
+// Method Definition Index: 86159
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR uint32_t math_asuint_mF26E6B0D25FD1C079FB93E913E339218F2D3B971_inline (float ___0_x, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -22391,7 +22391,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR uint32_t math_asuint_mF26E6B0D25F
 		return L_1;
 	}
 }
-// Method Definition Index: 86089
+// Method Definition Index: 86164
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float math_asfloat_mE332F9C6D56AA099930259ECE729FC5EC8FD2ED8_inline (uint32_t ___0_x, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>

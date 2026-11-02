@@ -740,7 +740,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         // road's geometric centre; asymmetric forward/backward counts simply leave
         // more unused width on the side with fewer lanes.
         bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
-        float forwardSide = leftTraffic ? -1f : 1f;
+        // Same side authority the graph and the vehicles use, so the paint cannot
+        // end up on the approaching carriageway.
+        float forwardSide = TrafficLane.SideSign(leftTraffic);
 
         var whiteBuilder = new MarkingMeshBuilder();
         var yellowBuilder = new MarkingMeshBuilder();
@@ -1304,7 +1306,10 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 // An OSM one-way way represents an entire carriageway. Its
                 // centreline is NOT the median between opposing traffic.
                 bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft == true;
-                float medianSide = (leftTraffic ? 1f : -1f) * (directionSign < 0 ? -1f : 1f);
+                // The median sits on the far side of the centreline from the driven
+                // carriageway, which is the negation of the shared kerb-side sign.
+                float medianSide = -TrafficLane.SideSign(leftTraffic) *
+                    (directionSign < 0 ? -1f : 1f);
                 Vector3 position = from + direction * distance + Vector3.Cross(Vector3.up, direction) * medianSide * (roadWidth * .5f + .4f);
                 position.y = roadYOffset + medianBarrierLift;
                 if (SurfaceIndex.Contains(position, Mathf.Max(3f, medianBarrierSpacingMeters), wayId)) continue;

@@ -393,6 +393,26 @@ The EditMode cases pin the budget and the optimiser: `TrafficPerformanceTests.Ac
 
 **After the loading-screen bootstrap fix (same day):** EditMode stayed at **609 tests — 600 passed / 9 failed** (the same nine), and the 08:00 clear smoke exited `0` with `WorldReadyLoadingScreen: world ready in 41.2s`, `SMOKE traffic … density=72 densityTarget=72 fullAi=12 spline=60 dormant=48 wheelColliders=0 meshColliders=0` and `avgFps=22.9 p50Ms=30.9`. The lane audit reported one transient `offLane=1` (`Sedan1 … laneErr 3.74`, `skipOffLane=1`, 62 km/h) where the previous run had `offLane=0`; it was a full-physics body mid-link, not a rehome or a pool change, so it is recorded here as the known noisy sample rather than a regression. The menu transition itself is covered by `MenuFlowSmokeCheck` (see "Menu-to-gameplay regression" above).
 
+### Traffic lane and road-side authority
+
+Lane geometry and the side of the road traffic keeps to now have one implementation, `TrafficLane` (with the `LaneFrame` it returns), instead of the eight copies the stack had accumulated. Every consumer that has to know where a car, a stop, a queue, a signal head or a lane marking belongs reads that one module:
+
+| Decision | Before | Now |
+| --- | --- | --- |
+| Lane offset from the centreline | `AIRoadGraph`, plus separate maths in both controllers and the pool | `TrafficLane.Offset`, called by `AIRoadGraph.GetLaneOffset` |
+| Lane line in world space | four local copies of `node ± Cross(up, segment) * offset` | `TrafficLane.Frame().PointAt()` / `.AlongOf()` / `.LateralOf()` |
+| Which side is the kerb | `leftTraffic ? -1 : 1` in the stop spawner, poster builder, signal spawner, depot, road mesh and both poster paths | `TrafficLane.SideSign` / `KerbDirection` |
+| Cruise, pass and kerb-yield lane | four functions with their own `drivesOnLeft ? +1 : -1` branch, plus the same branch again in `SplineVehicle` | `TrafficLane.CruiseLane` / `PassingLane` / `KerbYieldLane`, all derived from `KerbwardStep` |
+| Spawn lane | hardcoded lane 0 in the pool's fallback path | `TrafficLane.CruiseLane` |
+
+Lane indices are graph indices, not screen directions, and their order genuinely differs per link: a two-way direction is laid out from the centre line outwards (higher index = nearer the kerb), while a one-way carriageway is laid out across the whole road (order follows the driving side). That asymmetry cannot be removed without moving every car, so it is expressed once, in `KerbwardStep`, and every other lane decision is derived from it. `AIVehicleController`'s public helpers (`CruiseLaneIndex`, `PassingLaneIndex`, `KerbLaneIndex`, `OvertakeShift`, `KerbShift`, `LaneOffsetDelta`, `NearestLaneIndex`) keep their signatures and delegate, so callers such as `VehiclePool` and `SplineVehicle` were not rewritten.
+
+`LaneFrame.PointAt` interpolates height between the link's two node ends, because spawn placement previously lerped node heights; a flat lane line would have dropped cars spawned on a ramp below the road.
+
+The invariants are pinned by `TrafficLaneTests` (12 cases): the cruise lane is the one nearest the kerb on both driving sides, a pass always moves centre-ward, a one-way carriageway still allows a pass either way, a shared single-lane street keeps both directions on the middle, opposite directions occupy opposite halves of the same road, the frame round-trips along/lateral position, invalid links never look plausible, and the kerb vector agrees with the lane offset.
+
+**Run (2026-11-02, Nairobi, clear noon):** EditMode **744 tests — 743 passed / 1 failed**. The single failure was a wrong expectation in the new `NearestLaneResolvesABodyThatHasDriftedBackToItsOwnLine` (lane lines are on the negative side of a left-hand-traffic link, so a large positive lateral offset resolves to lane 0); after correcting the assertion the fixture passes **12/12** on its own run. No pre-existing test failed. The full-route gate then exited `0`: `stops {total:17, serviced:17, docked:17, advanced:17, doorsRefused:1}`, `traffic {active:12, moved:12, lanesChecked:true, lanesPassed:true}`, `navigator {checks:141, failures:0}`, and the audit lines `SMOKE stopSides … wrongSide=0 backwards=0 unmeasured=0`, `SMOKE trafficSide samples=14 wrongSide=0 reversed=0 pivotOffsets=0 worstPivot=0.00 ─ passed=True`.
+
 ## Imported model wiring
 
 The bus, stop and environment packs under `Assets/unity models` are not wired by hand. Regenerate them in batch after replacing or adding a source FBX:

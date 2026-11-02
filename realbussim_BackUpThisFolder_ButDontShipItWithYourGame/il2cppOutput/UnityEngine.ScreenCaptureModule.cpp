@@ -184,7 +184,7 @@ inline void ReadOnlySpan_1__ctor_m0152E50B40750679B83FF9F30CA539FFBB98EEE8_inlin
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 87444
+// Method Definition Index: 87519
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void EmbeddedAttribute__ctor_m3CC7FEB78C868005AE22363D8099E557C2B92C68 (EmbeddedAttribute_t0774D46D7938B8CA0EBCB8EE93046ABE9FBC7BCD* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -201,7 +201,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void EmbeddedAttribute__ctor_m3CC7FEB78C86800
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 87445
+// Method Definition Index: 87520
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RefSafetyRulesAttribute__ctor_m086215480C500C2C07DD6DE0E5D00E54F810786E (RefSafetyRulesAttribute_t1A3E2D619A63CF5BFF378826B169D547646CD3F5* __this, int32_t ___0_p, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -220,7 +220,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RefSafetyRulesAttribute__ctor_m086215480
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 87446
+// Method Definition Index: 87521
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ScreenCapture_CaptureScreenshot_m897B0264A202824D377CCD9A5221B164DE2CF9DE (String_t* ___0_filename, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -230,7 +230,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ScreenCapture_CaptureScreenshot_m897B026
 		return;
 	}
 }
-// Method Definition Index: 87447
+// Method Definition Index: 87522
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ScreenCapture_CaptureScreenshot_m35F14D593665968FE8F449104B66CE35EB22344D (String_t* ___0_filename, int32_t ___1_superSize, int32_t ___2_CaptureMode, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -299,7 +299,7 @@ IL_0039:
 		return;
 	}
 }
-// Method Definition Index: 87448
+// Method Definition Index: 87523
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ScreenCapture_CaptureScreenshot_Injected_m16860E2CE515D8D7C07084CF65F17ACB97CE0F24 (ManagedSpanWrapper_tE5AE0420F9CEEE99A6586A5D9E7E73C92BC01455* ___0_filename, int32_t ___1_superSize, int32_t ___2_CaptureMode, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -320,7 +320,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ScreenCapture_CaptureScreenshot_Injected
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-// Method Definition Index: 86049
+// Method Definition Index: 86124
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool StringMarshaller_TryMarshalEmptyOrNullString_mA7E06E9C8BEF97EC745F7DE392C854F5F5B49999_inline (String_t* ___0_s, ManagedSpanWrapper_tE5AE0420F9CEEE99A6586A5D9E7E73C92BC01455* ___1_managedSpanWrapper, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
