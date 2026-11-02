@@ -34,17 +34,17 @@ public class RuntimeOsmPoiVisualizer : MonoBehaviour
         while (GPSManager.Instance == null)
             yield return null;
 
-        SpawnPoiMarkers();
+        yield return SpawnPoiMarkersRoutine();
     }
 
-    void SpawnPoiMarkers()
+    IEnumerator SpawnPoiMarkersRoutine()
     {
         var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
         if (city == null)
         {
             if (logSpawns)
                 Debug.LogWarning("[RuntimeOsmPoiVisualizer] No active city. Skipping POI markers.");
-            return;
+            yield break;
         }
 
         string poiPath = RuntimeCityContentStore.ResolveReadPath(city, "poi.json");
@@ -57,18 +57,34 @@ public class RuntimeOsmPoiVisualizer : MonoBehaviour
         var placedByCategory = new Dictionary<PoiCategory, List<Vector3>>();
         int total = 0;
 
-        if (File.Exists(poiPath))
-            total += SpawnFromResponse(OverpassResponse.Deserialize(File.ReadAllText(poiPath)), parent.transform, placedByCategory);
-        else if (File.Exists(buildingsJsonPath))
-            total += SpawnFromResponse(OverpassResponse.Deserialize(File.ReadAllText(buildingsJsonPath)), parent.transform, placedByCategory);
-        else if (logSpawns)
-            Debug.LogWarning($"[RuntimeOsmPoiVisualizer] Missing poi.json and buildings.json for city {city.cityCode}. Download OSM place data first.");
+        string poiJson = null;
+        yield return RuntimeCityContentStore.ReadText(poiPath, text => poiJson = text);
+        if (!string.IsNullOrWhiteSpace(poiJson))
+        {
+            total += SpawnFromResponse(OverpassResponse.Deserialize(poiJson), parent.transform, placedByCategory);
+        }
+        else
+        {
+            string bldgJson = null;
+            yield return RuntimeCityContentStore.ReadText(buildingsJsonPath, text => bldgJson = text);
+            if (!string.IsNullOrWhiteSpace(bldgJson))
+                total += SpawnFromResponse(OverpassResponse.Deserialize(bldgJson), parent.transform, placedByCategory);
+            else if (logSpawns)
+                Debug.LogWarning($"[RuntimeOsmPoiVisualizer] Missing poi.json and buildings.json for city {city.cityCode}. Download OSM place data first.");
+        }
 
-        if (File.Exists(fuelPath))
-            total += SpawnFromResponse(OverpassResponse.Deserialize(File.ReadAllText(fuelPath)), parent.transform, placedByCategory);
+        string fuelJson = null;
+        yield return RuntimeCityContentStore.ReadText(fuelPath, text => fuelJson = text);
+        if (!string.IsNullOrWhiteSpace(fuelJson))
+            total += SpawnFromResponse(OverpassResponse.Deserialize(fuelJson), parent.transform, placedByCategory);
 
         if (logSpawns)
             Debug.Log($"[RuntimeOsmPoiVisualizer] Spawned {total} POI markers.");
+    }
+
+    void SpawnPoiMarkers()
+    {
+        StartCoroutine(SpawnPoiMarkersRoutine());
     }
 
     int SpawnFromResponse(OverpassResponse response, Transform parent, Dictionary<PoiCategory, List<Vector3>> placedByCategory)

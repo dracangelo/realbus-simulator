@@ -145,6 +145,149 @@ public static class TrafficLane
     }
 
     /// <summary>
+    /// The fastest/innermost lane on this directed link: lane 0 on a two-way link (closest
+    /// to the centre line), or the lane farthest from the kerb on a one-way carriageway.
+    /// </summary>
+    public static int FastestLane(AIRoadGraph graph, int fromNode, int toNode)
+    {
+        if (graph == null || !graph.IsValidNode(fromNode) || !graph.IsValidNode(toNode)) return 0;
+        int lanes = Mathf.Max(1, graph.GetLaneCount(fromNode, toNode));
+        if (lanes <= 1) return 0;
+        if (!graph.IsOneWay(fromNode, toNode)) return 0;
+        return CruiseLane(graph, fromNode, toNode) == 0 ? lanes - 1 : 0;
+    }
+
+    /// <summary>
+    /// Distributes vehicles naturally across multiple lanes (e.g. 2 lanes, 4 lanes) based on
+    /// vehicle type, driving aggressiveness and seed.
+    /// - Buses and trucks stick to the outer/kerb cruise lane (or occasional adjacent lane).
+    /// - Fast cars and emergency vehicles prefer the inner/fast lane.
+    /// - Standard traffic distributes across all available lanes so multi-lane roads are alive.
+    /// </summary>
+    public static int PickLaneForVehicle(AIRoadGraph graph, int fromNode, int toNode,
+        AIVehicleController.VehicleType type, float desiredSpeedFactor = 1f, int seed = -1)
+    {
+        if (graph == null || !graph.IsValidNode(fromNode) || !graph.IsValidNode(toNode)) return 0;
+        int lanes = Mathf.Max(1, graph.GetLaneCount(fromNode, toNode));
+        if (lanes <= 1) return 0;
+
+        int cruise = CruiseLane(graph, fromNode, toNode);
+        int fast = FastestLane(graph, fromNode, toNode);
+
+        if (type == AIVehicleController.VehicleType.Bus || type == AIVehicleController.VehicleType.Truck)
+        {
+            return cruise;
+        }
+
+        if (type == AIVehicleController.VehicleType.Emergency || desiredSpeedFactor >= 1.08f)
+        {
+            return fast;
+        }
+
+        if (desiredSpeedFactor <= 0.92f)
+        {
+            return cruise;
+        }
+
+        int roll = seed >= 0 ? System.Math.Abs(seed) % 100 : Random.Range(0, 100);
+        if (lanes == 2)
+        {
+            return roll < 55 ? cruise : fast;
+        }
+        if (lanes == 3)
+        {
+            int mid = KerbwardLane(graph, fromNode, toNode, fast);
+            if (mid < 0) mid = CentrewardLane(graph, fromNode, toNode, cruise);
+            if (roll < 45) return cruise;
+            if (roll < 75) return mid >= 0 ? mid : cruise;
+            return fast;
+        }
+
+        int laneIndex = roll * lanes / 100;
+        return Mathf.Clamp(laneIndex, 0, lanes - 1);
+    }
+
+    /// <summary>
+    /// Resolves which lane an approaching vehicle should use for its upcoming turn at an intersection.
+    /// - Near-side turns (left in Kenya/UK, right in US/EU) use the kerbward lane.
+    /// - Off-side turns (right in Kenya/UK, left in US/EU) use the inner/fastest lane.
+    /// - Going straight returns -1 (meaning any through lane is legal, no turn preparation needed).
+    /// </summary>
+    public static int ResolveTurnLane(AIRoadGraph graph, int fromNode, int toNode, int nextTargetNode)
+    {
+        if (graph == null || !graph.IsValidNode(fromNode) || !graph.IsValidNode(toNode) ||
+            !graph.IsValidNode(nextTargetNode))
+            return -1;
+
+        int lanes = Mathf.Max(1, graph.GetLaneCount(fromNode, toNode));
+        if (lanes <= 1) return 0;
+
+        Vector3 inDir = graph.GetNodePosition(toNode) - graph.GetNodePosition(fromNode);
+        Vector3 outDir = graph.GetNodePosition(nextTargetNode) - graph.GetNodePosition(toNode);
+        inDir.y = 0f; outDir.y = 0f;
+        if (inDir.sqrMagnitude < 0.001f || outDir.sqrMagnitude < 0.001f) return -1;
+
+        inDir.Normalize(); outDir.Normalize();
+        float crossY = Vector3.Cross(inDir, outDir).y;
+        float dot = Vector3.Dot(inDir, outDir);
+
+        if (dot > 0.85f && Mathf.Abs(crossY) < 0.25f) return -1;
+
+        bool turningLeft = crossY < -0.2f;
+        bool turningRight = crossY > 0.2f;
+        if (!turningLeft && !turningRight) return -1;
+
+        bool nearSide = graph.DrivesOnLeft ? turningLeft : turningRight;
+        return nearSide ? CruiseLane(graph, fromNode, toNode) : FastestLane(graph, fromNode, toNode);
+    }
+
+    /// <summary>
+    /// Resolves which lane an entering vehicle should occupy on the new link after turning at an intersection.
+    /// - Near-side turns enter the kerb/outer lane.
+    /// - Off-side turns enter the inner/centreline lane.
+    /// - Straight-through traffic preserves proportional lane index across changing lane counts.
+    /// </summary>
+    public static int ResolveExitLane(AIRoadGraph graph, int fromNode, int toNode, int nextTargetNode, int incomingLane)
+    {
+        if (graph == null || !graph.IsValidNode(toNode) || !graph.IsValidNode(nextTargetNode))
+            return 0;
+
+        int newLanes = Mathf.Max(1, graph.GetLaneCount(toNode, nextTargetNode));
+        if (newLanes <= 1) return 0;
+
+        if (!graph.IsValidNode(fromNode))
+            return Mathf.Clamp(incomingLane, 0, newLanes - 1);
+
+        Vector3 inDir = graph.GetNodePosition(toNode) - graph.GetNodePosition(fromNode);
+        Vector3 outDir = graph.GetNodePosition(nextTargetNode) - graph.GetNodePosition(toNode);
+        inDir.y = 0f; outDir.y = 0f;
+        if (inDir.sqrMagnitude < 0.001f || outDir.sqrMagnitude < 0.001f)
+            return Mathf.Clamp(incomingLane, 0, newLanes - 1);
+
+        inDir.Normalize(); outDir.Normalize();
+        float crossY = Vector3.Cross(inDir, outDir).y;
+        float dot = Vector3.Dot(inDir, outDir);
+
+        bool turningLeft = crossY < -0.2f;
+        bool turningRight = crossY > 0.2f;
+
+        if (dot <= 0.85f && (turningLeft || turningRight))
+        {
+            bool nearSide = graph.DrivesOnLeft ? turningLeft : turningRight;
+            return nearSide
+                ? CruiseLane(graph, toNode, nextTargetNode)
+                : FastestLane(graph, toNode, nextTargetNode);
+        }
+
+        int oldLanes = Mathf.Max(1, graph.GetLaneCount(fromNode, toNode));
+        if (oldLanes == newLanes)
+            return Mathf.Clamp(incomingLane, 0, newLanes - 1);
+
+        float ratio = (float)incomingLane / Mathf.Max(1, oldLanes - 1);
+        return Mathf.Clamp(Mathf.RoundToInt(ratio * (newLanes - 1)), 0, newLanes - 1);
+    }
+
+    /// <summary>
     /// The lane a pass moves into. It is always one step toward the centre line, never
     /// toward the kerb: pulling outboard to pass would be undertaking, and on a
     /// two-way link the outboard side is the stopped traffic beside the kerb.

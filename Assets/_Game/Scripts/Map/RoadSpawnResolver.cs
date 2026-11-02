@@ -181,12 +181,45 @@ public static class RoadSpawnResolver
             }
             else if (stopIndex == 0 && route.stops.Length > 1)
             {
-                // The first stop has no previous stop; the departure direction is
-                // the same carriageway and therefore the same kerb side.
                 Vector3 next = GpsToWorld(route.stops[1]);
                 hint = FirstPathDirection(graph, stopWorld, next);
             }
         }
+
+        // If road graph gave no directional hint, derive forward travel flow directly
+        // from sequential stop progression so return legs / oncoming lanes cannot hijack orientation
+        if (hint.sqrMagnitude < 0.01f)
+        {
+            if (stopIndex < route.stops.Length - 1)
+            {
+                for (int nextIdx = stopIndex + 1; nextIdx < route.stops.Length; nextIdx++)
+                {
+                    Vector3 next = GpsToWorld(route.stops[nextIdx]);
+                    Vector3 diff = Vector3.ProjectOnPlane(next - stopWorld, Vector3.up);
+                    if (diff.sqrMagnitude >= 4f)
+                    {
+                        hint = diff.normalized;
+                        break;
+                    }
+                }
+            }
+            if (hint.sqrMagnitude < 0.01f && stopIndex > 0)
+            {
+                for (int prevIdx = stopIndex - 1; prevIdx >= 0; prevIdx--)
+                {
+                    Vector3 prev = GpsToWorld(route.stops[prevIdx]);
+                    Vector3 diff = Vector3.ProjectOnPlane(stopWorld - prev, Vector3.up);
+                    if (diff.sqrMagnitude >= 4f)
+                    {
+                        hint = diff.normalized;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (hint.sqrMagnitude < 0.01f && fallback.sqrMagnitude >= 0.01f)
+            hint = Vector3.ProjectOnPlane(fallback, Vector3.up).normalized;
 
         return RouteHeading(route, stopWorld, fallback, hint);
     }
@@ -259,42 +292,57 @@ public static class RoadSpawnResolver
     public static Vector3 PathHeading(Vector3[] points, Vector3 requested, Vector3 fallback,
         Vector3 approachHint = default)
     {
-        float nearest = 150f * 150f;
-        Vector3 heading = fallback;
-        if (points == null) return heading;
+        if (points == null || points.Length < 2) return fallback;
 
-        // A route that runs out and back on the same street has two segments at the
-        // same distance from a stop, pointing opposite ways. Keeping only the first
-        // one mirrors the shelter whenever the return leg happens to be listed
-        // first, so collect the near-ties and let the known approach pick one.
-        const float TieToleranceSquared = 1f;
-        var candidates = new List<Vector3>(4);
+        Vector3 expectedFlow = approachHint.sqrMagnitude >= 0.01f
+            ? Vector3.ProjectOnPlane(approachHint, Vector3.up).normalized
+            : Vector3.zero;
+
+        float bestScore = float.MaxValue;
+        Vector3 bestHeading = fallback;
+        bool found = false;
+
         for (int i = 1; i < points.Length; i++)
         {
-            Vector3 a = points[i - 1], b = points[i]; a.y = b.y = requested.y;
+            Vector3 a = points[i - 1], b = points[i];
+            a.y = b.y = requested.y;
             Vector3 segment = b - a;
-            if (segment.sqrMagnitude < 1f) continue;
-            float distance = (ProjectOnSegment(requested, a, b) - requested).sqrMagnitude;
-            if (distance > nearest + TieToleranceSquared) continue;
-            if (distance < nearest - TieToleranceSquared)
+            if (segment.sqrMagnitude < 0.5f) continue;
+
+            Vector3 tangent = segment.normalized;
+
+            // Reject any segment running backwards against expected route flow
+            float alignment = expectedFlow.sqrMagnitude > 0.01f ? Vector3.Dot(tangent, expectedFlow) : 1f;
+            if (expectedFlow.sqrMagnitude > 0.01f && alignment < -0.1f)
+                continue; // Opposing / oncoming segment from return leg or parallel lane
+
+            Vector3 projected = ProjectOnSegment(requested, a, b);
+            float distSq = (projected - requested).sqrMagnitude;
+            if (distSq > 150f * 150f) continue;
+
+            // Score penalizes distance and misalignment with expected travel flow
+            float alignmentPenalty = expectedFlow.sqrMagnitude > 0.01f ? (1f - alignment) * 400f : 0f;
+            float score = distSq + alignmentPenalty;
+
+            if (score < bestScore)
             {
-                candidates.Clear();
-                nearest = distance;
+                bestScore = score;
+                bestHeading = tangent;
+                found = true;
             }
-            candidates.Add(segment.normalized);
         }
 
-        if (candidates.Count == 0) return heading;
-        if (approachHint.sqrMagnitude < 0.01f) return candidates[0];
+        if (found) return bestHeading;
 
-        float bestAlignment = float.NegativeInfinity;
-        for (int i = 0; i < candidates.Count; i++)
+        // Fallback: If no aligned segment was found within range, use NearestPathFrame
+        // but ensure tangent points along expectedFlow
+        if (NearestPathFrame(points, requested, out _, out Vector3 nearestTangent))
         {
-            float alignment = Vector3.Dot(candidates[i], approachHint);
-            if (alignment <= bestAlignment) continue;
-            bestAlignment = alignment;
-            heading = candidates[i];
+            if (expectedFlow.sqrMagnitude > 0.01f && Vector3.Dot(nearestTangent, expectedFlow) < 0f)
+                nearestTangent = -nearestTangent;
+            return nearestTangent;
         }
-        return heading;
+
+        return fallback;
     }
 }

@@ -243,8 +243,17 @@ public class StopPropSpawner : MonoBehaviour
                     $"headingYaw={Mathf.Atan2(heading.x, heading.z) * Mathf.Rad2Deg:F1} graph={approachGraph != null}");
             if (!roads.TryRoadside(stopPos, heading, leftTraffic, out Vector3 worldPos, out routeRotation))
             {
-                Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; skipping its prop rather than blocking a lane.");
-                continue;
+                worldPos = stopPos;
+                Vector3 fwd = heading.sqrMagnitude > 0.01f ? heading : (routeRotation * Vector3.forward);
+                if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
+                routeRotation = Quaternion.LookRotation(fwd, Vector3.up);
+                Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; falling back to raw stop position.");
+            }
+
+            // Directional sanity check: ensure rotation faces the travel heading
+            if (heading.sqrMagnitude > 0.01f && Vector3.Dot(routeRotation * Vector3.forward, heading) < -0.1f)
+            {
+                routeRotation = Quaternion.LookRotation(-(routeRotation * Vector3.forward), Vector3.up);
             }
             worldPos.y = OSMRoadMeshBuilder.Instance.roadYOffset;
             Vector3 outward = RoadSpawnResolver.KerbSide(routeRotation * Vector3.forward, leftTraffic);
@@ -478,19 +487,31 @@ public class StopPropSpawner : MonoBehaviour
 
     float GetRouteYaw(BusRoute route, int index)
     {
-        int a = Mathf.Clamp(index, 0, route.stops.Length - 1);
-        int b = Mathf.Clamp(index + 1, 0, route.stops.Length - 1);
-        if (a == b && a > 0) a -= 1;
-
-        var pA = route.stops[a];
-        var pB = route.stops[b];
-        Vector3 worldA = GPSManager.Instance.GpsToWorld(pA.latitude, pA.longitude);
-        Vector3 worldB = GPSManager.Instance.GpsToWorld(pB.latitude, pB.longitude);
-        Vector3 dir = worldB - worldA;
-        dir.y = 0f;
-        if (dir.sqrMagnitude < 0.001f)
+        if (route == null || route.stops == null || route.stops.Length == 0 || GPSManager.Instance == null)
             return 0f;
 
-        return Quaternion.LookRotation(dir, Vector3.up).eulerAngles.y;
+        int a = Mathf.Clamp(index, 0, route.stops.Length - 1);
+        Vector3 worldA = GPSManager.Instance.GpsToWorld(route.stops[a].latitude, route.stops[a].longitude);
+        worldA.y = 0f;
+
+        for (int b = a + 1; b < route.stops.Length; b++)
+        {
+            Vector3 worldB = GPSManager.Instance.GpsToWorld(route.stops[b].latitude, route.stops[b].longitude);
+            worldB.y = 0f;
+            Vector3 dir = worldB - worldA;
+            if (dir.sqrMagnitude >= 1f)
+                return Quaternion.LookRotation(dir, Vector3.up).eulerAngles.y;
+        }
+
+        for (int b = a - 1; b >= 0; b--)
+        {
+            Vector3 worldB = GPSManager.Instance.GpsToWorld(route.stops[b].latitude, route.stops[b].longitude);
+            worldB.y = 0f;
+            Vector3 dir = worldA - worldB;
+            if (dir.sqrMagnitude >= 1f)
+                return Quaternion.LookRotation(dir, Vector3.up).eulerAngles.y;
+        }
+
+        return 0f;
     }
 }

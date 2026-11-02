@@ -11,6 +11,10 @@ public class SplineVehicle : MonoBehaviour
     public int targetNodeIndex = -1;
     public int previousNodeIndex = -1;
     public int laneIndex = 0;
+    /// <summary>Preferred cruising lane on multi-lane roads (2 lanes, 4 lanes, etc.).</summary>
+    public int preferredLaneIndex = -1;
+    public AIVehicleController.VehicleType vehicleType = AIVehicleController.VehicleType.Car;
+    float junctionTurnGraceTimer;
 
     [Header("Motion")]
     public float speedKmh = 0f;
@@ -85,6 +89,7 @@ public class SplineVehicle : MonoBehaviour
         targetNodeIndex = targetNode;
         previousNodeIndex = previousNode;
         laneIndex = lane;
+        preferredLaneIndex = lane;
         speedKmh = Mathf.Max(0f, initialSpeedKmh);
         ResetLaneChange();
         RebuildPath();
@@ -102,6 +107,7 @@ public class SplineVehicle : MonoBehaviour
         overtakeTimer = 0f;
         overtakeCooldown = 0f;
         emergencyYieldSeconds = 0f;
+        junctionTurnGraceTimer = 0f;
         laneDisciplineTimer = Mathf.Max(0f, laneDisciplineDelaySeconds);
     }
 
@@ -195,12 +201,11 @@ public class SplineVehicle : MonoBehaviour
         float lookahead = Mathf.Clamp(speedKmh / 3.6f * 1.1f, 4f, 12f);
         Vector3 target = laneA + laneDir * Mathf.Min(laneLength, along * laneLength + lookahead);
 
-        // The same lateral correction the full-physics controller uses, so a car
-        // nudged off its line comes back rather than running parallel to it.
+        junctionTurnGraceTimer = Mathf.Max(0f, junctionTurnGraceTimer - dt);
         Vector3 right = Vector3.Cross(Vector3.up, segment);
         float bodyHalfWidth = Mathf.Max(.6f, vehicleWidth * .5f);
         float roadHalfWidth = roadGraph.GetRoadHalfWidth(currentNodeIndex, targetNodeIndex);
-        if (roadHalfWidth > .1f)
+        if (roadHalfWidth > .1f && junctionTurnGraceTimer <= 0f)
         {
             float maxOffset = Mathf.Max(0f, roadHalfWidth - bodyHalfWidth - .12f);
             float centerOffset = Vector3.Dot(transform.position - nodeA, right);
@@ -258,11 +263,21 @@ public class SplineVehicle : MonoBehaviour
 
         if (dist <= 3.5f)
         {
-            previousNodeIndex = currentNodeIndex;
-            currentNodeIndex = targetNodeIndex;
+            int prev = currentNodeIndex;
+            int curr = targetNodeIndex;
+            previousNodeIndex = prev;
+            currentNodeIndex = curr;
             EnsureTargetNode(forceAdvance: true);
-            // A pass belongs to the old edge. Let the offset ease home rather than
-            // snapping, but do not carry it into the next junction as an intent.
+            int next = targetNodeIndex;
+            int oldLane = laneIndex;
+
+            if (roadGraph != null && roadGraph.IsValidNode(curr) && roadGraph.IsValidNode(next))
+            {
+                laneIndex = TrafficLane.ResolveExitLane(roadGraph, prev, curr, next, oldLane);
+                preferredLaneIndex = GetEffectivePreferredLane(roadGraph.GetLaneCount(curr, next));
+            }
+
+            junctionTurnGraceTimer = 2.0f;
             if (!IsOvertaking && emergencyYieldSeconds <= 0f) laneShiftTarget = 0f;
         }
     }
@@ -336,12 +351,38 @@ public class SplineVehicle : MonoBehaviour
             return;
         }
 
+        int nextNode = cachedPath.Count > 0 ? cachedPath.Peek() : -1;
+        if (roadGraph != null && distanceToJunction < 55f)
+        {
+            if (nextNode < 0)
+                nextNode = roadGraph.GetRandomNextNode(targetNodeIndex, currentNodeIndex);
+            if (nextNode >= 0 && laneDisciplineTimer <= 0f && !IsOvertaking && Mathf.Abs(laneShift) < 0.05f)
+            {
+                int turnLane = TrafficLane.ResolveTurnLane(roadGraph, currentNodeIndex, targetNodeIndex, nextNode);
+                if (turnLane >= 0 && turnLane < laneCount && turnLane != laneIndex)
+                {
+                    int step = turnLane > laneIndex ? 1 : -1;
+                    int nextLane = laneIndex + step;
+                    float side = AIVehicleController.LaneOffsetDelta(roadGraph, currentNodeIndex, targetNodeIndex, laneIndex, nextLane);
+                    float clearLength = Mathf.Max(16f, speedKmh / 3.6f + 6f);
+                    if (Mathf.Abs(side) > 0.05f && TrafficParticipant.PassingLaneClear(transform, side, clearLength))
+                    {
+                        BeginLaneChange(nextLane);
+                        return;
+                    }
+                }
+            }
+        }
+
         if (overtakeCooldown <= 0f && !roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) &&
             RealismRules.HasOvertakeRunway(distanceToJunction, speedKmh))
         {
             int passLane = AIVehicleController.PassingLaneIndex(roadGraph, currentNodeIndex,
                 targetNodeIndex, laneIndex);
-            if (passLane >= 0)
+            if (passLane < 0 && (roadGraph.IsOneWay(currentNodeIndex, targetNodeIndex) || laneCount >= 3))
+                passLane = AIVehicleController.KerbLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex, laneIndex);
+
+            if (passLane >= 0 && passLane < laneCount && passLane != laneIndex)
             {
                 float scan = Mathf.Max(18f, overtakeScanDistanceMeters + speedKmh / 3.6f * .8f);
                 float halfLane = Mathf.Max(1.65f,
@@ -364,26 +405,37 @@ public class SplineVehicle : MonoBehaviour
             }
         }
 
-        if (returnToCruiseLane && laneDisciplineTimer <= 0f && laneCount > 1 &&
-            distanceToJunction > 10f)
+        // Multi-lane cruising and lane balance for the spline tier
+        int targetPreferred = GetEffectivePreferredLane(laneCount);
+        if (laneDisciplineTimer <= 0f && laneCount > 1 &&
+            distanceToJunction > Mathf.Max(12f, vehicleLength * 1.8f))
         {
-            int cruiseLane = AIVehicleController.CruiseLaneIndex(roadGraph,
-                currentNodeIndex, targetNodeIndex);
-            if (cruiseLane != laneIndex)
+            if (targetPreferred != laneIndex)
             {
-                float side = AIVehicleController.LaneOffsetDelta(roadGraph,
-                    currentNodeIndex, targetNodeIndex, laneIndex, cruiseLane);
+                int step = targetPreferred > laneIndex ? 1 : -1;
+                int stepLane = laneIndex + step;
+                float side = AIVehicleController.LaneOffsetDelta(roadGraph, currentNodeIndex,
+                    targetNodeIndex, laneIndex, stepLane);
                 float clearLength = Mathf.Max(18f, speedKmh / 3.6f + 8f);
                 if (Mathf.Abs(side) > .05f &&
                     TrafficParticipant.PassingLaneClear(transform, side, clearLength))
                 {
-                    BeginLaneChange(cruiseLane);
+                    BeginLaneChange(stepLane);
                     return;
                 }
             }
         }
 
         laneShiftTarget = 0f;
+    }
+
+    int GetEffectivePreferredLane(int laneCount)
+    {
+        if (preferredLaneIndex >= 0 && preferredLaneIndex < laneCount)
+            return preferredLaneIndex;
+        preferredLaneIndex = TrafficLane.PickLaneForVehicle(roadGraph, currentNodeIndex, targetNodeIndex,
+            vehicleType, desiredSpeedFactor, transform.GetHashCode());
+        return preferredLaneIndex;
     }
 
     void StartOvertake(TrafficParticipant leader, int passLane)
@@ -436,9 +488,10 @@ public class SplineVehicle : MonoBehaviour
         }
 
         int lanes = Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex));
-        int cruiseLane = AIVehicleController.CruiseLaneIndex(roadGraph,
-            currentNodeIndex, targetNodeIndex);
-        if (cruiseLane == laneIndex || lanes <= 1)
+        int targetLane = (returnToCruiseLane || vehicleType == AIVehicleController.VehicleType.Bus || vehicleType == AIVehicleController.VehicleType.Truck)
+            ? AIVehicleController.CruiseLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex)
+            : GetEffectivePreferredLane(lanes);
+        if (targetLane == laneIndex || lanes <= 1)
         {
             returningToCruiseLane = false;
             return false;
@@ -448,12 +501,12 @@ public class SplineVehicle : MonoBehaviour
             return true;
 
         float side = AIVehicleController.LaneOffsetDelta(roadGraph, currentNodeIndex,
-            targetNodeIndex, laneIndex, cruiseLane);
+            targetNodeIndex, laneIndex, targetLane);
         float clearLength = Mathf.Max(18f, speedKmh / 3.6f + 8f);
         if (Mathf.Abs(side) > .05f &&
             TrafficParticipant.PassingLaneClear(transform, side, clearLength))
         {
-            BeginLaneChange(cruiseLane);
+            BeginLaneChange(targetLane);
             returningToCruiseLane = false;
             laneShiftTarget = 0f;
         }

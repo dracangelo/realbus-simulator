@@ -27,50 +27,52 @@ public class OSMLoader : MonoBehaviour
         CityDefinition city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
         string jsonPath = RuntimeCityContentStore.ResolveReadPath(city, "roads.json");
         string xmlPath = RuntimeCityContentStore.ResolveReadPath(city, "roads.xml");
-        string preferredPath = File.Exists(jsonPath) ? jsonPath : xmlPath;
-        Debug.Log($"OSM: Loading from {preferredPath}");
+        string preferredPath = SelectPreferredRoadsPath(xmlPath, jsonPath);
+        string alternatePath = preferredPath == jsonPath ? xmlPath : jsonPath;
 
-        string raw = null;
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-        string url = preferredPath;
-        using (var request = UnityWebRequest.Get(url))
+        foreach (string path in new[] { preferredPath, alternatePath })
         {
-            yield return request.SendWebRequest();
+            Debug.Log($"OSM: Loading roads from {path}");
+            string raw = null;
+            yield return RuntimeCityContentStore.ReadText(path, text => raw = text);
 
-            if (request.result != UnityWebRequest.Result.Success)
+            if (string.IsNullOrWhiteSpace(raw))
             {
-                Debug.LogError($"OSM load failed: {request.error}");
-                Debug.LogError($"Path tried: {preferredPath}");
+                Debug.LogWarning($"OSM: No data loaded from {path}");
+                continue;
+            }
+
+            Debug.Log($"OSM: Loaded {raw.Length} bytes from {path}");
+
+            OSMData parsed = null;
+            yield return OSMParser.ParseInBackground(raw, path.EndsWith(".json"), result => parsed = result);
+            if (parsed != null && parsed.ways != null && parsed.ways.Count > 0)
+            {
+                osmData = parsed;
+                dataLoaded = true;
+                Debug.Log($"OSM: Data ready — {osmData.ways.Count} ways from {path}!");
                 yield break;
             }
 
-            raw = request.downloadHandler.text;
-        }
-#else
-        if (!File.Exists(preferredPath))
-        {
-            Debug.LogError($"OSM load failed: File not found");
-            Debug.LogError($"Path tried: {preferredPath}");
-            yield break;
+            Debug.LogWarning($"OSM: Parsed data had no ways from {path}, trying fallback...");
         }
 
-        raw = File.ReadAllText(preferredPath);
-#endif
+        osmData = new OSMData();
+        Debug.LogError($"OSM: Failed to load road data for {city?.cityName ?? "active city"}.");
+    }
 
-        Debug.Log($"OSM: Loaded {raw.Length} bytes from disk");
+    public static string SelectPreferredRoadsPath(string xmlPath, string jsonPath)
+    {
+        bool hasJson = File.Exists(jsonPath) && new FileInfo(jsonPath).Length > 32;
+        bool hasUsefulXml = File.Exists(xmlPath) && new FileInfo(xmlPath).Length > 64;
 
-        OSMData parsed = null;
-        yield return OSMParser.ParseInBackground(raw, preferredPath.EndsWith(".json"), result => parsed = result);
-        osmData = parsed;
-        dataLoaded = osmData != null && osmData.ways != null && osmData.ways.Count > 0;
+        if (hasJson)
+            return jsonPath;
+        if (hasUsefulXml)
+            return xmlPath;
 
-        if (!dataLoaded)
-        {
-            Debug.LogError($"OSM: Parsed data was empty from {preferredPath}");
-            yield break;
-        }
-
-        Debug.Log("OSM: Data ready!");
+        // Inside an Android APK, File.Exists cannot inspect StreamingAssets.
+        // Bundled roads are shipped as roads.json; try JSON first and let the loader fall back to XML.
+        return jsonPath;
     }
 }

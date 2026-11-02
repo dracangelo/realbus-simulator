@@ -19,6 +19,10 @@ public class AIVehicleController : MonoBehaviour
     public int targetNodeIndex = -1;
     public int previousNodeIndex = -1;
     public int laneIndex = 0;
+    /// <summary>Preferred cruising lane on multi-lane roads (2 lanes, 4 lanes, etc.).</summary>
+    public int preferredLaneIndex = -1;
+    int plannedNextNodeIndex = -1;
+    float junctionTurnGraceTimer;
 
     [Header("Motion")]
     public float maxAccel = 6f;
@@ -236,6 +240,7 @@ public class AIVehicleController : MonoBehaviour
         currentNodeIndex = startNode;
         previousNodeIndex = -1;
         laneIndex = lane;
+        preferredLaneIndex = lane;
         vehicleType = type;
         ResetLaneChange();
         targetNodeIndex = graph != null ? graph.GetRandomNextNode(startNode) : -1;
@@ -256,6 +261,8 @@ public class AIVehicleController : MonoBehaviour
         emergencyYieldTimer = 0f;
         recoveryLaneTimer = 0f;
         laneDisciplineTimer = Mathf.Max(0f, laneDisciplineDelaySeconds);
+        plannedNextNodeIndex = -1;
+        junctionTurnGraceTimer = 0f;
         laneChangeActive = false;
         laneChangeErrorBaseline = float.MaxValue;
         laneChangeStallTimer = 0f;
@@ -415,6 +422,7 @@ public class AIVehicleController : MonoBehaviour
         targetNodeIndex = targetNode;
         previousNodeIndex = previousNode;
         laneIndex = lane;
+        preferredLaneIndex = lane;
         vehicleType = type;
         currentSpeedKmh = Mathf.Max(0f, speedKmh);
         ResetLaneChange();
@@ -494,9 +502,10 @@ public class AIVehicleController : MonoBehaviour
         // RoadWidthPolicy reserves the model width in the rendered ribbon, so this
         // clamp normally has clearance to spare and only catches collisions,
         // sharp turns and stale lane offsets.
+        junctionTurnGraceTimer = Mathf.Max(0f, junctionTurnGraceTimer - Time.fixedDeltaTime);
         float bodyHalfWidth = Mathf.Max(.6f, vehicleWidth * .5f);
         float roadHalfWidth = roadGraph.GetRoadHalfWidth(currentNodeIndex, targetNodeIndex);
-        if (roadHalfWidth > .1f)
+        if (roadHalfWidth > .1f && junctionTurnGraceTimer <= 0f)
         {
             float maxOffset = Mathf.Max(0f, roadHalfWidth - bodyHalfWidth - .12f);
             float centerOffset = Vector3.Dot(current - nodeA, right);
@@ -532,7 +541,7 @@ public class AIVehicleController : MonoBehaviour
         // case and never while a deliberate lane change is in progress; the
         // normal compliance correction below handles everything smaller.
         float laneWidth = roadGraph.GetLaneWidth(currentNodeIndex, targetNodeIndex);
-        if (!IsChangingLane && LateralLaneError > Mathf.Max(3.2f, laneWidth * 1.35f))
+        if (!IsChangingLane && junctionTurnGraceTimer <= 0f && LateralLaneError > Mathf.Max(3.2f, laneWidth * 1.35f))
         {
             Vector3 corrected = current - right * lateralError;
             corrected.y = current.y;
@@ -649,11 +658,38 @@ public class AIVehicleController : MonoBehaviour
             return;
         }
 
+        // Approach intersection turn preparation on multi-lane roads
+        if (roadGraph != null && distanceToJunction < 55f)
+        {
+            if (plannedNextNodeIndex < 0 || !roadGraph.IsValidNode(plannedNextNodeIndex))
+                plannedNextNodeIndex = roadGraph.GetRandomNextNode(targetNodeIndex, currentNodeIndex);
+
+            if (plannedNextNodeIndex >= 0 && laneDisciplineTimer <= 0f && !isOvertaking && Mathf.Abs(laneShift) < 0.05f)
+            {
+                int turnLane = TrafficLane.ResolveTurnLane(roadGraph, currentNodeIndex, targetNodeIndex, plannedNextNodeIndex);
+                if (turnLane >= 0 && turnLane < laneCount && turnLane != laneIndex)
+                {
+                    int step = turnLane > laneIndex ? 1 : -1;
+                    int nextLane = laneIndex + step;
+                    float side = LaneOffsetDelta(roadGraph, currentNodeIndex, targetNodeIndex, laneIndex, nextLane);
+                    float clearLength = Mathf.Max(16f, currentSpeedKmh / 3.6f + 6f);
+                    if (Mathf.Abs(side) > 0.05f && TrafficParticipant.PassingLaneClear(transform, side, clearLength))
+                    {
+                        BeginLaneChange(nextLane);
+                        return;
+                    }
+                }
+            }
+        }
+
         if (overtakeCooldown <= 0f && !roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) &&
             RealismRules.HasOvertakeRunway(distanceToJunction, currentSpeedKmh))
         {
             int passLane = PassingLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex, laneIndex);
-            if (passLane >= 0)
+            if (passLane < 0 && (roadGraph.IsOneWay(currentNodeIndex, targetNodeIndex) || laneCount >= 3))
+                passLane = KerbLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex, laneIndex);
+
+            if (passLane >= 0 && passLane < laneCount && passLane != laneIndex)
             {
                 float desired = ResolveDesiredSpeedKmh();
                 float scan = Mathf.Max(18f, overtakeScanDistanceMeters + currentSpeedKmh / 3.6f * .8f);
@@ -675,29 +711,38 @@ public class AIVehicleController : MonoBehaviour
             }
         }
 
-        // Ordinary lane discipline: a car that spawned or turned into a faster
-        // lane moves back to the kerbside cruise lane when there is room. This is
-        // a real committed lane change, so it also gives the player visible lane
-        // switching instead of cars that only ever wobble inside one lane.
-        if (returnToCruiseLane && laneDisciplineTimer <= 0f && laneCount > 1 &&
-            distanceToJunction > Mathf.Max(10f, vehicleLength * 1.5f))
+        // Multi-lane cruising and lane balance: cars cruise in their preferred lane
+        // across 2-lane, 3-lane and 4-lane roads rather than all cramping into one lane.
+        int targetPreferred = GetEffectivePreferredLane(laneCount);
+        if (laneDisciplineTimer <= 0f && laneCount > 1 &&
+            distanceToJunction > Mathf.Max(12f, vehicleLength * 1.8f))
         {
-            int cruiseLane = CruiseLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex);
-            if (cruiseLane != laneIndex)
+            if (targetPreferred != laneIndex)
             {
+                int step = targetPreferred > laneIndex ? 1 : -1;
+                int stepLane = laneIndex + step;
                 float side = LaneOffsetDelta(roadGraph, currentNodeIndex, targetNodeIndex,
-                    laneIndex, cruiseLane);
+                    laneIndex, stepLane);
                 float clearLength = Mathf.Max(18f, currentSpeedKmh / 3.6f + 8f);
                 if (Mathf.Abs(side) > .05f &&
                     TrafficParticipant.PassingLaneClear(transform, side, clearLength))
                 {
-                    BeginLaneChange(cruiseLane);
+                    BeginLaneChange(stepLane);
                     return;
                 }
             }
         }
 
         laneShiftTarget = 0f;
+    }
+
+    int GetEffectivePreferredLane(int laneCount)
+    {
+        if (preferredLaneIndex >= 0 && preferredLaneIndex < laneCount)
+            return preferredLaneIndex;
+        preferredLaneIndex = TrafficLane.PickLaneForVehicle(roadGraph, currentNodeIndex, targetNodeIndex,
+            vehicleType, desiredSpeedFactor, transform.GetHashCode());
+        return preferredLaneIndex;
     }
 
     void StartOvertake(TrafficParticipant leader, int passLane)
@@ -757,8 +802,10 @@ public class AIVehicleController : MonoBehaviour
         }
 
         int lanes = Mathf.Max(1, roadGraph.GetLaneCount(currentNodeIndex, targetNodeIndex));
-        int cruiseLane = CruiseLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex);
-        if (cruiseLane == laneIndex || lanes <= 1)
+        int targetLane = (returnToCruiseLane || vehicleType == VehicleType.Bus || vehicleType == VehicleType.Truck)
+            ? CruiseLaneIndex(roadGraph, currentNodeIndex, targetNodeIndex)
+            : GetEffectivePreferredLane(lanes);
+        if (targetLane == laneIndex || lanes <= 1)
         {
             returningToCruiseLane = false;
             return false;
@@ -770,12 +817,12 @@ public class AIVehicleController : MonoBehaviour
             return true;
 
         float side = LaneOffsetDelta(roadGraph, currentNodeIndex, targetNodeIndex,
-            laneIndex, cruiseLane);
+            laneIndex, targetLane);
         float clearLength = Mathf.Max(18f, currentSpeedKmh / 3.6f + 8f);
         if (Mathf.Abs(side) > .05f &&
             TrafficParticipant.PassingLaneClear(transform, side, clearLength))
         {
-            BeginLaneChange(cruiseLane);
+            BeginLaneChange(targetLane);
             returningToCruiseLane = false;
             laneShiftTarget = 0f;
         }
@@ -785,14 +832,29 @@ public class AIVehicleController : MonoBehaviour
     /// <summary>
     /// Leaves the current link and picks a continuation that does not double back,
     /// so ordinary two-way chain nodes do not turn every car around.
+    /// Maps lanes across intersections (2 lanes to 4 lanes, turns, etc.) and smooths the turn.
     /// </summary>
     void AdvanceToNextNode()
     {
-        previousNodeIndex = currentNodeIndex;
-        currentNodeIndex = targetNodeIndex;
-        targetNodeIndex = roadGraph != null
-            ? roadGraph.GetRandomNextNode(currentNodeIndex, previousNodeIndex)
-            : -1;
+        int prev = currentNodeIndex;
+        int curr = targetNodeIndex;
+        int next = (plannedNextNodeIndex >= 0 && roadGraph != null && roadGraph.IsValidNode(plannedNextNodeIndex))
+            ? plannedNextNodeIndex
+            : (roadGraph != null ? roadGraph.GetRandomNextNode(curr, prev) : -1);
+
+        int oldLane = laneIndex;
+        previousNodeIndex = prev;
+        currentNodeIndex = curr;
+        targetNodeIndex = next;
+        plannedNextNodeIndex = -1;
+
+        if (roadGraph != null && roadGraph.IsValidNode(curr) && roadGraph.IsValidNode(next))
+        {
+            laneIndex = TrafficLane.ResolveExitLane(roadGraph, prev, curr, next, oldLane);
+            preferredLaneIndex = GetEffectivePreferredLane(roadGraph.GetLaneCount(curr, next));
+        }
+
+        junctionTurnGraceTimer = 2.0f;
         if (!isOvertaking && !isYieldingToEmergency && recoveryLaneTimer <= 0f)
             laneShiftTarget = 0f;
     }

@@ -412,6 +412,46 @@ public class ImportedGameplayRegressionTests
     }
 
     [Test]
+    public void PathHeading_DisqualifiesOpposingFlowEvenIfCloser()
+    {
+        var path = new[]
+        {
+            new Vector3(2, 0, 0), new Vector3(2, 0, 50),
+            new Vector3(1, 0, 50), new Vector3(1, 0, 0)
+        };
+        Vector3 requested = new Vector3(0, 0, 25);
+        Vector3 heading = RoadSpawnResolver.PathHeading(path, requested, Vector3.forward, Vector3.forward);
+        Assert.That(heading, Is.EqualTo(Vector3.forward));
+    }
+
+    [Test]
+    public void StopApproachHeading_InfersFromConsecutiveStopsWhenGraphNull()
+    {
+        var route = ScriptableObject.CreateInstance<BusRoute>();
+        route.stops = new[]
+        {
+            new BusStopData { stopName = "A", latitude = -1.280, longitude = 36.820 },
+            new BusStopData { stopName = "B", latitude = -1.285, longitude = 36.820 },
+            new BusStopData { stopName = "C", latitude = -1.290, longitude = 36.820 }
+        };
+        Vector3 stopPos = new Vector3(0, 0, 100);
+        Vector3 fallback = Vector3.forward;
+        Vector3 heading = RoadSpawnResolver.StopApproachHeading(route, 1, stopPos, fallback, null);
+        Assert.That(heading.sqrMagnitude, Is.GreaterThan(0.01f));
+        Object.DestroyImmediate(route);
+    }
+
+    [Test]
+    public void TryRoadside_FindsFallbackKerbWhenClearanceCheckOverlaps()
+    {
+        var roads = new RoadSurfaceIndex();
+        roads.Add(new Vector3(0, 0, -20), new Vector3(0, 0, 20), 8, 10);
+        Assert.That(roads.TryRoadside(new Vector3(0, 0, 5), Vector3.forward, true, out var kerb, out var rot), Is.True);
+        Assert.That(kerb.x, Is.LessThan(0f));
+        Assert.That(Vector3.Dot(rot * Vector3.forward, Vector3.forward), Is.GreaterThan(0.9f));
+    }
+
+    [Test]
     public void WaitingQueue_IsLaidOutOnThePavementSideOfTheKerb()
     {
         var anchor = new Vector3(10, 0, -4);

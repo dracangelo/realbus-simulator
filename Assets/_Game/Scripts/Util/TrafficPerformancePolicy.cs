@@ -24,7 +24,7 @@ public static class TrafficPerformancePolicy
     // The daily curve scales the active count between these fractions. 0.62 at
     // rush hour leaves about 74 of the 120 imported bodies on the road, against
     // 147 before, while a quiet hour still keeps a floor under an empty street.
-    public const float MinActiveFraction = 0.24f;
+    public const float MinActiveFraction = 0.32f;
     public const float MaxActiveFraction = 0.62f;
     public const int ImportedMinActiveVehicles = 12;
     public const int FallbackMinActiveVehicles = 8;

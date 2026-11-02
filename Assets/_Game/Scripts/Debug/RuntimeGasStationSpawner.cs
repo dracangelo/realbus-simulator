@@ -50,17 +50,27 @@ public class RuntimeGasStationSpawner : MonoBehaviour
         while (OSMLoader.Instance == null || !OSMLoader.Instance.dataLoaded || GPSManager.Instance == null)
             yield return null;
 
-        SpawnFromOsmFuelTags();
+        yield return SpawnFromOsmFuelTagsRoutine();
         SpawnComplete = true;
     }
 
-    void SpawnFromOsmFuelTags()
+    IEnumerator SpawnFromOsmFuelTagsRoutine()
     {
-        var fuelResponse = LoadFuelResponse();
+        OverpassResponse fuelResponse = null;
+        var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        if (city != null)
+        {
+            string path = RuntimeCityContentStore.ResolveReadPath(city, "fuel.json");
+            string json = null;
+            yield return RuntimeCityContentStore.ReadText(path, text => json = text);
+            if (!string.IsNullOrWhiteSpace(json))
+                fuelResponse = OverpassResponse.Deserialize(json);
+        }
+
         if (fuelResponse != null && fuelResponse.elements != null && fuelResponse.elements.Count > 0)
         {
             SpawnFromFuelResponse(fuelResponse);
-            return;
+            yield break;
         }
 
         var data = OSMLoader.Instance.osmData;
@@ -68,7 +78,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
         {
             if (logSpawns)
                 Debug.LogWarning("[RuntimeGasStationSpawner] OSM data missing. No gas stations spawned.");
-            return;
+            yield break;
         }
 
         GameObject[] prefabs = LoadStationPrefabs();
@@ -76,7 +86,7 @@ public class RuntimeGasStationSpawner : MonoBehaviour
         {
             if (logSpawns)
                 Debug.LogWarning($"[RuntimeGasStationSpawner] Missing resource: {gasStationResourcePath}");
-            return;
+            yield break;
         }
 
         var placed = new List<Vector3>();

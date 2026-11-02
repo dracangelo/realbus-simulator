@@ -86,10 +86,10 @@ public class VehiclePool : MonoBehaviour
 
     [Header("Spawn Safety")]
     [Tooltip("No vehicle is placed or re-homed closer than this to the player's bus.")]
-    public float minSpawnDistanceFromPlayerMeters = 80f;
+    public float minSpawnDistanceFromPlayerMeters = 32f;
     [Tooltip("No vehicle is placed in the player's forward corridor within this distance, so traffic cannot pop into the bonnet.")]
-    public float spawnAheadClearanceMeters = 120f;
-    public float spawnAheadHalfWidthMeters = 9f;
+    public float spawnAheadClearanceMeters = 45f;
+    public float spawnAheadHalfWidthMeters = 2.4f;
     [Tooltip("Minimum gap between a new/re-homed vehicle and any other traffic body.")]
     public float vehicleSpawnClearanceMeters = 14f;
     public int spawnClearanceAttempts = 512;
@@ -334,7 +334,9 @@ public class VehiclePool : MonoBehaviour
             return false;
 
         pv.full.PlaceOnLane(startNode, targetNode, lane, -1, along01);
+        pv.full.preferredLaneIndex = lane;
         pv.full.ResetLaneChange();
+        pv.spline.preferredLaneIndex = lane;
         pv.spline.Init(roadGraph, startNode, targetNode, lane, 0f);
         pv.laneIndex = lane;
         return true;
@@ -478,9 +480,7 @@ public class VehiclePool : MonoBehaviour
                 // will place it once there is room.
                 startNode = roadGraph.GetRandomNodeIndex(requireOutgoingConnection: true);
                 targetNode = roadGraph.GetRandomNextNode(startNode, -1);
-                // Lane 0 is the centre-line lane of a two-way link, so the old
-                // hardcoded 0 parked the fallback body on the wrong half of the road.
-                lane = TrafficLane.CruiseLane(roadGraph, startNode, targetNode);
+                lane = TrafficLane.PickLaneForVehicle(roadGraph, startNode, targetNode, ai.vehicleType, ai.desiredSpeedFactor);
                 along01 = 0.5f;
                 if (!roadGraph.IsValidNode(startNode) || !roadGraph.IsValidNode(targetNode))
                     continue;
@@ -488,11 +488,13 @@ public class VehiclePool : MonoBehaviour
 
             // Resolve a legal directed road link before choosing its lane.
             ai.Init(roadGraph, startNode, lane, ai.vehicleType);
+            ai.preferredLaneIndex = lane;
             // The lane is chosen after the link exists, so the body is placed on that
             // lane's line rather than on the road's centre line. Spawning partway
             // along the link also stops every car in a district appearing at the
             // same junction at the same time.
             ai.PlaceOnLane(startNode, targetNode, lane, -1, along01);
+            spline.preferredLaneIndex = lane;
             spline.Init(roadGraph, startNode, targetNode, lane, 0f);
 
             SetTier(go, ai, spline, rb, SimulationTier.Dormant, true);
@@ -680,15 +682,39 @@ public class VehiclePool : MonoBehaviour
             int next = roadGraph.GetRandomNextNode(node, -1);
             if (!roadGraph.IsValidNode(next)) continue;
 
-            // A new body belongs in its normal driving lane. Spawning in a random
-            // lane put cars in the oncoming half or the passing lane on their
-            // first metre, which read as traffic that did not keep a side.
-            int candidateLane = AIVehicleController.CruiseLaneIndex(roadGraph, node, next);
-            // Spread bodies along the link. Junction-only spawning created visible
-            // clumps and made re-homed traffic look like it had teleported.
+            int laneCount = roadGraph.GetLaneCount(node, next);
+            if (laneCount <= 0) laneCount = 1;
+
+            var vType = ignore != null ? ignore.type : AIVehicleController.VehicleType.Car;
+            float desiredSpeed = (ignore != null && ignore.full != null) ? ignore.full.desiredSpeedFactor : Random.Range(0.85f, 1.15f);
+            int preferredLane = TrafficLane.PickLaneForVehicle(roadGraph, node, next, vType, desiredSpeed);
+
+            int candidateLane = -1;
             float candidateAlong = Random.Range(0.12f, 0.88f);
-            Vector3 point = GetSpawnPoint(node, next, candidateLane, candidateAlong);
-            if (!IsSpawnPointClear(point, ignore)) continue;
+            Vector3 point = Vector3.zero;
+
+            Vector3 prefPoint = GetSpawnPoint(node, next, preferredLane, candidateAlong);
+            if (IsSpawnPointClear(prefPoint, ignore))
+            {
+                candidateLane = preferredLane;
+                point = prefPoint;
+            }
+            else
+            {
+                for (int l = 0; l < laneCount; l++)
+                {
+                    if (l == preferredLane) continue;
+                    Vector3 altPoint = GetSpawnPoint(node, next, l, candidateAlong);
+                    if (IsSpawnPointClear(altPoint, ignore))
+                    {
+                        candidateLane = l;
+                        point = altPoint;
+                        break;
+                    }
+                }
+            }
+
+            if (candidateLane < 0) continue;
 
             // Keep a re-homed body inside the spline band. A point past it is out
             // of view, so the tier pass would retire the body on its next tick and

@@ -34,11 +34,52 @@ public static class RuntimeCityContentStore
     public static bool IsDownloaded(CityDefinition city, string fileName) => IsUsefulFile(WritablePath(city, fileName));
 
     /// <summary>True when the shipped city pack already contains this file.</summary>
-    public static bool HasBundledFile(CityDefinition city, string fileName) => IsUsefulFile(BundledPath(city, fileName));
+    public static bool HasBundledFile(CityDefinition city, string fileName)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        // Inside Android APK, File.Exists cannot inspect StreamingAssets.
+        // If the city is valid, shipped bundled files exist.
+        return city != null && !string.IsNullOrWhiteSpace(city.cityCode);
+#else
+        return IsUsefulFile(BundledPath(city, fileName));
+#endif
+    }
 
     /// <summary>True when the game can read this file, downloaded or shipped.</summary>
     public static bool IsAvailable(CityDefinition city, string fileName)
         => IsDownloaded(city, fileName) || HasBundledFile(city, fileName);
+
+    public static System.Collections.IEnumerator ReadText(string path, System.Action<string> completed)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            completed?.Invoke(null);
+            yield break;
+        }
+
+        if (!path.Contains("://"))
+        {
+            string localText = null;
+            try
+            {
+                if (File.Exists(path))
+                    localText = File.ReadAllText(path);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[RuntimeCityContentStore] Could not read {path}: {ex.Message}");
+            }
+            completed?.Invoke(localText);
+            yield break;
+        }
+
+        using (var request = UnityEngine.Networking.UnityWebRequest.Get(path))
+        {
+            request.timeout = 30;
+            yield return request.SendWebRequest();
+            completed?.Invoke(request.result == UnityEngine.Networking.UnityWebRequest.Result.Success ? request.downloadHandler.text : null);
+        }
+    }
 
     /// <summary>
     /// Routes are split across two storage models: an imported routes.json, or the

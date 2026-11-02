@@ -235,9 +235,3 @@ MonoBehaviour:
       m_Center: {x: 0, y: 3.5, z: 0}
       m_Extent: {x: 2.5267174, y: 3.5, z: 2.5431247}
     triangles: 40640
-  - prefab: {fileID: 2774185976468546968, guid: 4c42375986f12f2a8a9b2eebc75b118c, type: 3}
-    kind: 5
-    bounds:
-      m_Center: {x: 0, y: 0.84999996, z: 0}
-      m_Extent: {x: 0.6241448, y: 0.84999996, z: 0.49237913}
-    triangles: 84272

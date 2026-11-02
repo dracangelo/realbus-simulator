@@ -227660,6 +227660,9 @@ MonoBehaviour:
   minSpacingMeters: 120
   yOffset: 0
   logSpawns: 1
+  alignToRoad: 1
+  roadClearanceMeters: 2
+  roadHalfWidthMeters: 5
   groundClearance: 0.28
   serviceRadius: 11
   refuelLitresPerSecond: 22

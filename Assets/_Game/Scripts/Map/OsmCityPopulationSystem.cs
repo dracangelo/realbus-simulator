@@ -236,12 +236,26 @@ public class OsmCityPopulationSystem : MonoBehaviour
 
     void SpawnPoiActivity()
     {
+        StartCoroutine(SpawnPoiActivityRoutine());
+    }
+
+    IEnumerator SpawnPoiActivityRoutine()
+    {
         var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
         if (city == null || string.IsNullOrWhiteSpace(city.cityCode))
-            return;
+            yield break;
 
-        SpawnPoiActivityFromResponse(LoadResponse(RuntimeCityContentStore.ResolveReadPath(city, "poi.json")));
-        SpawnPoiActivityFromResponse(LoadResponse(RuntimeCityContentStore.ResolveReadPath(city, "buildings.json")));
+        string poiPath = RuntimeCityContentStore.ResolveReadPath(city, "poi.json");
+        string poiJson = null;
+        yield return RuntimeCityContentStore.ReadText(poiPath, text => poiJson = text);
+        if (!string.IsNullOrWhiteSpace(poiJson))
+            SpawnPoiActivityFromResponse(OverpassResponse.Deserialize(poiJson));
+
+        string buildingsPath = RuntimeCityContentStore.ResolveReadPath(city, "buildings.json");
+        string buildingsJson = null;
+        yield return RuntimeCityContentStore.ReadText(buildingsPath, text => buildingsJson = text);
+        if (!string.IsNullOrWhiteSpace(buildingsJson))
+            SpawnPoiActivityFromResponse(OverpassResponse.Deserialize(buildingsJson));
     }
 
     void SpawnPoiActivityFromResponse(OverpassResponse response)

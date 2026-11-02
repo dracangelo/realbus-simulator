@@ -188,7 +188,9 @@ public class OSMRouteImporter : MonoBehaviour
         string roadsQuery = OverpassQueryBuilder.RoadsQuery(
             city.minLat, city.minLon, city.maxLat, city.maxLon, roadsTimeoutSec);
 
-        string roadsJson = localRoadsJson != null ? localRoadsJson.text : ReadDownloadedOrBundled(city, "roads.json");
+        string roadsJson = localRoadsJson != null ? localRoadsJson.text : null;
+        if (roadsJson == null)
+            yield return ReadDownloadedOrBundled(city, "roads.json", json => roadsJson = json);
         if (roadsJson == null)
             yield return FetchOverpass(roadsQuery, roadsTimeoutSec, json => roadsJson = json);
 
@@ -223,7 +225,9 @@ public class OSMRouteImporter : MonoBehaviour
         string routesQuery = OverpassQueryBuilder.BusRoutesQuery(
             city.minLat, city.minLon, city.maxLat, city.maxLon, routesTimeoutSec);
 
-        string routesJson = localRoutesJson != null ? localRoutesJson.text : ReadDownloadedOrBundled(city, "routes.json");
+        string routesJson = localRoutesJson != null ? localRoutesJson.text : null;
+        if (routesJson == null)
+            yield return ReadDownloadedOrBundled(city, "routes.json", json => routesJson = json);
         if (routesJson == null)
             yield return FetchOverpass(routesQuery, routesTimeoutSec, json => routesJson = json);
 
@@ -502,15 +506,10 @@ public class OSMRouteImporter : MonoBehaviour
         return converter;
     }
 
-    static string ReadDownloadedOrBundled(CityDefinition city, string fileName)
+    static IEnumerator ReadDownloadedOrBundled(CityDefinition city, string fileName, System.Action<string> onResult)
     {
         string path = RuntimeCityContentStore.ResolveReadPath(city, fileName);
-        try { return File.Exists(path) ? File.ReadAllText(path) : null; }
-        catch (IOException exception)
-        {
-            Debug.LogWarning($"[OSMRouteImporter] Could not read {path}: {exception.Message}");
-            return null;
-        }
+        yield return RuntimeCityContentStore.ReadText(path, onResult);
     }
 
     static bool IsExplicitSingleRouteDownload(CityDefinition city)

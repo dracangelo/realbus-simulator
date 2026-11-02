@@ -153,6 +153,12 @@ public sealed class RoadSurfaceIndex
         kerb = requested; rotation = Quaternion.identity;
         float best = float.MaxValue; bool found = false;
         heading = Vector3.ProjectOnPlane(heading, Vector3.up).normalized;
+
+        Vector3 fallbackKerb = requested;
+        Quaternion fallbackRotation = Quaternion.identity;
+        float bestFallbackScore = float.MaxValue;
+        bool hasFallback = false;
+
         foreach (var segment in Nearby(requested - Vector3.one * 60, requested + Vector3.one * 60))
         {
             Vector3 direction = (segment.b - segment.a).normalized;
@@ -168,10 +174,25 @@ public sealed class RoadSurfaceIndex
                 if (distance > 3600f) continue;
                 float score = distance + (1 - alignment) * 900f;
                 Vector3 candidate = along + RoadSpawnResolver.KerbSide(direction, leftTraffic) * (segment.halfWidth + .6f);
+                if (score < bestFallbackScore)
+                {
+                    bestFallbackScore = score;
+                    fallbackKerb = candidate;
+                    fallbackRotation = Quaternion.LookRotation(direction, Vector3.up);
+                    hasFallback = true;
+                }
                 if (score >= best || Contains(candidate, .3f)) continue;
                 best = score; found = true; kerb = candidate; rotation = Quaternion.LookRotation(direction, Vector3.up);
             }
         }
+
+        if (!found && hasFallback)
+        {
+            kerb = fallbackKerb;
+            rotation = fallbackRotation;
+            return true;
+        }
+
         return found;
     }
 }

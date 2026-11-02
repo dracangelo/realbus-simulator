@@ -12,6 +12,9 @@ public class TrafficLaneTests
     AIRoadGraph graph;
     GameObject nodeA;
     GameObject nodeB;
+    GameObject nodeC;
+    GameObject nodeD;
+    GameObject nodeE;
 
     /// <summary>A two-way link A(0,0,0) -> B(0,0,40) with the given lanes each way.</summary>
     void BuildTwoWay(int lanes, float laneWidth = 3.3f)
@@ -39,12 +42,60 @@ public class TrafficLaneTests
         };
     }
 
+    /// <summary>
+    /// Creates a 4-way intersection centered at nodeB (0,0,40):
+    /// nodeA (0,0,0) -> nodeB (0,0,40) [incoming from south]
+    /// nodeB -> nodeC (-40,0,40) [west / left turn]
+    /// nodeB -> nodeD (40,0,40)  [east / right turn]
+    /// nodeB -> nodeE (0,0,80)   [north / straight ahead]
+    /// </summary>
+    void BuildIntersection(int incomingLanes, int outgoingLanes, float laneWidth = 3.3f)
+    {
+        root = new GameObject("Intersection graph");
+        graph = root.AddComponent<AIRoadGraph>();
+        nodeA = new GameObject("A_South");
+        nodeB = new GameObject("B_Junction");
+        nodeC = new GameObject("C_West");
+        nodeD = new GameObject("D_East");
+        nodeE = new GameObject("E_North");
+
+        nodeA.transform.position = Vector3.zero;
+        nodeB.transform.position = new Vector3(0f, 0f, 40f);
+        nodeC.transform.position = new Vector3(-40f, 0f, 40f);
+        nodeD.transform.position = new Vector3(40f, 0f, 40f);
+        nodeE.transform.position = new Vector3(0f, 0f, 80f);
+
+        graph.nodes = new[]
+        {
+            new AIRoadGraph.RoadNode
+            {
+                point = nodeA.transform, nextNodeIndices = new[] { 1 },
+                outgoingLaneCounts = new[] { incomingLanes }, outgoingLaneWidths = new[] { laneWidth },
+                outgoingOneWays = new[] { false }, outgoingSharedLanes = new[] { false }
+            },
+            new AIRoadGraph.RoadNode
+            {
+                point = nodeB.transform, nextNodeIndices = new[] { 2, 3, 4 },
+                outgoingLaneCounts = new[] { outgoingLanes, outgoingLanes, outgoingLanes },
+                outgoingLaneWidths = new[] { laneWidth, laneWidth, laneWidth },
+                outgoingOneWays = new[] { false, false, false },
+                outgoingSharedLanes = new[] { false, false, false }
+            },
+            new AIRoadGraph.RoadNode { point = nodeC.transform, nextNodeIndices = new int[0] },
+            new AIRoadGraph.RoadNode { point = nodeD.transform, nextNodeIndices = new int[0] },
+            new AIRoadGraph.RoadNode { point = nodeE.transform, nextNodeIndices = new int[0] }
+        };
+    }
+
     [TearDown]
     public void TearDown()
     {
         if (root != null) Object.DestroyImmediate(root);
         if (nodeA != null) Object.DestroyImmediate(nodeA);
         if (nodeB != null) Object.DestroyImmediate(nodeB);
+        if (nodeC != null) Object.DestroyImmediate(nodeC);
+        if (nodeD != null) Object.DestroyImmediate(nodeD);
+        if (nodeE != null) Object.DestroyImmediate(nodeE);
     }
 
     [Test]
@@ -245,5 +296,107 @@ public class TrafficLaneTests
         Assert.That(kerb, Is.GreaterThan(0f));
         Assert.That(kerb + 2.6f * .5f, Is.LessThanOrEqualTo(half + .001f),
             "a stopped bus must still fit inside the carriageway it docks against");
+    }
+
+    [Test]
+    public void FastestLaneIsInnermostOnTwoWayAndOffsideOnOneWay()
+    {
+        BuildTwoWay(3);
+
+        // On two-way roads, lane 0 is next to the centre line (fastest / innermost) on both sides.
+        graph.drivesOnLeft = true;
+        Assert.That(TrafficLane.FastestLane(graph, 0, 1), Is.EqualTo(0));
+        graph.drivesOnLeft = false;
+        Assert.That(TrafficLane.FastestLane(graph, 0, 1), Is.EqualTo(0));
+
+        // On one-way roads:
+        graph.nodes[0].outgoingOneWays = new[] { true };
+        graph.drivesOnLeft = true;
+        // In left-hand drive, offside overtaking lane is the rightmost lane (highest index).
+        Assert.That(TrafficLane.FastestLane(graph, 0, 1), Is.EqualTo(2));
+        graph.drivesOnLeft = false;
+        // In right-hand drive, offside overtaking lane is the leftmost lane (lane 0).
+        Assert.That(TrafficLane.FastestLane(graph, 0, 1), Is.EqualTo(0));
+    }
+
+    [Test]
+    public void PickLaneForVehicleAssignsLanesByVehicleTypeAndSpeed()
+    {
+        BuildTwoWay(3);
+        graph.drivesOnLeft = true;
+
+        // Buses and trucks must stick to kerb lane (lane 2 in 3-lane two-way)
+        int busLane = TrafficLane.PickLaneForVehicle(graph, 0, 1, AIVehicleController.VehicleType.Bus, 1.0f);
+        int truckLane = TrafficLane.PickLaneForVehicle(graph, 0, 1, AIVehicleController.VehicleType.Truck, 1.0f);
+        Assert.That(busLane, Is.EqualTo(2));
+        Assert.That(truckLane, Is.EqualTo(2));
+
+        // Emergency vehicle and high-speed drivers prefer fastest lane (lane 0)
+        int emergLane = TrafficLane.PickLaneForVehicle(graph, 0, 1, AIVehicleController.VehicleType.Emergency, 1.0f);
+        int fastCarLane = TrafficLane.PickLaneForVehicle(graph, 0, 1, AIVehicleController.VehicleType.Car, 1.25f);
+        Assert.That(emergLane, Is.EqualTo(0));
+        Assert.That(fastCarLane, Is.EqualTo(0));
+
+        // Normal/slow car stays kerbward
+        int slowCarLane = TrafficLane.PickLaneForVehicle(graph, 0, 1, AIVehicleController.VehicleType.Car, 0.88f);
+        Assert.That(slowCarLane, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void ResolveTurnLanePreselectsKerbForNearsideAndOffsideForOffside()
+    {
+        BuildIntersection(incomingLanes: 3, outgoingLanes: 3);
+
+        // nodeA (0,0,0) -> nodeB (0,0,40): heading North (0, 0, 1)
+        // nodeC (-40,0,40): West (Left turn)
+        // nodeD (40,0,40): East (Right turn)
+
+        // Left-hand drive:
+        // Left turn is nearside -> kerb lane (lane 2)
+        // Right turn is offside -> inner lane (lane 0)
+        graph.drivesOnLeft = true;
+        int lhdLeftTurn = TrafficLane.ResolveTurnLane(graph, 0, 1, 2);
+        int lhdRightTurn = TrafficLane.ResolveTurnLane(graph, 0, 1, 3);
+        Assert.That(lhdLeftTurn, Is.EqualTo(2), "LHD left turn is near-side: use kerb lane");
+        Assert.That(lhdRightTurn, Is.EqualTo(0), "LHD right turn is off-side: use inner lane");
+
+        // Right-hand drive:
+        // Right turn is nearside -> kerb lane (lane 2)
+        // Left turn is offside -> inner lane (lane 0)
+        graph.drivesOnLeft = false;
+        int rhdLeftTurn = TrafficLane.ResolveTurnLane(graph, 0, 1, 2);
+        int rhdRightTurn = TrafficLane.ResolveTurnLane(graph, 0, 1, 3);
+        Assert.That(rhdRightTurn, Is.EqualTo(2), "RHD right turn is near-side: use kerb lane");
+        Assert.That(rhdLeftTurn, Is.EqualTo(0), "RHD left turn is off-side: use inner lane");
+    }
+
+    [Test]
+    public void ResolveExitLaneMapsVehiclesAccuratelyAcrossIntersectionsAndTransitions()
+    {
+        // 1. Intersection turns:
+        BuildIntersection(incomingLanes: 3, outgoingLanes: 3);
+        graph.drivesOnLeft = true;
+
+        // Nearside left turn in LHD exits into kerb lane (lane 2)
+        int exitNearside = TrafficLane.ResolveExitLane(graph, 0, 1, 2, incomingLane: 2);
+        Assert.That(exitNearside, Is.EqualTo(2));
+
+        // Offside right turn in LHD exits into fastest lane (lane 0)
+        int exitOffside = TrafficLane.ResolveExitLane(graph, 0, 1, 3, incomingLane: 0);
+        Assert.That(exitOffside, Is.EqualTo(0));
+
+        // 2. Straight transition where lane count expands (2 lanes -> 4 lanes):
+        // Node 0 -> Node 1 (2 lanes), Node 1 -> Node 4 (4 lanes)
+        graph.nodes[0].outgoingLaneCounts = new[] { 2 };
+        graph.nodes[1].outgoingLaneCounts = new[] { 3, 3, 4 };
+
+        // Straight ahead (North -> nodeE index 4):
+        // Incoming lane 0 (innermost of 2) maps to lane 0 (innermost of 4)
+        int exitStraightInner = TrafficLane.ResolveExitLane(graph, 0, 1, 4, incomingLane: 0);
+        Assert.That(exitStraightInner, Is.EqualTo(0));
+
+        // Incoming lane 1 (kerb lane of 2) maps to lane 3 (kerb lane of 4)
+        int exitStraightKerb = TrafficLane.ResolveExitLane(graph, 0, 1, 4, incomingLane: 1);
+        Assert.That(exitStraightKerb, Is.EqualTo(3));
     }
 }

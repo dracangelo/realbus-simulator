@@ -92,11 +92,18 @@ public class TrafficParticipant : MonoBehaviour
             // approaching lane even when its centre is not on that lane line.
             // Give the player's bus a wider near-field envelope so a car brakes
             // instead of clipping the middle of the bus.
-            bool broadside = playerBus &&
-                Mathf.Abs(Vector3.Dot(vehicle.forward, other.transform.forward)) < .5f;
-            if (playerBus)
+            bool broadside = Mathf.Abs(Vector3.Dot(vehicle.forward, other.transform.forward)) < .55f;
+            if (broadside)
+            {
+                float crossingEnvelope = Mathf.Max(other.width, other.length * .45f);
                 lateralClearance = Mathf.Max(lateralClearance,
-                    WidthOf(self) * .5f + other.width * .5f + (broadside ? 2.3f : .8f));
+                    WidthOf(self) * .5f + crossingEnvelope + (playerBus ? 1.5f : .5f));
+            }
+            else if (playerBus)
+            {
+                lateralClearance = Mathf.Max(lateralClearance,
+                    WidthOf(self) * .5f + other.width * .5f + .8f);
+            }
             if (Mathf.Abs(Vector3.Dot(vehicle.right, offset)) > lateralClearance) continue;
 
             // Keep a real bumper gap. Subtracting both half lengths stops a long
