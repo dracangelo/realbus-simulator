@@ -384,6 +384,51 @@ public static class TrafficLane
     }
 
     /// <summary>
+    /// Pulls a body back inside the asphalt of the road it is driving if it has
+    /// drifted or been shoved past the kerb. The rail is measured to the nearest
+    /// point of the link centreline - and of the outgoing link once the body is in
+    /// the junction mouth - so a car swinging through a corner is judged against the
+    /// road it is turning into instead of a line it has already left behind.
+    ///
+    /// This is deliberately independent of the lane line: lane keeping is allowed to
+    /// be a metre wide at a junction, a wheel over the kerb is not.
+    /// </summary>
+    public static Vector3 ClampToRoad(AIRoadGraph graph, int fromNode, int toNode, int nextNode,
+        Vector3 position, float bodyHalfWidth, float margin = .12f)
+    {
+        if (graph == null || !graph.IsValidNode(fromNode) || !graph.IsValidNode(toNode))
+            return position;
+
+        Vector3 a = graph.GetNodePosition(fromNode);
+        Vector3 b = graph.GetNodePosition(toNode);
+        float half = graph.GetRoadHalfWidth(fromNode, toNode);
+        Vector3 nearest = RoadSpawnResolver.ProjectOnSegment(position, a, b);
+
+        if (graph.IsValidNode(nextNode) && nextNode != fromNode && nextNode != toNode)
+        {
+            Vector3 c = graph.GetNodePosition(nextNode);
+            Vector3 onExit = RoadSpawnResolver.ProjectOnSegment(position, b, c);
+            if ((position - onExit).sqrMagnitude < (position - nearest).sqrMagnitude)
+            {
+                nearest = onExit;
+                half = graph.GetRoadHalfWidth(toNode, nextNode);
+            }
+        }
+
+        if (half <= .1f) return position;
+        float limit = Mathf.Max(.1f, half - Mathf.Max(0f, bodyHalfWidth) - Mathf.Max(0f, margin));
+
+        Vector3 lateral = position - nearest;
+        lateral.y = 0f;
+        float distance = lateral.magnitude;
+        if (distance <= limit) return position;
+
+        Vector3 corrected = nearest + lateral / distance * limit;
+        corrected.y = position.y;
+        return corrected;
+    }
+
+    /// <summary>
     /// True when the body is on the correct side of the centre line for its heading.
     /// Placement and the headless audit both call this, so a flipped side cannot be
     /// hidden by the probe agreeing with the placement it is meant to check.
@@ -409,5 +454,48 @@ public static class TrafficLane
         if (half <= .1f) return 0f;
         float clearance = Mathf.Max(0f, bodyWidth) * .5f + .35f;
         return Mathf.Max(0f, half - clearance);
+    }
+
+    /// <summary>
+    /// How often a body may re-check the drawn asphalt. Doing the spatial query every
+    /// frame for hundreds of vehicles would be the most expensive thing traffic runs;
+    /// a body that leaves the road does it over seconds, not one physics step.
+    /// </summary>
+    public const float SurfaceRailIntervalSeconds = 0.4f;
+
+    /// <summary>The road mesh's own surface index, or null while no road has been built.</summary>
+    public static RoadSurfaceIndex RuntimeSurface
+        => OSMRoadMeshBuilder.Instance != null ? OSMRoadMeshBuilder.Instance.SurfaceIndex : null;
+
+    /// <summary>True when <paramref name="point"/> falls on drawn asphalt.</summary>
+    public static bool IsOnAsphalt(RoadSurfaceIndex roads, Vector3 point, float clearance = 0f)
+        => roads != null && !roads.IsEmpty && roads.Contains(point, Mathf.Max(0f, clearance));
+
+    /// <summary>
+    /// The final road rail: the drawn asphalt, not the graph. <see cref="ClampToRoad"/>
+    /// keeps a body inside the road its link models even when that link's centreline
+    /// runs down a median the mesh never paved, so the body can be perfectly legal on
+    /// the graph and still be watched driving across a verge. This pulls it onto the
+    /// nearest carriageway the player can actually see. Inert on every correctly
+    /// aligned link, which is why it costs nothing to keep on.
+    /// </summary>
+    public static Vector3 ClampToSurface(RoadSurfaceIndex roads, Vector3 position, float bodyHalfWidth,
+        float searchRadius = 20f, float margin = .2f)
+    {
+        if (roads == null || roads.IsEmpty) return position;
+        if (roads.Contains(position, .05f)) return position;
+
+        if (!roads.TryGetNearestSurface(position, Mathf.Max(2f, searchRadius),
+                out Vector3 centre, out float halfWidth, out _))
+            return position;
+
+        float limit = Mathf.Max(.1f, halfWidth - Mathf.Max(0f, bodyHalfWidth) - Mathf.Max(0f, margin));
+        Vector3 lateral = position - centre;
+        lateral.y = 0f;
+        if (lateral.magnitude <= limit) return position;
+
+        Vector3 corrected = centre + Vector3.ClampMagnitude(lateral, limit);
+        corrected.y = position.y;
+        return corrected;
     }
 }

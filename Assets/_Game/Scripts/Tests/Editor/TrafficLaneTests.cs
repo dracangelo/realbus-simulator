@@ -343,6 +343,72 @@ public class TrafficLaneTests
     }
 
     [Test]
+    public void ASteeredBodyIsPulledBackInsideTheAsphalt()
+    {
+        BuildTwoWay(1, 3.5f);
+        float half = graph.GetRoadHalfWidth(0, 1);
+        const float bodyHalf = 1.1f;
+
+        // A body shoved past the kerb by a collision comes back onto the road.
+        Vector3 centre = new Vector3(0f, 0f, 20f);
+        Vector3 offRoad = centre + Vector3.right * (half + 2.5f);
+        Vector3 clamped = TrafficLane.ClampToRoad(graph, 0, 1, -1, offRoad, bodyHalf);
+        Assert.That(Vector3.Dot(clamped - centre, Vector3.right),
+            Is.LessThanOrEqualTo(half - bodyHalf + .001f),
+            "a body must sit fully inside the carriageway, never on the kerb");
+        Assert.That(Vector3.Dot(clamped - centre, Vector3.right), Is.GreaterThan(0f),
+            "the rail pulls the body back in, it does not mirror it across the road");
+
+        // A body already in its lane is not moved at all.
+        Vector3 inLane = centre + Vector3.right * 1.2f;
+        Assert.That(Vector3.Distance(TrafficLane.ClampToRoad(graph, 0, 1, -1, inLane, bodyHalf), inLane),
+            Is.LessThan(.001f), "lane keeping already satisfies the rail");
+    }
+
+    [Test]
+    public void ACornerIsJudgedAgainstTheRoadItTurnsInto()
+    {
+        BuildIntersection(incomingLanes: 1, outgoingLanes: 1);
+
+        // Turning east at the junction: the body is wide of the incoming centreline
+        // but already on the asphalt of the link it is joining. Judging it only
+        // against the line it left behind would drag it back across the junction.
+        Vector3 corner = new Vector3(6f, 0f, 41.5f);
+        Assert.That(Vector3.Distance(TrafficLane.ClampToRoad(graph, 0, 1, 3, corner, 1.1f), corner),
+            Is.LessThan(.001f), "a body inside the junction mouth of the exit link is on the road");
+
+        // Once the body is genuinely off both roads, it is pulled back.
+        Vector3 pavement = new Vector3(6f, 0f, 55f);
+        Vector3 clamped = TrafficLane.ClampToRoad(graph, 0, 1, 3, pavement, 1.1f);
+        Assert.That(Vector3.Distance(clamped, pavement), Is.GreaterThan(.5f),
+            "a body beyond the asphalt of both links must be corrected");
+        Assert.That(Vector3.Distance(clamped, new Vector3(6f, 0f, 40f)),
+            Is.LessThan(Vector3.Distance(pavement, new Vector3(6f, 0f, 40f))),
+            "the correction brings the body back towards the road, not further out");
+    }
+
+    [Test]
+    public void TurnAngleReportsTheExitTheVehicleActuallyTakes()
+    {
+        BuildIntersection(incomingLanes: 3, outgoingLanes: 3);
+
+        Assert.That(graph.GetTurnAngle(0, 1, 2), Is.EqualTo(90f).Within(1f),
+            "the west exit is a right-angle turn, so the car must slow for it");
+        Assert.That(graph.GetTurnAngle(0, 1, 4), Is.EqualTo(0f).Within(1f),
+            "the straight exit is not a turn");
+        Assert.That(graph.GetTurnAngle(0, 1, 99), Is.EqualTo(0f),
+            "an unusable exit reports no turn instead of guessing");
+    }
+
+    [Test]
+    public void APassStartsOnlyWhenItCanFinishBeforeTheJunction()
+    {
+        Assert.That(AIVehicleController.ShouldStartOvertake(50f, 20f, 18f, 9f, true, 200f), Is.True);
+        Assert.That(AIVehicleController.ShouldStartOvertake(50f, 20f, 18f, 9f, true, 12f), Is.False,
+            "a lane change it cannot complete before the junction is not worth starting");
+    }
+
+    [Test]
     public void ResolveTurnLanePreselectsKerbForNearsideAndOffsideForOffside()
     {
         BuildIntersection(incomingLanes: 3, outgoingLanes: 3);
@@ -398,5 +464,38 @@ public class TrafficLaneTests
         // Incoming lane 1 (kerb lane of 2) maps to lane 3 (kerb lane of 4)
         int exitStraightKerb = TrafficLane.ResolveExitLane(graph, 0, 1, 4, incomingLane: 1);
         Assert.That(exitStraightKerb, Is.EqualTo(3));
+    }
+
+    [Test]
+    public void ABodyOffTheDrawnRoadIsPulledBackOntoTheAsphalt()
+    {
+        var roads = new RoadSurfaceIndex();
+        roads.Add(new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 80f), 7f, 42L);
+        const float bodyHalf = 1.1f;
+
+        // Already on the carriageway: the index never moves it.
+        Vector3 onRoad = new Vector3(2f, 0f, 30f);
+        Assert.That(Vector3.Distance(TrafficLane.ClampToSurface(roads, onRoad, bodyHalf), onRoad),
+            Is.LessThan(.001f), "a body on the drawn asphalt must not be nudged");
+
+        // A graph centreline running down a median leaves the body legal on the graph
+        // and visibly off the road. The drawn asphalt is the authority.
+        Vector3 verge = new Vector3(14f, 0f, 30f);
+        Vector3 pulled = TrafficLane.ClampToSurface(roads, verge, bodyHalf);
+        Assert.That(Vector3.Distance(pulled, verge), Is.GreaterThan(1f), "a body on the verge is corrected");
+        Assert.That(Vector3.Distance(pulled, new Vector3(0f, 0f, 30f)), Is.LessThanOrEqualTo(2.21f),
+            "the correction leaves the body fully inside the 7 m asphalt");
+    }
+
+    [Test]
+    public void TheDrawnRoadRailIsInertWithoutARoadIndex()
+    {
+        Vector3 position = new Vector3(50f, 0f, 12f);
+        Assert.That(Vector3.Distance(TrafficLane.ClampToSurface(null, position, 1.1f), position), Is.LessThan(.001f));
+
+        var empty = new RoadSurfaceIndex();
+        Assert.That(empty.IsEmpty, Is.True);
+        Assert.That(Vector3.Distance(TrafficLane.ClampToSurface(empty, position, 1.1f), position), Is.LessThan(.001f),
+            "a scene with no road mesh keeps the graph rail as its only authority");
     }
 }

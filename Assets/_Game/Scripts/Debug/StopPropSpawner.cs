@@ -197,10 +197,24 @@ public class StopPropSpawner : MonoBehaviour
 
         int stopCount = spawnOnlyFirstStopAtMissionStart ? Mathf.Min(1, route.stops.Length) : route.stops.Length;
         List<int> stopOrder = ResolveStopOrder(route, stopCount);
+        // Imported routes list both platforms of a roadside pair back to back. The
+        // mission only serves the first and skips the duplicate; spawning furniture
+        // for both is what put a shelter on the oncoming kerb and made the bus cross
+        // traffic to reach it.
+        bool[] servedStops = BusRoute.ServedStopMask(route.stops);
+        int servedStopCount = 0;
+        for (int i = 0; i < stopCount && i < servedStops.Length; i++)
+            if (servedStops[i]) servedStopCount++;
         SpawnedStopCount = 0;
         for (int orderIndex = 0; orderIndex < stopOrder.Count; orderIndex++)
         {
             int i = stopOrder[orderIndex];
+            if (i < 0 || i >= servedStops.Length || !servedStops[i])
+            {
+                if (logSpawns)
+                    Debug.Log($"[StopPropSpawner] Skipping duplicate platform index={i} '{route.stops[i].stopName}'; the route serves its pair rather than both kerbs.");
+                continue;
+            }
             var stop = route.stops[i];
             Vector3 stopPos = GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude);
             stopPos.y = 0f;
@@ -232,22 +246,25 @@ public class StopPropSpawner : MonoBehaviour
                 ? Quaternion.Euler(0f, GetRouteYaw(route, i), 0f)
                 : Quaternion.identity;
             // The kerb side is chosen from the heading, so the heading has to be the
-            // direction the player actually drives. A loop route passes the same
-            // kerb twice and the nearest path segment can be the return leg; the
-            // graph path from the previous stop is the approach the mission uses,
-            // so it breaks that tie. RouteHeading still owns the actual tangent.
+            // direction the player actually drives. StopApproachHeading resolves the
+            // driven route line in stop order, which keeps the shelter on the kerb
+            // the bus pulls into even when a loop passes the street twice.
             Vector3 heading = RoadSpawnResolver.StopApproachHeading(route, i, stopPos,
                 routeRotation * Vector3.forward, approachGraph);
             if (logSpawns)
                 Debug.Log($"[StopPropSpawner] stopSide index={i} '{stop.stopName}' " +
                     $"headingYaw={Mathf.Atan2(heading.x, heading.z) * Mathf.Rad2Deg:F1} graph={approachGraph != null}");
-            if (!roads.TryRoadside(stopPos, heading, leftTraffic, out Vector3 worldPos, out routeRotation))
+            // Query from the driven route line rather than the stored platform point:
+            // the opposite platform of a route pair sits on the oncoming carriageway,
+            // and the nearest-road search would happily build the shelter over there.
+            Vector3 placementAnchor = RoadSpawnResolver.StopApproachAnchor(route, i, stopPos, heading);
+            if (!roads.TryRoadside(placementAnchor, heading, leftTraffic, out Vector3 worldPos, out routeRotation))
             {
-                worldPos = stopPos;
+                worldPos = placementAnchor;
                 Vector3 fwd = heading.sqrMagnitude > 0.01f ? heading : (routeRotation * Vector3.forward);
                 if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
                 routeRotation = Quaternion.LookRotation(fwd, Vector3.up);
-                Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; falling back to raw stop position.");
+                Debug.LogWarning($"[StopPropSpawner] No clear kerb near '{stop.stopName}'; falling back to the driven stop line.");
             }
 
             // Directional sanity check: ensure rotation faces the travel heading
@@ -359,7 +376,7 @@ public class StopPropSpawner : MonoBehaviour
             }
 
             SpawnedStopCount++;
-            if (!NearFieldComplete && SpawnedStopCount >= Mathf.Min(nearFieldStopsBeforeReady, stopOrder.Count))
+            if (!NearFieldComplete && SpawnedStopCount >= Mathf.Min(nearFieldStopsBeforeReady, servedStopCount))
                 NearFieldComplete = true;
             if (logSpawns)
                 Debug.Log($"[StopPropSpawner] Spawned {propPath} with posters at stop '{stop.stopName}'.");

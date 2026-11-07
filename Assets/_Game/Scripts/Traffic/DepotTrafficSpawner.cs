@@ -126,6 +126,10 @@ public class DepotTrafficSpawner : MonoBehaviour
         Vector3 streetBase = Flat(kerbWorld, groundY) + streetLane;
 
         var positions = new Vector3[NodeCount];
+        // The street nodes are a fixed distance up the road from the kerb and must keep
+        // that distance: the depot's own apron is registered in the road surface index,
+        // so snapping them to the nearest asphalt pulls them into the yard. The city
+        // rail in TrafficLane handles a body that ends up off the drawn road.
         positions[StreetApproachNode] = streetBase + streetAxis * approachDistanceMeters;
         positions[EntryMouthNode] = entryMouth;
         positions[EntryDeepNode] = Flat(entry[entry.Length - 1], groundY);

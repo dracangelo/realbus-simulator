@@ -144,26 +144,35 @@ public static class RoadSpawnResolver
         // minimap draws and the mission scores the bus against. Raw OSM geometry (and
         // the stop list) can be stored in an order that does not match the drive, and
         // a reversed tangent puts a kerb-side prop on the opposite side of the road.
+        Vector3[] points = RouteWorldPath(route);
+        return points != null ? PathHeading(points, requested, fallback, approachHint) : fallback;
+    }
+
+    static Vector3[] RouteWorldPath(BusRoute route)
+    {
+        if (route == null) return null;
         if (route.EnsureWorldPathPoints() && route.pathPoints != null && route.pathPoints.Length >= 2)
-            return PathHeading(route.pathPoints, requested, fallback, approachHint);
+            return route.pathPoints;
 
         var geometry = route.geometryLatLonFlat;
         if (GPSManager.Instance != null && geometry != null && geometry.Length >= 4)
         {
             var points = new Vector3[geometry.Length / 2];
-            for (int i = 0; i < points.Length; i++) points[i] = GPSManager.Instance.GpsToWorld(geometry[i * 2], geometry[i * 2 + 1]);
-            return PathHeading(points, requested, fallback, approachHint);
+            for (int i = 0; i < points.Length; i++)
+                points[i] = GPSManager.Instance.GpsToWorld(geometry[i * 2], geometry[i * 2 + 1]);
+            return points;
         }
-        return fallback;
+        return null;
     }
 
     /// <summary>
-    /// The direction the player actually arrives at a stop from. A loop or
-    /// out-and-back route passes the same kerb twice, so the nearest path segment
-    /// is ambiguous and the first one found can point back along the return leg;
-    /// that mirrors the shelter onto the oncoming side. The road-graph path from
-    /// the previous stop is the same approach the mission drives, so it breaks the
-    /// tie in favour of the pass the bus actually uses.
+    /// The direction the player actually arrives at a stop from. The driven route
+    /// line is stored in travel order, so the segment the bus reaches the stop on
+    /// is the authority. A loop or out-and-back route passes the same kerb twice;
+    /// the stop is matched to the pass that follows the previous served stop, not
+    /// to whichever pass happens to be nearest, which is what used to mirror
+    /// shelters onto the oncoming side. The road-graph path is only a fallback for
+    /// routes whose stops are not embedded in their geometry.
     /// </summary>
     public static Vector3 StopApproachHeading(BusRoute route, int stopIndex, Vector3 stopWorld,
         Vector3 fallback, AIRoadGraph graph)
@@ -171,29 +180,51 @@ public static class RoadSpawnResolver
         if (route == null || route.stops == null || GPSManager.Instance == null)
             return RouteHeading(route, stopWorld, fallback);
 
+        // The driven polyline is the authority on the approach direction: it is
+        // stored in drive order, so the segment the bus reaches the stop on is the
+        // tangent the kerb side must use. The road-graph shortcut below is only a
+        // fallback: on a loop it can find a shorter path that arrives from the
+        // opposite end of the same street, which flips the shelter to the oncoming
+        // kerb (the bug that put four stops on the wrong side of this route).
+        if (TryDrivenPathHeading(route, stopIndex, stopWorld, out Vector3 drivenHeading))
+            return drivenHeading;
+
         Vector3 hint = Vector3.zero;
         if (graph != null)
         {
-            if (stopIndex > 0 && stopIndex < route.stops.Length)
+            // Use the previous SERVED stop, not simply stopIndex - 1. Imported routes
+            // list both platforms of a pair back to back; the entry before this stop
+            // may be the opposite kerb, and routing from that kerb describes a crossing
+            // or U-turn instead of the direction the bus actually approaches from.
+            int previousIndex = BusRoute.PreviousServedStopIndex(route.stops, stopIndex);
+            if (previousIndex >= 0)
             {
-                Vector3 previous = GpsToWorld(route.stops[stopIndex - 1]);
+                Vector3 previous = GpsToWorld(route.stops[previousIndex]);
                 hint = LastPathDirection(graph, previous, stopWorld);
             }
-            else if (stopIndex == 0 && route.stops.Length > 1)
+            else if (stopIndex <= 0 && route.stops.Length > 1)
             {
-                Vector3 next = GpsToWorld(route.stops[1]);
-                hint = FirstPathDirection(graph, stopWorld, next);
+                int nextIndex = BusRoute.NextDistinctStopIndex(route.stops, 0);
+                if (nextIndex < route.stops.Length)
+                {
+                    Vector3 next = GpsToWorld(route.stops[nextIndex]);
+                    hint = FirstPathDirection(graph, stopWorld, next);
+                }
             }
         }
 
         // If road graph gave no directional hint, derive forward travel flow directly
         // from sequential stop progression so return legs / oncoming lanes cannot hijack orientation
-        if (hint.sqrMagnitude < 0.01f)
+        if (hint.sqrMagnitude < 0.01f && stopIndex >= 0 && stopIndex < route.stops.Length)
         {
+            BusStopData current = route.stops[stopIndex];
             if (stopIndex < route.stops.Length - 1)
             {
                 for (int nextIdx = stopIndex + 1; nextIdx < route.stops.Length; nextIdx++)
                 {
+                    // The opposite platform of a stop pair is not the next place the
+                    // bus drives to; using it would point the shelter across the road.
+                    if (BusRoute.IsSamePlatform(current, route.stops[nextIdx])) continue;
                     Vector3 next = GpsToWorld(route.stops[nextIdx]);
                     Vector3 diff = Vector3.ProjectOnPlane(next - stopWorld, Vector3.up);
                     if (diff.sqrMagnitude >= 4f)
@@ -203,17 +234,15 @@ public static class RoadSpawnResolver
                     }
                 }
             }
-            if (hint.sqrMagnitude < 0.01f && stopIndex > 0)
+            if (hint.sqrMagnitude < 0.01f)
             {
-                for (int prevIdx = stopIndex - 1; prevIdx >= 0; prevIdx--)
+                int previousIndex = BusRoute.PreviousServedStopIndex(route.stops, stopIndex);
+                if (previousIndex >= 0)
                 {
-                    Vector3 prev = GpsToWorld(route.stops[prevIdx]);
+                    Vector3 prev = GpsToWorld(route.stops[previousIndex]);
                     Vector3 diff = Vector3.ProjectOnPlane(stopWorld - prev, Vector3.up);
                     if (diff.sqrMagnitude >= 4f)
-                    {
                         hint = diff.normalized;
-                        break;
-                    }
                 }
             }
         }
@@ -224,10 +253,155 @@ public static class RoadSpawnResolver
         return RouteHeading(route, stopWorld, fallback, hint);
     }
 
+    /// <summary>
+    /// Point on the driven route line nearest to a stop, used as the origin of the
+    /// road-side query. A stop pair can store the platform on the opposite
+    /// carriageway; querying from that raw coordinate lets the nearest-segment search
+    /// pick the oncoming road and mirror the shelter. The route line is the side the
+    /// bus actually drives, so the chosen kerb follows that carriageway even when the
+    /// stored platform belongs to the other one.
+    /// </summary>
+    public static Vector3 StopApproachAnchor(BusRoute route, int stopIndex, Vector3 stopWorld, Vector3 heading)
+    {
+        if (route == null || heading.sqrMagnitude < 0.01f)
+            return stopWorld;
+
+        if (route.EnsureWorldPathPoints() && route.pathPoints != null &&
+            TryProjectOntoAlignedPath(route.pathPoints, stopWorld, heading, out Vector3 projected))
+            return projected;
+
+        var geometry = route.geometryLatLonFlat;
+        if (GPSManager.Instance != null && geometry != null && geometry.Length >= 4)
+        {
+            var points = new Vector3[geometry.Length / 2];
+            for (int i = 0; i < points.Length; i++)
+                points[i] = GPSManager.Instance.GpsToWorld(geometry[i * 2], geometry[i * 2 + 1]);
+            if (TryProjectOntoAlignedPath(points, stopWorld, heading, out projected))
+                return projected;
+        }
+
+        return stopWorld;
+    }
+
+    /// <summary>
+    /// Projects a point onto the nearest segment that runs with <paramref name="heading"/>.
+    /// Segments that cross the road (a duplicate platform pair stored as a straight
+    /// line between stops) are rejected, so the returned point stays on the
+    /// carriageway the player drives.
+    /// </summary>
+    static bool TryProjectOntoAlignedPath(Vector3[] points, Vector3 requested, Vector3 heading,
+        out Vector3 projected)
+    {
+        projected = requested;
+        if (points == null || points.Length < 2) return false;
+
+        Vector3 flow = Vector3.ProjectOnPlane(heading, Vector3.up).normalized;
+        if (flow.sqrMagnitude < 0.01f) return false;
+
+        float best = float.MaxValue;
+        bool found = false;
+        for (int i = 1; i < points.Length; i++)
+        {
+            Vector3 a = points[i - 1], b = points[i];
+            a.y = b.y = requested.y;
+            Vector3 segment = b - a;
+            if (segment.sqrMagnitude < 1f) continue;
+
+            Vector3 tangent = segment.normalized;
+            float alignment = Vector3.Dot(tangent, flow);
+            // Keep bends but reject the near-perpendicular hop between the two
+            // platforms of a stop pair.
+            if (alignment < 0.25f) continue;
+
+            Vector3 candidate = ProjectOnSegment(requested, a, b);
+            float distance = (candidate - requested).sqrMagnitude;
+            float score = distance + (1f - alignment) * 900f;
+            if (score >= best) continue;
+
+            best = score;
+            projected = candidate;
+            found = true;
+        }
+        return found;
+    }
+
     static Vector3 GpsToWorld(BusStopData stop)
     {
         if (stop == null || GPSManager.Instance == null) return Vector3.zero;
         return GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude);
+    }
+
+    /// <summary>
+    /// Tangent of the driven route line where the bus reaches a stop. Stops are
+    /// walked in route order with a cursor that only ever moves forward along the
+    /// polyline, so a street the route drives twice (out and back, or a loop)
+    /// resolves to the pass the stop belongs to instead of the earlier pass with
+    /// the opposite heading. Returns false when the stop is not near the line in
+    /// route order, in which case the caller falls back to the graph hint.
+    /// </summary>
+    static bool TryDrivenPathHeading(BusRoute route, int stopIndex, Vector3 stopWorld,
+        out Vector3 heading)
+    {
+        heading = Vector3.zero;
+        if (route == null || route.stops == null || GPSManager.Instance == null ||
+            stopIndex < 0 || stopIndex >= route.stops.Length)
+            return false;
+
+        Vector3[] points = RouteWorldPath(route);
+        if (points == null || points.Length < 2) return false;
+
+        const float maxDistance = 12f;
+        int cursor = 1;
+        int lastServed = -1;
+        for (int i = 0; i < stopIndex; i++)
+        {
+            // The mission skips the duplicate platform of a stop pair; it does not
+            // move the bus, so it must not move the path cursor either.
+            if (lastServed >= 0 && BusRoute.IsSamePlatform(route.stops[lastServed], route.stops[i]))
+                continue;
+            lastServed = i;
+
+            int previousSegment = NearestPathSegment(points, GpsToWorld(route.stops[i]),
+                cursor, maxDistance, out _);
+            if (previousSegment >= 0)
+                cursor = previousSegment;
+        }
+
+        int segment = NearestPathSegment(points, stopWorld, cursor, maxDistance, out _);
+        if (segment < 1) return false;
+
+        Vector3 tangent = Vector3.ProjectOnPlane(points[segment] - points[segment - 1], Vector3.up);
+        if (tangent.sqrMagnitude < .01f) return false;
+        heading = tangent.normalized;
+        return true;
+    }
+
+    /// <summary>
+    /// Nearest route segment to a point, searching only at or after
+    /// <paramref name="fromSegment"/>. Returns -1 when nothing lies within
+    /// <paramref name="maxDistance"/> of the line.
+    /// </summary>
+    static int NearestPathSegment(Vector3[] points, Vector3 requested, int fromSegment,
+        float maxDistance, out float distance)
+    {
+        int best = -1;
+        distance = float.MaxValue;
+        if (points == null || points.Length < 2) return -1;
+
+        int start = Mathf.Clamp(fromSegment, 1, points.Length - 1);
+        for (int i = start; i < points.Length; i++)
+        {
+            Vector3 a = points[i - 1], b = points[i];
+            a.y = b.y = requested.y;
+            Vector3 segment = b - a;
+            if (segment.sqrMagnitude < 1f) continue;
+            Vector3 projected = ProjectOnSegment(requested, a, b);
+            float candidate = Vector3.Distance(projected, requested);
+            if (candidate >= distance) continue;
+            distance = candidate;
+            best = i;
+        }
+        return best >= 1 && distance <= maxDistance ? best : -1;
     }
 
     static Vector3 LastPathDirection(AIRoadGraph graph, Vector3 from, Vector3 to)
@@ -251,11 +425,22 @@ public static class RoadSpawnResolver
         if (graph == null || !graph.TryFindPathWorld(from, to, out var path) || path == null)
             return Vector3.zero;
 
-        for (int i = 1; i < path.Count; i++)
+        // TryFindPathWorld prepends the exact start point, so path[0] -> path[1] is
+        // a kerb-to-nearest-node connector, not road travel. Bearing on that stub
+        // pointed the first stop across the street (it described the nearest graph
+        // node, not the route). Start at the first real node segment; a two-point
+        // path has only the connector and uses it.
+        int start = path.Count > 2 ? 2 : 1;
+        for (int pass = 0; pass < 2; pass++)
         {
-            Vector3 segment = Vector3.ProjectOnPlane(path[i] - path[i - 1], Vector3.up);
-            if (segment.sqrMagnitude >= 9f)
-                return segment.normalized;
+            int first = pass == 0 ? start : 1;
+            int last = pass == 0 ? path.Count : start;
+            for (int i = first; i < last; i++)
+            {
+                Vector3 segment = Vector3.ProjectOnPlane(path[i] - path[i - 1], Vector3.up);
+                if (segment.sqrMagnitude >= 9f)
+                    return segment.normalized;
+            }
         }
         return Vector3.zero;
     }

@@ -261,6 +261,106 @@ public class BusRoute : ScriptableObject
         return name;
     }
 
+    /// <summary>
+    /// Imported routes list the two platforms of a stop pair as separate stops, and
+    /// some pairs sit at the same coordinates. Serving the second one serves the stop
+    /// the player has just left, which reads as the navigation sending the bus back to
+    /// the same station. These radii decide when two entries are the same platform.
+    /// </summary>
+    public const float SamePlatformRadiusMeters = 6f;
+    public const float SamePlatformNamedRadiusMeters = 30f;
+
+    /// <summary>
+    /// True when <paramref name="candidate"/> is the platform just served rather than
+    /// a new stop: the same place recorded twice, or the opposite-direction platform
+    /// of the same named stop on the other side of the road.
+    /// </summary>
+    public static bool IsSamePlatform(BusStopData served, BusStopData candidate)
+    {
+        if (served == null || candidate == null) return false;
+        float distance = MetresBetween(served, candidate);
+        if (distance <= SamePlatformRadiusMeters) return true;
+        if (distance > SamePlatformNamedRadiusMeters) return false;
+        return SameStopName(served.stopName, candidate.stopName);
+    }
+
+    /// <summary>
+    /// The index of the next stop worth driving to after <paramref name="servedIndex"/>,
+    /// skipping platforms that are the stop just served. Returns
+    /// <c>servedIndex + 1</c> when nothing is skipped, and the stop count when the
+    /// platform was the last entry, so route completion still fires.
+    /// </summary>
+    public static int NextDistinctStopIndex(BusStopData[] stops, int servedIndex)
+    {
+        int next = Mathf.Max(0, servedIndex + 1);
+        if (stops == null || stops.Length == 0 || servedIndex < 0 || servedIndex >= stops.Length)
+            return next;
+
+        BusStopData served = stops[servedIndex];
+        while (next < stops.Length && IsSamePlatform(served, stops[next]))
+            next++;
+        return next;
+    }
+
+    /// <summary>
+    /// Marks the stops the mission will actually serve: the first entry of every
+    /// consecutive same-platform run. Imported routes list the two platforms of a
+    /// roadside pair back to back and the mission skips the second one, so building
+    /// furniture for both put a shelter on the oncoming kerb.
+    /// </summary>
+    public static bool[] ServedStopMask(BusStopData[] stops)
+    {
+        int count = stops != null ? stops.Length : 0;
+        var served = new bool[count];
+        int lastServed = -1;
+        for (int i = 0; i < count; i++)
+        {
+            if (lastServed >= 0 && IsSamePlatform(stops[lastServed], stops[i]))
+                continue;
+            served[i] = true;
+            lastServed = i;
+        }
+        return served;
+    }
+
+    /// <summary>
+    /// Index of the stop the mission serves immediately before <paramref name="index"/>
+    /// in route order, skipping duplicate platform entries. Returns -1 when there is
+    /// no earlier served stop. Stop-side placement uses this so the approach vector
+    /// never comes from the opposite platform of a pair.
+    /// </summary>
+    public static int PreviousServedStopIndex(BusStopData[] stops, int index)
+    {
+        if (stops == null || index <= 0)
+            return -1;
+
+        int limit = Mathf.Min(index, stops.Length);
+        int previous = -1;
+        for (int i = 0; i < limit; i++)
+        {
+            if (previous >= 0 && IsSamePlatform(stops[previous], stops[i]))
+                continue;
+            previous = i;
+        }
+        return previous;
+    }
+
+    static bool SameStopName(string a, string b)
+    {
+        if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
+        return string.Equals(a.Trim(), b.Trim(), System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Flat-earth metres between two stops. Both are inside one city, so this is exact enough.</summary>
+    static float MetresBetween(BusStopData a, BusStopData b)
+    {
+        double latRadians = a.latitude * System.Math.PI / 180d;
+        double northMeters = (b.latitude - a.latitude) * System.Math.PI / 180d * 6371008.8d;
+        double eastMeters = (b.longitude - a.longitude) * System.Math.PI / 180d * 6371008.8d *
+                            System.Math.Cos(latRadians);
+        return (float)System.Math.Sqrt(northMeters * northMeters + eastMeters * eastMeters);
+    }
+
     public void SyncLegacyStopsFromBusStops()
     {
         if (busStops == null || busStops.Length == 0)

@@ -145,12 +145,16 @@ public class AIVehicleController : MonoBehaviour
     /// that this is a pass rather than a speculative drift across the road.
     /// </summary>
     public static bool ShouldStartOvertake(float desiredKmh, float leaderKmh, float gapMeters,
-        float followingDistance, bool laneAvailable)
+        float followingDistance, bool laneAvailable, float metersToJunction = float.MaxValue)
     {
         if (!laneAvailable) return false;
         if (leaderKmh >= Mathf.Max(0f, desiredKmh) - 6f) return false;
         float trigger = Mathf.Max(12f, Mathf.Max(0f, followingDistance) * 2.8f);
-        return gapMeters > .05f && gapMeters <= trigger;
+        if (gapMeters <= .05f || gapMeters > trigger) return false;
+        // The pass has to fit before the next junction. A lane change that has to be
+        // abandoned inside the junction leaves the car straddling two lanes exactly
+        // where the crossing traffic is, so a late pass is not worth starting.
+        return RealismRules.HasOvertakeRunway(metersToJunction, desiredKmh, 2.6f, 26f);
     }
 
     /// <summary>
@@ -457,6 +461,27 @@ public class AIVehicleController : MonoBehaviour
             rb.linearVelocity = velocity;
     }
 
+    float surfaceRailTimer;
+
+    /// <summary>
+    /// Puts a body that has wandered off the drawn road back on the nearest
+    /// carriageway, at a cadence rather than per frame. Returns the position the rest
+    /// of the step must work from, so steering and lane error use the corrected spot.
+    /// </summary>
+    Vector3 RailToDrawnAsphalt(Vector3 position, float bodyHalfWidth)
+    {
+        surfaceRailTimer -= Time.fixedDeltaTime;
+        if (surfaceRailTimer > 0f) return position;
+        surfaceRailTimer = TrafficLane.SurfaceRailIntervalSeconds;
+
+        Vector3 corrected = TrafficLane.ClampToSurface(TrafficLane.RuntimeSurface, position, bodyHalfWidth);
+        if ((corrected - position).sqrMagnitude <= .0001f) return position;
+
+        transform.position = corrected;
+        if (rb != null) rb.position = corrected;
+        return corrected;
+    }
+
     void FixedUpdate()
     {
         if (roadGraph == null || !roadGraph.IsValidNode(currentNodeIndex))
@@ -504,21 +529,25 @@ public class AIVehicleController : MonoBehaviour
         // sharp turns and stale lane offsets.
         junctionTurnGraceTimer = Mathf.Max(0f, junctionTurnGraceTimer - Time.fixedDeltaTime);
         float bodyHalfWidth = Mathf.Max(.6f, vehicleWidth * .5f);
-        float roadHalfWidth = roadGraph.GetRoadHalfWidth(currentNodeIndex, targetNodeIndex);
-        if (roadHalfWidth > .1f && junctionTurnGraceTimer <= 0f)
+        // The road-edge rail is never switched off. A turn used to open a two second
+        // hole in it, and a corner is exactly where a body cuts across the kerb. The
+        // clamp is measured to the nearest point of this link's asphalt - and of the
+        // link the car is turning into once it is in the junction mouth - so the car
+        // still swings through the corner, just never onto the pavement.
+        Vector3 railed = TrafficLane.ClampToRoad(roadGraph, currentNodeIndex, targetNodeIndex,
+            plannedNextNodeIndex, current, bodyHalfWidth);
+        if ((railed - current).sqrMagnitude > .0001f)
         {
-            float maxOffset = Mathf.Max(0f, roadHalfWidth - bodyHalfWidth - .12f);
-            float centerOffset = Vector3.Dot(current - nodeA, right);
-            if (Mathf.Abs(centerOffset) > maxOffset)
-            {
-                Vector3 corrected = current - right *
-                    (centerOffset - Mathf.Sign(centerOffset) * maxOffset);
-                corrected.y = current.y;
-                transform.position = corrected;
-                if (rb != null) rb.position = corrected;
-                current = corrected;
-            }
+            current = railed;
+            transform.position = current;
+            if (rb != null) rb.position = current;
         }
+
+        // The graph is a model of the road; the drawn asphalt is the road. Where the
+        // two disagree - a node welded across a carriageway, a link whose centreline
+        // runs down a median - the body is put back on the carriageway the player can
+        // actually see instead of continuing across the verge.
+        current = RailToDrawnAsphalt(current, bodyHalfWidth);
 
         // The lane line comes from the shared frame, which is the same geometry the
         // spline tier, the pool's spawn placement and the headless audit read. The
@@ -630,7 +659,10 @@ public class AIVehicleController : MonoBehaviour
                 -Mathf.Max(2f, vehicleLength * .7f);
             bool tooCloseToJunction = distanceToJunction < Mathf.Max(7f, vehicleLength * 1.2f);
             bool laneGone = overtakeLaneIndex < 0 || overtakeLaneIndex >= laneCount;
-            if (targetGone || passed || tooCloseToJunction ||
+            // A leader that has picked its speed back up leaves nothing to pass.
+            bool targetOutpaced = !targetGone &&
+                passTarget.SpeedKmh >= ResolveDesiredSpeedKmh() - 4f;
+            if (targetGone || passed || tooCloseToJunction || targetOutpaced ||
                 roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) || laneGone ||
                 overtakeTimer >= Mathf.Max(2f, maximumOvertakeSeconds))
             {
@@ -653,6 +685,16 @@ public class AIVehicleController : MonoBehaviour
 
         // Do not stack a second lane change on top of one still in progress.
         if (Mathf.Abs(laneShift) > .05f)
+        {
+            laneShiftTarget = 0f;
+            return;
+        }
+
+        // A queue waiting at a red light stays in the lane it arrived in. Changing
+        // lane inside the stop zone is what leaves cars straddling two lanes - and
+        // the kerb - while they wait, and it never helps anyone leave sooner.
+        if (roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) &&
+            distanceToJunction < Mathf.Max(18f, vehicleLength * 2f + currentSpeedKmh / 3.6f))
         {
             laneShiftTarget = 0f;
             return;
@@ -696,7 +738,8 @@ public class AIVehicleController : MonoBehaviour
                 float halfLane = Mathf.Max(1.5f, vehicleWidth * .5f + .65f);
                 if (TrafficParticipant.TryFindAhead(transform, scan, halfLane,
                         out TrafficParticipant leader, out float gap) &&
-                    ShouldStartOvertake(desired, leader.SpeedKmh, gap, safeFollowingDistance, true))
+                    ShouldStartOvertake(desired, leader.SpeedKmh, gap, safeFollowingDistance, true,
+                        distanceToJunction))
                 {
                     float passSide = LaneOffsetDelta(roadGraph, currentNodeIndex, targetNodeIndex,
                         laneIndex, passLane);
@@ -919,7 +962,12 @@ public class AIVehicleController : MonoBehaviour
             if (incoming.sqrMagnitude > .0001f)
             {
                 incoming.Normalize();
-                float angle = roadGraph.GetLikelyTurnAngle(targetNodeIndex, incoming, previousNodeIndex);
+                // Slow for the exit this car has actually planned: the shallowest
+                // exit at the junction can be a side street it is not going to take,
+                // which let a right-angle turn be taken at cruise speed.
+                float angle = roadGraph.IsValidNode(plannedNextNodeIndex)
+                    ? roadGraph.GetTurnAngle(currentNodeIndex, targetNodeIndex, plannedNextNodeIndex)
+                    : roadGraph.GetLikelyTurnAngle(targetNodeIndex, incoming, previousNodeIndex);
                 float factor = RealismRules.TurnSpeedFactor(angle);
                 if (factor < .999f)
                 {
@@ -939,6 +987,11 @@ public class AIVehicleController : MonoBehaviour
                 result = Mathf.Min(result, RealismRules.StoppingSpeedKmh(distToSignal, vehicleLength * 0.5f + 3f, maxBrake * 0.65f));
             }
         }
+
+        // Never enter a junction whose far side has no room for this body. Stopping
+        // across the junction blocks the cross street, and a queue that spills round
+        // the corner is what reads as traffic parked on the pavement.
+        result = Mathf.Min(result, JunctionEntrySpeedKmh(result));
 
         // A pass keeps its speed up rather than crawling at 12 km/h. The lane is
         // clear when the pass starts, and the target vehicle is ignored by the
@@ -968,6 +1021,40 @@ public class AIVehicleController : MonoBehaviour
             ? passTarget.transform : null;
         return TrafficParticipant.LimitSpeed(transform, Mathf.Max(0f, result),
             vehicleLength * 0.5f + 3f, maxBrake * 0.65f, ignore);
+    }
+
+    /// <summary>
+    /// Speed cap for entering the junction ahead. Zero while the far side of it is
+    /// occupied, so the car waits at the stop line instead of parking across the
+    /// crossing; full speed again once the exit has room. Only applies when the exit
+    /// link is already planned, so it can never brake a car for a junction it is
+    /// not about to cross.
+    /// </summary>
+    float JunctionEntrySpeedKmh(float desiredKmh)
+    {
+        if (!roadGraph.IsValidNode(currentNodeIndex) || !roadGraph.IsValidNode(targetNodeIndex) ||
+            !roadGraph.IsValidNode(plannedNextNodeIndex))
+            return desiredKmh;
+
+        float clearance = vehicleLength * .5f + 2f;
+        float distance = Vector3.Distance(transform.position, roadGraph.GetNodePosition(targetNodeIndex));
+        if (distance > clearance + safeFollowingDistance + 6f) return desiredKmh;
+
+        Vector3 exitPoint = JunctionExitPoint(plannedNextNodeIndex);
+        if (exitPoint == Vector3.zero) return desiredKmh;
+
+        float radius = vehicleLength * .5f + 3.5f;
+        if (TrafficParticipant.IsSpawnAreaClear(exitPoint, radius, transform)) return desiredKmh;
+        return Mathf.Min(desiredKmh, RealismRules.StoppingSpeedKmh(distance, clearance, maxBrake * 0.65f));
+    }
+
+    /// <summary>A point just inside the link this car is about to enter.</summary>
+    Vector3 JunctionExitPoint(int nextNode)
+    {
+        int exitLane = Mathf.Clamp(laneIndex, 0, Mathf.Max(1, roadGraph.GetLaneCount(targetNodeIndex, nextNode)) - 1);
+        LaneFrame exit = TrafficLane.Frame(roadGraph, targetNodeIndex, nextNode, exitLane);
+        if (!exit.IsValid) return Vector3.zero;
+        return exit.Start + exit.Direction * Mathf.Min(8f, exit.Length * .5f);
     }
 
     void MoveVehicle(Vector3 forwardDir, float targetSpeedKmh)

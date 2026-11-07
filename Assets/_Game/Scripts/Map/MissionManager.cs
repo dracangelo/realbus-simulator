@@ -288,6 +288,9 @@ public class MissionManager : MonoBehaviour
     void RestoreMissionCheckpoint(MissionCheckpoint checkpoint)
     {
         currentStopIndex = Mathf.Clamp(checkpoint.stopIndex, 0, currentRoute.stops.Length - 1);
+        // A checkpoint saved on the duplicate platform of the stop just served would
+        // otherwise resume with the navigation aiming back at that station.
+        currentStopIndex = BusRoute.NextDistinctStopIndex(currentRoute.stops, currentStopIndex - 1);
         ElapsedSeconds = Mathf.Max(0f, checkpoint.elapsedSeconds);
         DistanceDrivenKm = Mathf.Max(0f, checkpoint.distanceDrivenKm);
         busController.Teleport(checkpoint.busPosition, checkpoint.busRotation);
@@ -560,7 +563,18 @@ public class MissionManager : MonoBehaviour
         busController.RequestKneelingSuspension(false);
         busController.ServiceBrakeInterlock = false;
         busController.brakeInput = 0f;
-        currentStopIndex++;
+        // A route can list the same platform twice (the two directions of a stop
+        // pair). Advancing onto it made the navigation point back at the stop the bus
+        // had just served, so the duplicates are skipped here instead.
+        int servedStopIndex = currentStopIndex;
+        currentStopIndex = BusRoute.NextDistinctStopIndex(currentRoute.stops, servedStopIndex);
+        int skippedPlatforms = currentStopIndex - servedStopIndex - 1;
+        if (skippedPlatforms > 0)
+        {
+            string servedName = servedStopIndex >= 0 && servedStopIndex < currentRoute.stops.Length
+                ? currentRoute.stops[servedStopIndex].stopName : servedStopIndex.ToString();
+            Debug.Log($"[MissionManager] Skipped {skippedPlatforms} stop(s) recorded at the same platform as '{servedName}'.");
+        }
         pendingDoorOpenRequest = false;
         isProcessingStop = false;
         earlyDepartureRequested = false;

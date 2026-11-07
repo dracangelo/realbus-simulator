@@ -85,6 +85,42 @@ public class BusPhysicsTests
     }
 
     [Test]
+    public void GearRatedTopSpeedLimitsThrottleAndForcesTheUpshift()
+    {
+        var transmission = ScriptableObject.CreateInstance<TransmissionSystem>();
+        try
+        {
+            // First gear is rated to 12 km/h, so the gearbox shifts up instead of
+            // holding the engine against a limit the bus has already reached.
+            Assert.IsTrue(transmission.UpdateAutomatic(800f, 2500f, 12f));
+            Assert.AreEqual(1, transmission.currentGear);
+            Assert.AreEqual(1f, transmission.ThrottleFactorAtSpeed(20f), .001f,
+                "below top gear an automatic shifts up rather than cutting power");
+
+            // A manual gearbox has no shift to make, so the gear's limit is a real cut.
+            transmission.automatic = false;
+            transmission.currentGear = 0;
+            Assert.AreEqual(1f, transmission.ThrottleFactorAtSpeed(6f), .001f);
+            Assert.Less(transmission.ThrottleFactorAtSpeed(11.9f), .5f,
+                "the throttle must be nearly shut as first gear reaches its limit");
+            Assert.AreEqual(0f, transmission.ThrottleFactorAtSpeed(12f), .001f);
+
+            // Reverse has one fixed ratio and its own 10 km/h limit.
+            transmission.currentGear = -1;
+            Assert.AreEqual(0f, transmission.ThrottleFactorAtSpeed(10f), .001f);
+            Assert.AreEqual(1f, transmission.ThrottleFactorAtSpeed(4f), .001f);
+
+            // Top gear is the bus's own top speed, so there is nothing left to shift to.
+            transmission.automatic = true;
+            transmission.currentGear = transmission.gearRatios.Length - 1;
+            Assert.IsFalse(transmission.HasHigherGear());
+            Assert.AreEqual(0f, transmission.ThrottleFactorAtSpeed(transmission.GetCurrentMaxSpeed()), .001f);
+            Assert.AreEqual(1f, transmission.ThrottleFactorAtSpeed(transmission.GetCurrentMaxSpeed() - 20f), .001f);
+        }
+        finally { Object.DestroyImmediate(transmission); }
+    }
+
+    [Test]
     public void DragOpposesVelocityAndScalesWithSpeedSquared()
     {
         Vector3 first = AerodynamicsSystem.DragForce(Vector3.forward * 10f, 0.65f, 8.5f, 1.225f);

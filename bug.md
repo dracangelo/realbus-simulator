@@ -103,7 +103,7 @@ UNITY_BIN=/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Unity LD_PRELOAD="$XML" 
 
 ### 1.3 Dead code / comments that don't match behavior
 
-- [ ] `TransmissionSystem.GetCurrentMaxSpeed()` + `gearMaxSpeeds[]` are never called — the doc comment claims BusController uses them to cut throttle; it doesn't. Auto-shift is RPM-only (0.8/0.35 threshold, 0.75 s cooldown).
+- [x] **`TransmissionSystem.GetCurrentMaxSpeed()` + `gearMaxSpeeds[]` are never called** — the doc comment claimed BusController uses them to cut throttle, but it didn't, and auto-shift was RPM-only (0.8/0.35 threshold, 0.75 s cooldown), so the gearbox's rated top speed per gear was decorative: first gear and reverse could be wound out to the engine's rev limit. Fixed 2026-11-02: `UpdateAutomatic` also shifts up at a gear's rated top speed (`atGearSpeed`, and refuses a downshift while still near the current gear's limit), and `BusController.ApplyThrottle` multiplies the throttle by the new pure `TransmissionSystem.ThrottleFactorAtSpeed`, which is full below top gear for an automatic (it shifts instead of cutting) and eases to zero at the gear's limit in reverse, in top gear and in manual mode. Covered by `BusPhysicsTests.GearRatedTopSpeedLimitsThrottleAndForcesTheUpshift` plus the existing threshold/reverse case; full EditMode suite **757 tests — 757 passed**.
 - [ ] `AIVehicleController.FindFrontVehicle()` is never called.
 - [ ] `BusInputActions.cs` (generated Input System asset) is referenced only by itself. `BusController.cs:120` reads `Keyboard.current` directly → no rebinding, no gamepad.
 - [ ] AI traffic hard-sets `rb.linearVelocity`/`MoveRotation` each `FixedUpdate` (`AIVehicleController.cs:213`) → not really physics-driven.

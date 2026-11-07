@@ -694,7 +694,7 @@ public class VehiclePool : MonoBehaviour
             Vector3 point = Vector3.zero;
 
             Vector3 prefPoint = GetSpawnPoint(node, next, preferredLane, candidateAlong);
-            if (IsSpawnPointClear(prefPoint, ignore))
+            if (IsSpawnPointClear(prefPoint, ignore) && IsOnDrawnAsphalt(prefPoint))
             {
                 candidateLane = preferredLane;
                 point = prefPoint;
@@ -705,7 +705,7 @@ public class VehiclePool : MonoBehaviour
                 {
                     if (l == preferredLane) continue;
                     Vector3 altPoint = GetSpawnPoint(node, next, l, candidateAlong);
-                    if (IsSpawnPointClear(altPoint, ignore))
+                    if (IsSpawnPointClear(altPoint, ignore) && IsOnDrawnAsphalt(altPoint))
                     {
                         candidateLane = l;
                         point = altPoint;
@@ -831,6 +831,14 @@ public class VehiclePool : MonoBehaviour
         // top of one of them.
         return TrafficParticipant.IsSpawnAreaClear(point, Mathf.Max(2f, vehicleSpawnClearanceMeters));
     }
+
+    /// <summary>
+    /// A graph node can sit in a median or on a welded junction that the road mesh
+    /// never draws as asphalt. Spawning there is exactly how a car appears parked in a
+    /// field, so a candidate point is only used when the drawn road covers it.
+    /// </summary>
+    static bool IsOnDrawnAsphalt(Vector3 point)
+        => TrafficLane.IsOnAsphalt(TrafficLane.RuntimeSurface, point, 1.5f);
 
     bool IsTrafficGraphDisabledByConfig()
     {

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Passed" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:39Z" duration="3.9193326">
+  <test-suite type="TestSuite" id="1000" name="My-project" fullname="My-project" runstate="Runnable" testcasecount="866" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:39Z" duration="3.919333" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1990" name="GameScriptsTests.Editor.dll" fullname="/home/drac/Documents/coding/realbus-simulator/Library/ScriptAssemblies/GameScriptsTests.Editor.dll" runstate="Runnable" testcasecount="761" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:39Z" duration="3.871173" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="139449" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1347" name="GameScriptsTests" fullname="GameScriptsTests" classname="GameScriptsTests" runstate="Runnable" testcasecount="130" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:35Z" duration="0.118501" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1378" name="FuelSystem_AutoRefuelAtDepot_FillsTank_AndReturnsCost" fullname="GameScriptsTests.FuelSystem_AutoRefuelAtDepot_FillsTank_AndReturnsCost" methodname="FuelSystem_AutoRefuelAtDepot_FillsTank_AndReturnsCost" classname="GameScriptsTests" runstate="Runnable" seed="1184704806" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:35Z" duration="0.053326" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1797" name="RealismSystemsTests" fullname="RealismSystemsTests" classname="RealismSystemsTests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:39Z" duration="3.663939" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1819" name="BusController_ThrottleReleasesTheParkingBrakeSoADepotBusCanDriveOut" fullname="RealismSystemsTests.BusController_ThrottleReleasesTheParkingBrakeSoADepotBusCanDriveOut" methodname="BusController_ThrottleReleasesTheParkingBrakeSoADepotBusCanDriveOut" classname="RealismSystemsTests" runstate="Runnable" seed="725784873" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:35Z" duration="0.001970" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1821" name="BusDepotManager_AnchorsTheYardBehindTheFirstStop" fullname="RealismSystemsTests.BusDepotManager_AnchorsTheYardBehindTheFirstStop" methodname="BusDepotManager_AnchorsTheYardBehindTheFirstStop" classname="RealismSystemsTests" runstate="Runnable" seed="1828943364" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:35Z" duration="0.014223" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+        </test-case>
+        <test-case id="1814" name="BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad" fullname="RealismSystemsTests.BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad" methodname="BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad" classname="RealismSystemsTests" runstate="Runnable" seed="347392526" result="Passed" start-time="2026-11-02 14:08:35Z" end-time="2026-11-02 14:08:38Z" duration="3.199952" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[DepotTrafficSpawner] Depot traffic ready: 2 vehicle(s) on a 8-node yard circuit (26 m of street either side of the depot).
+[BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
+]]></output>
+        </test-case>
+        <test-case id="1815" name="BusDepotManager_EvictsCityBuildingsStandingInTheNewYard" fullname="RealismSystemsTests.BusDepotManager_EvictsCityBuildingsStandingInTheNewYard" methodname="BusDepotManager_EvictsCityBuildingsStandingInTheNewYard" classname="RealismSystemsTests" runstate="Runnable" seed="654131179" result="Passed" start-time="2026-11-02 14:08:38Z" end-time="2026-11-02 14:08:39Z" duration="0.317932" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[BusDepotManager] Constructed depot at (78.00, 0.00, 88.00). Assigned Bay 1: (71.10, 0.40, 82.00), Exit: (100.00, 0.00, 100.00), Roads: 0.
+Building surface: wall=RealBus/Facade roof=RealBus/Roof
+[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[BusDepotManager] Cleared 1 building(s) that stood inside the depot yard.
+[BusDepotManager] Constructed depot at (78.00, 0.00, 88.00). Assigned Bay 1: (71.10, 0.40, 82.00), Exit: (100.00, 0.00, 100.00), Roads: 0.
+]]></output>
+        </test-case>
+        <test-case id="1820" name="BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt" fullname="RealismSystemsTests.BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt" methodname="BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt" classname="RealismSystemsTests" runstate="Runnable" seed="854588806" result="Passed" start-time="2026-11-02 14:08:39Z" end-time="2026-11-02 14:08:39Z" duration="0.044100" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[DepotTrafficSpawner] Depot traffic ready: 2 vehicle(s) on a 8-node yard circuit (26 m of street either side of the depot).
+[BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
+[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[DepotTrafficSpawner] Depot traffic ready: 2 vehicle(s) on a 8-node yard circuit (26 m of street either side of the depot).
+[BusDepotManager] Constructed depot at (112.00, 0.25, 71.40). Assigned Bay 1: (118.00, 0.65, 64.50), Exit: (107.50, 0.26, 95.40), Roads: 3.
+]]></output>
+        </test-case>
+        <test-case id="1813" name="BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints" fullname="RealismSystemsTests.BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints" methodname="BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints" classname="RealismSystemsTests" runstate="Runnable" seed="2006897279" result="Passed" start-time="2026-11-02 14:08:39Z" end-time="2026-11-02 14:08:39Z" duration="0.015778" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[BusDepotManager] Constructed depot at (78.00, 0.00, 88.00). Assigned Bay 1: (71.10, 0.40, 82.00), Exit: (100.00, 0.00, 100.00), Roads: 0.
+]]></output>
+        </test-case>
+        <test-case id="1817" name="BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes" fullname="RealismSystemsTests.BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes" methodname="BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes" classname="RealismSystemsTests" runstate="Runnable" seed="991092097" result="Passed" start-time="2026-11-02 14:08:39Z" end-time="2026-11-02 14:08:39Z" duration="0.023441" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[DepotTrafficSpawner] Depot traffic ready: 2 vehicle(s) on a 8-node yard circuit (26 m of street either side of the depot).
+[BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
+]]></output>
+        </test-case>
+        <test-case id="1818" name="BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer" fullname="RealismSystemsTests.BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer" methodname="BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer" classname="RealismSystemsTests" runstate="Runnable" seed="1636246995" result="Passed" start-time="2026-11-02 14:08:39Z" end-time="2026-11-02 14:08:39Z" duration="0.023026" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[DepotTrafficSpawner] Depot traffic ready: 2 vehicle(s) on a 8-node yard circuit (26 m of street either side of the depot).
+[BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
+]]></output>
+        </test-case>
+        <test-case id="1816" name="BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit" fullname="RealismSystemsTests.BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit" methodname="BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit" classname="RealismSystemsTests" runstate="Runnable" seed="1946344650" result="Passed" start-time="2026-11-02 14:08:39Z" end-time="2026-11-02 14:08:39Z" duration="0.016895" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
+ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_3' has 16 renderers; repaired 3 material slots for the Built-in Render Pipeline.
+[BusDepotManager] Constructed depot at (78.00, 0.00, 88.00). Assigned Bay 1: (71.10, 0.40, 82.00), Exit: (100.00, 0.00, 100.00), Roads: 0.
+]]></output>
+        </test-case>
+      </test-suite>
+      <test-suite type="TestFixture" id="1970" name="WorldSystemsTests" fullname="WorldSystemsTests" classname="WorldSystemsTests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-11-02 14:08:39Z" end-time="2026-11-02 14:08:39Z" duration="0.070637" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1975" name="WorldReadiness_OnlyWaitsForTheDepotWhileAMissionIsStarting" fullname="WorldSystemsTests.WorldReadiness_OnlyWaitsForTheDepotWhileAMissionIsStarting" methodname="WorldReadiness_OnlyWaitsForTheDepotWhileAMissionIsStarting" classname="WorldSystemsTests" runstate="Runnable" seed="1818008571" result="Passed" start-time="2026-11-02 14:08:39Z" end-time="2026-11-02 14:08:39Z" duration="0.005677" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[Saving results to: /home/drac/Documents/coding/realbus-simulator/TestResults/depot-results2.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

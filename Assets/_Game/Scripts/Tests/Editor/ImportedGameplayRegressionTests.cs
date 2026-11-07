@@ -442,6 +442,28 @@ public class ImportedGameplayRegressionTests
     }
 
     [Test]
+    public void ServedStopMask_KeepsOnlyTheDrivenPlatformOfEachPair()
+    {
+        // Imported routes list both kerbs of a stop pair back to back. Only the
+        // first entry is driven to, so only it may get a shelter.
+        var stops = new[]
+        {
+            new BusStopData { stopName = "Depot",  latitude = 0d, longitude = 0d },
+            new BusStopData { stopName = "Market", latitude = 0d, longitude = 0.0001d },
+            new BusStopData { stopName = "Market", latitude = 0d, longitude = 0.0001d },
+            new BusStopData { stopName = "Park",   latitude = 0d, longitude = 0.0010d }
+        };
+
+        bool[] served = BusRoute.ServedStopMask(stops);
+        Assert.That(served, Is.EqualTo(new[] { true, true, false, true }));
+        Assert.That(BusRoute.PreviousServedStopIndex(stops, 3), Is.EqualTo(1),
+            "the approach to Park must come from the served Market platform, not its opposite");
+        Assert.That(BusRoute.PreviousServedStopIndex(stops, 2), Is.EqualTo(1));
+        Assert.That(BusRoute.PreviousServedStopIndex(stops, 0), Is.EqualTo(-1));
+        Assert.That(BusRoute.NextDistinctStopIndex(stops, 1), Is.EqualTo(3));
+    }
+
+    [Test]
     public void TryRoadside_FindsFallbackKerbWhenClearanceCheckOverlaps()
     {
         var roads = new RoadSurfaceIndex();

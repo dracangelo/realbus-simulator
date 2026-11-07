@@ -804,6 +804,63 @@ public static class GameplaySmokeCheck
         int laneSamples = 0, steadySamples = 0, offLane = 0;
         float worstDeviation = 0f, worstSteady = 0f;
         string worstVehicle = string.Empty;
+
+        // Lane keeping is measured on the graph line both tiers drive, so a fleet
+        // that happens to be entirely in the spline tier is still judged instead of
+        // producing zero samples, which used to fail the audit outright.
+        void SampleLane(AIRoadGraph graph, int currentNode, int targetNode, int lane,
+            Transform root, float vehicleLength, float speedKmh, float lateralError, string tier)
+        {
+            if (graph == null || root == null ||
+                !graph.IsValidNode(currentNode) || !graph.IsValidNode(targetNode)) return;
+            Vector3 from = graph.GetNodePosition(currentNode);
+            Vector3 segment = graph.GetNodePosition(targetNode) - from;
+            segment.y = 0f;
+            if (segment.sqrMagnitude < .01f) return;
+            float segmentLength = segment.magnitude;
+            segment.Normalize();
+            // A two-way link carries traffic both ways. A vehicle driving against
+            // the link direction has its lane offset mirrored, so comparing it
+            // with the link's canonical offset would report a lane width of drift
+            // for a car that is exactly where it belongs. Direction errors are
+            // audited separately; this check is about lane keeping along the link.
+            if (Vector3.Dot(root.forward, segment) < 0f) return;
+            float expected = graph.GetLaneOffset(currentNode, targetNode, lane);
+            float actual = Vector3.Dot(root.position - from, Vector3.Cross(Vector3.up, segment));
+            float deviation = Mathf.Abs(actual - expected);
+            laneSamples++;
+            if (deviation > worstDeviation)
+            {
+                worstDeviation = deviation;
+                worstVehicle = root.name;
+            }
+
+            // A body crossing a junction is briefly wide of the new lane line; lane
+            // keeping is judged on the part of the link where the wheels should be
+            // settled, not on the turn itself. A lane change or a junction cut needs
+            // room to resolve. A body within 8 m of either end is still turning, not
+            // failing to hold its lane.
+            float along = Vector3.Dot(root.position - from, segment);
+            float junctionMargin = Mathf.Max(vehicleLength * 1.5f, 8f);
+            if (along < junctionMargin || segmentLength - along < junctionMargin) return;
+            steadySamples++;
+            worstSteady = Mathf.Max(worstSteady, deviation);
+            if (deviation > 1.2f) offLane++;
+            if (deviation > .8f)
+            {
+                var dbgRb = root.GetComponent<Rigidbody>();
+                var dbgSpline = root.GetComponent<SplineVehicle>();
+                var dbgAi = root.GetComponent<AIVehicleController>();
+                Debug.Log($"SMOKE traffic lane sample {deviation:F2}m on {root.name} tier={tier} along {along:F1}/{segmentLength:F1}m " +
+                    $"node {currentNode}->{targetNode} lane {lane}/{graph.GetLaneCount(currentNode, targetNode)} " +
+                    $"expected {expected:F2} actual {actual:F2} laneErr {lateralError:F2} speed {speedKmh:F0} " +
+                    $"kin={(dbgRb != null && dbgRb.isKinematic)} rbV={(dbgRb != null ? dbgRb.linearVelocity.magnitude * 3.6f : 0f):F0} " +
+                    $"splineOn={(dbgSpline != null && dbgSpline.enabled)} fullOn={(dbgAi != null && dbgAi.enabled)} " +
+                    $"oneWay={graph.IsOneWay(currentNode, targetNode)} shared={graph.IsSharedLane(currentNode, targetNode)} " +
+                    $"halfW={graph.GetRoadHalfWidth(currentNode, targetNode):F2} laneW={graph.GetLaneWidth(currentNode, targetNode):F2}");
+            }
+        }
+
         foreach (var ai in Object.FindObjectsByType<AIVehicleController>(FindObjectsInactive.Exclude))
         {
             // A spline-tier vehicle still carries the disabled controller, whose
@@ -811,48 +868,17 @@ public static class GameplaySmokeCheck
             if (!ai.isActiveAndEnabled) continue;
             // Overtaking, yielding and stuck recovery deliberately leave the lane line.
             if (ai.IsChangingLane) continue;
-            var graph = ai.roadGraph;
-            if (graph == null || !graph.IsValidNode(ai.currentNodeIndex) || !graph.IsValidNode(ai.targetNodeIndex)) continue;
-            Vector3 from = graph.GetNodePosition(ai.currentNodeIndex);
-            Vector3 segment = graph.GetNodePosition(ai.targetNodeIndex) - from;
-            segment.y = 0f;
-            if (segment.sqrMagnitude < .01f) continue;
-            float segmentLength = segment.magnitude;
-            segment.Normalize();
-            float expected = graph.GetLaneOffset(ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex);
-            float actual = Vector3.Dot(ai.transform.position - from, Vector3.Cross(Vector3.up, segment));
-            float deviation = Mathf.Abs(actual - expected);
-            laneSamples++;
-            if (deviation > worstDeviation)
-            {
-                worstDeviation = deviation;
-                worstVehicle = ai.name;
-            }
-
-            // A body crossing a junction is briefly wide of the new lane line; lane
-            // keeping is judged on the part of the link where the wheels should be
-            // settled, not on the turn itself.
-            float along = Vector3.Dot(ai.transform.position - from, segment);
-            // A lane change or a junction cut needs room to resolve. A body within
-            // 8 m of either end is still turning, not failing to hold its lane, so
-            // lane keeping is judged on the settled middle of the link.
-            float junctionMargin = Mathf.Max(ai.vehicleLength * 1.5f, 8f);
-            if (along < junctionMargin || segmentLength - along < junctionMargin) continue;
-            steadySamples++;
-            worstSteady = Mathf.Max(worstSteady, deviation);
-            if (deviation > 1.2f) offLane++;
-            if (deviation > .8f)
-            {
-                var dbgRb = ai.GetComponent<Rigidbody>();
-                var dbgSpline = ai.GetComponent<SplineVehicle>();
-                Debug.Log($"SMOKE traffic lane sample {deviation:F2}m on {ai.name} along {along:F1}/{segmentLength:F1}m " +
-                    $"node {ai.currentNodeIndex}->{ai.targetNodeIndex} lane {ai.laneIndex}/{graph.GetLaneCount(ai.currentNodeIndex, ai.targetNodeIndex)} " +
-                    $"expected {expected:F2} actual {actual:F2} laneErr {ai.LateralLaneError:F2} speed {ai.currentSpeedKmh:F0} " +
-                    $"kin={(dbgRb != null && dbgRb.isKinematic)} rbV={(dbgRb != null ? dbgRb.linearVelocity.magnitude * 3.6f : 0f):F0} " +
-                    $"splineOn={(dbgSpline != null && dbgSpline.enabled)} fullOn={ai.enabled} " +
-                    $"oneWay={graph.IsOneWay(ai.currentNodeIndex, ai.targetNodeIndex)} shared={graph.IsSharedLane(ai.currentNodeIndex, ai.targetNodeIndex)} " +
-                    $"halfW={graph.GetRoadHalfWidth(ai.currentNodeIndex, ai.targetNodeIndex):F2} laneW={graph.GetLaneWidth(ai.currentNodeIndex, ai.targetNodeIndex):F2}");
-            }
+            SampleLane(ai.roadGraph, ai.currentNodeIndex, ai.targetNodeIndex, ai.laneIndex,
+                ai.transform, ai.vehicleLength, ai.currentSpeedKmh, ai.LateralLaneError, "full");
+        }
+        foreach (var splineCar in Object.FindObjectsByType<SplineVehicle>(FindObjectsInactive.Exclude))
+        {
+            // The spline tier eases between lane lines for turn lanes, passes and
+            // kerb shifts; it is deliberately off both lines while it does.
+            if (!splineCar.isActiveAndEnabled || splineCar.IsChangingLane) continue;
+            SampleLane(splineCar.roadGraph, splineCar.currentNodeIndex, splineCar.targetNodeIndex,
+                splineCar.laneIndex, splineCar.transform, splineCar.vehicleLength,
+                splineCar.speedKmh, 0f, "spline");
         }
 
         // No active vehicle at all is a failure: a pool that never leaves its dormant
@@ -1262,8 +1288,14 @@ public static class GameplaySmokeCheck
         // unbounded animation wait silently failed to do.
         float served = Time.time - routePhaseAt;
         bool routeEnded = mission.missionState == MissionState.Completed || !mission.routeActive;
-        bool advanced = mission.currentStopIndex == routeStopIndex + 1;
-        if (advanced || (routeEnded && routeStopIndex == stopCount - 1))
+        // Imported routes list both platforms of a stop pair back to back and the
+        // mission skips the duplicate. The next served index is therefore not
+        // always routeStopIndex + 1; comparing against that made this runner wait
+        // for a stop the mission had already passed, until the dwell budget
+        // expired. Ask the route which index it really serves next.
+        int nextServedIndex = BusRoute.NextDistinctStopIndex(mission.currentRoute.stops, routeStopIndex);
+        bool advanced = mission.currentStopIndex == nextServedIndex;
+        if (advanced || (routeEnded && nextServedIndex >= stopCount))
         {
             routeAdvanced++;
             routeServiceSeconds.Add(served);
@@ -1275,7 +1307,7 @@ public static class GameplaySmokeCheck
             bool guidanceRebuilt = versionAfter > routeGuidanceVersionBeforeService;
             // The last stop has no next target to steer at: completing the route is
             // what it has to do instead, and that is asserted by the summary below.
-            bool lastStop = routeStopIndex == stopCount - 1;
+            bool lastStop = nextServedIndex >= stopCount;
             if (!guidanceRebuilt && !lastStop)
             {
                 routeFailures++;
@@ -1294,7 +1326,9 @@ public static class GameplaySmokeCheck
                 doorsRefused = routeCurrentStopDoorsRefused,
                 serviceSeconds = served,
             });
-            routeStopIndex++;
+            // Jump straight to the index the mission moved to; it may be more than
+            // one step ahead because of a skipped duplicate platform.
+            routeStopIndex = nextServedIndex;
             routePhase = RoutePhaseTravel;
             routePhaseAt = Time.time;
             BeginRouteLeg();
@@ -1535,12 +1569,28 @@ public static class GameplaySmokeCheck
         if (trafficMotionSampled) return;
         if (trafficMotionBodies.Count == 0)
         {
+            // Ambient traffic is split across two tiers: distant bodies move on the
+            // cheap spline controller, close ones on the full AI controller. Sampling
+            // only AIVehicleController reported "0 bodies" on every route whose
+            // visible fleet happened to be in the spline tier, even though the
+            // street in front of the bus was moving. Both tiers drive the same
+            // graph, so both are valid witnesses that traffic moves.
+            var seen = new HashSet<Transform>();
             foreach (var ai in Object.FindObjectsByType<AIVehicleController>(FindObjectsInactive.Exclude))
             {
                 if (!ai.isActiveAndEnabled) continue;
                 if (Vector3.Distance(ai.transform.position, around) > 400f) continue;
+                if (!seen.Add(ai.transform)) continue;
                 trafficMotionBodies.Add(ai.transform);
                 trafficMotionStarts.Add(ai.transform.position);
+            }
+            foreach (var spline in Object.FindObjectsByType<SplineVehicle>(FindObjectsInactive.Exclude))
+            {
+                if (!spline.isActiveAndEnabled) continue;
+                if (Vector3.Distance(spline.transform.position, around) > 400f) continue;
+                if (!seen.Add(spline.transform)) continue;
+                trafficMotionBodies.Add(spline.transform);
+                trafficMotionStarts.Add(spline.transform.position);
             }
             trafficMotionAt = Time.time;
             trafficMotionActive = trafficMotionBodies.Count;
@@ -1586,9 +1636,16 @@ public static class GameplaySmokeCheck
         bool banner = hud != null && hud.NavigatorVisible;
         // The final stop is the destination: there is no road ahead to draw
         // chevrons on, so the beacon and the arrival banner are the navigator
-        // there. Everywhere else the route line must still be visible.
-        bool atFinalStop = mission.currentRoute != null &&
-            mission.currentStopIndex >= mission.currentRoute.stops.Length - 1;
+        // there. Everywhere else the route line must still be visible. "Final"
+        // means no distinct stop remains: a route can end with the duplicate
+        // platform of a pair, which the mission skips.
+        bool atFinalStop = false;
+        var stops = mission.currentRoute != null ? mission.currentRoute.stops : null;
+        if (stops != null && stops.Length > 0)
+        {
+            atFinalStop = mission.currentStopIndex >= stops.Length - 1 ||
+                BusRoute.NextDistinctStopIndex(stops, mission.currentStopIndex) >= stops.Length;
+        }
         bool arrivalState = atFinalStop && beacon && banner &&
             (mission.isProcessingStop || mission.distanceToNextStop <= 30f);
 
@@ -1606,10 +1663,21 @@ public static class GameplaySmokeCheck
                 $"path={mission.ActiveGuidancePathPoints?.Count ?? 0} version={mission.GuidancePathVersion} {RouteState(mission)}");
     }
 
+    static int ServedStopCount(BusRoute route)
+    {
+        if (route == null || route.stops == null) return 0;
+        bool[] served = BusRoute.ServedStopMask(route.stops);
+        int count = 0;
+        for (int i = 0; i < served.Length; i++)
+            if (served[i]) count++;
+        return count;
+    }
+
     static void FinishRoute(MissionManager mission)
     {
         int stopCount = mission != null && mission.currentRoute != null && mission.currentRoute.stops != null
             ? mission.currentRoute.stops.Length : 0;
+        int servedStopCount = ServedStopCount(mission != null ? mission.currentRoute : null);
         bool completed = mission != null && mission.missionState == MissionState.Completed && !mission.routeActive;
         bool trafficOk = trafficMotionSampled && trafficMotionActive >= 3 &&
             trafficMotionMoved >= Mathf.Max(2, trafficMotionActive / 4);
@@ -1617,12 +1685,15 @@ public static class GameplaySmokeCheck
         // The refused-door case is asserted, not hoped for: the runner forces it at one
         // stop, so a pass means the full-bus path was really driven.
         bool refusedDoorsOk = routeRefusedDoorProbeRan && routeDoorsRefused >= 1;
-        bool routeOk = completed && routeFailures == 0 && routeAdvanced == stopCount && stopCount > 0 &&
+        // Compare against the number of stops the mission actually serves: duplicate
+        // platforms are skipped both by the mission and by this runner.
+        bool routeOk = completed && routeFailures == 0 && servedStopCount > 0 &&
+            routeAdvanced == servedStopCount &&
             trafficOk && trafficLaneChecked && trafficLaneOk && navigatorOk && refusedDoorsOk;
         float total = Time.time - routeStartedAt;
         float average = routeServiceSeconds.Count > 0 ? routeServiceSeconds.Average() : 0f;
         float longest = routeServiceSeconds.Count > 0 ? routeServiceSeconds.Max() : 0f;
-        Debug.Log($"SMOKE routeResult stops={stopCount} serviced={routeServiced} docked={routeDocked} advanced={routeAdvanced} " +
+        Debug.Log($"SMOKE routeResult stops={stopCount} servedStops={servedStopCount} serviced={routeServiced} docked={routeDocked} advanced={routeAdvanced} " +
             $"doorsRefused={routeDoorsRefused} " +
             $"failures={routeFailures} shortcuts={routeShortcuts} serviceAvg={average:F1}s serviceLongest={longest:F1}s " +
             $"seconds={total:F0} completed={completed} trafficMoved={trafficMotionMoved}/{trafficMotionActive} " +
@@ -1763,11 +1834,10 @@ public static class GameplaySmokeCheck
         if (passed) return failures;
 
         var mission = MissionManager.Instance;
-        int stopCount = mission != null && mission.currentRoute != null && mission.currentRoute.stops != null
-            ? mission.currentRoute.stops.Length : 0;
-        if (stopCount == 0) failures.Add("the route has no stops");
-        if (routeAdvanced != stopCount)
-            failures.Add($"stop progression advanced {routeAdvanced}/{stopCount} stops");
+        int servedStopCount = ServedStopCount(mission != null ? mission.currentRoute : null);
+        if (servedStopCount == 0) failures.Add("the route has no stops");
+        if (routeAdvanced != servedStopCount)
+            failures.Add($"stop progression advanced {routeAdvanced}/{servedStopCount} stops");
         if (mission == null || mission.missionState != MissionState.Completed || mission.routeActive)
             failures.Add($"the route did not complete: state={mission?.missionState} active={mission?.routeActive}");
         bool trafficMoved = trafficMotionSampled && trafficMotionActive >= 3 &&

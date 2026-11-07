@@ -63,6 +63,14 @@ public class SplineVehicle : MonoBehaviour
     TrafficParticipant passTarget;
     Vector3 lastProgressPosition;
     public bool IsOvertaking { get; private set; }
+
+    /// <summary>
+    /// True while an intentional lane shift is settling: a pass, a turn-lane
+    /// change, a kerb shift or a return to the cruise lane. The body is between
+    /// two lane lines during that window, so lane-keeping audits must not count
+    /// it as drift.
+    /// </summary>
+    public bool IsChangingLane => IsOvertaking || Mathf.Abs(laneShift) > .05f;
     public static void NotifyEmergency(Vector3 source, float radius, float seconds)
     {
         foreach (var vehicle in ActiveSplineVehicles)
@@ -152,6 +160,22 @@ public class SplineVehicle : MonoBehaviour
         return step;
     }
 
+    float surfaceRailTimer;
+
+    /// <summary>Cadenced correction onto the drawn road; see the full tier's copy.</summary>
+    Vector3 RailToDrawnAsphalt(Vector3 position, float bodyHalfWidth, float dt)
+    {
+        surfaceRailTimer -= dt;
+        if (surfaceRailTimer > 0f) return position;
+        surfaceRailTimer = TrafficLane.SurfaceRailIntervalSeconds;
+
+        Vector3 corrected = TrafficLane.ClampToSurface(TrafficLane.RuntimeSurface, position, bodyHalfWidth);
+        if ((corrected - position).sqrMagnitude <= .0001f) return position;
+
+        transform.position = corrected;
+        return corrected;
+    }
+
     void Simulate(float dt)
     {
         if (roadGraph == null || !roadGraph.IsValidNode(currentNodeIndex))
@@ -176,8 +200,13 @@ public class SplineVehicle : MonoBehaviour
         float distanceToJunction = Vector3.Distance(transform.position, nodeB);
         float desired = roadGraph.GetSpeedLimitKmh(currentNodeIndex, targetNodeIndex) *
                         Mathf.Clamp(desiredSpeedFactor, 0.8f, 1.1f);
-        float turnFactor = RealismRules.TurnSpeedFactor(
-            roadGraph.GetLikelyTurnAngle(targetNodeIndex, segment, previousNodeIndex));
+        // Slow for the exit this car has already planned, not the shallowest exit
+        // the junction happens to offer.
+        int plannedNext = cachedPath.Count > 0 ? cachedPath.Peek() : -1;
+        float turnAngle = roadGraph.IsValidNode(plannedNext)
+            ? roadGraph.GetTurnAngle(currentNodeIndex, targetNodeIndex, plannedNext)
+            : roadGraph.GetLikelyTurnAngle(targetNodeIndex, segment, previousNodeIndex);
+        float turnFactor = RealismRules.TurnSpeedFactor(turnAngle);
         if (turnFactor < .999f)
         {
             float approach = Mathf.Clamp(speedKmh / 3.6f * 1.8f + vehicleLength, 10f, 60f);
@@ -204,14 +233,14 @@ public class SplineVehicle : MonoBehaviour
         junctionTurnGraceTimer = Mathf.Max(0f, junctionTurnGraceTimer - dt);
         Vector3 right = Vector3.Cross(Vector3.up, segment);
         float bodyHalfWidth = Mathf.Max(.6f, vehicleWidth * .5f);
-        float roadHalfWidth = roadGraph.GetRoadHalfWidth(currentNodeIndex, targetNodeIndex);
-        if (roadHalfWidth > .1f && junctionTurnGraceTimer <= 0f)
-        {
-            float maxOffset = Mathf.Max(0f, roadHalfWidth - bodyHalfWidth - .12f);
-            float centerOffset = Vector3.Dot(transform.position - nodeA, right);
-            if (Mathf.Abs(centerOffset) > maxOffset)
-                transform.position -= right * (centerOffset - Mathf.Sign(centerOffset) * maxOffset);
-        }
+        // Same rail as the full-physics tier, and likewise never switched off: it is
+        // measured to the nearest point of this link's asphalt (and the exit link in
+        // the junction mouth), so a corner is steered, not cut over the kerb.
+        transform.position = TrafficLane.ClampToRoad(roadGraph, currentNodeIndex, targetNodeIndex,
+            plannedNext, transform.position, bodyHalfWidth);
+        // Same drawn-asphalt rail as the full tier: the graph can model a link the mesh
+        // never paved, and a low-detail car must not be the one seen driving across it.
+        transform.position = RailToDrawnAsphalt(transform.position, bodyHalfWidth, dt);
         target -= right * Vector3.Dot(transform.position - laneA, right) * AIVehicleController.LaneCenteringGain;
 
         Vector3 to = laneB - transform.position;
@@ -235,6 +264,27 @@ public class SplineVehicle : MonoBehaviour
             float signalClearance = vehicleLength * .5f + 3f;
             desired = Mathf.Min(desired, RealismRules.StoppingSpeedKmh(
                 distanceToJunction, signalClearance, brakeKmhPerSec / 3.6f * 0.65f));
+        }
+
+        // The same "never block the box" rule as the full tier: hold at the stop
+        // line while the far side of the junction has no room for this body.
+        if (roadGraph.IsValidNode(plannedNext))
+        {
+            float junctionClearance = vehicleLength * .5f + 2f;
+            if (distanceToJunction <= junctionClearance + minHeadway + 6f)
+            {
+                int exitLane = Mathf.Clamp(laneIndex, 0,
+                    Mathf.Max(1, roadGraph.GetLaneCount(targetNodeIndex, plannedNext)) - 1);
+                LaneFrame exit = TrafficLane.Frame(roadGraph, targetNodeIndex, plannedNext, exitLane);
+                if (exit.IsValid)
+                {
+                    Vector3 exitPoint = exit.Start + exit.Direction * Mathf.Min(8f, exit.Length * .5f);
+                    if (!TrafficParticipant.IsSpawnAreaClear(exitPoint,
+                            vehicleLength * .5f + 3.5f, transform))
+                        desired = Mathf.Min(desired, RealismRules.StoppingSpeedKmh(
+                            distanceToJunction, junctionClearance, brakeKmhPerSec / 3.6f * 0.65f));
+                }
+            }
         }
         if (IsOvertaking)
             desired = Mathf.Min(desired, AIVehicleController.OvertakeSpeedKmh(desired,
@@ -328,7 +378,9 @@ public class SplineVehicle : MonoBehaviour
                 Vector3.Dot(transform.forward, passTarget.transform.position - transform.position) < -5f;
             bool tooCloseToJunction = distanceToJunction < 7f;
             bool laneGone = overtakeLaneIndex < 0 || overtakeLaneIndex >= laneCount;
-            if (targetGone || passed || tooCloseToJunction ||
+            // A leader that has picked its speed back up leaves nothing to pass.
+            bool targetOutpaced = !targetGone && passTarget.SpeedKmh >= desiredKmh - 4f;
+            if (targetGone || passed || tooCloseToJunction || targetOutpaced ||
                 roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) || laneGone ||
                 overtakeTimer >= Mathf.Max(2f, maximumOvertakeSeconds))
             {
@@ -346,6 +398,15 @@ public class SplineVehicle : MonoBehaviour
             return;
 
         if (Mathf.Abs(laneShift) > .05f)
+        {
+            laneShiftTarget = 0f;
+            return;
+        }
+
+        // No lane changes inside a red light's stop zone: a queue that shuffles
+        // sideways while it waits ends up straddling two lanes and the kerb.
+        if (roadGraph.IsRedSignal(currentNodeIndex, targetNodeIndex) &&
+            distanceToJunction < Mathf.Max(18f, vehicleLength * 2f + speedKmh / 3.6f))
         {
             laneShiftTarget = 0f;
             return;
@@ -390,7 +451,7 @@ public class SplineVehicle : MonoBehaviour
                 if (TrafficParticipant.TryFindAhead(transform, scan, halfLane,
                         out TrafficParticipant leader, out float gap) &&
                     AIVehicleController.ShouldStartOvertake(desiredKmh, leader.SpeedKmh, gap,
-                        minHeadway, true))
+                        minHeadway, true, distanceToJunction))
                 {
                     float passSide = AIVehicleController.LaneOffsetDelta(roadGraph,
                         currentNodeIndex, targetNodeIndex, laneIndex, passLane);

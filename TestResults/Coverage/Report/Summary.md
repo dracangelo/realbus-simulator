@@ -1,48 +1,48 @@
 ﻿# Summary
 |||
 |:---|:---|
-| Generated on: | 11/2/2026 - 9:42:22 AM |
+| Generated on: | 11/7/2026 - 8:55:49 AM |
 | Parser: | MultiReportParser (4x OpenCoverParser) |
 | Assemblies: | 2 |
 | Classes: | 302 |
 | Files: | 396 |
-| Covered lines: | 16099 |
-| Uncovered lines: | 50760 |
-| Coverable lines: | 66859 |
-| Total lines: | 78952 |
-| Line coverage: | 24% (16099 of 66859) |
+| Covered lines: | 16366 |
+| Uncovered lines: | 51275 |
+| Coverable lines: | 67641 |
+| Total lines: | 80295 |
+| Line coverage: | 24.1% (16366 of 67641) |
 | Covered branches: | 0 |
 | Total branches: | 0 |
-| Covered methods: | 1986 |
-| Total methods: | 6269 |
-| Method coverage: | 31.6% (1986 of 6269) |
+| Covered methods: | 2011 |
+| Total methods: | 6311 |
+| Method coverage: | 31.8% (2011 of 6311) |
 
 |**Name**|**Covered**|**Uncovered**|**Coverable**|**Total**|**Line coverage**|**Covered**|**Total**|**Branch coverage**|**Covered**|**Total**|**Method coverage**|
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-|**GameScripts**|**16093**|**38592**|**54685**|**73883**|**29.4%**|**0**|**0**|****|**1984**|**5514**|**35.9%**|
+|**GameScripts**|**16360**|**39072**|**55432**|**75487**|**29.5%**|**0**|**0**|****|**2009**|**5555**|**36.1%**|
 |AccessibilityManager|11|31|42|82|26.1%|0|0||5|11|45.4%|
 |AerodynamicsSystem|3|10|13|29|23%|0|0||1|4|25%|
 |AIBusRouteRunner|0|62|62|456|0%|0|0||0|9|0%|
 |AIBusScheduleSpawner|0|364|364|456|0%|0|0||0|20|0%|
-|AIRoadGraph|504|265|769|842|65.5%|0|0||51|68|75%|
-|AIVehicleController|187|568|755|986|24.7%|0|0||27|60|45%|
+|AIRoadGraph|513|265|778|860|65.9%|0|0||52|69|75.3%|
+|AIVehicleController|194|638|832|1135|23.3%|0|0||27|64|42.1%|
 |AmbientCommuterMotion|0|8|8|863|0%|0|0||0|2|0%|
 |AmbulanceBehaviour|0|112|112|90|0%|0|0||0|14|0%|
 |BalanceTelemetryRecorder|1|60|61|104|1.6%|0|0||1|19|5.2%|
 |BatterySystem|46|242|288|226|15.9%|0|0||10|37|27%|
 |BuildingCatalog|1|0|1|25|100%|0|0||1|1|100%|
 |BuiltInShaders|13|3|16|84|81.2%|0|0||5|6|83.3%|
-|BusController|156|501|657|646|23.7%|0|0||27|79|34.1%|
-|BusDepotManager|663|190|853|1488|77.7%|0|0||50|59|84.7%|
+|BusController|156|502|658|650|23.7%|0|0||27|79|34.1%|
+|BusDepotManager|680|217|897|1575|75.8%|0|0||52|62|83.8%|
 |BusFleetManager|456|152|608|665|75%|0|0||55|68|80.8%|
 |BusInputActions|0|262|262|655|0%|0|0||0|73|0%|
 |BusLiveryPaint|132|65|197|320|67%|0|0||14|19|73.6%|
-|BusRoute|127|65|192|295|66.1%|0|0||17|18|94.4%|
+|BusRoute|178|66|244|395|72.9%|0|0||23|24|95.8%|
 |BusRouteParser|247|59|306|351|80.7%|0|0||24|27|88.8%|
 |BusSpec|61|2|63|64|96.8%|0|0||8|10|80%|
 |BusStabilityAssist|25|24|49|109|51%|0|0||5|7|71.4%|
 |BusStop|4|6|10|16|40%|0|0||2|4|50%|
-|BusStopData|2|0|2|295|100%|0|0||2|2|100%|
+|BusStopData|2|0|2|395|100%|0|0||2|2|100%|
 |BusStopPlatformRegistry|13|15|28|80|46.4%|0|0||3|6|50%|
 |BusStopPosterBuilder|332|145|477|863|69.6%|0|0||31|39|79.4%|
 |BusUpgradeModifiers|14|7|21|74|66.6%|0|0||3|3|100%|
@@ -66,7 +66,7 @@
 |CountrySelectUI|0|599|599|303|0%|0|0||0|36|0%|
 |CrowdPerformancePolicy|18|0|18|92|100%|0|0||5|5|100%|
 |DailyChallengeManager|7|130|137|181|5.1%|0|0||3|37|8.1%|
-|DepotTrafficSpawner|165|35|200|384|82.5%|0|0||19|23|82.6%|
+|DepotTrafficSpawner|165|35|200|388|82.5%|0|0||19|23|82.6%|
 |DistanceVisibility|0|21|21|47|0%|0|0||0|4|0%|
 |DockingZone|26|193|219|225|11.8%|0|0||6|33|18.1%|
 |DriverShiftSystem|304|66|370|263|82.1%|0|0||22|26|84.6%|
@@ -96,7 +96,7 @@
 |ImportedMaterialPalette|90|8|98|213|91.8%|0|0||14|14|100%|
 |ImportedVehicleVisualRepair|184|19|203|337|90.6%|0|0||10|12|83.3%|
 |Json|589|127|716|688|82.2%|0|0||48|48|100%|
-|LaneFrame|21|0|21|270|100%|0|0||6|6|100%|
+|LaneFrame|21|0|21|501|100%|0|0||6|6|100%|
 |LiveCityCatalog|1|0|1|20|100%|0|0||1|1|100%|
 |LiveCityStreamer|58|404|462|734|12.5%|0|0||9|36|25%|
 |LiveryCodeCodec|45|3|48|361|93.7%|0|0||5|5|100%|
@@ -116,7 +116,7 @@
 |MissionBriefingUI|0|356|356|290|0%|0|0||0|26|0%|
 |MissionData|56|49|105|174|53.3%|0|0||11|19|57.8%|
 |MissionDrivingMonitor|0|27|27|40|0%|0|0||0|5|0%|
-|MissionManager|93|1086|1179|994|7.8%|0|0||24|111|21.6%|
+|MissionManager|93|1094|1187|1008|7.8%|0|0||24|111|21.6%|
 |MissionResult|144|24|168|240|85.7%|0|0||8|8|100%|
 |MissionResultUI|0|384|384|312|0%|0|0||0|30|0%|
 |MissionSettlementData|10|0|10|123|100%|0|0||2|2|100%|
@@ -130,12 +130,12 @@
 |OfflineMapsUI|0|154|154|147|0%|0|0||0|16|0%|
 |OSMBuildingLoader|7|114|121|116|5.7%|0|0||1|19|5.2%|
 |OSMBuildingMeshBuilder|324|1045|1369|1762|23.6%|0|0||23|87|26.4%|
-|OsmCityPopulationSystem|0|368|368|564|0%|0|0||0|21|0%|
+|OsmCityPopulationSystem|0|379|379|578|0%|0|0||0|22|0%|
 |OSMData|30|46|76|315|39.4%|0|0||3|10|30%|
-|OSMLoader|0|63|63|76|0%|0|0||0|12|0%|
+|OSMLoader|0|77|77|78|0%|0|0||0|13|0%|
 |OSMParser|63|253|316|252|19.9%|0|0||2|13|15.3%|
 |OSMRoadMeshBuilder|374|913|1287|1439|29%|0|0||28|88|31.8%|
-|OSMRouteImporter|0|504|504|537|0%|0|0||0|39|0%|
+|OSMRouteImporter|0|504|504|536|0%|0|0||0|39|0%|
 |OsmTrafficSignalSpawner|27|82|109|173|24.7%|0|0||2|10|20%|
 |OSMWay|91|162|253|315|35.9%|0|0||10|30|33.3%|
 |OverpassDownloadPolicy|60|2|62|141|96.7%|0|0||6|6|100%|
@@ -179,14 +179,14 @@
 |RoadModuleCatalog|24|0|24|55|100%|0|0||3|3|100%|
 |RoadNetworkSurface|0|66|66|81|0%|0|0||0|8|0%|
 |RoadRoutePathBuilder|51|6|57|80|89.4%|0|0||3|3|100%|
-|RoadSpawnResolver|73|126|199|300|36.6%|0|0||7|12|58.3%|
+|RoadSpawnResolver|84|254|338|533|24.8%|0|0||9|17|52.9%|
 |RoadSurfaceDetector|10|188|198|168|5%|0|0||2|16|12.5%|
 |RoadSurfaceFrictionController|6|90|96|82|6.2%|0|0||1|8|12.5%|
-|RoadSurfaceIndex|117|11|128|177|91.4%|0|0||12|13|92.3%|
+|RoadSurfaceIndex|148|15|163|231|90.7%|0|0||14|15|93.3%|
 |RoadSurfaceType|0|6|6|19|0%|0|0||0|1|0%|
 |RoadTrafficBridge|0|29|29|40|0%|0|0||0|3|0%|
 |RoadWidthPolicy|12|14|26|69|46.1%|0|0||6|7|85.7%|
-|RouteArrowOverlay|0|249|249|453|0%|0|0||0|25|0%|
+|RouteArrowOverlay|0|286|286|522|0%|0|0||0|27|0%|
 |RouteGhostRecorder|1|90|91|155|1%|0|0||1|24|4.1%|
 |RouteGhostReplay|0|2|2|155|0%|0|0||0|1|0%|
 |RouteMapGraphic|0|49|49|64|0%|0|0||0|5|0%|
@@ -196,12 +196,12 @@
 |RouteSelectUI|0|509|509|320|0%|0|0||0|39|0%|
 |RouteVisualizer|0|76|76|0|0%|0|0||0|6|0%|
 |RuntimeCityContentDownloader|0|195|195|314|0%|0|0||0|29|0%|
-|RuntimeCityContentStore|0|49|49|93|0%|0|0||0|14|0%|
+|RuntimeCityContentStore|0|76|76|134|0%|0|0||0|15|0%|
 |RuntimeDistanceCuller|0|206|206|171|0%|0|0||0|18|0%|
 |RuntimeEnvironmentSpawner|0|126|126|187|0%|0|0||0|16|0%|
-|RuntimeGasStationSpawner|0|444|444|436|0%|0|0||0|30|0%|
+|RuntimeGasStationSpawner|0|453|453|446|0%|0|0||0|30|0%|
 |RuntimeMinimapGraphic|29|261|290|442|10%|0|0||3|21|14.2%|
-|RuntimeOsmPoiVisualizer|0|315|315|238|0%|0|0||0|22|0%|
+|RuntimeOsmPoiVisualizer|0|328|328|254|0%|0|0||0|23|0%|
 |RuntimeSpawnLogger|0|70|70|71|0%|0|0||0|8|0%|
 |RuntimeTarmacApplier|0|222|222|209|0%|0|0||0|16|0%|
 |RuntimeUiShapes|29|53|82|243|35.3%|0|0||4|9|44.4%|
@@ -230,11 +230,11 @@
 |SkyReflectionEnvironment|80|7|87|191|91.9%|0|0||11|11|100%|
 |SlippyTileCoverage|28|1|29|42|96.5%|0|0||1|1|100%|
 |SnowController|179|64|243|300|73.6%|0|0||20|28|71.4%|
-|SplineVehicle|119|321|440|505|27%|0|0||16|34|47%|
+|SplineVehicle|123|389|512|619|24%|0|0||16|37|43.2%|
 |StationInteractionPanel|0|307|307|455|0%|0|0||0|23|0%|
 |SteeringWheelControl|0|16|16|25|0%|0|0||0|8|0%|
 |StopApproachUI|0|197|197|168|0%|0|0||0|26|0%|
-|StopPropSpawner|0|400|400|496|0%|0|0||0|27|0%|
+|StopPropSpawner|0|428|428|534|0%|0|0||0|27|0%|
 |StopTrigger|0|139|139|108|0%|0|0||0|16|0%|
 |StreetTextureLibrary|469|78|547|906|85.7%|0|0||35|39|89.7%|
 |SubtitleManager|0|39|39|64|0%|0|0||0|8|0%|
@@ -245,16 +245,16 @@
 |TrafficBusPolicy|56|0|56|160|100%|0|0||9|9|100%|
 |TrafficCatalog|8|0|8|41|100%|0|0||3|3|100%|
 |TrafficDebugHUD|0|110|110|79|0%|0|0||0|10|0%|
-|TrafficLane|90|5|95|270|94.7%|0|0||14|15|93.3%|
+|TrafficLane|198|21|219|501|90.4%|0|0||22|23|95.6%|
 |TrafficLight|103|23|126|119|81.7%|0|0||19|23|82.6%|
 |TrafficLivery|59|1|60|149|98.3%|0|0||7|7|100%|
 |TrafficModelRules|74|8|82|197|90.2%|0|0||14|15|93.3%|
-|TrafficParticipant|32|124|156|263|20.5%|0|0||7|18|38.8%|
+|TrafficParticipant|32|131|163|270|19.6%|0|0||7|18|38.8%|
 |TrafficPerformancePolicy|10|0|10|85|100%|0|0||4|4|100%|
 |TrafficPresentationCull|3|25|28|54|10.7%|0|0||1|5|20%|
 |TrafficSignalJunction|68|9|77|154|88.3%|0|0||14|16|87.5%|
 |TrafficStressTest|0|104|104|58|0%|0|0||0|14|0%|
-|TransmissionSystem|28|23|51|54|54.9%|0|0||6|11|54.5%|
+|TransmissionSystem|45|18|63|89|71.4%|0|0||9|13|69.2%|
 |UIAnimator|0|115|115|88|0%|0|0||0|9|0%|
 |UIFonts|2|12|14|25|14.2%|0|0||4|6|66.6%|
 |UITheme|107|10|117|243|91.4%|0|0||10|10|100%|
@@ -265,7 +265,7 @@
 |VehicleDistanceLod|0|17|17|29|0%|0|0||0|3|0%|
 |VehiclePersistentState|53|2|55|123|96.3%|0|0||4|4|100%|
 |VehiclePolishEffects|0|25|25|40|0%|0|0||0|4|0%|
-|VehiclePool|652|657|1309|1444|49.8%|0|0||38|62|61.2%|
+|VehiclePool|664|673|1337|1478|49.6%|0|0||39|63|61.9%|
 |ViewPriority|32|15|47|82|68%|0|0||3|3|100%|
 |VisualQualityController|0|108|108|175|0%|0|0||0|15|0%|
 |WeatherLighting|12|0|12|67|100%|0|0||7|7|100%|
@@ -280,7 +280,7 @@
 |XPAwardResult|2|2|4|430|50%|0|0||2|4|50%|
 |XPBar|0|282|282|211|0%|0|0||0|24|0%|
 |XPSystem|190|124|314|430|60.5%|0|0||36|52|69.2%|
-|**GameScripts.Editor**|**6**|**12168**|**12174**|**17433**|**0%**|**0**|**0**|****|**2**|**755**|**0.2%**|
+|**GameScripts.Editor**|**6**|**12203**|**12209**|**17503**|**0%**|**0**|**0**|****|**2**|**756**|**0.2%**|
 |AIRoadGraphGenerator|0|374|374|290|0%|0|0||0|26|0%|
 |BuildingCatalogPreview|0|84|84|122|0%|0|0||0|1|0%|
 |BuildingModelImporter|0|377|377|568|0%|0|0||0|23|0%|
@@ -293,7 +293,7 @@
 |EditorCoroutineUtility|0|76|76|1299|0%|0|0||0|10|0%|
 |EditorOverpassQueryBuilder|0|8|8|1299|0%|0|0||0|2|0%|
 |FuelAmenityDownloader|0|252|252|184|0%|0|0||0|16|0%|
-|GameplaySmokeCheck|3|1296|1299|2055|0.2%|0|0||1|42|2.3%|
+|GameplaySmokeCheck|3|1331|1334|2125|0.2%|0|0||1|43|2.3%|
 |GameSceneRebuilder|0|405|405|549|0%|0|0||0|29|0%|
 |GasStationMaterialBinder|0|103|103|147|0%|0|0||0|7|0%|
 |ImportedModelImportSettings|0|16|16|33|0%|0|0||0|1|0%|

@@ -8,12 +8,12 @@ Kernel version:          7.1.5+kali-amd64
 Architecture:            x86_64
 Window Protocol:         Wayland (XWayland)
 Available memory:        15852 MB
-Date:                    2026-11-02T06:40:16Z
-VBCSCompilerPreWarmer: ERROR: Couldn't pre-warm as failed to write stub code temporary file (/tmpUnityVBCSPreWarm_53173.cs)
-VBCSCompiler prewarm took 0.45 ms
+Date:                    2026-11-07T05:53:38Z
+VBCSCompilerPreWarmer: ERROR: Couldn't pre-warm as failed to write stub code temporary file (/tmpUnityVBCSPreWarm_270681.cs)
+VBCSCompiler prewarm took 1.75 ms
 [Licensing::Module] Trying to connect to existing licensing client channel...
 [Licensing::IpcConnector] Channel LicenseClient-drac doesn't exist
-[Licensing::Module] Successfully launched the LicensingClient (PId: 53185)
+[Licensing::Module] Successfully launched the LicensingClient (PId: 270695)
 Selected window backend: (null) 
 Desktop is 1280 x 1024 @ 60 Hz
 Initialize udev device monitor.
@@ -78,28 +78,28 @@ Successfully changed project path to: /home/drac/Documents/coding/realbus-simula
     "memorysetup-job-temp-allocator-block-size-background=1048576"
     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
 Logging is directed to a specific file, skipping project log.
-Player connection [139930047069184]  Target information:
+Player connection [139782050860032]  Target information:
 
-Player connection [139930047069184]  * "[IP] 192.168.100.28 [Port] 55504 [Flags] 2 [Guid] 571561308 [EditorId] 571561308 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.28) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+Player connection [139782050860032]  * "[IP] 192.168.100.10 [Port] 55504 [Flags] 2 [Guid] 1497450351 [EditorId] 1497450351 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.10) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
 
-Player connection [139930047069184]  * "[IP] 172.17.0.1 [Port] 55504 [Flags] 2 [Guid] 571561308 [EditorId] 571561308 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.28) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+Player connection [139782050860032]  * "[IP] 172.17.0.1 [Port] 55504 [Flags] 2 [Guid] 1497450351 [EditorId] 1497450351 [Version] 1048832 [Id] LinuxEditor(16,192.168.100.10) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
 
-Player connection [139930047069184] Host joined multi-casting on [225.0.0.222:54997]...
-Player connection [139930047069184] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [139782050860032] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [139782050860032] Host joined alternative multi-casting on [225.0.0.222:34997]...
 Input System module state changed to: Initialized.
 [Physics::Module] Initialized fallback backend.
 [Physics::Module] Id: 0xdecafbad
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac" at "2026-11-02T06:40:16.566505Z"
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac" at "2026-11-07T05:53:39.255533Z"
 [SignatureVerifier] Application signature verification not supported on this platform.
 [Licensing::Client] Handshaking with LicensingClient:
   Version:                 1.18.3+d7ffd15
-  Session Id:              a5ec002099884bbeb528d84b75a9dd0e
-  Correlation Id:          690fea15c4cfb7038c24483a0dce5ce3
-  External correlation Id: 4400312633831157357
+  Session Id:              e2c651de50f246b399e222293b592419
+  Correlation Id:          789372d86eefa3b57a3a60f75de9299e
+  External correlation Id: 2423251844472274898
   Machine Id:              o3y/Pwceucb8Ha7Dsv+8jcLZd2I=
-[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-drac" (connect: 0.38s, validation: 0.10s, handshake: 0.00s)
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac-notifications" at "2026-11-02T06:40:16.66662Z"
-[Licensing::Module] Connected to LicensingClient (PId: 53185, launch time: 0.00, total connection time: 0.48s)
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-drac" (connect: 0.86s, validation: 0.17s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac-notifications" at "2026-11-07T05:53:39.421344Z"
+[Licensing::Module] Connected to LicensingClient (PId: 270695, launch time: 0.00, total connection time: 1.03s)
 [Licensing::Module] Error: Access token is unavailable; failed to update
 [Licensing::Client] Successfully resolved entitlement details
 [Licensing::Module] License group:
@@ -107,8 +107,8 @@ Input System module state changed to: Initialized.
   Product: Unity Personal
   Type: Assigned
   Expiration: Unlimited
-[Licensing::Client] Successfully updated license, isAsync: True, time: 0.02
-[Licensing::Module] Licensing Background thread has ended after 0.54s
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.03
+[Licensing::Module] Licensing Background thread has ended after 1.17s
 Initialising UDS system complete:
   - System type: Client
   - Resource namespace: 809e1407a05d52a82f37878b0cd6251b
@@ -117,7 +117,7 @@ Initialising UDS system complete:
   - Command buffer size: 8192
   - Hashmap size: 4194304
   - Service connected: false
-[Package Manager] Connected to IPC stream "Upm-53173" after 0.3 seconds.
+[Package Manager] Connected to IPC stream "Upm-270681" after 0.6 seconds.
 [Licensing::Client] Successfully resolved entitlement details
 Library Redirect Path: Library/
 Launching Unity Data Store - /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/Unity.DataStore 
@@ -129,7 +129,7 @@ Unity Data Store artifact dir = Library/DataStore, working dir = /home/drac/Docu
 [Physics::Module] Threading Mode: Multi-Threaded
 Unity Data Store running and initialised
 [Licensing::Client] Successfully resolved entitlement details
-Refreshing native plugins compatible for Editor in 4.94 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 21.50 ms, found 0 plugins.
 Initialize engine version: 6000.6.0f1 (f7f8ed4d1e24)
 [EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
 [Subsystems] Discovering subsystems at path /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
@@ -148,13 +148,13 @@ exture_buffer_range GL_ARB_texture_compression_bptc GL_ARB_texture_compression_r
 pth_stencil GL_ATI_blend_equation_separate GL_ATI_meminfo GL_ATI_texture_float GL_ATI_texture_mirror_once GL_EXT_EGL_image_storage GL_EXT_EGL_image_storage_compression GL_EXT_EGL_sync GL_EXT_abgr GL_EXT_blend_equation_separate GL_EXT_debug_label GL_EXT_depth_bounds_test GL_EXT_draw_buffers2 GL_EXT_draw_instanced GL_EXT_framebuffer_blit GL_EXT_framebuffer_multisample GL_EXT_framebuffer_multisample_blit_scaled GL_EXT_framebuffer_object GL_EXT_framebuffer_sRGB GL_EXT_memory_object GL_EXT_memory_object_fd GL_EXT_mesh_shader GL_EXT_packed_depth_stencil GL_EXT_packed_float GL_EXT_pixel_buffer_object GL_EXT_polygon_offset_clamp GL_EXT_provoking_vertex GL_EXT_shader_clock GL_EXT_shader_framebuffer_fetch GL_EXT_shader_framebuffer_fetch_non_coherent GL_EXT_shader_image_load_formatted GL_EXT_shader_integer_mix GL_EXT_texture_array GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_compression_s3tc GL_EXT_texture_filter_anisotropic GL_EXT_texture_filter_minmax GL_EXT_texture_integer GL_EXT_te
 xture_mirror_clamp GL_EXT_texture_sRGB GL_EXT_texture_sRGB_R8 GL_EXT_texture_sRGB_RG8 GL_EXT_texture_sRGB_decode GL_EXT_texture_shadow_lod GL_EXT_texture_shared_exponent GL_EXT_texture_snorm GL_EXT_texture_storage GL_EXT_texture_swizzle GL_EXT_timer_query GL_EXT_transform_feedback GL_EXT_vertex_array_bgra GL_EXT_vertex_attrib_64bit GL_IBM_multimode_draw_arrays GL_INTEL_shader_atomic_float_minmax GL_KHR_blend_equation_advanced GL_KHR_blend_equation_advanced_coherent GL_KHR_context_flush_control GL_KHR_debug GL_KHR_no_error GL_KHR_parallel_shader_compile GL_KHR_robust_buffer_access_behavior GL_KHR_robustness GL_KHR_texture_compression_astc_ldr GL_KHR_texture_compression_astc_sliced_3d GL_MESA_framebuffer_flip_y GL_MESA_pack_invert GL_MESA_shader_integer_functions GL_MESA_texture_signed_rgba GL_NVX_gpu_memory_info GL_NV_alpha_to_coverage_dither_control GL_NV_conditional_render GL_NV_copy_image GL_NV_depth_clamp GL_NV_packed_depth_stencil GL_NV_sample_locations GL_NV_shader_atomic_float GL_NV_texture_barrier GL_
 OES_EGL_image GL_OVR_multiview GL_OVR_multiview2 GL_S3_s3tc
-OPENGL LOG: Creating OpenGL 4.6 graphics device ; Context level  <OpenGL 4.5> ; Context handle 1456529520
+OPENGL LOG: Creating OpenGL 4.6 graphics device ; Context level  <OpenGL 4.5> ; Context handle 2032998192
 Initialize mono
 Mono path[0] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Managed'
 Mono path[1] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
 Mono path[2] = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-linux'
 Mono config path = '/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56173
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56681
 Code Coverage is enabled. Note that Code Coverage can affect the performance.
 CodeReloadManager initialized
 ImportWorker Server TCP listen port: 0
@@ -165,7 +165,7 @@ Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/
 [Licensing::Client] Successfully resolved entitlement details
 Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
 Register platform support module: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
-Registered in 0.003620 seconds.
+Registered in 0.013320 seconds.
 [usbmuxd] Start listen thread
 [usbmuxd] Listen thread started
 Native extension for LinuxStandalone target not found
@@ -175,25 +175,25 @@ Package Manager log level set to [2]
 [Licensing::Client] Successfully resolved entitlement details
 ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Scripting: successfully reloaded assembly
-- Finished resetting the current domain, in  7.550 seconds
-Domain Reload Profiling: 8225ms
-	BeginReloadAssembly (109ms)
-		CreateAndSetChildDomain (5ms)
-	RebuildCommonClasses (6ms)
-	RebuildNativeTypeToScriptingClass (15ms)
-	initialDomainReloadingComplete (78ms)
-	LoadAllAssembliesAndSetupDomain (465ms)
-		LoadAssemblies (104ms)
-		TypeCache.Refresh (312ms)
-			TypeCache.ScanAssembly (292ms)
+- Finished resetting the current domain, in  9.457 seconds
+Domain Reload Profiling: 10631ms
+	BeginReloadAssembly (243ms)
+		CreateAndSetChildDomain (11ms)
+	RebuildCommonClasses (11ms)
+	RebuildNativeTypeToScriptingClass (27ms)
+	initialDomainReloadingComplete (150ms)
+	LoadAllAssembliesAndSetupDomain (739ms)
+		LoadAssemblies (233ms)
+		TypeCache.Refresh (497ms)
+			TypeCache.ScanAssembly (468ms)
 		AnalyzeDomain (1ms)
-	FinalizeReload (7552ms)
+	FinalizeReload (9460ms)
 		SetupLoadedEditorAssemblies (0ms)
-			LogAssemblyErrors (3ms)
-			InitializePlatformSupportModulesInManaged (14ms)
-			BeforeProcessingInitializeOnLoad (197ms)
-			ProcessInitializeOnLoadAttributes (181ms)
-			ProcessInitializeOnLoadMethodAttributes (6900ms)
+			LogAssemblyErrors (4ms)
+			InitializePlatformSupportModulesInManaged (23ms)
+			BeforeProcessingInitializeOnLoad (421ms)
+			ProcessInitializeOnLoadAttributes (252ms)
+			ProcessInitializeOnLoadMethodAttributes (8276ms)
 [Licensing::Client] Successfully resolved entitlement details
 [Licensing::Client] Successfully resolved entitlement details
 Application.AssetDatabase Initial Refresh Start
@@ -264,197 +264,211 @@ Application.AssetDatabase Initial Refresh Start
     com.unity.ext.nunit@2.1.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.ext.nunit@508b95ff9afe)
     com.unity.mathematics@1.4.0 (location: /home/drac/Documents/coding/realbus-simulator/Library/PackageCache/com.unity.mathematics@9c2fa23d2d82)
 [Subsystems] No new subsystems found in resolved package list.
-[Package Manager] Done registering packages in 0.01 seconds
+[Package Manager] Done registering packages in 0.02 seconds
 Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
 Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
 [ScriptCompilation] Requested script compilation because: AssetDatabase observed changes in script compilation related files
 Starting: /home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/BuildPipeline/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/1300b0aEDbg.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
 WorkingDir: /home/drac/Documents/coding/realbus-simulator
 DisplayProgressbar: Compiling Scripts
-ExitCode: 0 Duration: 15s
-[648/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.pdb
-[649/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.dll
-[650/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.pdb
-[652/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll
+ExitCode: 0 Duration: 20s
+[562/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.pdb
+[576/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll
+[577/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.pdb
+[579/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Rider.Editor.dll
 [685/910    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
-[754/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.dll
-[755/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.dll
-[756/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.dll
-[757/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.dll
-[758/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.dll
-[759/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.dll
-[760/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.dll
-[761/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.dll
-[762/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.dll
-[763/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.dll
-[764/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.dll
-[765/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.dll
-[766/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.dll
-[767/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.dll
-[768/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.dll
-[769/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.dll
-[770/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.dll
-[771/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.dll
-[772/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.dll
-[773/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.dll
-[774/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.dll
-[775/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.dll
-[776/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.dll
-[777/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Networking.dll
-[778/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.dll
-[779/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.dll
-[780/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.dll
-[781/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.dll
-[782/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.dll
-[783/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.dll
-[784/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.pdb
-[785/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.pdb
-[786/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.pdb
-[787/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.dll
-[788/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.dll
-[789/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.dll
-[790/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.dll
-[791/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.pdb
-[792/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.dll
-[793/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.pdb
-[794/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.pdb
-[795/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.pdb
-[796/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.dll
-[797/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.dll
-[798/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.pdb
-[799/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.pdb
-[800/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.dll
-[801/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.pdb
-[802/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.dll
-[803/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.dll
-[804/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.pdb
-[805/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.pdb
-[806/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.dll
-[807/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.dll
-[808/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.pdb
-[809/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.dll
-[810/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.pdb
-[811/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.pdb
-[812/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.pdb
-[813/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.pdb
-[814/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.dll
-[815/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.pdb
-[816/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.dll
-[817/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.pdb
-[818/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.pdb
-[819/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.pdb
-[820/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.pdb
-[821/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll
-[822/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.dll
-[823/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.pdb
-[824/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.pdb
-[825/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.pdb
-[826/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.pdb
-[827/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.dll
-[828/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.pdb
-[829/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.pdb
-[830/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.dll
-[831/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.pdb
-[832/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.dll
-[833/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.dll
-[834/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.pdb
-[835/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.pdb
-[836/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.pdb
-[837/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.pdb
-[838/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.pdb
-[839/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.pdb
-[840/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.pdb
-[841/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.dll
-[842/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.pdb
-[843/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.pdb
-[844/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.dll
-[845/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.pdb
-[846/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.pdb
-[847/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.dll
-[848/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.pdb
-[849/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.pdb
-[850/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.dll
-[851/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.pdb
-[852/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.pdb
-[853/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.pdb
-[854/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.pdb
-[855/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.pdb
-[856/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.pdb
-[857/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.pdb
-[858/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.dll
-[859/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.dll
-[860/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.pdb
-[861/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.dll
-[862/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.pdb
-[863/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.pdb
-[864/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.dll
-[865/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.dll
-[866/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.pdb
-[867/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll
-[868/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.dll
-[869/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.pdb
-[870/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.dll
-[871/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.pdb
-[872/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.dll
-[873/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.pdb
-[874/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.pdb
-[875/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.pdb
-[876/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Networking.pdb
-[877/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.pdb
-[878/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.dll
-[879/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.pdb
-[880/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.pdb
-[881/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.pdb
-[882/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.pdb
-[883/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.dll
-[884/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.dll
-[885/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.pdb
-[886/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.pdb
-[887/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.pdb
-[888/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll
+[754/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.dll
+[755/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.dll
+[756/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.dll
+[757/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.dll
+[758/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.dll
+[759/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.dll
+[760/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.dll
+[761/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.dll
+[762/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.dll
+[763/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.dll
+[764/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Networking.dll
+[765/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.dll
+[766/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.dll
+[767/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.dll
+[768/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.dll
+[769/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.dll
+[770/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.dll
+[771/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.dll
+[772/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.dll
+[773/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.dll
+[774/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.dll
+[775/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.dll
+[776/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.dll
+[777/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.dll
+[778/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.dll
+[779/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.dll
+[780/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.dll
+[781/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.dll
+[782/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.dll
+[783/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.dll
+[784/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Stores.pdb
+[785/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.dll
+[786/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Networking.pdb
+[787/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.pdb
+[788/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Mathematics.pdb
+[789/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.pdb
+[790/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.dll
+[791/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.pdb
+[792/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.pdb
+[793/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.dll
+[794/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.pdb
+[795/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.dll
+[796/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.dll
+[797/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.dll
+[798/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.pdb
+[799/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.pdb
+[800/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Common.dll
+[801/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.dll
+[802/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.pdb
+[803/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.dll
+[804/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.DocCodeExamples.pdb
+[805/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.dll
+[806/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.dll
+[807/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityStub.pdb
+[808/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Scheduler.pdb
+[809/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleStub.pdb
+[810/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.pdb
+[811/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.pdb
+[812/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.pdb
+[813/910    0s] CopyFiles Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.pdb
+[814/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Codeless.pdb
+[815/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.Purchasing.pdb
+[816/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.pdb
+[817/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.pdb
+[818/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.pdb
+[819/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Internal.pdb
+[820/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.dll
+[821/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.Editor.dll
+[822/910    0s] CopyFiles Library/ScriptAssemblies/Unity.CollabProxy.Editor.pdb
+[823/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.dll
+[824/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.UI.pdb
+[825/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Analytics.pdb
+[826/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InternalAPIEngineBridge.004.pdb
+[827/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.pdb
+[828/910    0s] CopyFiles Library/ScriptAssemblies/UnityEngine.TestRunner.pdb
+[829/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.TestFramework.pdb
+[830/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Flow.pdb
+[831/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.dll
+[832/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Registration.pdb
+[833/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Editor.pdb
+[834/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.dll
+[835/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.dll
+[836/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Telemetry.pdb
+[837/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.Editor.dll
+[838/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.pdb
+[839/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.Utilities.pdb
+[840/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.pdb
+[841/910    0s] CopyFiles Library/ScriptAssemblies/Unity.2D.Sprite.Editor.pdb
+[842/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.SecurityCore.pdb
+[843/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.dll
+[844/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.pdb
+[845/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.pdb
+[846/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.pdb
+[847/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Threading.pdb
+[848/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll
+[849/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Timeline.pdb
+[850/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.pdb
+[851/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Configuration.Editor.pdb
+[852/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Components.pdb
+[853/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.pdb
+[854/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Entities.dll
+[855/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.TestRunner.pdb
+[856/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.pdb
+[857/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.dll
+[858/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.pdb
+[859/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Settings.Editor.dll
+[860/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.DocCodeSamples.dll
+[861/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.Editor.dll
+[862/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.pdb
+[863/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll
+[864/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Shared.Editor.pdb
+[865/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.AppleMacosStub.pdb
+[866/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.Analytics.dll
+[867/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.dll
+[868/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.pdb
+[869/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.State.Editor.dll
+[870/910    0s] CopyFiles Library/ScriptAssemblies/Unity.PlasticSCM.Editor.Assistant.dll
+[871/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.Core.pdb
+[872/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Device.pdb
+[873/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.dll
+[874/910    0s] CopyFiles Library/ScriptAssemblies/IAPResolver.dll
+[875/910    0s] CopyFiles Library/ScriptAssemblies/UnityEditor.UI.pdb
+[876/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.pdb
+[877/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.pdb
+[878/910    0s] CopyFiles Library/ScriptAssemblies/Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.dll
+[879/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.pdb
+[880/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Purchasing.pdb
+[881/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Multiplayer.Center.Editor.dll
+[882/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Cinemachine.Editor.pdb
+[883/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Performance.Profile-Analyzer.Editor.dll
+[884/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Environments.Internal.pdb
+[885/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.ForUI.Editor.dll
+[886/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Services.Core.Editor.pdb
+[887/910    0s] CopyFiles Library/ScriptAssemblies/Unity.Splines.Editor.dll
+[888/910    0s] CopyFiles Library/ScriptAssemblies/Unity.VisualScripting.SettingsProvider.Editor.dll
 [889/910    0s] CopyFiles Library/ScriptAssemblies/Unity.InputSystem.pdb
 [BUSY       6s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/GameScripts.dll (+2 others)
-[890/910   12s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/GameScripts.dll (+2 others)
-Assets/_Game/Scripts/Map/BusDepotManager.cs(846,63): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
-Assets/_Game/Scripts/Map/BusDepotManager.cs(846,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
-[894/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
-Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/Assembly-CSharp-Editor.dll, with 155 defines and 376 references
-processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
-1 processor(s) skipped this assembly
-[895/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/GameScripts.dll (+pdb)
+[890/910    8s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/GameScripts.dll (+2 others)
+Assets/_Game/Scripts/Map/BusDepotManager.cs(933,63): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets/_Game/Scripts/Map/BusDepotManager.cs(933,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+[891/910    1s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/GameScripts.dll (+pdb)
 Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/GameScripts.dll, with 157 defines and 317 references
 processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
 1 processor(s) skipped this assembly
-[896/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/Assembly-CSharp.dll (+pdb)
-Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/Assembly-CSharp.dll, with 157 defines and 349 references
-processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
-1 processor(s) skipped this assembly
-[897/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
-[898/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
-[899/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
-[900/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
-[901/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.pdb
-[902/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.dll
-[903/910    1s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/GameScripts.Editor.dll (+pdb)
-Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/GameScripts.Editor.dll, with 155 defines and 329 references
-processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
-1 processor(s) skipped this assembly
-[904/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.pdb
-[905/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.dll
-[906/910    2s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/GameScriptsTests.Editor.dll (+2 others)
-[907/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/GameScriptsTests.Editor.dll (+pdb)
+[892/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.pdb
+[893/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.dll
+[894/910    3s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/GameScriptsTests.Editor.dll (+2 others)
+[895/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/GameScriptsTests.Editor.dll (+pdb)
 Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/GameScriptsTests.Editor.dll, with 155 defines and 308 references
 processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
 1 processor(s) skipped this assembly
-[908/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.pdb
-[909/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.dll
-*** Tundra build success (14.98 seconds), 158 items updated, 910 evaluated
-Assets/_Game/Scripts/Map/BusDepotManager.cs(846,63): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
-Assets/_Game/Scripts/Map/BusDepotManager.cs(846,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
-Assets/_Game/Scripts/Map/BusDepotManager.cs(846,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
-AssetDatabase: script compilation time: 16.620533s
+[896/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.pdb
+[897/910    0s] CopyFiles Library/ScriptAssemblies/GameScriptsTests.Editor.dll
+[898/910    3s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/GameScripts.Editor.dll (+2 others)
+Assets/_Game/Scripts/Editor/MenuFlowSmokeCheck.cs(78,50): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets/_Game/Scripts/Editor/MenuFlowSmokeCheck.cs(77,39): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsInactive, FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+Assets/_Game/Scripts/Editor/GameplaySmokeCheck.cs(48,18): warning CS0414: The field 'GameplaySmokeCheck.routeBootAt' is assigned but its value is never used
+[899/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/GameScripts.Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/GameScripts.Editor.dll, with 155 defines and 329 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[900/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.pdb
+[901/910    0s] CopyFiles Library/ScriptAssemblies/GameScripts.Editor.dll
+[902/910    5s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/Assembly-CSharp.dll (+2 others)
+[903/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/Assembly-CSharp.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/Assembly-CSharp.dll, with 157 defines and 349 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[904/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
+[905/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
+[906/910    2s] Csc Library/Bee/artifacts/1300b0aEDbg.dag/Assembly-CSharp-Editor.dll (+2 others)
+Assets/Mapbox/Core/mapbox-sdk-cs/Tests/UnitTests/Editor/MapboxUnitTests_FileSource.cs(140,6): warning CS0162: Unreachable code detected
+[907/910    0s] ILPostProcess Library/Bee/artifacts/1300b0aEDbg.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1300b0aEDbg.dag/Assembly-CSharp-Editor.dll, with 155 defines and 376 references
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+1 processor(s) skipped this assembly
+[908/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+[909/910    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+*** Tundra build success (21.06 seconds), 161 items updated, 910 evaluated
+Assets/_Game/Scripts/Map/BusDepotManager.cs(933,63): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets/_Game/Scripts/Map/BusDepotManager.cs(933,25): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+Assets/_Game/Scripts/Editor/MenuFlowSmokeCheck.cs(78,50): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets/_Game/Scripts/Editor/MenuFlowSmokeCheck.cs(77,39): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsInactive, FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+Assets/_Game/Scripts/Editor/GameplaySmokeCheck.cs(48,18): warning CS0414: The field 'GameplaySmokeCheck.routeBootAt' is assigned but its value is never used
+Assets/Mapbox/Core/mapbox-sdk-cs/Tests/UnitTests/Editor/MapboxUnitTests_FileSource.cs(140,6): warning CS0162: Unreachable code detected
+Assets/_Game/Scripts/Editor/MenuFlowSmokeCheck.cs(77,39): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsInactive, FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+Assets/_Game/Scripts/Editor/GameplaySmokeCheck.cs(48,18): warning CS0414: The field 'GameplaySmokeCheck.routeBootAt' is assigned but its value is never used
+Assets/_Game/Scripts/Editor/MenuFlowSmokeCheck.cs(77,39): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsInactive, FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+Assets/_Game/Scripts/Editor/GameplaySmokeCheck.cs(48,18): warning CS0414: The field 'GameplaySmokeCheck.routeBootAt' is assigned but its value is never used
+AssetDatabase: script compilation time: 24.083241s
 Total cache size 179469978
-Total cache size after purge 179469978, took 00:00:00.6304694
+Total cache size after purge 179469978, took 00:00:00.7026465
 Begin MonoManager ReloadAssembly
 Symbol file LoadedFromMemory is not a mono symbol file
 Symbol file LoadedFromMemory is not a mono symbol file
@@ -462,111 +476,113 @@ Symbol file LoadedFromMemory is not a mono symbol file
 Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
 'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
 'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
-Refreshing native plugins compatible for Editor in 27.51 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 19.92 ms, found 0 plugins.
 Native extension for LinuxStandalone target not found
 Native extension for iOS target not found
 Native extension for Android target not found
-Refreshing native plugins compatible for Editor in 13.94 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 25.24 ms, found 0 plugins.
 ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
 Scripting: successfully reloaded assembly
-- Finished resetting the current domain, in  4.734 seconds
-Domain Reload Profiling: 10769ms
-	BeginReloadAssembly (1186ms)
-		DisableScriptedObjects (102ms)
-		CreateAndSetChildDomain (267ms)
-	RebuildCommonClasses (101ms)
-	RebuildNativeTypeToScriptingClass (199ms)
-	initialDomainReloadingComplete (298ms)
-	LoadAllAssembliesAndSetupDomain (4248ms)
-		LoadAssemblies (1974ms)
-		TypeCache.Refresh (1020ms)
-			TypeCache.ScanAssembly (947ms)
-		AnalyzeDomain (356ms)
-			BuildScriptInfoCaches (315ms)
-			ResolveRequiredComponents (35ms)
-	FinalizeReload (4738ms)
+- Finished resetting the current domain, in  5.075 seconds
+Domain Reload Profiling: 9442ms
+	BeginReloadAssembly (713ms)
+		DisableScriptedObjects (77ms)
+		CreateAndSetChildDomain (164ms)
+	RebuildCommonClasses (47ms)
+	RebuildNativeTypeToScriptingClass (59ms)
+	initialDomainReloadingComplete (201ms)
+	LoadAllAssembliesAndSetupDomain (3342ms)
+		LoadAssemblies (1282ms)
+		TypeCache.Refresh (769ms)
+			TypeCache.ScanAssembly (711ms)
+		AnalyzeDomain (401ms)
+			BuildScriptInfoCaches (366ms)
+			ResolveRequiredComponents (27ms)
+	FinalizeReload (5079ms)
 		SetupLoadedEditorAssemblies (0ms)
-			LogAssemblyErrors (9ms)
-			InitializePlatformSupportModulesInManaged (39ms)
-			BeforeProcessingInitializeOnLoad (657ms)
-			ProcessInitializeOnLoadAttributes (2116ms)
-			ProcessInitializeOnLoadMethodAttributes (205ms)
-			AfterProcessingInitializeOnLoad (21ms)
-			EditorAssembliesLoaded (7ms)
-		AwakeInstancesAfterBackupRestoration (121ms)
+			LogAssemblyErrors (13ms)
+			InitializePlatformSupportModulesInManaged (53ms)
+			BeforeProcessingInitializeOnLoad (674ms)
+			ProcessInitializeOnLoadAttributes (2754ms)
+			ProcessInitializeOnLoadMethodAttributes (257ms)
+			AfterProcessingInitializeOnLoad (30ms)
+			EditorAssembliesLoaded (8ms)
+		AwakeInstancesAfterBackupRestoration (139ms)
 Starting new worker id: 0 with log in /home/drac/Documents/coding/realbus-simulator/Logs/AssetImportWorkerHW0.log
-Refreshing native plugins compatible for Editor in 14.75 ms, found 0 plugins.
+Refreshing native plugins compatible for Editor in 15.13 ms, found 0 plugins.
 
-Asset Pipeline Refresh (id=1458aca188fd88d0190c700acbcd1460): Total: 34.352 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+Asset Pipeline Refresh (id=486bc6937846eabccb20988bf7f9e51b): Total: 38.537 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
 	(Values over 0.05ms)
 	Summary:
 		Imports: total=0 (actual=0, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=8062 ms
-		Asset DB Callback time: managed=3227 ms, native=67 ms
-		Scripting: domain reloads=1, domain reload time=6186 ms, compile time=16624 ms, other=184 ms
-		Project Asset Count: scripts=1773, non-scripts=4385
-		Asset File Changes: new=0, changed=0, moved=0, deleted=1
+		Asset DB Process Time: managed=0 ms, native=8509 ms
+		Asset DB Callback time: managed=1163 ms, native=78 ms
+		Scripting: domain reloads=1, domain reload time=4492 ms, compile time=24089 ms, other=204 ms
+		Project Asset Count: scripts=1773, non-scripts=4389
+		Asset File Changes: new=0, changed=2, moved=0, deleted=0
 		Scan Filter Count: 1
-	InvokePackagesCallback: 10.967ms
-	ApplyChangesToAssetFolders: 1.038ms
-	Scan: 2035.592ms
-	Collect global state as custom dependencies: 11.805ms
-	OnSourceAssetsModified: 0.826ms
-	CategorizeScriptCompilationAssets: 88.972ms
-	ProcessAssetsWithTransientArtifactChanges: 427.159ms
-	CategorizeAssets: 199.966ms
-	CompileScripts: 16623.950ms
-	ImportOutOfDateAssets: 4997.657ms (4942.532ms without children)
-		UnloadImportedAssets: 0.989ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 6.653ms
-		ImportSchedulerStart: 47.469ms
-	PostProcessAllAssets: 3257.844ms
-		XRBuildSystem.XRAssetImported 29.210ms
-		VCAutoAddAssetPostprocess 6.132ms
-		MonoPostProcessAllAssets: 3220.297ms
-			SyncVS.PostprocessSyncProject 2031.064ms
-			AssetPostprocessor.OnPostprocessAllAssets 828.837ms
-			StyleCatalogPostProcessor.OnPostprocessAllAssets 167.879ms
-			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 46.682ms
-			BuilderAssetPostprocessor.OnPostprocessAllAssets 19.953ms
-			AssetChangedListener.OnPostprocessAllAssets 13.463ms
-			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 8.500ms
-			EditModeScopePostprocessor.OnPostprocessAllAssets 4.738ms
-			SpeedTree9Postprocessor.OnPostprocessAllAssets 4.192ms
-			SpriteEditorTexturePostprocessor.OnPostprocessAllAssets 3.080ms
-			InputActionAssetPostprocessor.OnPostprocessAllAssets 2.842ms
-			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 2.313ms
-			SpriteSlicePostprocessor.OnPostprocessAllAssets 2.252ms
-			TextAssetPostProcessor.OnPostprocessAllAssets 2.231ms
-			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 2.189ms
-			AssetEvents.OnPostprocessAllAssets 1.842ms
-			ConfigAssetsTracker.OnPostprocessAllAssets 1.771ms
-			UVCSAssetPostprocessor.OnPostprocessAllAssets 1.547ms
-			ReferencedClipsPostProcessor.OnPostprocessAllAssets 1.497ms
-			TMPro_TexturePostProcessor.OnPostprocessAllAssets 1.480ms
-			CinemachineSettings.OnPostprocessAllAssets 1.424ms
-			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 1.416ms
-			AudioMixerPostprocessor.OnPostprocessAllAssets 1.338ms
-			ThemePostprocessor.OnPostprocessAllAssets 1.205ms
-			SamplePostprocessor.OnPostprocessAllAssets 0.998ms
-			SpeedTreePostProcessor.OnPostprocessAllAssets 0.960ms
-			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.952ms
-			DomainReloadProcessor.OnPostprocessAllAssets 0.887ms
-			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.809ms
-			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.701ms
-			AssetReloadNotifier.OnPostprocessAllAssets 0.587ms
-			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 0.535ms
-			AudioContainerPostProcessor.OnPostprocessAllAssets 0.484ms
-	PostAssetChangesProfiler: 27.009ms
-	UnloadStreamsBegin: 3.031ms
-	PersistCurrentRevisions: 1.123ms
-	GenerateScriptTypeHashes: 12.610ms
-	GenerateScriptTypeSerializationHashes: 26.127ms
-	Untracked: 6659.671ms
+	InvokePackagesCallback: 24.672ms
+	ApplyChangesToAssetFolders: 1.045ms
+	Scan: 1911.427ms
+	Collect global state as custom dependencies: 13.542ms
+	OnSourceAssetsModified: 1.103ms
+	CategorizeScriptCompilationAssets: 157.289ms
+	ProcessAssetsWithTransientArtifactChanges: 480.829ms
+	CategorizeAssets: 259.344ms
+	CompileScripts: 24088.518ms
+	ImportOutOfDateAssets: 5240.347ms (5178.784ms without children)
+		UnloadImportedAssets: 0.626ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 6.682ms
+		ImportSchedulerStart: 54.233ms
+	PostProcessAllAssets: 1198.582ms
+		XRBuildSystem.XRAssetImported 31.455ms
+		VCAutoAddAssetPostprocess 3.176ms
+		PostProcessCallbackCreateDeferredMaterials 0.163ms
+		ShaderAssetModifiedCallback 0.055ms
+		MonoPostProcessAllAssets: 1162.260ms
+			AssetPostprocessor.OnPostprocessAllAssets 727.560ms
+			StyleCatalogPostProcessor.OnPostprocessAllAssets 163.074ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 55.509ms
+			SyncVS.PostprocessSyncProject 42.350ms
+			BuilderAssetPostprocessor.OnPostprocessAllAssets 31.702ms
+			SpriteSlicePostprocessor.OnPostprocessAllAssets 12.604ms
+			AssetChangedListener.OnPostprocessAllAssets 8.332ms
+			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 7.978ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 5.951ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 4.305ms
+			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 3.626ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 3.177ms
+			TextAssetPostProcessor.OnPostprocessAllAssets 3.000ms
+			SpriteEditorTexturePostprocessor.OnPostprocessAllAssets 2.806ms
+			AudioMixerPostprocessor.OnPostprocessAllAssets 2.235ms
+			UVCSAssetPostprocessor.OnPostprocessAllAssets 2.231ms
+			CinemachineSettings.OnPostprocessAllAssets 1.864ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 1.861ms
+			AssetEvents.OnPostprocessAllAssets 1.760ms
+			TMPro_TexturePostProcessor.OnPostprocessAllAssets 1.736ms
+			ConfigAssetsTracker.OnPostprocessAllAssets 1.726ms
+			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 1.673ms
+			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 1.635ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 1.215ms
+			DomainReloadProcessor.OnPostprocessAllAssets 1.126ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 1.066ms
+			SpeedTreePostProcessor.OnPostprocessAllAssets 0.995ms
+			AudioContainerPostProcessor.OnPostprocessAllAssets 0.977ms
+			SamplePostprocessor.OnPostprocessAllAssets 0.965ms
+			ThemePostprocessor.OnPostprocessAllAssets 0.807ms
+			AssetReloadNotifier.OnPostprocessAllAssets 0.771ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.741ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.561ms
+	PostAssetChangesProfiler: 19.683ms
+	UnloadStreamsBegin: 5.526ms
+	PersistCurrentRevisions: 1.091ms
+	GenerateScriptTypeHashes: 15.089ms
+	GenerateScriptTypeSerializationHashes: 30.065ms
+	Untracked: 5127.759ms
 
 Application.AssetDatabase Initial Refresh End
-AutoLocale: current locale expects 'C' but got 'en_US.UTF-8'Launched and connected shader compiler UnityShaderCompiler after 0.04 seconds
-Scanning for USB devices : 19.246ms
+AutoLocale: current locale expects 'C' but got 'en_US.UTF-8'Launched and connected shader compiler UnityShaderCompiler after 0.06 seconds
+Scanning for USB devices : 15.341ms
 Initializing Unity extensions:
 UpdateMenuTitleForLanguage: 10
 [MODES] ModeService[none].Initialize
@@ -574,49 +590,49 @@ UpdateMenuTitleForLanguage: 10
 [MODES] Loading mode Default (0) for mode-current-id-My-project
 Worker ready: AssetImportWorkerHW0 0
 Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 6671 unused Assets / (4.8 MB). Loaded Objects now: 7395.
-Memory consumption went from 222.1 MB to 217.3 MB.
-Total: 30.009430 ms (FindLiveObjects: 1.408583 ms CreateObjectMapping: 1.094831 ms MarkObjects: 20.245131 ms  DeleteObjects: 6.520812 ms)
+Unloading 6671 unused Assets / (6.1 MB). Loaded Objects now: 7395.
+Memory consumption went from 216.3 MB to 210.2 MB.
+Total: 45.561615 ms (FindLiveObjects: 1.669506 ms CreateObjectMapping: 1.363951 ms MarkObjects: 29.645441 ms  DeleteObjects: 11.978077 ms)
 
 Disable old input system
-[Project] Loading completed in 48.257 seconds
-	Project init time: 				46.544 seconds
+[Project] Loading completed in 59.894 seconds
+	Project init time: 				55.410 seconds
 		Template init time: 		0.000 seconds
-		Package Manager init time: 		0.312 seconds
-		Asset Database init time: 		0.293 seconds
-		Global illumination init time: 	0.003 seconds
-		Assemblies load time: 			8.257 seconds
-		Unity extensions init time: 	0.069 seconds
-		Asset Database refresh time: 	34.353 seconds
-	Scene opening time: 			1.365 seconds
-##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1793601664432,"processId":53173,"projectLoad":48.257454272,"projectInit":46.544491691,"templateInit":0.0,"packageManagerInit":0.312449803,"assetDatabaseInit":0.292597591,"globalIlluminationInit":0.003211293,"assembliesLoad":8.25709815,"unityExtensionsInit":0.068894837,"assetDatabaseRefresh":34.352900007,"sceneOpening":1.36527905}
-##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1793601664432,"processId":53173,"editorVersion":"6000.6.0f1 (f7f8ed4d1e24)","branch":"6000.6/respin/6000.6.0f1-fa21a270ab12","buildType":"Release","platform":"Linux"}
+		Package Manager init time: 		0.613 seconds
+		Asset Database init time: 		0.530 seconds
+		Global illumination init time: 	0.014 seconds
+		Assemblies load time: 			10.705 seconds
+		Unity extensions init time: 	0.085 seconds
+		Asset Database refresh time: 	38.537 seconds
+	Scene opening time: 			3.799 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1794030879012,"processId":270681,"projectLoad":59.894339664,"projectInit":55.409672304,"templateInit":0.0,"packageManagerInit":0.612588348,"assetDatabaseInit":0.529731013,"globalIlluminationInit":0.013941709,"assembliesLoad":10.705357242,"unityExtensionsInit":0.084898007,"assetDatabaseRefresh":38.537219105,"sceneOpening":3.799249044}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1794030879012,"processId":270681,"editorVersion":"6000.6.0f1 (f7f8ed4d1e24)","branch":"6000.6/respin/6000.6.0f1-fa21a270ab12","buildType":"Release","platform":"Linux"}
 
-Asset Pipeline Refresh (id=bc162f724e7abc3cfb749debc5dbc1ee): Total: 0.473 seconds - Initiated by RefreshV2(ForceSynchronousImport)
+Asset Pipeline Refresh (id=77d55e2e97a73b8009115733609f473d): Total: 0.620 seconds - Initiated by RefreshV2(ForceSynchronousImport)
 	(Values over 0.05ms)
 	Summary:
 		Imports: total=0 (actual=0, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=472 ms
+		Asset DB Process Time: managed=0 ms, native=619 ms
 		Asset DB Callback time: managed=0 ms, native=0 ms
 		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
-		Project Asset Count: scripts=1773, non-scripts=4385
+		Project Asset Count: scripts=1773, non-scripts=4389
 		Asset File Changes: new=0, changed=0, moved=0, deleted=0
 		Scan Filter Count: 1
-	InvokePackagesCallback: 0.541ms
-	ApplyChangesToAssetFolders: 0.306ms
-	Scan: 438.594ms
-	Collect global state as custom dependencies: 1.126ms
-	ProcessAssetsWithTransientArtifactChanges: 0.829ms
-	CategorizeAssets: 11.049ms
-	CompileScripts: 0.103ms
-	ImportOutOfDateAssets: 3.924ms (0.600ms without children)
-		UnloadImportedAssets: 0.249ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 2.493ms
-		ImportSchedulerStart: 0.576ms
-	GatherAllCurrentPrimaryImportResultRevisions: 0.883ms
-	UnloadStreamsBegin: 0.106ms
-	PersistCurrentRevisions: 0.639ms
-	Untracked: 12.418ms
+	InvokePackagesCallback: 0.634ms
+	ApplyChangesToAssetFolders: 0.346ms
+	Scan: 574.971ms
+	Collect global state as custom dependencies: 1.394ms
+	ProcessAssetsWithTransientArtifactChanges: 0.933ms
+	CategorizeAssets: 13.024ms
+	CompileScripts: 0.121ms
+	ImportOutOfDateAssets: 6.789ms (1.006ms without children)
+		UnloadImportedAssets: 0.457ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 4.613ms
+		ImportSchedulerStart: 0.699ms
+	GatherAllCurrentPrimaryImportResultRevisions: 0.968ms
+	UnloadStreamsBegin: 0.120ms
+	PersistCurrentRevisions: 0.925ms
+	Untracked: 16.620ms
 
 [Licensing::Client] Successfully resolved entitlement details
 [Licensing::Client] Successfully resolved entitlement details
@@ -648,19 +664,19 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 Start Indexing on Editor startup
 [Indexing] Starting Initial Indexing for Assets
-Request Asset Garbage Collect because used heap size increased from 217.1 MB to 0.65 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 210.0 MB to 0.65 GB, exceeding the threshold of 256.0 MB.
 [UnityConnectServicesConfig] config is NOT valid, switching to default
-Created GICache directory at /home/drac/.cache/unity3d/GiCache. Took: 0.005s, timestamps: [48.266 - 48.271]
+Created GICache directory at /home/drac/.cache/unity3d/GiCache. Took: 0.008s, timestamps: [59.903 - 59.911]
 Unloading 80 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 4991 unused Assets / (436.8 MB). Loaded Objects now: 7549.
-Memory consumption went from 0.64 GB to 216.3 MB.
-Total: 48.400047 ms (FindLiveObjects: 1.937101 ms CreateObjectMapping: 1.782550 ms MarkObjects: 34.546404 ms  DeleteObjects: 9.134200 ms)
-
 [Licensing::Client] Successfully resolved entitlement details
+Unloading 4991 unused Assets / (437.6 MB). Loaded Objects now: 7549.
+Memory consumption went from 0.64 GB to 216.4 MB.
+Total: 35.443051 ms (FindLiveObjects: 1.499117 ms CreateObjectMapping: 3.448468 ms MarkObjects: 22.583709 ms  DeleteObjects: 6.888819 ms)
+
 Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
 Unloading 0 unused Assets / (0 B). Loaded Objects now: 7554.
-Memory consumption went from 211.7 MB to 211.7 MB.
-Total: 29.508383 ms (FindLiveObjects: 1.231648 ms CreateObjectMapping: 0.498064 ms MarkObjects: 26.698313 ms  DeleteObjects: 0.031094 ms)
+Memory consumption went from 211.9 MB to 211.9 MB.
+Total: 29.700291 ms (FindLiveObjects: 1.219011 ms CreateObjectMapping: 0.453801 ms MarkObjects: 26.893332 ms  DeleteObjects: 0.030946 ms)
 
 [Code Coverage] Started OpenCover Session
 [Code Coverage] Processing assembly: gamescripts
@@ -1962,7 +1978,7 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/Map/ScoreTracker.cs Line: 231)
 
-Request Asset Garbage Collect because used heap size increased from 211.8 MB to 0.67 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 211.9 MB to 0.67 GB, exceeding the threshold of 256.0 MB.
 Unloading 78 Unused Serialized files (Serialized files now loaded: 0)
 Collision! Safety score: 85
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3234,8 +3250,8 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 (Filename: Assets/_Game/Scripts/Map/ScheduleManager.cs Line: 84)
 
 Unloading 5043 unused Assets / (441.2 MB). Loaded Objects now: 7651.
-Memory consumption went from 0.67 GB to 240.3 MB.
-Total: 60.510603 ms (FindLiveObjects: 1.739521 ms CreateObjectMapping: 1.282742 ms MarkObjects: 36.240730 ms  DeleteObjects: 20.412941 ms)
+Memory consumption went from 0.67 GB to 240.5 MB.
+Total: 59.617947 ms (FindLiveObjects: 1.246758 ms CreateObjectMapping: 0.796446 ms MarkObjects: 36.043624 ms  DeleteObjects: 20.655379 ms)
 
 [VehiclePool] Widest traffic model 2.00m; lane spacing floor is now 2.90m (padding 0.55m).
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3244,8 +3260,8 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-VehiclePool:ApplyTrafficLaneWidth (AIRoadGraph) (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:561)
-VehiclePool:WarmPool () (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:399)
+VehiclePool:ApplyTrafficLaneWidth (AIRoadGraph) (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:563)
+VehiclePool:WarmPool () (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:401)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
 GameScriptsTests:InvokePrivateMethod (object,string) (at Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs:2032)
@@ -3286,7 +3302,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/VehiclePool.cs Line: 561)
+(Filename: Assets/_Game/Scripts/Traffic/VehiclePool.cs Line: 563)
 
 [VehiclePool] Warmed pool: 20/20 vehicles created (buses=0/2, roadGraphNodes=20, laneWidth=2.90m, wheelCollidersRemoved=0, meshCollidersRemoved=0, animatorsDisabled=0).
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3295,7 +3311,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-VehiclePool:WarmPool () (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:517)
+VehiclePool:WarmPool () (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:519)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
 GameScriptsTests:InvokePrivateMethod (object,string) (at Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs:2032)
@@ -3336,17 +3352,17 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/VehiclePool.cs Line: 517)
+(Filename: Assets/_Game/Scripts/Traffic/VehiclePool.cs Line: 519)
 
-[VehiclePool] Activated vehicle 'VehiclePrefab(Clone)' tier=FullAI type=Car lane=1.
+[VehiclePool] Activated vehicle 'VehiclePrefab(Clone)' tier=FullAI type=Car lane=0.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
 UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
 UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-VehiclePool:ApplyTierIfNeeded (VehiclePool/PooledVehicle,VehiclePool/SimulationTier) (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:1321)
-VehiclePool:UpdateSimulationTiers () (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:1155)
+VehiclePool:ApplyTierIfNeeded (VehiclePool/PooledVehicle,VehiclePool/SimulationTier) (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:1355)
+VehiclePool:UpdateSimulationTiers () (at Assets/_Game/Scripts/Traffic/VehiclePool.cs:1189)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
 GameScriptsTests:InvokePrivateMethod (object,string) (at Assets/_Game/Scripts/Tests/Editor/GameScriptsTests.cs:2032)
@@ -3387,7 +3403,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/VehiclePool.cs Line: 1321)
+(Filename: Assets/_Game/Scripts/Traffic/VehiclePool.cs Line: 1355)
 
 WeatherSystem: Clear | Intensity: 0.00 | Temp: 20.0°C
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3644,7 +3660,7 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 OSMParser:ParseOverpassJson (string) (at Assets/_Game/Scripts/OSM/OSMParser.cs:140)
-ImportedGameplayRegressionTests:OvertureConversion_ProducesLoadableFootprints (string,string,int) (at Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs:572)
+ImportedGameplayRegressionTests:OvertureConversion_ProducesLoadableFootprints (string,string,int) (at Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs:634)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
 NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
@@ -3693,7 +3709,7 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 OSMParser:ParseOverpassJson (string) (at Assets/_Game/Scripts/OSM/OSMParser.cs:140)
-ImportedGameplayRegressionTests:OvertureConversion_ProducesLoadableFootprints (string,string,int) (at Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs:572)
+ImportedGameplayRegressionTests:OvertureConversion_ProducesLoadableFootprints (string,string,int) (at Assets/_Game/Scripts/Tests/Editor/ImportedGameplayRegressionTests.cs:634)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
 NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
@@ -3734,11 +3750,11 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/OSM/OSMParser.cs Line: 140)
 
-Request Asset Garbage Collect because used heap size increased from 240.5 MB to 0.73 GB, exceeding the threshold of 256.0 MB.
-Unloading 366 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 4008 unused Assets / (472.1 MB). Loaded Objects now: 7655.
-Memory consumption went from 0.70 GB to 244.8 MB.
-Total: 37.430429 ms (FindLiveObjects: 1.116837 ms CreateObjectMapping: 0.697632 ms MarkObjects: 30.429758 ms  DeleteObjects: 4.390779 ms)
+Request Asset Garbage Collect because used heap size increased from 240.6 MB to 0.62 GB, exceeding the threshold of 256.0 MB.
+Unloading 342 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3739 unused Assets / (364.6 MB). Loaded Objects now: 7655.
+Memory consumption went from 0.59 GB to 241.3 MB.
+Total: 68.690232 ms (FindLiveObjects: 1.756254 ms CreateObjectMapping: 1.043398 ms MarkObjects: 59.591250 ms  DeleteObjects: 5.208903 ms)
 
 TrimDiskCacheJob: Current cache size 0mb
 [MapboxLive] GET https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/512/15/9949/13520@2x?access_token=(pk. user=realbussim authorization=cmmdeuage02b62qqujbqxlneu, 93 chars)
@@ -3852,18 +3868,11 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: Assets/_Game/Scripts/Tests/Editor/MapboxTokenRequestTests.cs Line: 395)
 
-Request Asset Garbage Collect because used heap size increased from 241.0 MB to 0.50 GB, exceeding the threshold of 256.0 MB.
-Unloading 176 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 4119 unused Assets / (257.8 MB). Loaded Objects now: 7655.
-Memory consumption went from 499.3 MB to 241.5 MB.
-Total: 44.074291 ms (FindLiveObjects: 1.375689 ms CreateObjectMapping: 0.851454 ms MarkObjects: 36.084780 ms  DeleteObjects: 4.571140 ms)
-
-[Warning] Evict-before-extend: reclaimed cold content for 236980108-byte alloc
-Request Asset Garbage Collect because used heap size increased from 241.0 MB to 0.67 GB, exceeding the threshold of 256.0 MB.
-Unloading 65 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 4879 unused Assets / (437.3 MB). Loaded Objects now: 7659.
-Memory consumption went from 0.66 GB to 241.1 MB.
-Total: 34.811338 ms (FindLiveObjects: 1.193625 ms CreateObjectMapping: 0.792257 ms MarkObjects: 27.451070 ms  DeleteObjects: 4.575778 ms)
+Request Asset Garbage Collect because used heap size increased from 241.7 MB to 0.83 GB, exceeding the threshold of 256.0 MB.
+Unloading 239 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 8751 unused Assets / (0.57 GB). Loaded Objects now: 7659.
+Memory consumption went from 0.81 GB to 242.9 MB.
+Total: 51.352077 ms (FindLiveObjects: 1.743860 ms CreateObjectMapping: 1.373813 ms MarkObjects: 36.449947 ms  DeleteObjects: 10.778772 ms)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3872,9 +3881,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:284)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -3912,7 +3921,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -3922,8 +3931,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:284)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -3971,8 +3980,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:284)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4019,9 +4028,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:153)
-BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1363)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:664)
+DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:157)
+BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1450)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:749)
 RealismSystemsTests:BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:284)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4059,7 +4068,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 153)
+(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 157)
 
 [BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4068,7 +4077,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_BuildsSeparatedEntryAndExitRoadsRegisteredAsRoad () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:284)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4106,7 +4115,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4115,9 +4124,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:368)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4155,7 +4164,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4165,8 +4174,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:368)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4214,8 +4223,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:368)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4262,7 +4271,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:368)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4300,7 +4309,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 Building surface: wall=RealBus/Facade roof=RealBus/Roof
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4357,9 +4366,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:381)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4397,7 +4406,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4407,8 +4416,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:381)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4456,8 +4465,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:381)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4504,8 +4513,8 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:EvictCityBuildingsFromDepot () (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1389)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:667)
+BusDepotManager:EvictCityBuildingsFromDepot () (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1476)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:752)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:381)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4543,7 +4552,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1389)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1476)
 
 [BusDepotManager] Constructed depot at (78.00, 0.00, 88.00). Assigned Bay 1: (71.10, 0.40, 82.00), Exit: (100.00, 0.00, 100.00), Roads: 0.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4552,7 +4561,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_EvictsCityBuildingsStandingInTheNewYard () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:381)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4590,7 +4599,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4599,9 +4608,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:626)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4639,7 +4648,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4649,8 +4658,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:626)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4698,8 +4707,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:626)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4746,9 +4755,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:153)
-BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1363)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:664)
+DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:157)
+BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1450)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:749)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:626)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4786,7 +4795,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 153)
+(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 157)
 
 [BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4795,7 +4804,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:626)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4833,7 +4842,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4842,9 +4851,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:643)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4882,7 +4891,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -4892,8 +4901,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:643)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4941,8 +4950,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:643)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -4989,9 +4998,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:153)
-BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1363)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:664)
+DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:157)
+BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1450)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:749)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:643)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5029,7 +5038,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 153)
+(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 157)
 
 [BusDepotManager] Constructed depot at (112.00, 0.25, 71.40). Assigned Bay 1: (118.00, 0.65, 64.50), Exit: (107.50, 0.26, 95.40), Roads: 3.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5038,7 +5047,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_OpensTheStreetKerbWhereTheDrivewaysMeetIt () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:643)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5076,7 +5085,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5085,9 +5094,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:242)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5125,7 +5134,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5135,8 +5144,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:242)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5184,8 +5193,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:242)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5232,7 +5241,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_PlacesYardZoneThatRejectsCityBuildingFootprints () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:242)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5270,7 +5279,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5279,9 +5288,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:445)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5319,7 +5328,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5329,8 +5338,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:445)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5378,8 +5387,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:445)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5426,9 +5435,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:153)
-BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1363)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:664)
+DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:157)
+BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1450)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:749)
 RealismSystemsTests:BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:445)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5466,7 +5475,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 153)
+(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 157)
 
 [BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5475,7 +5484,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_RefusesPropsWhoseFootprintWouldStandInItsOwnLanes () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:445)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5513,7 +5522,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5522,9 +5531,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:508)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5562,7 +5571,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5572,8 +5581,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:508)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5621,8 +5630,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:508)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5669,9 +5678,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:153)
-BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1363)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:664)
+DepotTrafficSpawner:Init (UnityEngine.Transform,System.Collections.Generic.IList`1<UnityEngine.Vector3[]>,UnityEngine.Vector3,UnityEngine.Vector2,BusController,single) (at Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs:157)
+BusDepotManager:BuildDepotTraffic (UnityEngine.Transform,BusController) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1450)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:749)
 RealismSystemsTests:BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:508)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5709,7 +5718,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 153)
+(Filename: Assets/_Game/Scripts/Traffic/DepotTrafficSpawner.cs Line: 157)
 
 [BusDepotManager] Constructed depot at (78.00, 0.25, 88.00). Assigned Bay 1: (71.10, 0.65, 82.00), Exit: (100.00, 0.26, 92.50), Roads: 3.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5718,7 +5727,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_RunsYardTrafficOnItsOwnLanesAndHoldsItForThePlayer () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:508)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5756,7 +5765,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
 [BusDepotManager] Refused imported depot prop 'Parking+Garage' (300.0x84.1x300.0 m): a depot building has to fit the 20 m yard budget.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5765,9 +5774,9 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1079)
-BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1047)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:655)
+BusDepotManager:PlaceDepotStructure (UnityEngine.Transform,UnityEngine.GameObject,string,UnityEngine.Vector3,UnityEngine.Quaternion,single,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1166)
+BusDepotManager:PlaceDepot3DAssets (UnityEngine.Transform,single) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1134)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:740)
 RealismSystemsTests:BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:416)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5805,7 +5814,7 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1079)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 1166)
 
 ImportedVehicleVisualRepair: 'Fleet_Bus_Bay_2' has 34 renderers; repaired 4 material slots for the Built-in Render Pipeline.
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
@@ -5815,8 +5824,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:416)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5864,8 +5873,8 @@ UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,st
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
 ImportedVehicleVisualRepair:RepairNow (UnityEngine.Transform) (at Assets/_Game/Scripts/Bus/ImportedVehicleVisualRepair.cs:185)
-BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1329)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:661)
+BusDepotManager:SpawnParkedFleetBuses (UnityEngine.Transform) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:1416)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:746)
 RealismSystemsTests:BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:416)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5912,7 +5921,7 @@ UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOpt
 UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
 UnityEngine.Logger:Log (UnityEngine.LogType,object)
 UnityEngine.Debug:Log (object)
-BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:688)
+BusDepotManager:TrySpawnDepotAndResolveBay (BusRoute,UnityEngine.Vector3,BusController,UnityEngine.Vector3&,UnityEngine.Quaternion&,UnityEngine.Vector3&) (at Assets/_Game/Scripts/Map/BusDepotManager.cs:773)
 RealismSystemsTests:BusDepotManager_SpawnsDepotWithAssignedBayAndConnectsExit () (at Assets/_Game/Scripts/Tests/Editor/RealismSystemsTests.cs:416)
 System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
 System.Reflection.MethodBase:Invoke (object,object[])
@@ -5950,9 +5959,9 @@ UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteStep () (at ./Libr
 UnityEditor.TestTools.TestRunner.TestRun.TestJobRunner:ExecuteCallback () (at ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRun/TestJobRunner.cs:129)
 UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/build/output/unity/unity/Editor/Mono/EditorApplication.cs:413)
 
-(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 688)
+(Filename: Assets/_Game/Scripts/Map/BusDepotManager.cs Line: 773)
 
-[PassengerBoarding] Stop 1/2: Station | Boarded=8, Alighted=0, LeftBehind=0, Onboard=8/10, Fare+=200, Dwell=24.0s, WheelchairBoarding=True
+[PassengerBoarding] Stop 1/2: Station | Boarded=10, Alighted=0, LeftBehind=0, Onboard=10/10, Fare+=250, Dwell=17.0s, WheelchairBoarding=False
 UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
 UnityEngine.StackTraceUtility:ExtractStackTrace () (at /home/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
 UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
@@ -6043,11 +6052,11 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 [./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/TestRunner/EditModeRunner.cs line 180]
 
-Request Asset Garbage Collect because used heap size increased from 241.2 MB to 0.68 GB, exceeding the threshold of 256.0 MB.
+Request Asset Garbage Collect because used heap size increased from 242.2 MB to 0.69 GB, exceeding the threshold of 256.0 MB.
 Unloading 59 Unused Serialized files (Serialized files now loaded: 0)
 Unloading 2713 unused Assets / (428.0 MB). Loaded Objects now: 10544.
-Memory consumption went from 0.68 GB to 267.4 MB.
-Total: 39.346547 ms (FindLiveObjects: 1.468414 ms CreateObjectMapping: 0.938541 ms MarkObjects: 32.740650 ms  DeleteObjects: 3.221336 ms)
+Memory consumption went from 0.68 GB to 268.2 MB.
+Total: 56.486753 ms (FindLiveObjects: 2.514199 ms CreateObjectMapping: 1.617162 ms MarkObjects: 46.272272 ms  DeleteObjects: 4.837569 ms)
 
 [Code Coverage] Started OpenCover Session
 [Code Coverage] Processing assembly: gamescripts
@@ -6083,7 +6092,7 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 [Code Coverage] Finished parsing '/home/drac/Documents/coding/realbus-simulator/TestResults/Coverage/realbus-simulator-opencov/EditMode/TestCoverageResults_0000.xml' 3/4
 [Code Coverage] Finished parsing '/home/drac/Documents/coding/realbus-simulator/TestResults/Coverage/realbus-simulator-opencov/EditMode/TestCoverageResults_0001.xml' 4/4
 [Code Coverage] Parsing of 4 files completed
-[Code Coverage] Coverage report parsing took 10.0 seconds
+[Code Coverage] Coverage report parsing took 11.3 seconds
 [Code Coverage] Initializing report builders for report types: xmlSummary, MarkdownSummary, JsonSummary, Html, Badges
 [Code Coverage] Analyzing 302 classes
 [Code Coverage] File '/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Traffic/AIBusScheduleSpawner.cs' does not exist (any more).
@@ -6227,7 +6236,7 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 [Code Coverage] File '/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Editor/StreamingAssetsCityFolderGenerator.cs' does not exist (any more).
 [Code Coverage] File '/home/vng370/Documents/coding/python/My-project/Assets/_Game/Scripts/Editor/TrafficStressTestSceneBuilder.cs' does not exist (any more).
 [Code Coverage] Error during rendering summary report (Report type: 'Badges'): Font 'Arial' is not available. Therefore only SVG badges can be generated. PNG files are omitted.
-[Code Coverage] Report generation took 20.7 seconds
+[Code Coverage] Report generation took 23.9 seconds
 [Code Coverage] Code Coverage Report was generated in /home/drac/Documents/coding/realbus-simulator/TestResults/Coverage/Report
 Included Assemblies: GameScripts,GameScripts.Editor
 Excluded Assemblies: GameScriptsTests.Editor
@@ -6257,9 +6266,9 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 Saving results to: /home/drac/Documents/coding/realbus-simulator/TestResults/editmode-results.xml
 Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 74 unused Assets / (17.1 MB). Loaded Objects now: 7613.
-Memory consumption went from 239.3 MB to 222.2 MB.
-Total: 96.498443 ms (FindLiveObjects: 1.210756 ms CreateObjectMapping: 0.457710 ms MarkObjects: 93.568261 ms  DeleteObjects: 0.341556 ms)
+Unloading 74 unused Assets / (9.3 MB). Loaded Objects now: 7613.
+Memory consumption went from 240.2 MB to 230.8 MB.
+Total: 111.927800 ms (FindLiveObjects: 1.230196 ms CreateObjectMapping: 0.348319 ms MarkObjects: 108.886469 ms  DeleteObjects: 0.386034 ms)
 
 DisplayProgressbar: Undo
 Test run completed. Exiting with code 0 (Ok). Run completed.
@@ -6275,13 +6284,11 @@ UnityEditor.EditorApplication:Internal_CallUpdateFunctions () (at /home/bokken/b
 
 (Filename: ./Library/PackageCache/com.unity.test-framework@f0b61198e8dc/UnityEditor.TestRunner/CommandLineTest/Executer.cs Line: 81)
 
-MonoPathRemapper: Attempts to remap: 51544; Successful remaps: 242
+MonoPathRemapper: Attempts to remap: 51395; Successful remaps: 242
 Serialized file version minimum: 23, current 23
-Killing ADB server in 0.145785 seconds.
+Killing ADB server in 0.121885 seconds.
 Shutting down MSBuild server...
 Shutting down VB/C# compiler server...
-VB/C# compiler server shut down successfully.
-MSBuild server shut down successfully.
 [Physics::Module] Cleanup current backend.
 [Physics::Module] Id: 0xf2b8ea05
 Input System module state changed to: ShutdownInProgress.
@@ -6289,6 +6296,8 @@ Input Polling Thread exited.
 Input System module state changed to: Shutdown.
 [Licensing::IpcConnector] LicenseClient-drac-notifications channel disconnected successfully.
 [Licensing::IpcConnector] LicenseClient-drac channel disconnected successfully.
+MSBuild server shut down successfully.
+VB/C# compiler server shut down successfully.
 Lingering sessions upon destruction of worker manager
 Unity Data Store service was successfully shut down
 UDS shutting down local client system
@@ -6302,4 +6311,4 @@ debugger-agent: Unable to listen on 71
 Checking for leaked weakptr:
   Found no leaked weakptrs.
 [Package Manager] Server process was shutdown
-##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1793601758331,"processId":53173,"allocatedMemory":16525202,"memoryLabels":[{"Default":268131},{"Permanent":16152},{"Thread":1051328},{"Manager":24665},{"VertexData":8},{"Geometry":408},{"Texture":24},{"Shader":851024},{"Material":24},{"GfxDevice":36104},{"Animation":1016},{"FreeType":8},{"FontEngine":736},{"Physics":4850},{"Physics2D":16},{"Serialization":32856},{"Input":60256},{"JobScheduler":256},{"TextLib":280},{"Mono":80},{"ScriptingNativeRuntime":155088},{"BaseObject":62288},{"Resource":1032},{"Renderer":2368},{"Transform":4717},{"File":4228},{"WebCam":80},{"Culling":32},{"Terrain":11346},{"Wind":24},{"String":1762513},{"StaticString":3808},{"Utility":2674352},{"Curl":2531},{"PoolAlloc":1960},{"AI":80},{"TypeTree":22053},{"ScriptManager":12640},{"CodeReload":448},{"RuntimeInitializeOnLoadManager":64},{"Sprites":102},{"SpriteAtlas":120},{"GI":7408},{"Director":8280},{"CloudService":288},{"WebRequest":592},{"VR":49554},{"SceneManager":640},{"Video":64},{"LazyScriptCache":32},{"NativeArray":540},{"Camera":729},{"Secure":10161},{"SerializationCache":9256},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57552},{"StaticSafetyDebugInfo":278528},{"Analytics":464},{"Hierarchy":1436},{"UIElements":40},{"CoreStats":14456},{"Identifiers":7152},{"Gui":160},{"EditorUtility":80976},{"VersionControl":8},{"Undo":963},{"AssetDatabase":8866499},{"AssetImporter":40},{"EditorGi":328},{"UnityConnect":40473},{"Upm":1760},{"UpmDiagnostics":8},{"AssetCompliance":96},{"DrivenProperties":72},{"LocalIPC":147},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2402},{"Windowing":480},{"Licensing":1128},{"AssetReference":32},{"IPCStream":32}]}
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1794030965662,"processId":270681,"allocatedMemory":16520713,"memoryLabels":[{"Default":263523},{"Permanent":16152},{"Thread":1051328},{"Manager":24665},{"VertexData":8},{"Geometry":408},{"Texture":24},{"Shader":851024},{"Material":24},{"GfxDevice":36104},{"Animation":1016},{"FreeType":8},{"FontEngine":736},{"Physics":4850},{"Physics2D":16},{"Serialization":32856},{"Input":60256},{"JobScheduler":256},{"TextLib":280},{"Mono":80},{"ScriptingNativeRuntime":155088},{"BaseObject":62288},{"Resource":1032},{"Renderer":2368},{"Transform":4717},{"File":4228},{"WebCam":80},{"Culling":32},{"Terrain":11346},{"Wind":24},{"String":1762535},{"StaticString":3808},{"Utility":2674352},{"Curl":2628},{"PoolAlloc":1960},{"AI":80},{"TypeTree":22053},{"ScriptManager":12640},{"CodeReload":448},{"RuntimeInitializeOnLoadManager":64},{"Sprites":102},{"SpriteAtlas":120},{"GI":7408},{"Director":8280},{"CloudService":288},{"WebRequest":592},{"VR":49554},{"SceneManager":640},{"Video":64},{"LazyScriptCache":32},{"NativeArray":540},{"Camera":729},{"Secure":10161},{"SerializationCache":9256},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57552},{"StaticSafetyDebugInfo":278528},{"Analytics":464},{"Hierarchy":1436},{"UIElements":40},{"CoreStats":14456},{"Identifiers":7152},{"Gui":160},{"EditorUtility":80976},{"VersionControl":8},{"Undo":963},{"AssetDatabase":8866499},{"AssetImporter":40},{"EditorGi":328},{"UnityConnect":40473},{"Upm":1760},{"UpmDiagnostics":8},{"AssetCompliance":96},{"DrivenProperties":72},{"LocalIPC":147},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2402},{"Windowing":480},{"Licensing":1128},{"AssetReference":32},{"IPCStream":32}]}

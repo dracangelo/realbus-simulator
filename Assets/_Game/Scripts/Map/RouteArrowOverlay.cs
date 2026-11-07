@@ -48,6 +48,7 @@ public class RouteArrowOverlay : MonoBehaviour
 
     BusController  bus;
     MissionManager mission;
+    BusRoute       lastRoute;
 
     readonly List<Vector3> cachedPath = new List<Vector3>(256);
     int  lastPathVersion = -1;
@@ -91,7 +92,7 @@ public class RouteArrowOverlay : MonoBehaviour
     {
         if (Instance != null) return Instance;
         var ex = FindAnyObjectByType<RouteArrowOverlay>();
-        if (ex != null) return ex;
+        if (ex != null) { Instance = ex; return ex; }
         return new GameObject("RouteArrowOverlay").AddComponent<RouteArrowOverlay>();
     }
 
@@ -120,8 +121,9 @@ public class RouteArrowOverlay : MonoBehaviour
     /// </summary>
     bool TryBind()
     {
-        if (bus == null) bus = FindAnyObjectByType<BusController>();
         if (mission == null) mission = MissionManager.Instance;
+        if (bus == null && mission != null && mission.busController != null) bus = mission.busController;
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
         if (bus == null) return false;
         if (pool == null || beacon.root == null) BuildPool();
         overlayReady = true;
@@ -143,19 +145,28 @@ public class RouteArrowOverlay : MonoBehaviour
         // the bus and the route behind them do not. Holding the references from
         // the first route is why the markers worked for the opening route and
         // then silently disappeared - or kept guiding the previous route - once
-        // the player loaded another one. Re-resolve whenever the bound objects
-        // are gone.
-        if (bus == null) bus = FindAnyObjectByType<BusController>();
-        if (mission == null || mission.currentRoute == null)
+        // the player loaded another one. Re-resolve the mission every frame; it is
+        // a static lookup, and it also covers a mission replaced without a scene
+        // load.
+        var resolvedMission = MissionManager.Instance;
+        if (resolvedMission != null && resolvedMission != mission)
         {
-            var resolved = MissionManager.Instance;
-            if (resolved != mission)
-            {
-                mission = resolved;
-                lastPathVersion = -1;
-                cachedPath.Clear();
-            }
+            mission = resolvedMission;
+            lastRoute = null;
+            lastPathVersion = -1;
+            cachedPath.Clear();
         }
+        else if (resolvedMission == null && mission != null)
+        {
+            mission = null;
+        }
+
+        // The mission owns the player bus. Preferring it over a scene-wide search
+        // stops the overlay binding to a parked fleet visual in one map and the
+        // player in another.
+        if (mission != null && mission.busController != null)
+            bus = mission.busController;
+        if (bus == null) bus = FindAnyObjectByType<BusController>();
         if (bus == null || mission == null) { HideAll(); if (beacon.root != null) beacon.root.SetActive(false); return; }
 
         // No active route (menu, free drive, finished route): the markers belong to
@@ -165,6 +176,16 @@ public class RouteArrowOverlay : MonoBehaviour
             HideAll();
             if (beacon.root != null) beacon.root.SetActive(false);
             return;
+        }
+
+        // A new route can arrive while the mission object stays the same (route
+        // selection, return routes). Resetting on the route reference guarantees the
+        // previous leg is not reused even if the version counter happened to match.
+        if (mission.currentRoute != lastRoute)
+        {
+            lastRoute = mission.currentRoute;
+            lastPathVersion = -1;
+            cachedPath.Clear();
         }
 
         RefreshPath();
@@ -287,8 +308,12 @@ public class RouteArrowOverlay : MonoBehaviour
         {
             // A rebuild can briefly hand back no points (GPS or tile data not
             // ready yet). Keep the last valid line and its version instead of
-            // blanking the navigator: the next rebuild replaces it. A route
-            // change is handled above by re-binding the mission and clearing.
+            // blanking the navigator: the next rebuild replaces it. If there is no
+            // previous line - a route that never published a guidance path - build
+            // one from the route itself, so every map still gets markers.
+            if (cachedPath.Count >= 2) return;
+            if (!BuildFallbackPath()) return;
+            lastPathVersion = mission.GuidancePathVersion;
             return;
         }
 
@@ -303,6 +328,36 @@ public class RouteArrowOverlay : MonoBehaviour
 
         cachedPath.Clear();
         for (int i = 0; i < src.Count; i++) cachedPath.Add(src[i]);
+    }
+
+    /// <summary>
+    /// Last-resort line for a route whose mission has not produced a guidance path
+    /// yet. Uses the route's own world path, then its stops. Without this a route
+    /// imported on a map where the graph or GPS was not ready showed no chevrons
+    /// for the whole run.
+    /// </summary>
+    bool BuildFallbackPath()
+    {
+        var route = mission != null ? mission.currentRoute : null;
+        if (route == null) return false;
+
+        cachedPath.Clear();
+        if (route.EnsureWorldPathPoints() && route.pathPoints != null && route.pathPoints.Length >= 2)
+        {
+            for (int i = 0; i < route.pathPoints.Length; i++) cachedPath.Add(route.pathPoints[i]);
+            return true;
+        }
+
+        if (route.stops == null || route.stops.Length < 2 || GPSManager.Instance == null)
+            return false;
+
+        for (int i = 0; i < route.stops.Length; i++)
+        {
+            var stop = route.stops[i];
+            if (stop == null) continue;
+            cachedPath.Add(GPSManager.Instance.GpsToWorld(stop.latitude, stop.longitude));
+        }
+        return cachedPath.Count >= 2;
     }
 
     // ── Placement ───────────────────────────────────────────────────────
@@ -366,7 +421,7 @@ public class RouteArrowOverlay : MonoBehaviour
         dir.y = 0f;
         if (dir.sqrMagnitude < 0.01f) dir = Vector3.forward;
 
-        stopPos.y = hoverHeight + beaconHoverHeight;
+        stopPos.y = RoadSurfaceY() + hoverHeight + beaconHoverHeight;
 
         beacon.root.transform.SetPositionAndRotation(
             stopPos,
@@ -383,7 +438,7 @@ public class RouteArrowOverlay : MonoBehaviour
     {
         if (alpha <= 0.005f) { a.root.SetActive(false); return; }
 
-        pos.y = hoverHeight;
+        pos.y = RoadSurfaceY() + hoverHeight;
         dir.y = 0f;
         if (dir.sqrMagnitude < 0.01f) dir = Vector3.forward;
 
@@ -406,6 +461,20 @@ public class RouteArrowOverlay : MonoBehaviour
         if (pool == null) return;
         foreach (var a in pool)
             if (a.root != null) a.root.SetActive(false);
+    }
+
+    /// <summary>
+    /// Y of the top of the drawn asphalt. The chevrons used to be placed at
+    /// <see cref="hoverHeight"/> in world space, which is BELOW the road ribbon and
+    /// the imported road pieces on maps whose surface sits higher (roadYOffset +
+    /// roadModelSurfaceLift). They were active but buried, so the navigator looked
+    /// missing on some cities only.
+    /// </summary>
+    float RoadSurfaceY()
+    {
+        var roads = OSMRoadMeshBuilder.Instance;
+        if (roads == null) return 0f;
+        return roads.roadYOffset + (roads.useRoadModelInstances ? roads.roadModelSurfaceLift : 0f);
     }
 
     float ComputeAlpha(float dist)

@@ -542,6 +542,24 @@ public class AIRoadGraph : MonoBehaviour
     public bool DrivesOnLeft => drivesOnLeft;
 
     /// <summary>
+    /// Angle of the turn a vehicle is actually about to make, in degrees: the
+    /// incoming link against the exit it has already planned to take. Approach
+    /// speed uses this instead of the shallowest exit at the junction, which can be
+    /// a side street the car is not going to use - and so let it take a right angle
+    /// at cruise speed.
+    /// </summary>
+    public float GetTurnAngle(int fromNode, int toNode, int nextNode)
+    {
+        if (!IsValidNode(fromNode) || !IsValidNode(toNode) || !IsValidNode(nextNode)) return 0f;
+        Vector3 incoming = GetNodePosition(toNode) - GetNodePosition(fromNode);
+        Vector3 outgoing = GetNodePosition(nextNode) - GetNodePosition(toNode);
+        incoming.y = 0f;
+        outgoing.y = 0f;
+        if (incoming.sqrMagnitude < .0001f || outgoing.sqrMagnitude < .0001f) return 0f;
+        return Vector3.Angle(incoming, outgoing);
+    }
+
+    /// <summary>
     /// Angle of the most likely legal continuation at a junction, in degrees.
     /// The next-node picker weights straight-ahead exits above turns, so this
     /// gives the controller a useful pre-junction speed signal without slowing

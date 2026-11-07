@@ -255,12 +255,12 @@ public class TrafficParticipant : MonoBehaviour
     /// Used before a spawn so a new vehicle cannot materialise on top of an existing
     /// one; the check is planar because road bodies sit at slightly different heights.
     /// </summary>
-    public static bool IsSpawnAreaClear(Vector3 point, float radius)
+    public static bool IsSpawnAreaClear(Vector3 point, float radius, Transform ignore = null)
     {
         float sqr = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
         foreach (var other in active)
         {
-            if (other == null) continue;
+            if (other == null || other.transform == ignore) continue;
             Vector3 offset = other.transform.position - point;
             offset.y = 0f;
             if (offset.sqrMagnitude < sqr) return false;

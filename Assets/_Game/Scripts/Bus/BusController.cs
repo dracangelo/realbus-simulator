@@ -233,7 +233,7 @@ public class BusController : MonoBehaviour
         UpdateParkingBrakeRelease();
         UpdateRPM();
         shiftCooldown -= Time.fixedDeltaTime;
-        if (shiftCooldown <= 0f && transmissionData.UpdateAutomatic(currentRPM, engineData.maxRPM))
+        if (shiftCooldown <= 0f && transmissionData.UpdateAutomatic(currentRPM, engineData.maxRPM, currentSpeedKmh))
         {
             shiftCooldown = 0.75f;
             UpdateRPM();
@@ -257,6 +257,10 @@ public class BusController : MonoBehaviour
         float torque = engineData.GetTorque(currentRPM) * transmissionData.GetCurrentRatio()
             * transmissionData.differentialRatio / count;
         float throttle = currentRPM >= engineData.maxRPM ? 0f : Mathf.Min(Mathf.Clamp01(throttleInput), Mathf.Clamp01(AssistThrottleLimit));
+        // Each gear has a rated top speed. Without this the table on the transmission
+        // asset was decorative: first gear and reverse could be wound out to the
+        // engine's rev limit, which is not how the bus is geared.
+        throttle *= transmissionData.ThrottleFactorAtSpeed(currentSpeedKmh);
         bool driveAllowed = !parkingBrakeActive && !ServiceBrakeInterlock && !FuelDepleted && brakeInput <= 0f;
         foreach (var wheel in driveWheels)
         {

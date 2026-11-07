@@ -56,4 +56,45 @@ public class RouteNavigationTests
         Assert.That(MissionManager.MaxServiceAnimationWaitSeconds, Is.LessThanOrEqualTo(15f),
             "a stuck animation must not hold the route at a stop for long");
     }
+
+    [Test]
+    public void TheRouteDoesNotSendTheBusBackToTheStopItJustServed()
+    {
+        // Imported routes list both platforms of a stop pair. One pair sits at the
+        // same coordinates, the other a few metres away under the same name.
+        var stops = new[]
+        {
+            new BusStopData { stopName = "Stop 1", latitude = -1.2900, longitude = 36.8200 },
+            new BusStopData { stopName = "Stop 2", latitude = -1.2890, longitude = 36.8200 },
+            new BusStopData { stopName = "Stop 3", latitude = -1.2890, longitude = 36.8200 },
+            new BusStopData { stopName = "Stima Plaza", latitude = -1.2870, longitude = 36.8220 },
+            new BusStopData { stopName = "stima plaza", latitude = -1.28697, longitude = 36.82204 },
+            new BusStopData { stopName = "Aga Khan", latitude = -1.2850, longitude = 36.8230 }
+        };
+
+        Assert.That(BusRoute.NextDistinctStopIndex(stops, 0), Is.EqualTo(1),
+            "the next stop along the road is a stop, not a duplicate");
+        Assert.That(BusRoute.NextDistinctStopIndex(stops, 1), Is.EqualTo(3),
+            "a platform recorded at the same coordinates is the stop just served");
+        Assert.That(BusRoute.NextDistinctStopIndex(stops, 3), Is.EqualTo(5),
+            "the opposite-direction platform of the same named stop is the same station");
+        Assert.That(BusRoute.NextDistinctStopIndex(stops, 5), Is.EqualTo(6),
+            "the end of the route is still reported as the end");
+    }
+
+    [Test]
+    public void DistinctStopsOnTheSameStreetAreAllServed()
+    {
+        // Nairobi's Go Bus terminal lists three platforms about 9 m apart, each its
+        // own stop: skipping them would silently drop stops from the route.
+        var stops = new[]
+        {
+            new BusStopData { stopName = "Stop 11431881637", latitude = 30.0493149, longitude = 31.2318838 },
+            new BusStopData { stopName = "Stop 11431881636", latitude = 30.0493239, longitude = 31.2319736 },
+            new BusStopData { stopName = "Stop 11431881635", latitude = 30.0493284, longitude = 31.2320746 }
+        };
+
+        Assert.That(BusRoute.NextDistinctStopIndex(stops, 0), Is.EqualTo(1));
+        Assert.That(BusRoute.NextDistinctStopIndex(stops, 1), Is.EqualTo(2));
+    }
 }

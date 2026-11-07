@@ -656,6 +656,34 @@ public class RealismSystemsTests
         }
     }
 
+    [Test]
+    public void BusDepotManager_AnchorsTheYardBehindTheFirstStop()
+    {
+        Vector3 forward = Vector3.forward;
+        var stop = new Vector3(40f, 0f, 120f);
+        const float setback = 7.5f;   // kerb anchor to the exit driveway mouth
+        const float behind = 26f;     // driveway mouth to the first stop
+
+        // A yard already a comfortable way behind the stop keeps its ground.
+        Vector3 behindKerb = stop - forward * (behind + setback + 6f);
+        Assert.That(BusDepotManager.AnchorExitBehindFirstStop(behindKerb, forward, stop, setback, behind),
+            Is.EqualTo(behindKerb), "a yard already behind the stop must not be moved");
+
+        // A yard level with the stop is slid back until its exit driveway opens
+        // on the street before the stop: the bus then leaves behind the stop.
+        Vector3 level = BusDepotManager.AnchorExitBehindFirstStop(stop, forward, stop, setback, behind);
+        Assert.That(Vector3.Dot(level - stop, forward) - setback, Is.EqualTo(-behind).Within(0.01f),
+            "the exit driveway must open behind the first stop, not alongside it");
+
+        // A yard placed ahead of the stop - the case where the bus had to reverse
+        // back up the street - is pulled behind it instead.
+        Vector3 ahead = BusDepotManager.AnchorExitBehindFirstStop(stop + forward * 40f, forward, stop, setback, behind);
+        Assert.That(Vector3.Dot(ahead - stop, forward), Is.LessThan(0f),
+            "the whole yard must end up behind the first stop");
+        Assert.That(Vector3.Dot(ahead - stop, forward) - setback, Is.EqualTo(-behind).Within(0.01f),
+            "the exit driveway must open a set distance before the stop");
+    }
+
     static float FlatDistance(Vector3 a, Vector3 b)
     {
         a.y = 0f;

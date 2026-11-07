@@ -71,6 +71,39 @@ public sealed class RoadSurfaceIndex
     static Vector2Int Cell(Vector3 p) => new Vector2Int(Mathf.FloorToInt(p.x / CellSize), Mathf.FloorToInt(p.z / CellSize));
     public IEnumerable<Segment> Around(Vector3 point, float radius)
         => Nearby(point - Vector3.one * radius, point + Vector3.one * radius);
+
+    /// <summary>True when no road has been registered: a test fixture, or a city whose mesh is not built yet.</summary>
+    public bool IsEmpty => cells.Count == 0;
+
+    /// <summary>
+    /// Nearest point on the drawn asphalt within <paramref name="radius"/> of
+    /// <paramref name="point"/>. The traffic graph is built from OSM node positions
+    /// while the ribbon is drawn from the way's own width, and the two can disagree
+    /// (a node welded across a dual carriageway, a way whose centreline runs down a
+    /// median). The asphalt the player can see is the authority, so traffic rails
+    /// against this.
+    /// </summary>
+    public bool TryGetNearestSurface(Vector3 point, float radius, out Vector3 centre, out float halfWidth, out float distance)
+    {
+        centre = point;
+        halfWidth = 0f;
+        distance = float.MaxValue;
+        if (cells.Count == 0) return false;
+
+        point.y = 0f;
+        float limit = Mathf.Max(0f, radius);
+        foreach (var segment in Around(point, limit))
+        {
+            Vector3 projected = RoadSpawnResolver.ProjectOnSegment(point, segment.a, segment.b);
+            float candidate = Vector3.Distance(point, projected);
+            if (candidate > limit || candidate >= distance) continue;
+            distance = candidate;
+            centre = projected;
+            halfWidth = segment.halfWidth;
+        }
+
+        return distance < float.MaxValue;
+    }
     IEnumerable<Segment> Nearby(Vector3 min, Vector3 max)
     {
         var seen = new HashSet<Segment>(); var lo = Cell(min); var hi = Cell(max);

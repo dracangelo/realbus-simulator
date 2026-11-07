@@ -34,6 +34,8 @@ public class BusDepotManager : MonoBehaviour
     [Header("Depot Configuration")]
     public float depotOffsetFromRoad = 22f;
     public float depotAlongRoadOffset = -12f;
+    [Tooltip("Metres of street between the yard's exit driveway and the first stop. The yard is anchored this far behind the stop, so the bus leaves the yard facing the stop and drives forward to it.")]
+    public float depotExitBehindFirstStop = 26f;
     public int totalBays = 4;
     public float bayWidth = 4.6f;
     public float bayLength = 14f;
@@ -87,6 +89,15 @@ public class BusDepotManager : MonoBehaviour
     // at roadYOffset, so without a hair of lift the two coplanar meshes z-fight in the
     // overlap; 12 mm is invisible on a bus wheel but settles the depth test.
     private const float DrivewayLift = 0.012f;
+    // Yard layout pitch, shared by the road builder and the anchor so the two
+    // cannot disagree about where the exit driveway meets the street.
+    private const float EntryMouthSetback = 1.5f;
+    private float AislePitch => Mathf.Max(depotRoadWidth + 1f, 5.5f);
+    /// <summary>How far the exit driveway's street end sits behind the yard's kerb anchor.</summary>
+    private float ExitMouthSetback => EntryMouthSetback + AislePitch;
+    // Beyond this the first stop is not this spawn's stop (a resumed route, or
+    // another city), so the yard is anchored on the caller's point instead.
+    private const float MaxAnchorFromFirstStopMeters = 250f;
 
     [Header("Imported model fallback")]
     [Tooltip("Applied only to untextured near-white materials on imported depot props (concrete/steel tone).")]
@@ -523,6 +534,27 @@ public class BusDepotManager : MonoBehaviour
         return go.AddComponent<BusDepotManager>();
     }
 
+    /// <summary>
+    /// Slides the yard's kerb anchor back along the street until the exit
+    /// driveway opens on the road <paramref name="exitBehindStop"/> metres before
+    /// the first stop. A yard already behind the stop keeps its ground; one level
+    /// with it, or ahead of it, is moved back - those are the placements that left
+    /// the bus alongside or past its first stop and forced it to reverse.
+    /// <paramref name="kerbPos"/> is the anchor, so the driveway mouth is
+    /// <paramref name="exitMouthSetback"/> behind it along the street.
+    /// </summary>
+    public static Vector3 AnchorExitBehindFirstStop(Vector3 kerbPos, Vector3 roadForward,
+        Vector3 firstStop, float exitMouthSetback, float exitBehindStop)
+    {
+        roadForward = Vector3.ProjectOnPlane(roadForward, Vector3.up);
+        if (roadForward.sqrMagnitude < 0.0001f) return kerbPos;
+        roadForward.Normalize();
+
+        float exitMouthFromStop = Vector3.Dot(kerbPos - firstStop, roadForward) - exitMouthSetback;
+        float shortfall = exitMouthFromStop + Mathf.Max(0f, exitBehindStop);
+        return shortfall > 0f ? kerbPos - roadForward * shortfall : kerbPos;
+    }
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -569,7 +601,10 @@ public class BusDepotManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns a depot adjacent to the route's starting point and resolves the spawn transform for Bay 1.
+    /// Spawns the route's depot behind the first stop and resolves the spawn
+    /// transform for Bay 1. The exit driveway is anchored a set distance before
+    /// the stop, so the bus pulls out of its bay facing the stop and drives
+    /// forward to it rather than reversing in the stop.
     /// </summary>
     public bool TrySpawnDepotAndResolveBay(BusRoute route, Vector3 requestedStartPos, BusController bus,
         out Vector3 bayPosition, out Quaternion bayRotation, out Vector3 exitPos)
@@ -582,15 +617,35 @@ public class BusDepotManager : MonoBehaviour
 
         if (route == null) return false;
 
+        // The service begins at the first stop, so the yard belongs BEHIND it:
+        // the bus spawns facing the stop, and once it is through the exit
+        // driveway the stop is a short drive forward. The stop list alone is not
+        // a reliable bearing - imported routes routinely store stops out of drive
+        // order - so the direction comes from the same approach heading the stop
+        // props and shelter use.
+        Vector3 firstStopPos = requestedStartPos;
+        bool hasFirstStop = false;
+        if (route.stops != null && route.stops.Length > 0 && GPSManager.Instance != null)
+        {
+            Vector3 converted = GPSManager.Instance.GpsToWorld(route.stops[0].latitude, route.stops[0].longitude);
+            if ((converted - requestedStartPos).sqrMagnitude < MaxAnchorFromFirstStopMeters * MaxAnchorFromFirstStopMeters)
+            {
+                firstStopPos = converted;
+                hasFirstStop = true;
+            }
+        }
+
         // Resolve road heading & roadside kerb
         Vector3 heading = bus != null ? bus.transform.forward : Vector3.forward;
         if (route.stops != null && route.stops.Length > 1 && GPSManager.Instance != null)
         {
             Vector3 nextStop = GPSManager.Instance.GpsToWorld(route.stops[1].latitude, route.stops[1].longitude);
-            Vector3 diff = nextStop - requestedStartPos;
+            Vector3 diff = nextStop - (hasFirstStop ? firstStopPos : requestedStartPos);
             diff.y = 0f;
             if (diff.sqrMagnitude > 1f) heading = diff.normalized;
         }
+        if (hasFirstStop)
+            heading = RoadSpawnResolver.StopApproachHeading(route, 0, firstStopPos, heading, AIRoadGraph.FindCityGraph());
 
         bool leftTraffic = RoadSpawnResolver.ResolveCountry()?.DrivesOnLeft ?? true;
         Vector3 kerbPos = requestedStartPos;
@@ -598,10 +653,40 @@ public class BusDepotManager : MonoBehaviour
 
         var roadBuilder = OSMRoadMeshBuilder.Resolve();
         var roads = roadBuilder?.SurfaceIndex;
-        if (roads != null && roads.TryRoadside(requestedStartPos, heading, leftTraffic, out var resolvedKerb, out var resolvedFacing))
+
+        // Walk the anchor back until the exit driveway opens on the street behind
+        // the first stop. The anchor is re-resolved from each shifted point so the
+        // yard follows the street round a bend instead of sliding off its kerb.
+        for (int attempt = 0; attempt < 3 && roads != null; attempt++)
         {
+            if (!roads.TryRoadside(kerbPos, heading, leftTraffic, out var resolvedKerb, out var resolvedFacing))
+                break;
             kerbPos = resolvedKerb;
             roadFacing = resolvedFacing;
+            if (!hasFirstStop) break;
+
+            Vector3 anchored = AnchorExitBehindFirstStop(kerbPos, roadFacing * Vector3.forward,
+                firstStopPos, ExitMouthSetback, depotExitBehindFirstStop);
+            bool settled = (anchored - kerbPos).sqrMagnitude < 0.01f;
+            kerbPos = anchored;
+            if (settled) break;
+        }
+
+        // A one-way link, or a path that leaves the stop "backwards", would give
+        // the yard a facing that points away from the first stop. Resolve the kerb
+        // for the direction that actually leads there, so the bays (and the bus)
+        // always look up the street at the stop.
+        if (hasFirstStop && Vector3.Dot(roadFacing * Vector3.forward, firstStopPos - kerbPos) < 0f)
+        {
+            heading = -(roadFacing * Vector3.forward);
+            roadFacing = Quaternion.LookRotation(heading, Vector3.up);
+            if (roads != null && roads.TryRoadside(kerbPos, heading, leftTraffic, out var flippedKerb, out var flippedFacing))
+            {
+                kerbPos = flippedKerb;
+                roadFacing = flippedFacing;
+                kerbPos = AnchorExitBehindFirstStop(kerbPos, roadFacing * Vector3.forward,
+                    firstStopPos, ExitMouthSetback, depotExitBehindFirstStop);
+            }
         }
 
         float groundY = roadBuilder != null ? roadBuilder.roadYOffset : kerbPos.y;
@@ -686,6 +771,8 @@ public class BusDepotManager : MonoBehaviour
             DriverShiftSystem.Instance.assignedDepotBayId = "BAY-1";
 
         Debug.Log($"[BusDepotManager] Constructed depot at {depotCenter}. Assigned Bay 1: {bayPosition}, Exit: {exitPos}, Roads: {depotRoadLines.Count}.");
+        if (hasFirstStop)
+            Debug.Log($"[BusDepotManager] Yard sits behind the first stop: {Vector3.Dot(firstStopPos - exitPos, roadFwd):F1} m from the exit driveway to the stop, Bay 1 faces {Vector3.Dot(bayRotation * Vector3.forward, firstStopPos - bayPosition):F1} m toward it.");
         return true;
     }
 
@@ -753,10 +840,10 @@ public class BusDepotManager : MonoBehaviour
         Vector3 localKerb = Quaternion.Inverse(roadFacing) * (kerbPos - parent.position);
         float side = localKerb.x >= 0f ? 1f : -1f;
         float halfWidth = yardWidth * 0.5f;
-        float entryZ = localKerb.z - 1.5f;
+        float entryZ = localKerb.z - EntryMouthSetback;
         // The two aisles must not touch, or the U-turn would read as one wide slab
         // and neither lane could be marked or reasoned about on its own.
-        float exitZ = entryZ - Mathf.Max(depotRoadWidth + 1f, 5.5f);
+        float exitZ = entryZ - AislePitch;
         float loopEndX = -side * (halfWidth - 6f);
         float turnX = -side * (halfWidth - 3f);
         // The aisle runs at right angles to the kerb, so its last point is its end
