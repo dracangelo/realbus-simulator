@@ -268,7 +268,7 @@ public class BusRoute : ScriptableObject
     /// the same station. These radii decide when two entries are the same platform.
     /// </summary>
     public const float SamePlatformRadiusMeters = 6f;
-    public const float SamePlatformNamedRadiusMeters = 30f;
+    public const float SamePlatformNamedRadiusMeters = 100f;
 
     /// <summary>
     /// True when <paramref name="candidate"/> is the platform just served rather than
@@ -348,7 +348,41 @@ public class BusRoute : ScriptableObject
     static bool SameStopName(string a, string b)
     {
         if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
-        return string.Equals(a.Trim(), b.Trim(), System.StringComparison.OrdinalIgnoreCase);
+        if (string.Equals(a.Trim(), b.Trim(), System.StringComparison.OrdinalIgnoreCase)) return true;
+        string normA = NormalizeStopName(a);
+        string normB = NormalizeStopName(b);
+        if (string.IsNullOrEmpty(normA) || string.IsNullOrEmpty(normB)) return false;
+        if (string.Equals(normA, normB, System.StringComparison.OrdinalIgnoreCase)) return true;
+        if (normA.Length >= 4 && normB.Length >= 4)
+        {
+            if (normA.IndexOf(normB, System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normB.IndexOf(normA, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+        return false;
+    }
+
+    static string NormalizeStopName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return string.Empty;
+        string s = name.Trim().ToLowerInvariant();
+        var sb = new System.Text.StringBuilder(s.Length);
+        for (int i = 0; i < s.Length; i++)
+        {
+            char c = s[i];
+            if (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c))
+                sb.Append(c);
+            else
+                sb.Append(' ');
+        }
+        string cleaned = sb.ToString();
+        string[] noiseWords = { "bus stop", "busstop", "stage", "station", "platform", "junction", "terminus" };
+        foreach (var noise in noiseWords)
+        {
+            cleaned = cleaned.Replace(noise, " ");
+        }
+        string[] parts = cleaned.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" ", parts);
     }
 
     /// <summary>Flat-earth metres between two stops. Both are inside one city, so this is exact enough.</summary>

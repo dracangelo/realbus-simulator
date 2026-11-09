@@ -16161,7 +16161,7 @@ IL2CPP_EXTERN_C  void Enumerator_System_Collections_IEnumerator_Reset_mADA914873
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 41412
+// Method Definition Index: 41517
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool Enumerator_MoveNext_m737A2187E2E4BB9888BFF8A3375F3408C0EF9EFC_gshared (Enumerator_t405265F0EEE2F6B6437597674FF3379D335B6816* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16186,7 +16186,7 @@ IL_0023:
 		return (bool)1;
 	}
 }
-// Method Definition Index: 41413
+// Method Definition Index: 41518
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Enumerator_Reset_m4D033C4D8217E3E855F537189114A8BD0376984A_gshared (Enumerator_t405265F0EEE2F6B6437597674FF3379D335B6816* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16195,7 +16195,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Enumerator_Reset_m4D033C4D8217E3E855F537
 		return;
 	}
 }
-// Method Definition Index: 41414
+// Method Definition Index: 41519
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR Il2CppSharedGenericObject* Enumerator_get_Current_mDBD109BB37651C1EE0638BA5C200EE1DEF36A92B_gshared (Enumerator_t405265F0EEE2F6B6437597674FF3379D335B6816* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16207,7 +16207,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR Il2CppSharedGenericObject* Enumerator_get_Cur
 		return L_2;
 	}
 }
-// Method Definition Index: 41415
+// Method Definition Index: 41520
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* Enumerator_System_Collections_IEnumerator_get_Current_m02CD27ECF09112C57CF7795CAE34C247E819B700_gshared (Enumerator_t405265F0EEE2F6B6437597674FF3379D335B6816* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>
@@ -16217,8 +16217,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* Enumerator_System_Collections_
 		return (RuntimeObject*)L_0;
 	}
 }
-// Method Definition Index: 41416
-// Method Definition Index: 41417
+// Method Definition Index: 41521
+// Method Definition Index: 41522
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Enumerator__ctor_mA999A212BDBFAB7D74676848E961B6B72EF743BE_gshared (Enumerator_t405265F0EEE2F6B6437597674FF3379D335B6816* __this, const RuntimeMethod* method) 
 {
 	//<source_info:<no-source>:1>

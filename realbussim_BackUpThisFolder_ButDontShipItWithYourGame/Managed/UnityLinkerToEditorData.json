@@ -16,9 +16,7 @@
           },
           {
             "name": "AnimationClip",
-            "scenes": [
-              "Assets/_Game/Scenes/MainMenu.unity"
-            ],
+            "scenes": [],
             "dependencyType": 0,
             "icon": null
           },

@@ -180,16 +180,31 @@ public static class RoadSpawnResolver
         if (route == null || route.stops == null || GPSManager.Instance == null)
             return RouteHeading(route, stopWorld, fallback);
 
+        Vector3 hint = ResolveExpectedStopFlow(route, stopIndex, stopWorld, fallback, graph);
+
         // The driven polyline is the authority on the approach direction: it is
         // stored in drive order, so the segment the bus reaches the stop on is the
-        // tangent the kerb side must use. The road-graph shortcut below is only a
-        // fallback: on a loop it can find a shorter path that arrives from the
-        // opposite end of the same street, which flips the shelter to the oncoming
-        // kerb (the bug that put four stops on the wrong side of this route).
-        if (TryDrivenPathHeading(route, stopIndex, stopWorld, out Vector3 drivenHeading))
+        // tangent the kerb side must use. We supply expected flow so dual carriageway
+        // return legs or oncoming parallel lanes cannot hijack the search.
+        if (TryDrivenPathHeading(route, stopIndex, stopWorld, hint, out Vector3 drivenHeading))
             return drivenHeading;
 
+        return RouteHeading(route, stopWorld, fallback, hint);
+    }
+
+    /// <summary>
+    /// Derives the expected forward travel flow vector for a stop, checking graph hints
+    /// or sequential stop progression. Used to prevent nearest-segment searches from latching
+    /// onto oncoming carriageways or return-leg polylines.
+    /// </summary>
+    public static Vector3 ResolveExpectedStopFlow(BusRoute route, int stopIndex, Vector3 stopWorld,
+        Vector3 fallback, AIRoadGraph graph = null)
+    {
         Vector3 hint = Vector3.zero;
+        if (route == null || route.stops == null || GPSManager.Instance == null ||
+            stopIndex < 0 || stopIndex >= route.stops.Length)
+            return fallback.sqrMagnitude >= 0.01f ? Vector3.ProjectOnPlane(fallback, Vector3.up).normalized : Vector3.zero;
+
         if (graph != null)
         {
             // Use the previous SERVED stop, not simply stopIndex - 1. Imported routes
@@ -215,7 +230,7 @@ public static class RoadSpawnResolver
 
         // If road graph gave no directional hint, derive forward travel flow directly
         // from sequential stop progression so return legs / oncoming lanes cannot hijack orientation
-        if (hint.sqrMagnitude < 0.01f && stopIndex >= 0 && stopIndex < route.stops.Length)
+        if (hint.sqrMagnitude < 0.01f)
         {
             BusStopData current = route.stops[stopIndex];
             if (stopIndex < route.stops.Length - 1)
@@ -250,7 +265,7 @@ public static class RoadSpawnResolver
         if (hint.sqrMagnitude < 0.01f && fallback.sqrMagnitude >= 0.01f)
             hint = Vector3.ProjectOnPlane(fallback, Vector3.up).normalized;
 
-        return RouteHeading(route, stopWorld, fallback, hint);
+        return hint;
     }
 
     /// <summary>
@@ -340,7 +355,7 @@ public static class RoadSpawnResolver
     /// route order, in which case the caller falls back to the graph hint.
     /// </summary>
     static bool TryDrivenPathHeading(BusRoute route, int stopIndex, Vector3 stopWorld,
-        out Vector3 heading)
+        Vector3 expectedFlow, out Vector3 heading)
     {
         heading = Vector3.zero;
         if (route == null || route.stops == null || GPSManager.Instance == null ||
@@ -350,7 +365,7 @@ public static class RoadSpawnResolver
         Vector3[] points = RouteWorldPath(route);
         if (points == null || points.Length < 2) return false;
 
-        const float maxDistance = 12f;
+        const float maxDistance = 25f;
         int cursor = 1;
         int lastServed = -1;
         for (int i = 0; i < stopIndex; i++)
@@ -361,13 +376,20 @@ public static class RoadSpawnResolver
                 continue;
             lastServed = i;
 
-            int previousSegment = NearestPathSegment(points, GpsToWorld(route.stops[i]),
-                cursor, maxDistance, out _);
+            Vector3 stepWorld = GpsToWorld(route.stops[i]);
+            Vector3 stepFlow = ResolveExpectedStopFlow(route, i, stepWorld, expectedFlow);
+            int previousSegment = NearestPathSegment(points, stepWorld,
+                cursor, maxDistance, stepFlow, out _);
             if (previousSegment >= 0)
                 cursor = previousSegment;
         }
 
-        int segment = NearestPathSegment(points, stopWorld, cursor, maxDistance, out _);
+        int segment = NearestPathSegment(points, stopWorld, cursor, maxDistance, expectedFlow, out _);
+        if (segment < 1 && cursor > 1)
+        {
+            // Fallback: If cursor advanced past due to an earlier stop, retry from beginning
+            segment = NearestPathSegment(points, stopWorld, 1, maxDistance, expectedFlow, out _);
+        }
         if (segment < 1) return false;
 
         Vector3 tangent = Vector3.ProjectOnPlane(points[segment] - points[segment - 1], Vector3.up);
@@ -382,7 +404,7 @@ public static class RoadSpawnResolver
     /// <paramref name="maxDistance"/> of the line.
     /// </summary>
     static int NearestPathSegment(Vector3[] points, Vector3 requested, int fromSegment,
-        float maxDistance, out float distance)
+        float maxDistance, Vector3 expectedFlow, out float distance)
     {
         int best = -1;
         distance = float.MaxValue;
@@ -395,6 +417,12 @@ public static class RoadSpawnResolver
             a.y = b.y = requested.y;
             Vector3 segment = b - a;
             if (segment.sqrMagnitude < 1f) continue;
+
+            Vector3 tangent = segment.normalized;
+            // Reject any segment running backwards against expected route flow
+            if (expectedFlow.sqrMagnitude > 0.01f && Vector3.Dot(tangent, expectedFlow) < 0.15f)
+                continue;
+
             Vector3 projected = ProjectOnSegment(requested, a, b);
             float candidate = Vector3.Distance(projected, requested);
             if (candidate >= distance) continue;

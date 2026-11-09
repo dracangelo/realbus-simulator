@@ -1,30 +1,30 @@
 ﻿# Summary
 |||
 |:---|:---|
-| Generated on: | 11/7/2026 - 8:55:49 AM |
+| Generated on: | 11/9/2026 - 10:59:13 AM |
 | Parser: | MultiReportParser (4x OpenCoverParser) |
 | Assemblies: | 2 |
 | Classes: | 302 |
 | Files: | 396 |
-| Covered lines: | 16366 |
-| Uncovered lines: | 51275 |
-| Coverable lines: | 67641 |
-| Total lines: | 80295 |
-| Line coverage: | 24.1% (16366 of 67641) |
+| Covered lines: | 16385 |
+| Uncovered lines: | 51310 |
+| Coverable lines: | 67695 |
+| Total lines: | 80368 |
+| Line coverage: | 24.2% (16385 of 67695) |
 | Covered branches: | 0 |
 | Total branches: | 0 |
-| Covered methods: | 2011 |
-| Total methods: | 6311 |
-| Method coverage: | 31.8% (2011 of 6311) |
+| Covered methods: | 2012 |
+| Total methods: | 6313 |
+| Method coverage: | 31.8% (2012 of 6313) |
 
 |**Name**|**Covered**|**Uncovered**|**Coverable**|**Total**|**Line coverage**|**Covered**|**Total**|**Branch coverage**|**Covered**|**Total**|**Method coverage**|
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-|**GameScripts**|**16360**|**39072**|**55432**|**75487**|**29.5%**|**0**|**0**|****|**2009**|**5555**|**36.1%**|
+|**GameScripts**|**16379**|**39107**|**55486**|**75594**|**29.5%**|**0**|**0**|****|**2010**|**5557**|**36.1%**|
 |AccessibilityManager|11|31|42|82|26.1%|0|0||5|11|45.4%|
 |AerodynamicsSystem|3|10|13|29|23%|0|0||1|4|25%|
 |AIBusRouteRunner|0|62|62|456|0%|0|0||0|9|0%|
 |AIBusScheduleSpawner|0|364|364|456|0%|0|0||0|20|0%|
-|AIRoadGraph|513|265|778|860|65.9%|0|0||52|69|75.3%|
+|AIRoadGraph|511|267|778|860|65.6%|0|0||52|69|75.3%|
 |AIVehicleController|194|638|832|1135|23.3%|0|0||27|64|42.1%|
 |AmbientCommuterMotion|0|8|8|863|0%|0|0||0|2|0%|
 |AmbulanceBehaviour|0|112|112|90|0%|0|0||0|14|0%|
@@ -37,12 +37,12 @@
 |BusFleetManager|456|152|608|665|75%|0|0||55|68|80.8%|
 |BusInputActions|0|262|262|655|0%|0|0||0|73|0%|
 |BusLiveryPaint|132|65|197|320|67%|0|0||14|19|73.6%|
-|BusRoute|178|66|244|395|72.9%|0|0||23|24|95.8%|
+|BusRoute|206|68|274|429|75.1%|0|0||24|25|96%|
 |BusRouteParser|247|59|306|351|80.7%|0|0||24|27|88.8%|
 |BusSpec|61|2|63|64|96.8%|0|0||8|10|80%|
 |BusStabilityAssist|25|24|49|109|51%|0|0||5|7|71.4%|
 |BusStop|4|6|10|16|40%|0|0||2|4|50%|
-|BusStopData|2|0|2|395|100%|0|0||2|2|100%|
+|BusStopData|2|0|2|429|100%|0|0||2|2|100%|
 |BusStopPlatformRegistry|13|15|28|80|46.4%|0|0||3|6|50%|
 |BusStopPosterBuilder|332|145|477|863|69.6%|0|0||31|39|79.4%|
 |BusUpgradeModifiers|14|7|21|74|66.6%|0|0||3|3|100%|
@@ -68,7 +68,7 @@
 |DailyChallengeManager|7|130|137|181|5.1%|0|0||3|37|8.1%|
 |DepotTrafficSpawner|165|35|200|388|82.5%|0|0||19|23|82.6%|
 |DistanceVisibility|0|21|21|47|0%|0|0||0|4|0%|
-|DockingZone|26|193|219|225|11.8%|0|0||6|33|18.1%|
+|DockingZone|26|197|223|231|11.6%|0|0||6|33|18.1%|
 |DriverShiftSystem|304|66|370|263|82.1%|0|0||22|26|84.6%|
 |DrivingAssistSystem|2|27|29|47|6.8%|0|0||1|5|20%|
 |DynamicEventSystem|42|398|440|416|9.5%|0|0||10|57|17.5%|
@@ -116,7 +116,7 @@
 |MissionBriefingUI|0|356|356|290|0%|0|0||0|26|0%|
 |MissionData|56|49|105|174|53.3%|0|0||11|19|57.8%|
 |MissionDrivingMonitor|0|27|27|40|0%|0|0||0|5|0%|
-|MissionManager|93|1094|1187|1008|7.8%|0|0||24|111|21.6%|
+|MissionManager|93|1097|1190|1011|7.8%|0|0||24|111|21.6%|
 |MissionResult|144|24|168|240|85.7%|0|0||8|8|100%|
 |MissionResultUI|0|384|384|312|0%|0|0||0|30|0%|
 |MissionSettlementData|10|0|10|123|100%|0|0||2|2|100%|
@@ -142,13 +142,13 @@
 |OverpassQueryBuilder|32|52|84|166|38%|0|0||9|22|40.9%|
 |OverpassResponse|216|32|248|249|87%|0|0||29|30|96.6%|
 |OvertureBuildingConverter|55|3|58|89|94.8%|0|0||4|4|100%|
-|PassengerAgent|104|101|205|205|50.7%|0|0||21|41|51.2%|
+|PassengerAgent|102|103|205|205|49.7%|0|0||21|41|51.2%|
 |PassengerAnimatorParameters|5|7|12|654|41.6%|0|0||2|2|100%|
 |PassengerCountUI|0|54|54|49|0%|0|0||0|8|0%|
 |PassengerData|14|0|14|18|100%|0|0||4|4|100%|
 |PassengerFeedbackSystem|2|58|60|90|3.3%|0|0||2|16|12.5%|
 |PassengerLoadDynamics|6|20|26|46|23%|0|0||2|4|50%|
-|PassengerManager|580|665|1245|1096|46.5%|0|0||56|106|52.8%|
+|PassengerManager|575|670|1245|1096|46.1%|0|0||56|106|52.8%|
 |PassengerReactionLibrary|0|7|7|26|0%|0|0||0|1|0%|
 |PassengerSpawner|89|35|124|103|71.7%|0|0||9|11|81.8%|
 |PassengerStoryManager|1|68|69|118|1.4%|0|0||1|23|4.3%|
@@ -179,7 +179,7 @@
 |RoadModuleCatalog|24|0|24|55|100%|0|0||3|3|100%|
 |RoadNetworkSurface|0|66|66|81|0%|0|0||0|8|0%|
 |RoadRoutePathBuilder|51|6|57|80|89.4%|0|0||3|3|100%|
-|RoadSpawnResolver|84|254|338|533|24.8%|0|0||9|17|52.9%|
+|RoadSpawnResolver|84|269|353|561|23.7%|0|0||9|18|50%|
 |RoadSurfaceDetector|10|188|198|168|5%|0|0||2|16|12.5%|
 |RoadSurfaceFrictionController|6|90|96|82|6.2%|0|0||1|8|12.5%|
 |RoadSurfaceIndex|148|15|163|231|90.7%|0|0||14|15|93.3%|
@@ -234,7 +234,7 @@
 |StationInteractionPanel|0|307|307|455|0%|0|0||0|23|0%|
 |SteeringWheelControl|0|16|16|25|0%|0|0||0|8|0%|
 |StopApproachUI|0|197|197|168|0%|0|0||0|26|0%|
-|StopPropSpawner|0|428|428|534|0%|0|0||0|27|0%|
+|StopPropSpawner|0|430|430|536|0%|0|0||0|27|0%|
 |StopTrigger|0|139|139|108|0%|0|0||0|16|0%|
 |StreetTextureLibrary|469|78|547|906|85.7%|0|0||35|39|89.7%|
 |SubtitleManager|0|39|39|64|0%|0|0||0|8|0%|

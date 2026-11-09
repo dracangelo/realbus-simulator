@@ -228,7 +228,7 @@ var assemblies = [
       { "name": "AerodynamicsSystem", "rp": "GameScripts_AerodynamicsSystem.html", "cl": 3, "ucl": 10, "cal": 13, "tl": 29, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "AIBusRouteRunner", "rp": "GameScripts_AIBusRouteRunner.html", "cl": 0, "ucl": 62, "cal": 62, "tl": 456, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "AIBusScheduleSpawner", "rp": "GameScripts_AIBusScheduleSpawner.html", "cl": 0, "ucl": 364, "cal": 364, "tl": 456, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "AIRoadGraph", "rp": "GameScripts_AIRoadGraph.html", "cl": 513, "ucl": 265, "cal": 778, "tl": 860, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "AIRoadGraph", "rp": "GameScripts_AIRoadGraph.html", "cl": 511, "ucl": 267, "cal": 778, "tl": 860, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "AIVehicleController", "rp": "GameScripts_AIVehicleController.html", "cl": 194, "ucl": 638, "cal": 832, "tl": 1135, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "AmbientCommuterMotion", "rp": "GameScripts_AmbientCommuterMotion.html", "cl": 0, "ucl": 8, "cal": 8, "tl": 863, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "AmbulanceBehaviour", "rp": "GameScripts_AmbulanceBehaviour.html", "cl": 0, "ucl": 112, "cal": 112, "tl": 90, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -241,12 +241,12 @@ var assemblies = [
       { "name": "BusFleetManager", "rp": "GameScripts_BusFleetManager.html", "cl": 456, "ucl": 152, "cal": 608, "tl": 665, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusInputActions", "rp": "GameScripts_BusInputActions.html", "cl": 0, "ucl": 262, "cal": 262, "tl": 655, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusLiveryPaint", "rp": "GameScripts_BusLiveryPaint.html", "cl": 132, "ucl": 65, "cal": 197, "tl": 320, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "BusRoute", "rp": "GameScripts_BusRoute.html", "cl": 178, "ucl": 66, "cal": 244, "tl": 395, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "BusRoute", "rp": "GameScripts_BusRoute.html", "cl": 206, "ucl": 68, "cal": 274, "tl": 429, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusRouteParser", "rp": "GameScripts_BusRouteParser.html", "cl": 247, "ucl": 59, "cal": 306, "tl": 351, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusSpec", "rp": "GameScripts_BusSpec.html", "cl": 61, "ucl": 2, "cal": 63, "tl": 64, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusStabilityAssist", "rp": "GameScripts_BusStabilityAssist.html", "cl": 25, "ucl": 24, "cal": 49, "tl": 109, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusStop", "rp": "GameScripts_BusStop.html", "cl": 4, "ucl": 6, "cal": 10, "tl": 16, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "BusStopData", "rp": "GameScripts_BusStopData.html", "cl": 2, "ucl": 0, "cal": 2, "tl": 395, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "BusStopData", "rp": "GameScripts_BusStopData.html", "cl": 2, "ucl": 0, "cal": 2, "tl": 429, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusStopPlatformRegistry", "rp": "GameScripts_BusStopPlatformRegistry.html", "cl": 13, "ucl": 15, "cal": 28, "tl": 80, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusStopPosterBuilder", "rp": "GameScripts_BusStopPosterBuilder.html", "cl": 332, "ucl": 145, "cal": 477, "tl": 863, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "BusUpgradeModifiers", "rp": "GameScripts_BusUpgradeModifiers.html", "cl": 14, "ucl": 7, "cal": 21, "tl": 74, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -272,7 +272,7 @@ var assemblies = [
       { "name": "DailyChallengeManager", "rp": "GameScripts_DailyChallengeManager.html", "cl": 7, "ucl": 130, "cal": 137, "tl": 181, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "DepotTrafficSpawner", "rp": "GameScripts_DepotTrafficSpawner.html", "cl": 165, "ucl": 35, "cal": 200, "tl": 388, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "DistanceVisibility", "rp": "GameScripts_DistanceVisibility.html", "cl": 0, "ucl": 21, "cal": 21, "tl": 47, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "DockingZone", "rp": "GameScripts_DockingZone.html", "cl": 26, "ucl": 193, "cal": 219, "tl": 225, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "DockingZone", "rp": "GameScripts_DockingZone.html", "cl": 26, "ucl": 197, "cal": 223, "tl": 231, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "DriverShiftSystem", "rp": "GameScripts_DriverShiftSystem.html", "cl": 304, "ucl": 66, "cal": 370, "tl": 263, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "DrivingAssistSystem", "rp": "GameScripts_DrivingAssistSystem.html", "cl": 2, "ucl": 27, "cal": 29, "tl": 47, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "DynamicEventSystem", "rp": "GameScripts_DynamicEventSystem.html", "cl": 42, "ucl": 398, "cal": 440, "tl": 416, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -320,7 +320,7 @@ var assemblies = [
       { "name": "MissionBriefingUI", "rp": "GameScripts_MissionBriefingUI.html", "cl": 0, "ucl": 356, "cal": 356, "tl": 290, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "MissionData", "rp": "GameScripts_MissionData.html", "cl": 56, "ucl": 49, "cal": 105, "tl": 174, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "MissionDrivingMonitor", "rp": "GameScripts_MissionDrivingMonitor.html", "cl": 0, "ucl": 27, "cal": 27, "tl": 40, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "MissionManager", "rp": "GameScripts_MissionManager.html", "cl": 93, "ucl": 1094, "cal": 1187, "tl": 1008, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "MissionManager", "rp": "GameScripts_MissionManager.html", "cl": 93, "ucl": 1097, "cal": 1190, "tl": 1011, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "MissionResult", "rp": "GameScripts_MissionResult.html", "cl": 144, "ucl": 24, "cal": 168, "tl": 240, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "MissionResultUI", "rp": "GameScripts_MissionResultUI.html", "cl": 0, "ucl": 384, "cal": 384, "tl": 312, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "MissionSettlementData", "rp": "GameScripts_MissionSettlementData.html", "cl": 10, "ucl": 0, "cal": 10, "tl": 123, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -346,13 +346,13 @@ var assemblies = [
       { "name": "OverpassQueryBuilder", "rp": "GameScripts_OverpassQueryBuilder.html", "cl": 32, "ucl": 52, "cal": 84, "tl": 166, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OverpassResponse", "rp": "GameScripts_OverpassResponse.html", "cl": 216, "ucl": 32, "cal": 248, "tl": 249, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "OvertureBuildingConverter", "rp": "GameScripts_OvertureBuildingConverter.html", "cl": 55, "ucl": 3, "cal": 58, "tl": 89, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "PassengerAgent", "rp": "GameScripts_PassengerAgent.html", "cl": 104, "ucl": 101, "cal": 205, "tl": 205, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "PassengerAgent", "rp": "GameScripts_PassengerAgent.html", "cl": 102, "ucl": 103, "cal": 205, "tl": 205, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerAnimatorParameters", "rp": "GameScripts_PassengerAnimatorParameters.html", "cl": 5, "ucl": 7, "cal": 12, "tl": 654, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerCountUI", "rp": "GameScripts_PassengerCountUI.html", "cl": 0, "ucl": 54, "cal": 54, "tl": 49, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerData", "rp": "GameScripts_PassengerData.html", "cl": 14, "ucl": 0, "cal": 14, "tl": 18, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerFeedbackSystem", "rp": "GameScripts_PassengerFeedbackSystem.html", "cl": 2, "ucl": 58, "cal": 60, "tl": 90, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerLoadDynamics", "rp": "GameScripts_PassengerLoadDynamics.html", "cl": 6, "ucl": 20, "cal": 26, "tl": 46, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "PassengerManager", "rp": "GameScripts_PassengerManager.html", "cl": 580, "ucl": 665, "cal": 1245, "tl": 1096, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "PassengerManager", "rp": "GameScripts_PassengerManager.html", "cl": 575, "ucl": 670, "cal": 1245, "tl": 1096, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerReactionLibrary", "rp": "GameScripts_PassengerReactionLibrary.html", "cl": 0, "ucl": 7, "cal": 7, "tl": 26, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerSpawner", "rp": "GameScripts_PassengerSpawner.html", "cl": 89, "ucl": 35, "cal": 124, "tl": 103, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "PassengerStoryManager", "rp": "GameScripts_PassengerStoryManager.html", "cl": 1, "ucl": 68, "cal": 69, "tl": 118, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -383,7 +383,7 @@ var assemblies = [
       { "name": "RoadModuleCatalog", "rp": "GameScripts_RoadModuleCatalog.html", "cl": 24, "ucl": 0, "cal": 24, "tl": 55, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "RoadNetworkSurface", "rp": "GameScripts_RoadNetworkSurface.html", "cl": 0, "ucl": 66, "cal": 66, "tl": 81, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "RoadRoutePathBuilder", "rp": "GameScripts_RoadRoutePathBuilder.html", "cl": 51, "ucl": 6, "cal": 57, "tl": 80, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "RoadSpawnResolver", "rp": "GameScripts_RoadSpawnResolver.html", "cl": 84, "ucl": 254, "cal": 338, "tl": 533, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "RoadSpawnResolver", "rp": "GameScripts_RoadSpawnResolver.html", "cl": 84, "ucl": 269, "cal": 353, "tl": 561, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "RoadSurfaceDetector", "rp": "GameScripts_RoadSurfaceDetector.html", "cl": 10, "ucl": 188, "cal": 198, "tl": 168, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "RoadSurfaceFrictionController", "rp": "GameScripts_RoadSurfaceFrictionController.html", "cl": 6, "ucl": 90, "cal": 96, "tl": 82, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "RoadSurfaceIndex", "rp": "GameScripts_RoadSurfaceIndex.html", "cl": 148, "ucl": 15, "cal": 163, "tl": 231, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -438,7 +438,7 @@ var assemblies = [
       { "name": "StationInteractionPanel", "rp": "GameScripts_StationInteractionPanel.html", "cl": 0, "ucl": 307, "cal": 307, "tl": 455, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "SteeringWheelControl", "rp": "GameScripts_SteeringWheelControl.html", "cl": 0, "ucl": 16, "cal": 16, "tl": 25, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "StopApproachUI", "rp": "GameScripts_StopApproachUI.html", "cl": 0, "ucl": 197, "cal": 197, "tl": 168, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
-      { "name": "StopPropSpawner", "rp": "GameScripts_StopPropSpawner.html", "cl": 0, "ucl": 428, "cal": 428, "tl": 534, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
+      { "name": "StopPropSpawner", "rp": "GameScripts_StopPropSpawner.html", "cl": 0, "ucl": 430, "cal": 430, "tl": 536, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "StopTrigger", "rp": "GameScripts_StopTrigger.html", "cl": 0, "ucl": 139, "cal": 139, "tl": 108, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "StreetTextureLibrary", "rp": "GameScripts_StreetTextureLibrary.html", "cl": 469, "ucl": 78, "cal": 547, "tl": 906, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
       { "name": "SubtitleManager", "rp": "GameScripts_SubtitleManager.html", "cl": 0, "ucl": 39, "cal": 39, "tl": 64, "ct": "LineCoverage", "mc": "-", "cb": 0, "tb": 0, "lch": [], "bch": [], "hc": [] },
@@ -760,7 +760,7 @@ var riskHotspots = [
       { "value": 1406, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "ProcessStopArrival()", "methodShortName": "ProcessStopArrival()", "fileIndex": 0, "line": 467,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "ProcessStopArrival()", "methodShortName": "ProcessStopArrival()", "fileIndex": 0, "line": 470,
     "metrics": [
       { "value": 37, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -1271,6 +1271,13 @@ var riskHotspots = [
       { "value": 506, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::ResolveExpectedStopFlow(BusRoute, System.Int32, UnityEngine.Vector3, UnityEngine.Vector3, AIRoadGraph)", "methodShortName": "ResolveExpectedStopFlow(...)", "fileIndex": 0, "line": 202,
+    "metrics": [
+      { "value": 22, "exceeded": true },
+      { "value": 0, "exceeded": false },
+      { "value": 506, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "RoadSurfaceType", "reportPath": "GameScripts_RoadSurfaceType.html", "methodName": "static RoadSurfaceDetector/RoadType RoadSurfaceType::FromOsm(System.String)", "methodShortName": "FromOsm(...)", "fileIndex": 0, "line": 9,
     "metrics": [
       { "value": 22, "exceeded": true },
@@ -1334,7 +1341,7 @@ var riskHotspots = [
       { "value": 462, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::RouteComplete()", "methodShortName": "RouteComplete()", "fileIndex": 0, "line": 586,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::RouteComplete()", "methodShortName": "RouteComplete()", "fileIndex": 0, "line": 589,
     "metrics": [
       { "value": 21, "exceeded": true },
       { "value": 0, "exceeded": false },
@@ -1479,13 +1486,6 @@ var riskHotspots = [
       { "value": 20, "exceeded": true },
       { "value": 0, "exceeded": false },
       { "value": 420, "exceeded": true },
-    ]},
-  {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::StopApproachHeading(BusRoute, System.Int32, UnityEngine.Vector3, UnityEngine.Vector3, AIRoadGraph)", "methodShortName": "StopApproachHeading(...)", "fileIndex": 0, "line": 179,
-    "metrics": [
-      { "value": 22, "exceeded": true },
-      { "value": 0, "exceeded": false },
-      { "value": 414.08, "exceeded": true },
     ]},
   {
     "assembly": "GameScripts", "class": "AIBusScheduleSpawner", "reportPath": "GameScripts_AIBusScheduleSpawner.html", "methodName": "System.Boolean AIBusScheduleSpawner::SpawnBusOnRoute(System.Int32, AIBusScheduleSpawner/ScheduledAIBusRoute, System.Int32[])", "methodShortName": "SpawnBusOnRoute(...)", "fileIndex": 0, "line": 148,
@@ -2020,6 +2020,13 @@ var riskHotspots = [
       { "value": 272, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static System.Boolean RoadSpawnResolver::TryDrivenPathHeading(BusRoute, System.Int32, UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector3&)", "methodShortName": "TryDrivenPathHeading(...)", "fileIndex": 0, "line": 359,
+    "metrics": [
+      { "value": 16, "exceeded": true },
+      { "value": 0, "exceeded": false },
+      { "value": 272, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "RuntimeCityContentDownloader", "reportPath": "GameScripts_RuntimeCityContentDownloader.html", "methodName": "DownloadRoutine()", "methodShortName": "DownloadRoutine()", "fileIndex": 0, "line": 87,
     "metrics": [
       { "value": 16, "exceeded": true },
@@ -2342,6 +2349,13 @@ var riskHotspots = [
       { "value": 210, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::UpdateStopApproachUI()", "methodShortName": "UpdateStopApproachUI()", "fileIndex": 0, "line": 418,
+    "metrics": [
+      { "value": 14, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 210, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "MobileCameraController", "reportPath": "GameScripts_MobileCameraController.html", "methodName": "System.Void MobileCameraController::LateUpdate()", "methodShortName": "LateUpdate()", "fileIndex": 0, "line": 115,
     "metrics": [
       { "value": 14, "exceeded": false },
@@ -2392,13 +2406,6 @@ var riskHotspots = [
     ]},
   {
     "assembly": "GameScripts", "class": "RealismTestBootstrap", "reportPath": "GameScripts_RealismTestBootstrap.html", "methodName": "System.Void RealismTestBootstrap::OnGUI()", "methodShortName": "OnGUI()", "fileIndex": 0, "line": 194,
-    "metrics": [
-      { "value": 14, "exceeded": false },
-      { "value": 0, "exceeded": false },
-      { "value": 210, "exceeded": true },
-    ]},
-  {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static System.Boolean RoadSpawnResolver::TryDrivenPathHeading(BusRoute, System.Int32, UnityEngine.Vector3, UnityEngine.Vector3&)", "methodShortName": "TryDrivenPathHeading(...)", "fileIndex": 0, "line": 344,
     "metrics": [
       { "value": 14, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -2517,6 +2524,13 @@ var riskHotspots = [
       { "value": 182, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts", "class": "DockingZone", "reportPath": "GameScripts_DockingZone.html", "methodName": "System.Void DockingZone::EvaluateDockingState()", "methodShortName": "EvaluateDockingState()", "fileIndex": 0, "line": 138,
+    "metrics": [
+      { "value": 13, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 182, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "GameplayTestBootstrap", "reportPath": "GameScripts_GameplayTestBootstrap.html", "methodName": "Start()", "methodShortName": "Start()", "fileIndex": 0, "line": 40,
     "metrics": [
       { "value": 13, "exceeded": false },
@@ -2559,7 +2573,7 @@ var riskHotspots = [
       { "value": 182, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryApplyTemporaryDiversion(System.String, System.String, UnityEngine.Vector3, System.Single)", "methodShortName": "TryApplyTemporaryDiversion(...)", "fileIndex": 0, "line": 826,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryApplyTemporaryDiversion(System.String, System.String, UnityEngine.Vector3, System.Single)", "methodShortName": "TryApplyTemporaryDiversion(...)", "fileIndex": 0, "line": 829,
     "metrics": [
       { "value": 13, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -2629,7 +2643,7 @@ var riskHotspots = [
       { "value": 182, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::FirstPathDirection(AIRoadGraph, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "FirstPathDirection(...)", "fileIndex": 0, "line": 424,
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::FirstPathDirection(AIRoadGraph, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "FirstPathDirection(...)", "fileIndex": 0, "line": 452,
     "metrics": [
       { "value": 13, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3252,7 +3266,7 @@ var riskHotspots = [
       { "value": 132, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryBuildGraphGuidancePath(AIRoadGraph, UnityEngine.Vector3, System.Int32, System.Collections.Generic.ISet[Int32], UnityEngine.Vector3[]&)", "methodShortName": "TryBuildGraphGuidancePath(...)", "fileIndex": 0, "line": 888,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryBuildGraphGuidancePath(AIRoadGraph, UnityEngine.Vector3, System.Int32, System.Collections.Generic.ISet[Int32], UnityEngine.Vector3[]&)", "methodShortName": "TryBuildGraphGuidancePath(...)", "fileIndex": 0, "line": 891,
     "metrics": [
       { "value": 11, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3371,7 +3385,14 @@ var riskHotspots = [
       { "value": 132, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::StopApproachAnchor(BusRoute, System.Int32, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "StopApproachAnchor(...)", "fileIndex": 0, "line": 265,
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::StopApproachAnchor(BusRoute, System.Int32, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "StopApproachAnchor(...)", "fileIndex": 0, "line": 280,
+    "metrics": [
+      { "value": 11, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 132, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static System.Int32 RoadSpawnResolver::NearestPathSegment(UnityEngine.Vector3[], UnityEngine.Vector3, System.Int32, System.Single, UnityEngine.Vector3, System.Single&)", "methodShortName": "NearestPathSegment(...)", "fileIndex": 0, "line": 408,
     "metrics": [
       { "value": 11, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3505,6 +3526,13 @@ var riskHotspots = [
     ]},
   {
     "assembly": "GameScripts", "class": "SplineVehicle", "reportPath": "GameScripts_SplineVehicle.html", "methodName": "System.Void SplineVehicle::Update()", "methodShortName": "Update()", "fileIndex": 1, "line": 58,
+    "metrics": [
+      { "value": 11, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 132, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts", "class": "StopPropSpawner", "reportPath": "GameScripts_StopPropSpawner.html", "methodName": "System.Single StopPropSpawner::GetRouteYaw(BusRoute, System.Int32)", "methodShortName": "GetRouteYaw(...)", "fileIndex": 0, "line": 506,
     "metrics": [
       { "value": 11, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -3714,6 +3742,13 @@ var riskHotspots = [
       { "value": 110, "exceeded": true },
     ]},
   {
+    "assembly": "GameScripts", "class": "DockingZone", "reportPath": "GameScripts_DockingZone.html", "methodName": "System.Void DockingZone::OnUndocked()", "methodShortName": "OnUndocked()", "fileIndex": 0, "line": 96,
+    "metrics": [
+      { "value": 10, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 110, "exceeded": true },
+    ]},
+  {
     "assembly": "GameScripts", "class": "ExtendedTrafficViolationSystem", "reportPath": "GameScripts_ExtendedTrafficViolationSystem.html", "methodName": "System.Void ExtendedTrafficViolationSystem::TrackOffRouteDeviation()", "methodShortName": "TrackOffRouteDeviation()", "fileIndex": 0, "line": 256,
     "metrics": [
       { "value": 10, "exceeded": false },
@@ -3749,14 +3784,7 @@ var riskHotspots = [
       { "value": 110, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::UpdateStopApproachUI()", "methodShortName": "UpdateStopApproachUI()", "fileIndex": 0, "line": 418,
-    "metrics": [
-      { "value": 10, "exceeded": false },
-      { "value": 0, "exceeded": false },
-      { "value": 110, "exceeded": true },
-    ]},
-  {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryCloseAndLockDoors()", "methodShortName": "TryCloseAndLockDoors()", "fileIndex": 0, "line": 661,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryCloseAndLockDoors()", "methodShortName": "TryCloseAndLockDoors()", "fileIndex": 0, "line": 664,
     "metrics": [
       { "value": 10, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -4204,7 +4232,7 @@ var riskHotspots = [
       { "value": 90, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "DockingZone", "reportPath": "GameScripts_DockingZone.html", "methodName": "System.Void DockingZone::UpdateBayFeedback()", "methodShortName": "UpdateBayFeedback()", "fileIndex": 0, "line": 164,
+    "assembly": "GameScripts", "class": "DockingZone", "reportPath": "GameScripts_DockingZone.html", "methodName": "System.Void DockingZone::UpdateBayFeedback()", "methodShortName": "UpdateBayFeedback()", "fileIndex": 0, "line": 170,
     "metrics": [
       { "value": 9, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -4372,7 +4400,7 @@ var riskHotspots = [
       { "value": 90, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::MissionEndedAtDepot()", "methodShortName": "MissionEndedAtDepot()", "fileIndex": 0, "line": 737,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::MissionEndedAtDepot()", "methodShortName": "MissionEndedAtDepot()", "fileIndex": 0, "line": 740,
     "metrics": [
       { "value": 9, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -4498,13 +4526,6 @@ var riskHotspots = [
       { "value": 90, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static System.Int32 RoadSpawnResolver::NearestPathSegment(UnityEngine.Vector3[], UnityEngine.Vector3, System.Int32, System.Single, System.Single&)", "methodShortName": "NearestPathSegment(...)", "fileIndex": 0, "line": 386,
-    "metrics": [
-      { "value": 9, "exceeded": false },
-      { "value": 0, "exceeded": false },
-      { "value": 90, "exceeded": true },
-    ]},
-  {
     "assembly": "GameScripts", "class": "RoadSurfaceFrictionController", "reportPath": "GameScripts_RoadSurfaceFrictionController.html", "methodName": "System.Void RoadSurfaceFrictionController::Update()", "methodShortName": "Update()", "fileIndex": 1, "line": 39,
     "metrics": [
       { "value": 9, "exceeded": false },
@@ -4604,13 +4625,6 @@ var riskHotspots = [
     ]},
   {
     "assembly": "GameScripts", "class": "StopPropSpawner", "reportPath": "GameScripts_StopPropSpawner.html", "methodName": "System.Collections.Generic.List[Int32] StopPropSpawner::ResolveStopOrder(BusRoute, System.Int32)", "methodShortName": "ResolveStopOrder(...)", "fileIndex": 0, "line": 401,
-    "metrics": [
-      { "value": 9, "exceeded": false },
-      { "value": 0, "exceeded": false },
-      { "value": 90, "exceeded": true },
-    ]},
-  {
-    "assembly": "GameScripts", "class": "StopPropSpawner", "reportPath": "GameScripts_StopPropSpawner.html", "methodName": "System.Single StopPropSpawner::GetRouteYaw(BusRoute, System.Int32)", "methodShortName": "GetRouteYaw(...)", "fileIndex": 0, "line": 506,
     "metrics": [
       { "value": 9, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -5086,14 +5100,14 @@ var riskHotspots = [
       { "value": 72, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::ApplyMissionSettlement()", "methodShortName": "ApplyMissionSettlement()", "fileIndex": 0, "line": 702,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::ApplyMissionSettlement()", "methodShortName": "ApplyMissionSettlement()", "fileIndex": 0, "line": 705,
     "metrics": [
       { "value": 8, "exceeded": false },
       { "value": 0, "exceeded": false },
       { "value": 72, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryGetGuidancePointAhead(System.Single, UnityEngine.Vector3&)", "methodShortName": "TryGetGuidancePointAhead(...)", "fileIndex": 0, "line": 784,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryGetGuidancePointAhead(System.Single, UnityEngine.Vector3&)", "methodShortName": "TryGetGuidancePointAhead(...)", "fileIndex": 0, "line": 787,
     "metrics": [
       { "value": 8, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -5303,7 +5317,7 @@ var riskHotspots = [
       { "value": 72, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static System.Boolean RoadSpawnResolver::TryProjectOntoAlignedPath(UnityEngine.Vector3[], UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector3&)", "methodShortName": "TryProjectOntoAlignedPath(...)", "fileIndex": 0, "line": 294,
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static System.Boolean RoadSpawnResolver::TryProjectOntoAlignedPath(UnityEngine.Vector3[], UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector3&)", "methodShortName": "TryProjectOntoAlignedPath(...)", "fileIndex": 0, "line": 309,
     "metrics": [
       { "value": 8, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -6332,7 +6346,7 @@ var riskHotspots = [
       { "value": 56, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryOpenDoorsAtCurrentStop()", "methodShortName": "TryOpenDoorsAtCurrentStop()", "fileIndex": 0, "line": 640,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Boolean MissionManager::TryOpenDoorsAtCurrentStop()", "methodShortName": "TryOpenDoorsAtCurrentStop()", "fileIndex": 0, "line": 643,
     "metrics": [
       { "value": 7, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -7578,21 +7592,21 @@ var riskHotspots = [
       { "value": 42, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Single MissionManager::GetDistanceToGuidancePath(UnityEngine.Vector3)", "methodShortName": "GetDistanceToGuidancePath(...)", "fileIndex": 0, "line": 768,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Single MissionManager::GetDistanceToGuidancePath(UnityEngine.Vector3)", "methodShortName": "GetDistanceToGuidancePath(...)", "fileIndex": 0, "line": 771,
     "metrics": [
       { "value": 6, "exceeded": false },
       { "value": 0, "exceeded": false },
       { "value": 42, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::UpdateGuidancePathForCurrentState()", "methodShortName": "UpdateGuidancePathForCurrentState()", "fileIndex": 0, "line": 868,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "System.Void MissionManager::UpdateGuidancePathForCurrentState()", "methodShortName": "UpdateGuidancePathForCurrentState()", "fileIndex": 0, "line": 871,
     "metrics": [
       { "value": 6, "exceeded": false },
       { "value": 0, "exceeded": false },
       { "value": 42, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "static System.Void MissionManager::AppendPath(System.Collections.Generic.List[Vector3], System.Collections.Generic.List[Vector3])", "methodShortName": "AppendPath(...)", "fileIndex": 0, "line": 947,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "static System.Void MissionManager::AppendPath(System.Collections.Generic.List[Vector3], System.Collections.Generic.List[Vector3])", "methodShortName": "AppendPath(...)", "fileIndex": 0, "line": 950,
     "metrics": [
       { "value": 6, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -7998,7 +8012,7 @@ var riskHotspots = [
       { "value": 42, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::LastPathDirection(AIRoadGraph, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "LastPathDirection(...)", "fileIndex": 0, "line": 408,
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::LastPathDirection(AIRoadGraph, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "LastPathDirection(...)", "fileIndex": 0, "line": 436,
     "metrics": [
       { "value": 6, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -8586,7 +8600,7 @@ var riskHotspots = [
       { "value": 41.45, "exceeded": true },
     ]},
   {
-    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "UnityEngine.Vector3[] MissionManager::BuildBaseGuidancePath()", "methodShortName": "BuildBaseGuidancePath()", "fileIndex": 0, "line": 918,
+    "assembly": "GameScripts", "class": "MissionManager", "reportPath": "GameScripts_MissionManager.html", "methodName": "UnityEngine.Vector3[] MissionManager::BuildBaseGuidancePath()", "methodShortName": "BuildBaseGuidancePath()", "fileIndex": 0, "line": 921,
     "metrics": [
       { "value": 9, "exceeded": false },
       { "value": 0, "exceeded": false },
@@ -8647,6 +8661,13 @@ var riskHotspots = [
       { "value": 8, "exceeded": false },
       { "value": 0, "exceeded": false },
       { "value": 32.62, "exceeded": true },
+    ]},
+  {
+    "assembly": "GameScripts", "class": "AIRoadGraph", "reportPath": "GameScripts_AIRoadGraph.html", "methodName": "System.Int32 AIRoadGraph::GetRandomNodeIndex(System.Boolean, System.Int32)", "methodShortName": "GetRandomNodeIndex(...)", "fileIndex": 0, "line": 423,
+    "metrics": [
+      { "value": 11, "exceeded": false },
+      { "value": 0, "exceeded": false },
+      { "value": 32.25, "exceeded": true },
     ]},
   {
     "assembly": "GameScripts", "class": "AIRoadGraph", "reportPath": "GameScripts_AIRoadGraph.html", "methodName": "System.Int32 AIRoadGraph::GetRandomNodeIndex(System.Boolean, System.Int32)", "methodShortName": "GetRandomNodeIndex(...)", "fileIndex": 1, "line": 57,
@@ -8796,7 +8817,7 @@ var riskHotspots = [
       { "value": 18.24, "exceeded": false },
     ]},
   {
-    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::PathHeading(UnityEngine.Vector3[], UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "PathHeading(...)", "fileIndex": 0, "line": 479,
+    "assembly": "GameScripts", "class": "RoadSpawnResolver", "reportPath": "GameScripts_RoadSpawnResolver.html", "methodName": "static UnityEngine.Vector3 RoadSpawnResolver::PathHeading(UnityEngine.Vector3[], UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector3)", "methodShortName": "PathHeading(...)", "fileIndex": 0, "line": 507,
     "metrics": [
       { "value": 18, "exceeded": true },
       { "value": 0, "exceeded": false },

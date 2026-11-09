@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CoverageReport scope="Summary">
   <Summary>
-    <Generatedon>11/7/2026 - 8:55:50 AM</Generatedon>
+    <Generatedon>11/9/2026 - 10:59:14 AM</Generatedon>
     <Parser>MultiReportParser (4x OpenCoverParser)</Parser>
     <Assemblies>2</Assemblies>
     <Classes>302</Classes>
     <Files>396</Files>
-    <Coveredlines>16366</Coveredlines>
-    <Uncoveredlines>51275</Uncoveredlines>
-    <Coverablelines>67641</Coverablelines>
-    <Totallines>80295</Totallines>
-    <Linecoverage>24.1</Linecoverage>
+    <Coveredlines>16385</Coveredlines>
+    <Uncoveredlines>51310</Uncoveredlines>
+    <Coverablelines>67695</Coverablelines>
+    <Totallines>80368</Totallines>
+    <Linecoverage>24.2</Linecoverage>
     <Coveredbranches>0</Coveredbranches>
     <Totalbranches>0</Totalbranches>
-    <Coveredmethods>2011</Coveredmethods>
-    <Totalmethods>6311</Totalmethods>
+    <Coveredmethods>2012</Coveredmethods>
+    <Totalmethods>6313</Totalmethods>
     <Methodcoverage>31.8</Methodcoverage>
   </Summary>
   <Coverage>
-    <Assembly name="GameScripts" classes="260" coverage="29.5" coveredlines="16360" coverablelines="55432" totallines="75487" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2009" totalmethods="5555" methodcoverage="36.1">
+    <Assembly name="GameScripts" classes="260" coverage="29.5" coveredlines="16379" coverablelines="55486" totallines="75594" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2010" totalmethods="5557" methodcoverage="36.1">
       <Class name="AccessibilityManager" coverage="26.1" coveredlines="11" coverablelines="42" totallines="82" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="11" methodcoverage="45.4" />
       <Class name="AerodynamicsSystem" coverage="23" coveredlines="3" coverablelines="13" totallines="29" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="4" methodcoverage="25" />
       <Class name="AIBusRouteRunner" coverage="0" coveredlines="0" coverablelines="62" totallines="456" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="9" methodcoverage="0" />
       <Class name="AIBusScheduleSpawner" coverage="0" coveredlines="0" coverablelines="364" totallines="456" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="20" methodcoverage="0" />
-      <Class name="AIRoadGraph" coverage="65.9" coveredlines="513" coverablelines="778" totallines="860" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="52" totalmethods="69" methodcoverage="75.3" />
+      <Class name="AIRoadGraph" coverage="65.6" coveredlines="511" coverablelines="778" totallines="860" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="52" totalmethods="69" methodcoverage="75.3" />
       <Class name="AIVehicleController" coverage="23.3" coveredlines="194" coverablelines="832" totallines="1135" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="27" totalmethods="64" methodcoverage="42.1" />
       <Class name="AmbientCommuterMotion" coverage="0" coveredlines="0" coverablelines="8" totallines="863" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="2" methodcoverage="0" />
       <Class name="AmbulanceBehaviour" coverage="0" coveredlines="0" coverablelines="112" totallines="90" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="14" methodcoverage="0" />
@@ -36,12 +36,12 @@
       <Class name="BusFleetManager" coverage="75" coveredlines="456" coverablelines="608" totallines="665" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="55" totalmethods="68" methodcoverage="80.8" />
       <Class name="BusInputActions" coverage="0" coveredlines="0" coverablelines="262" totallines="655" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="73" methodcoverage="0" />
       <Class name="BusLiveryPaint" coverage="67" coveredlines="132" coverablelines="197" totallines="320" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="14" totalmethods="19" methodcoverage="73.6" />
-      <Class name="BusRoute" coverage="72.9" coveredlines="178" coverablelines="244" totallines="395" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="23" totalmethods="24" methodcoverage="95.8" />
+      <Class name="BusRoute" coverage="75.1" coveredlines="206" coverablelines="274" totallines="429" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="24" totalmethods="25" methodcoverage="96" />
       <Class name="BusRouteParser" coverage="80.7" coveredlines="247" coverablelines="306" totallines="351" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="24" totalmethods="27" methodcoverage="88.8" />
       <Class name="BusSpec" coverage="96.8" coveredlines="61" coverablelines="63" totallines="64" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="8" totalmethods="10" methodcoverage="80" />
       <Class name="BusStabilityAssist" coverage="51" coveredlines="25" coverablelines="49" totallines="109" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="5" totalmethods="7" methodcoverage="71.4" />
       <Class name="BusStop" coverage="40" coveredlines="4" coverablelines="10" totallines="16" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="4" methodcoverage="50" />
-      <Class name="BusStopData" coverage="100" coveredlines="2" coverablelines="2" totallines="395" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="2" methodcoverage="100" />
+      <Class name="BusStopData" coverage="100" coveredlines="2" coverablelines="2" totallines="429" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="2" methodcoverage="100" />
       <Class name="BusStopPlatformRegistry" coverage="46.4" coveredlines="13" coverablelines="28" totallines="80" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="3" totalmethods="6" methodcoverage="50" />
       <Class name="BusStopPosterBuilder" coverage="69.6" coveredlines="332" coverablelines="477" totallines="863" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="31" totalmethods="39" methodcoverage="79.4" />
       <Class name="BusUpgradeModifiers" coverage="66.6" coveredlines="14" coverablelines="21" totallines="74" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="3" totalmethods="3" methodcoverage="100" />
@@ -67,7 +67,7 @@
       <Class name="DailyChallengeManager" coverage="5.1" coveredlines="7" coverablelines="137" totallines="181" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="3" totalmethods="37" methodcoverage="8.1" />
       <Class name="DepotTrafficSpawner" coverage="82.5" coveredlines="165" coverablelines="200" totallines="388" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="19" totalmethods="23" methodcoverage="82.6" />
       <Class name="DistanceVisibility" coverage="0" coveredlines="0" coverablelines="21" totallines="47" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="4" methodcoverage="0" />
-      <Class name="DockingZone" coverage="11.8" coveredlines="26" coverablelines="219" totallines="225" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="6" totalmethods="33" methodcoverage="18.1" />
+      <Class name="DockingZone" coverage="11.6" coveredlines="26" coverablelines="223" totallines="231" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="6" totalmethods="33" methodcoverage="18.1" />
       <Class name="DriverShiftSystem" coverage="82.1" coveredlines="304" coverablelines="370" totallines="263" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="22" totalmethods="26" methodcoverage="84.6" />
       <Class name="DrivingAssistSystem" coverage="6.8" coveredlines="2" coverablelines="29" totallines="47" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="5" methodcoverage="20" />
       <Class name="DynamicEventSystem" coverage="9.5" coveredlines="42" coverablelines="440" totallines="416" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="10" totalmethods="57" methodcoverage="17.5" />
@@ -115,7 +115,7 @@
       <Class name="MissionBriefingUI" coverage="0" coveredlines="0" coverablelines="356" totallines="290" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="26" methodcoverage="0" />
       <Class name="MissionData" coverage="53.3" coveredlines="56" coverablelines="105" totallines="174" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="11" totalmethods="19" methodcoverage="57.8" />
       <Class name="MissionDrivingMonitor" coverage="0" coveredlines="0" coverablelines="27" totallines="40" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="5" methodcoverage="0" />
-      <Class name="MissionManager" coverage="7.8" coveredlines="93" coverablelines="1187" totallines="1008" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="24" totalmethods="111" methodcoverage="21.6" />
+      <Class name="MissionManager" coverage="7.8" coveredlines="93" coverablelines="1190" totallines="1011" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="24" totalmethods="111" methodcoverage="21.6" />
       <Class name="MissionResult" coverage="85.7" coveredlines="144" coverablelines="168" totallines="240" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="8" totalmethods="8" methodcoverage="100" />
       <Class name="MissionResultUI" coverage="0" coveredlines="0" coverablelines="384" totallines="312" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="30" methodcoverage="0" />
       <Class name="MissionSettlementData" coverage="100" coveredlines="10" coverablelines="10" totallines="123" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="2" methodcoverage="100" />
@@ -141,13 +141,13 @@
       <Class name="OverpassQueryBuilder" coverage="38" coveredlines="32" coverablelines="84" totallines="166" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="22" methodcoverage="40.9" />
       <Class name="OverpassResponse" coverage="87" coveredlines="216" coverablelines="248" totallines="249" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="29" totalmethods="30" methodcoverage="96.6" />
       <Class name="OvertureBuildingConverter" coverage="94.8" coveredlines="55" coverablelines="58" totallines="89" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="4" totalmethods="4" methodcoverage="100" />
-      <Class name="PassengerAgent" coverage="50.7" coveredlines="104" coverablelines="205" totallines="205" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="21" totalmethods="41" methodcoverage="51.2" />
+      <Class name="PassengerAgent" coverage="49.7" coveredlines="102" coverablelines="205" totallines="205" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="21" totalmethods="41" methodcoverage="51.2" />
       <Class name="PassengerAnimatorParameters" coverage="41.6" coveredlines="5" coverablelines="12" totallines="654" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="2" methodcoverage="100" />
       <Class name="PassengerCountUI" coverage="0" coveredlines="0" coverablelines="54" totallines="49" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="8" methodcoverage="0" />
       <Class name="PassengerData" coverage="100" coveredlines="14" coverablelines="14" totallines="18" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="4" totalmethods="4" methodcoverage="100" />
       <Class name="PassengerFeedbackSystem" coverage="3.3" coveredlines="2" coverablelines="60" totallines="90" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="16" methodcoverage="12.5" />
       <Class name="PassengerLoadDynamics" coverage="23" coveredlines="6" coverablelines="26" totallines="46" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="4" methodcoverage="50" />
-      <Class name="PassengerManager" coverage="46.5" coveredlines="580" coverablelines="1245" totallines="1096" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="56" totalmethods="106" methodcoverage="52.8" />
+      <Class name="PassengerManager" coverage="46.1" coveredlines="575" coverablelines="1245" totallines="1096" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="56" totalmethods="106" methodcoverage="52.8" />
       <Class name="PassengerReactionLibrary" coverage="0" coveredlines="0" coverablelines="7" totallines="26" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="1" methodcoverage="0" />
       <Class name="PassengerSpawner" coverage="71.7" coveredlines="89" coverablelines="124" totallines="103" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="11" methodcoverage="81.8" />
       <Class name="PassengerStoryManager" coverage="1.4" coveredlines="1" coverablelines="69" totallines="118" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="23" methodcoverage="4.3" />
@@ -178,7 +178,7 @@
       <Class name="RoadModuleCatalog" coverage="100" coveredlines="24" coverablelines="24" totallines="55" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="3" totalmethods="3" methodcoverage="100" />
       <Class name="RoadNetworkSurface" coverage="0" coveredlines="0" coverablelines="66" totallines="81" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="8" methodcoverage="0" />
       <Class name="RoadRoutePathBuilder" coverage="89.4" coveredlines="51" coverablelines="57" totallines="80" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="3" totalmethods="3" methodcoverage="100" />
-      <Class name="RoadSpawnResolver" coverage="24.8" coveredlines="84" coverablelines="338" totallines="533" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="17" methodcoverage="52.9" />
+      <Class name="RoadSpawnResolver" coverage="23.7" coveredlines="84" coverablelines="353" totallines="561" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="9" totalmethods="18" methodcoverage="50" />
       <Class name="RoadSurfaceDetector" coverage="5" coveredlines="10" coverablelines="198" totallines="168" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="16" methodcoverage="12.5" />
       <Class name="RoadSurfaceFrictionController" coverage="6.2" coveredlines="6" coverablelines="96" totallines="82" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="1" totalmethods="8" methodcoverage="12.5" />
       <Class name="RoadSurfaceIndex" coverage="90.7" coveredlines="148" coverablelines="163" totallines="231" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="14" totalmethods="15" methodcoverage="93.3" />
@@ -233,7 +233,7 @@
       <Class name="StationInteractionPanel" coverage="0" coveredlines="0" coverablelines="307" totallines="455" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="23" methodcoverage="0" />
       <Class name="SteeringWheelControl" coverage="0" coveredlines="0" coverablelines="16" totallines="25" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="8" methodcoverage="0" />
       <Class name="StopApproachUI" coverage="0" coveredlines="0" coverablelines="197" totallines="168" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="26" methodcoverage="0" />
-      <Class name="StopPropSpawner" coverage="0" coveredlines="0" coverablelines="428" totallines="534" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="27" methodcoverage="0" />
+      <Class name="StopPropSpawner" coverage="0" coveredlines="0" coverablelines="430" totallines="536" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="27" methodcoverage="0" />
       <Class name="StopTrigger" coverage="0" coveredlines="0" coverablelines="139" totallines="108" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="16" methodcoverage="0" />
       <Class name="StreetTextureLibrary" coverage="85.7" coveredlines="469" coverablelines="547" totallines="906" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="35" totalmethods="39" methodcoverage="89.7" />
       <Class name="SubtitleManager" coverage="0" coveredlines="0" coverablelines="39" totallines="64" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="0" totalmethods="8" methodcoverage="0" />

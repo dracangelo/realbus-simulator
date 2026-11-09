@@ -513,6 +513,7 @@ public class StopPropSpawner : MonoBehaviour
 
         for (int b = a + 1; b < route.stops.Length; b++)
         {
+            if (BusRoute.IsSamePlatform(route.stops[a], route.stops[b])) continue;
             Vector3 worldB = GPSManager.Instance.GpsToWorld(route.stops[b].latitude, route.stops[b].longitude);
             worldB.y = 0f;
             Vector3 dir = worldB - worldA;
@@ -522,6 +523,7 @@ public class StopPropSpawner : MonoBehaviour
 
         for (int b = a - 1; b >= 0; b--)
         {
+            if (BusRoute.IsSamePlatform(route.stops[a], route.stops[b])) continue;
             Vector3 worldB = GPSManager.Instance.GpsToWorld(route.stops[b].latitude, route.stops[b].longitude);
             worldB.y = 0f;
             Vector3 dir = worldA - worldB;

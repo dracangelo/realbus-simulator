@@ -97,9 +97,9 @@ public class DockingZone : MonoBehaviour
         Debug.Log($"Departed: {stopName}");
         if (CurrentDockedZone == this)
             CurrentDockedZone = null;
-        if (busController != null)
+        if (busController != null && (MissionManager.Instance == null || !MissionManager.Instance.isProcessingStop))
             busController.RequestKneelingSuspension(false);
-        if (StopApproachUI.Instance != null)
+        if (StopApproachUI.Instance != null && (MissionManager.Instance == null || !MissionManager.Instance.isProcessingStop))
             StopApproachUI.Instance.HideApproach();
     }
 
@@ -153,9 +153,15 @@ public class DockingZone : MonoBehaviour
         currentDockingScore = CalculateDockingScore(currentKerbOffsetMeters, currentStopSignOffsetMeters,
             currentHeadingErrorDegrees, busController.currentSpeedKmh, kerbToleranceMeters,
             stopSignToleranceMeters, headingToleranceDegrees, maxDockingSpeedKmh);
+        // Hysteresis prevents rapid docked/undocked fluttering when the bus creeps or bounces slightly
+        float speedLimit = isDocked ? (maxDockingSpeedKmh + 2.5f) : maxDockingSpeedKmh;
+        float kerbLimit = isDocked ? (kerbToleranceMeters + 0.6f) : kerbToleranceMeters;
+        float signLimit = isDocked ? (stopSignToleranceMeters + 1.5f) : stopSignToleranceMeters;
+        float headingLimit = isDocked ? (headingToleranceDegrees + 10f) : headingToleranceDegrees;
+
         isCorrectlyDocked = GameplayRules.IsDocked(currentKerbOffsetMeters, currentStopSignOffsetMeters,
-            headingError, busController.currentSpeedKmh, kerbToleranceMeters, stopSignToleranceMeters,
-            headingToleranceDegrees, maxDockingSpeedKmh);
+            headingError, busController.currentSpeedKmh, kerbLimit, signLimit,
+            headingLimit, speedLimit);
 
         isDocked = isCorrectlyDocked;
     }

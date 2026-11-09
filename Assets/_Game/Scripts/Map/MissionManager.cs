@@ -425,13 +425,16 @@ public class MissionManager : MonoBehaviour
             return;
         }
 
-        if (distanceToNextStop <= StopApproachDistanceMeters && distanceToNextStop > 15f && !isProcessingStop)
+        if (distanceToNextStop <= StopApproachDistanceMeters && !isProcessingStop)
         {
-            var stop = currentRoute.stops[currentStopIndex];
-            StopApproachUI.Instance.ShowApproach(stop.stopName, distanceToNextStop);
-            StopApproachUI.Instance.UpdateGuidance(distanceToNextStop, GetSignedAngleToNextStop());
+            if (DockingZone.CurrentDockedZone == null || !DockingZone.CurrentDockedZone.isDocked)
+            {
+                var stop = currentRoute.stops[currentStopIndex];
+                StopApproachUI.Instance.ShowApproach(stop.stopName, distanceToNextStop);
+                StopApproachUI.Instance.UpdateGuidance(distanceToNextStop, GetSignedAngleToNextStop());
+            }
         }
-        else if (!isProcessingStop)
+        else if (!isProcessingStop && (DockingZone.CurrentDockedZone == null || !DockingZone.CurrentDockedZone.isDocked))
         {
             StopApproachUI.Instance.HideApproach();
         }
