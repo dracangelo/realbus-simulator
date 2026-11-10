@@ -1,0 +1,59 @@
+Unity Editor version:    6000.6.0f1 (f7f8ed4d1e24)
+Branch:                  6000.6/respin/6000.6.0f1-fa21a270ab12
+Build type:              Release
+Batch mode:              YES
+System name:             Linux
+Distro version:          #1 SMP PREEMPT_DYNAMIC Kali 7.1.5-1kali1 (2026-07-29)
+Kernel version:          7.1.5+kali-amd64
+Architecture:            x86_64
+Window Protocol:         Wayland (XWayland)
+Available memory:        15852 MB
+Date:                    2026-11-09T11:30:17Z
+VBCSCompilerPreWarmer: ERROR: Couldn't pre-warm as failed to write stub code temporary file (/tmpUnityVBCSPreWarm_391041.cs)
+VBCSCompiler prewarm took 0.73 ms
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac" at "2026-11-09T11:30:17.258784Z"
+[SignatureVerifier] Application signature verification not supported on this platform.
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+  Session Id:              839657e7777f46338df64dc570f8870c
+  Correlation Id:          fceba5ae135ada8a8afa56e21068491d
+  External correlation Id: 5925314816898830034
+  Machine Id:              o3y/Pwceucb8Ha7Dsv+8jcLZd2I=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-drac" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-drac-notifications" at "2026-11-09T11:30:17.262219Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 11270711791718-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.01
+[Licensing::Module] Licensing Background thread has ended after 0.02s
+Selected window backend: (null) 
+Desktop is 1280 x 1024 @ 60 Hz
+Initialize udev device monitor.
+
+COMMAND LINE ARGUMENTS:
+/home/drac/Unity/Hub/Editor/6000.6.0f1/Editor/Unity
+-batchmode
+-projectPath
+/home/drac/Documents/coding/realbus-simulator
+-runTests
+-testPlatform
+editmode
+-assemblyNames
+GameScriptsTests.Editor
+-testFilter
+OvertureConversion
+-testResults
+/home/drac/Documents/coding/realbus-simulator/TestResults/overture-results.xml
+-logFile
+/home/drac/Documents/coding/realbus-simulator/TestResults/overture-unity.log
+Successfully changed project path to: /home/drac/Documents/coding/realbus-simulator
+/home/drac/Documents/coding/realbus-simulator
+[ExitDontLaunchBugReporter] Exiting without the bug reporter. Application will exit with return code 1
+
+SDL leaked 2 allocations
+Turn on UNITY_SDL_ALLOCATION_TRACKING for detailed information.

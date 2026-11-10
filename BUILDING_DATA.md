@@ -87,6 +87,31 @@ Imported road tiles are decorative only, and generated mesh takes over at bends
 and crossings to avoid stacked rectangular tiles and blocking prefab colliders.
 The current map remains flat: this is not a grade-separated bridge/tunnel system.
 
+## Bulk map download
+
+`scripts/download_all_maps.py` downloads every city's OSM layers in one run. It
+reads the city list and bounding boxes from the `CityDefinition` assets, so no
+city list is duplicated in the script, and writes each city's files into its own
+folder under `Assets/StreamingAssets/Cities/<CODE>/` (`roads.json`, `stops.json`,
+`buildings.json`, `poi.json`, `fuel.json`). Files that already exist are skipped,
+so an interrupted run resumes where it stopped.
+
+```sh
+scripts/download_all_maps.py --list                 # what would be downloaded
+scripts/download_all_maps.py                        # all cities, all OSM layers
+scripts/download_all_maps.py --only NBO,MEL --force # selected cities, fresh copy
+scripts/download_all_maps.py --layers buildings,poi  # one or two layers only
+scripts/download_all_maps.py --overture              # also fetch Overture buildings
+```
+
+Large layers are fetched in tiles and merged, retried on the configured Overpass
+mirrors, and written atomically; a failed city does not stop the run, and the
+exit status is non-zero if anything failed. `--tiles` overrides the tile count,
+`--delay` spaces requests, and `--keep-tiles` keeps the raw responses under
+`MapData/<CODE>/tiles/`. `--overture` requires the `overturemaps` CLI (see below)
+and only downloads; convert those files in Unity. `MapData/` is git-ignored
+because the exports are large.
+
 ## Optional Overture buildings
 
 1. Open **Tools > RealBus > OSM > Import Overture Buildings**.
@@ -100,11 +125,21 @@ The current map remains flat: this is not a grade-separated bridge/tunnel system
    /tmp/realbus-overture/bin/pip install overturemaps
    ```
 
-4. Click **Copy city download command**. Run it in a terminal, replacing the first
-   `overturemaps` word with `/tmp/realbus-overture/bin/overturemaps`. Keep the
-   bounding-box argument: omitting it requests the entire building dataset.
-5. Click **Import downloaded GeoJSON…**, select the exported file, then restart
-   Play Mode. Look for `Buildings: Using Overture pack` in the Console.
+4. In the window, set **Overture CLI** to the venv binary
+   (`/tmp/realbus-overture/bin/overturemaps`).
+5. Click **Download + import ALL cities** to run the CLI once per
+   `CityDefinition` and convert each result, or **Import all files in MapData** to
+   convert exports you downloaded yourself. Raw downloads are written to
+   `MapData/<CODE>/overture-buildings.geojson`, one folder per city, and reused on
+the next run unless **Redownload existing files** is enabled; converted packs go
+   to `Assets/StreamingAssets/Cities/<CODE>/overture-buildings.json`. The batch
+   runs off the main thread with progress, a per-city log and a cancel button, so
+   the editor stays responsive. Restart Play Mode afterwards and look for
+   `Buildings: Using Overture pack` in the Console.
+
+For a single city, **Copy city download command** writes the same command to the
+clipboard, and **Import downloaded GeoJSON…** converts one file (its file picker
+opens the city's `MapData` folder).
 
 The importer accepts GeoJSON FeatureCollections with Polygon/MultiPolygon geometry,
 preserves supplied heights and per-building source metadata, and filters to the

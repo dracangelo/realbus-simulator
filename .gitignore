@@ -80,6 +80,10 @@ MemoryCaptures/
 
 # Large binary caches
 
+# Raw map downloads (Overture GeoJSON, kept tile responses)
+/MapData/
+__pycache__/
+
 
 # OS
 .DS_Store

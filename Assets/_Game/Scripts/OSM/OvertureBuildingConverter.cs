@@ -9,6 +9,19 @@ public static class OvertureBuildingConverter
     {
         if (city == null || city.minLat >= city.maxLat || city.minLon >= city.maxLon)
             throw new ArgumentException("Select a city with a valid bounding box.");
+        return ConvertGeoJson(json, city.cityCode, city.minLat, city.minLon, city.maxLat, city.maxLon,
+            out imported, out skipped);
+    }
+
+    /// <summary>
+    /// City-code and bounds overload. A batch import runs on a worker thread, where
+    /// reading a ScriptableObject is not allowed, so the values are passed as plain data.
+    /// </summary>
+    public static string ConvertGeoJson(string json, string cityCode,
+        double minLat, double minLon, double maxLat, double maxLon, out int imported, out int skipped)
+    {
+        if (string.IsNullOrWhiteSpace(cityCode) || minLat >= maxLat || minLon >= maxLon)
+            throw new ArgumentException("Select a city with a valid bounding box.");
         var root = Json.Deserialize(json) as Dictionary<string, object>;
         if (root == null || Text(root, "type") != "FeatureCollection" ||
             !root.TryGetValue("features", out var featuresValue) || !(featuresValue is List<object> features))
@@ -33,7 +46,7 @@ public static class OvertureBuildingConverter
                 // The current extrusion mesher cannot preserve courtyards. Skip
                 // holed or malformed polygons rather than covering their holes.
                 if (!(polygons[part] is List<object> rings) || rings.Count != 1 ||
-                    !(rings[0] is List<object> ring) || !TryRing(ring, city, out var points))
+                    !(rings[0] is List<object> ring) || !TryRing(ring, minLat, minLon, maxLat, maxLon, out var points))
                 { skipped++; continue; }
                 string identity = string.IsNullOrEmpty(sourceId) ? Json.Serialize(points) : sourceId + ":" + part;
                 if (!ids.Add(identity)) { skipped++; continue; }
@@ -49,7 +62,7 @@ public static class OvertureBuildingConverter
         }
         if (imported == 0) throw new FormatException("No usable footprints inside the selected city's bounds. Existing data was not changed.");
         return Json.Serialize(new Dictionary<string, object> {
-            ["generator"] = "RealBus Overture import", ["cityCode"] = city.cityCode,
+            ["generator"] = "RealBus Overture import", ["cityCode"] = cityCode,
             ["attribution"] = "Overture Maps Foundation and contributing sources; see overture_sources per building.",
             ["attribution_url"] = "https://docs.overturemaps.org/attribution/",
             ["elements"] = elements
@@ -63,7 +76,8 @@ public static class OvertureBuildingConverter
         double.TryParse(System.Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Float,
             CultureInfo.InvariantCulture, out number) && !double.IsNaN(number) && !double.IsInfinity(number);
 
-    static bool TryRing(List<object> ring, CityDefinition city, out List<object> points)
+    static bool TryRing(List<object> ring, double minLat, double minLon, double maxLat, double maxLon,
+        out List<object> points)
     {
         points = new List<object>();
         if (ring.Count < 4 || ring.Count > 2048) return false;
@@ -84,6 +98,6 @@ public static class OvertureBuildingConverter
         // Bound polygon size to protect the mobile mesh/spatial index budget.
         if (previousX != firstX || previousY != firstY || Math.Abs(area) < 1e-12 || maxX - minX > .02 || maxY - minY > .02) return false;
         double cx = (minX + maxX) * .5, cy = (minY + maxY) * .5;
-        return cx >= city.minLon && cx <= city.maxLon && cy >= city.minLat && cy <= city.maxLat;
+        return cx >= minLon && cx <= maxLon && cy >= minLat && cy <= maxLat;
     }
 }
