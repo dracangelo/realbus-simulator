@@ -71,6 +71,7 @@
     <Compile Include="Assets/_Game/Scripts/Bus/RuntimeVehiclePackDownloader.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/DynamicEventSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/BusRouteParser.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/RoadGradeBaker.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficLane.cs" />
     <Compile Include="Assets/_Game/Scripts/Util/RuntimeDistanceCuller.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/TrafficDebugHUD.cs" />
@@ -189,6 +190,7 @@
     <Compile Include="Assets/_Game/Scripts/Passengers/PassengerFeedbackSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/UIFonts.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/SceneBootstrap.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/GameClock.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CinematicAtmosphereController.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/TransmissionSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RealismTestBootstrap.cs" />
@@ -204,9 +206,11 @@
     <Compile Include="Assets/_Game/Scripts/Util/MapDownloadPolicy.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/ScheduleManager.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/ProceduralBuildingFill.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/FloatingOriginManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RouteRecoverySystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Weather/RainController.cs" />
     <Compile Include="Assets/_Game/Scripts/Debug/StopPropSpawner.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/RoadGraphFinder.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MobileControlLayoutEditor.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/BusLiveryPaint.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/BusStop.cs" />
@@ -215,6 +219,7 @@
     <Compile Include="Assets/_Game/Scripts/UI/HUDManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/GasStationForecourt.cs" />
     <Compile Include="Assets/_Game/Scripts/OSM/OSMTypes.cs" />
+    <Compile Include="Assets/_Game/Scripts/Map/StreetLightManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RoadSurfaceIndex.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/StreetTextureLibrary.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/MobilePerformanceManager.cs" />
@@ -238,6 +243,7 @@
     <Compile Include="Assets/_Game/Scripts/Map/MissionManager.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/TrafficCatalog.cs" />
     <Compile Include="Assets/_Game/Scripts/Audio/RealBusAudioManager.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/RoadGradeLookup.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/StationInteractionPanel.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/ExtendedTrafficViolationSystem.cs" />
     <Compile Include="Assets/_Game/Scripts/Traffic/AIVehicleController.cs" />
@@ -245,6 +251,8 @@
     <Compile Include="Assets/_Game/Scripts/Map/MissionDrivingMonitor.cs" />
     <Compile Include="Assets/_Game/Scripts/UI/GarageProgressionPanel.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/RouteArrowOverlay.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/RoadElevationLookup.cs" />
+    <Compile Include="Assets/_Game/Scripts/OSM/DemSampler.cs" />
     <Compile Include="Assets/_Game/Scripts/Map/CinematicColorGrade.cs" />
     <Compile Include="Assets/_Game/Scripts/Bus/VehicleDistanceLod.cs" />
     <Compile Include="Assets/_Game/Scripts/Util/SceneryLodPolicy.cs" />

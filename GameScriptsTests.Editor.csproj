@@ -73,6 +73,7 @@
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/StreamingPriorityTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusPhysicsTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/AudioSynthesisTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/GameClockTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/WorldSystemsTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/MapboxTokenRequestTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/CrowdPerformanceTests.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/OverpassDownloadPolicyTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/MapDownloadPolicyTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusRouteDataTests.cs" />
+    <Compile Include="Assets/_Game/Scripts/Tests/Editor/RoadGradeBakerTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/OfflineMapTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/BusLiveryTests.cs" />
     <Compile Include="Assets/_Game/Scripts/Tests/Editor/TrafficLaneTests.cs" />

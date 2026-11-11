@@ -30,8 +30,14 @@ public class ScheduleManager : MonoBehaviour
 
     void Update()
     {
-        // Advance game clock
-        currentTimeMinutes += (Time.deltaTime / Mathf.Max(0.01f, secondsPerGameMinute));
+        // Advance the SimClock once per frame (section 4.3). Physics and input
+        // always use real time; SimClock drives timetable, scoring and day/night.
+        GameClock.Tick();
+
+        // Advance game clock using the SimClock (section 4). During manual driving
+        // SimClock equals real time; during autopilot, layover and dwell it runs
+        // at x4-x30 so the player doesn't sit through empty road or stopped time.
+        currentTimeMinutes += (float)GameClock.SimDeltaTime / 60f;
 
         // Format time string
         int hours24 = Mathf.FloorToInt(currentTimeMinutes / 60f) % 24;

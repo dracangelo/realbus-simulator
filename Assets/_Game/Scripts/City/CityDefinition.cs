@@ -51,6 +51,12 @@ public class CityDefinition : ScriptableObject
     public int[] rainySeasonMonths = { 3, 4, 5, 10, 11, 12 };
     public int[] snowSeasonMonths = { 12, 1, 2 };
 
+    [Header("Route Timing Calibration (4.4)")]
+    [Tooltip("Multiplier applied to simulated segment travel times for this city. " +
+             "Urban buses average ~12-20 km/h including stops; calibrate against " +
+             "real timetables. Nairobi city centre typically ~15 km/h effective.")]
+    [Range(0.5f, 3f)] public float speedFactor = 1f;
+
     public string GetRoadsPath()
     {
         return System.IO.Path.Combine(

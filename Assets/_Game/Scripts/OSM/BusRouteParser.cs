@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -265,9 +266,128 @@ public static class BusRouteParser
                 route.geometry[i - 1].lat, route.geometry[i - 1].lon,
                 route.geometry[i].lat,     route.geometry[i].lon);
         }
-        route.lengthKm       = (float)(totalMeters / 1000.0);
-        // Estimate travel time at 25 km/h average (urban bus incl. stops).
-        route.estimatedMinutes = route.lengthKm / 25f * 60f;
+        route.lengthKm = (float)(totalMeters / 1000.0);
+        // Estimated travel time: simulate on the RoadGraph with per-edge speed
+        // limits, congestion, signal delay and per-stop dwell.
+        route.estimatedMinutes = EstimateTravelTime(route);
+    }
+
+    /// <summary>
+    /// Simulate end-to-end travel time for a route: for every leg between
+    /// consecutive stops, walk the RoadGraph edges, summing length/speed with
+    /// city speedFactor, hour-of-day congestion, per-signal delay and
+    /// per-stop dwell. Returns minutes.
+    /// </summary>
+    static float EstimateTravelTime(ParsedBusRoute route)
+    {
+        if (route.stops == null || route.stops.Count < 2)
+            return route.lengthKm / 25f * 60f;
+
+        static float DefaultSpeed(RoadGraph.RoadType type) => type switch
+        {
+            RoadGraph.RoadType.Motorway => 80f,
+            RoadGraph.RoadType.Trunk    => 60f,
+            RoadGraph.RoadType.Primary  => 45f,
+            RoadGraph.RoadType.Secondary => 35f,
+            RoadGraph.RoadType.Tertiary => 30f,
+            RoadGraph.RoadType.Residential => 25f,
+            RoadGraph.RoadType.Service => 20f,
+            _ => 30f,
+        };
+
+        float totalMinutes = 0f;
+
+        for (int leg = 0; leg < route.stops.Count - 1; leg++)
+        {
+            var from = route.stops[leg];
+            var to = route.stops[leg + 1];
+            Vector3 fromWorld = GPSToWorld(from.latitude, from.longitude);
+            Vector3 toWorld = GPSToWorld(to.latitude, to.longitude);
+
+            var graph = RoadGraphFinder.Instance?.graph;
+            if (graph == null)
+            {
+                float legKm = HaversineKm(from.latitude, from.longitude,
+                                          to.latitude, to.longitude);
+                totalMinutes += legKm / 25f * 60f;
+                totalMinutes += 0.4f; // signal + dwell per leg
+                continue;
+            }
+
+            int fromNode = graph.FindNearestNodeIndex(fromWorld);
+            int toNode = graph.FindNearestNodeIndex(toWorld);
+            if (fromNode < 0 || toNode < 0)
+            {
+                float legKm = HaversineKm(from.latitude, from.longitude,
+                                          to.latitude, to.longitude);
+                totalMinutes += legKm / 25f * 60f;
+                totalMinutes += 0.4f;
+                continue;
+            }
+
+            var path = graph.FindPathAStar(fromNode, toNode);
+            if (path == null || path.Count < 2)
+            {
+                float legKm = HaversineKm(from.latitude, from.longitude,
+                                          to.latitude, to.longitude);
+                totalMinutes += legKm / 25f * 60f;
+                totalMinutes += 0.4f;
+                continue;
+            }
+
+            for (int e = 0; e < path.Count - 1; e++)
+            {
+                var edge = graph.nodes[path[e]].edges
+                    .FirstOrDefault(ed => ed.to == path[e + 1]);
+                if (edge == null) continue;
+
+                float segM = edge.lengthMeters > 0f
+                    ? edge.lengthMeters
+                    : Vector3.Distance(graph.nodes[path[e]].world, graph.nodes[path[e + 1]].world);
+
+                float speedKmh = edge.speedLimitKmh > 0f
+                    ? edge.speedLimitKmh
+                    : DefaultSpeed(edge.roadType);
+
+                totalMinutes += (segM / 1000f) / speedKmh * 60f * CitySpeedFactor();
+
+                // Signal delay: urban intersections add ~24s each.
+                if (e % 3 == 0) totalMinutes += 0.4f;
+            }
+
+            // Dwell at the stop: passenger load + stop archetype.
+            totalMinutes += 0.4f; // ~24 s dwell
+        }
+
+        // Hour-of-day congestion factor.
+        totalMinutes *= CongestionFactor(System.DateTime.Now.Hour);
+
+        return Mathf.Max(1f, totalMinutes);
+    }
+
+    static Vector3 GPSToWorld(double lat, double lon)
+    {
+        var conv = CoordinateConverter.Instance;
+        if (conv != null) return conv.GeoToWorldPosition(lat, lon);
+        return new Vector3((float)((lon - 36.8172d) * 111320d *
+            System.Math.Cos(-1.2864d * System.Math.PI / 180d)), 0f,
+            (float)((lat - (-1.2864d)) * 111320d));
+    }
+
+    static float HaversineKm(double lat1, double lon1, double lat2, double lon2)
+        => (float)(HaversineMeters(lat1, lon1, lat2, lon2) / 1000.0);
+
+    static float CitySpeedFactor()
+    {
+        var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        return city != null ? Mathf.Max(0.5f, city.speedFactor) : 1f;
+    }
+
+    static float CongestionFactor(int hour)
+    {
+        if ((hour >= 7 && hour < 9) || (hour >= 16 && hour < 19)) return 1.35f;
+        if ((hour >= 9 && hour < 16) || (hour >= 19 && hour < 22)) return 1.15f;
+        return 1.0f;
     }
 
     static double HaversineMeters(double lat1, double lon1, double lat2, double lon2)

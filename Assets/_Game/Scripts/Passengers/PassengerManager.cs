@@ -97,6 +97,8 @@ public class PassengerManager : MonoBehaviour
     private float lastSpeedKmh = 0f;
     private float longitudinalAcceleration = 0f;
     private float currentLongitudinalG = 0f;
+    /// <summary>Grade-derived acceleration component (m/s²) felt by standing passengers.</summary>
+    private float roadGradeAccelG = 0f;
     private bool hadElderlyBoarding = false;
     private float accessibilityResetTimer = -1f;
     private float lastAlightingTimeUnits = 0f;
@@ -259,18 +261,25 @@ public class PassengerManager : MonoBehaviour
             longitudinalAcceleration = (speedMs - lastSpeedMs) / Time.fixedDeltaTime;
         currentLongitudinalG = Mathf.Abs(longitudinalAcceleration) / 9.81f;
         lastSpeedKmh = busController.currentSpeedKmh;
+
+        // Section 3.4: passengers lean into the grade even at constant speed — a
+        // standing passenger feels uphill as a backward pull and downhill as a
+        // forward pull, so add the baked road grade as a standing-sway term.
+        roadGradeAccelG = busController.CurrentRoadGrade * 9.81f * 0.35f;
     }
 
     void UpdateOnboardPassengerDynamics()
     {
         if (onboardPassengers.Count == 0) return;
 
-        // Standing passengers sway opposite bus acceleration/deceleration.
+        // Standing passengers sway opposite bus acceleration/deceleration, plus
+        // the grade pull: uphill leans them back, downhill leans them forward.
+        float swayAccel = -longitudinalAcceleration + roadGradeAccelG;
         foreach (var passenger in onboardPassengers)
         {
             if (passenger == null) continue;
             if (!passenger.isSeated)
-                passenger.UpdateStandingSway(-longitudinalAcceleration, Time.fixedDeltaTime);
+                passenger.UpdateStandingSway(swayAccel, Time.fixedDeltaTime);
 
             if (longitudinalAcceleration < -0.5f * 9.81f)
             {

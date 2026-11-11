@@ -140,10 +140,11 @@ public class FuelSystem : MonoBehaviour
 
     public float GetRoadGradientFactor()
     {
-        if (busController == null)
-            return 1f;
-
-        float slope = Mathf.Clamp(busController.transform.forward.y, -0.18f, 0.18f);
+        // Use the baked road grade (section 3.3 / 3.4) instead of the rough
+        // forward-vector approximation, so uphill sections cost more fuel and
+        // downhill sections recover some.
+        float grade = RoadGradeLookup.GetGradeAtBus();
+        float slope = Mathf.Clamp(grade, -0.18f, 0.18f);
         return Mathf.Clamp(1f + (slope * 2.1f), 0.82f, 1.38f);
     }
 

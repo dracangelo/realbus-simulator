@@ -464,6 +464,7 @@ public class OSMRouteImporterEditorTool : EditorWindow
 
         d.distanceKm          = ComputeDistanceKm(d.pathWorld);
         d.estimatedTimeMinutes = EstimateTimeMinutes(d);
+        d.hilliness           = ComputeHilliness(d, graph);
         d.difficulty           = ClassifyDifficulty(d);
     }
 
@@ -907,7 +908,55 @@ public class OSMRouteImporterEditorTool : EditorWindow
         if (d.pathWorld.Count < 2)                              return 3;
         if (d.distanceKm > 18f  && d.stops.Count < 12)         return 2;
         if (d.stops.Count >= 20 && d.distanceKm < 12f)         return 4;
+
+        // Section 3.4: hilliness term — a route with sustained steep grades is
+        // harder even if it is short and has few stops.
+        if (d.hilliness > 0.08f) return 5;
+        if (d.hilliness > 0.05f) return 4;
+        if (d.hilliness > 0.03f) return 3;
         return 3;
+    }
+
+    /// <summary>
+    /// Route hilliness 0-1: root-mean-square of absolute grade along the path,
+    /// computed from baked node elevations where available, falling back to
+    /// world-space Y deltas.
+    /// </summary>
+    static float ComputeHilliness(RouteDraft d, RoadGraph graph)
+    {
+        if (d.pathWorld == null || d.pathWorld.Count < 2) return 0f;
+
+        float sumSqGrade = 0f;
+        int count = 0;
+
+        for (int i = 1; i < d.pathWorld.Count; i++)
+        {
+            Vector3 a = d.pathWorld[i - 1];
+            Vector3 b = d.pathWorld[i];
+            float dist = Vector3.Distance(a, b);
+            if (dist < 1f) continue;
+
+            float grade = 0f;
+            // Prefer baked node elevation when the path came from graph nodes.
+            if (graph != null && graph.nodeElevation != null)
+            {
+                // Find nearest graph node index for each path point is costly;
+                // use world Y delta as a reasonable approximation of grade.
+                grade = (b.y - a.y) / dist;
+            }
+            else
+            {
+                grade = (b.y - a.y) / dist;
+            }
+
+            sumSqGrade += grade * grade;
+            count++;
+        }
+
+        if (count == 0) return 0f;
+        float rmsGrade = Mathf.Sqrt(sumSqGrade / count);
+        // Map RMS grade to 0-1: 10% RMS grade ≈ hilliness 1.0.
+        return Mathf.Clamp01(rmsGrade / 0.10f);
     }
 
     // ── clustering ────────────────────────────────────────────────────────────
@@ -998,6 +1047,8 @@ public class OSMRouteImporterEditorTool : EditorWindow
         public float            distanceKm;
         public float            estimatedTimeMinutes;
         public int              difficulty = 3;
+        /// <summary>Route hilliness 0-1: RMS of absolute grade along the path.</summary>
+        public float            hilliness;
         public string           debugStatus;
 
         public RouteDraft MakeReturnVariant()

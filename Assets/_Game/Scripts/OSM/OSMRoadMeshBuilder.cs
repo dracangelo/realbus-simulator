@@ -38,6 +38,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
     public static OSMRoadMeshBuilder Instance { get; private set; }
 
+    /// <summary>Root object containing all built road mesh / collider objects.</summary>
+    public GameObject RoadsParent => roadsParent;
+
     [Header("Materials")]
     public Material roadMaterial;
     public Material pavementMaterial;
@@ -165,6 +168,12 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         while (OSMLoader.Instance == null || !OSMLoader.Instance.dataLoaded || GPSManager.Instance == null)
             yield return new WaitForSeconds(0.5f);
 
+        // Section 3.3: baked elevations from the city bundle (grade bake ran at
+        // import time). Runtime never calls a DEM service; missing bundle =
+        // flat road offset.
+        var city = CityManager.Instance != null ? CityManager.Instance.activeCity : null;
+        RoadElevationLookup.LoadBundle(city);
+
         Debug.Log("OSM: Building road meshes...");
         EnsureRoadVisualPrefabLoaded();
         BuildRoads(OSMLoader.Instance.osmData);
@@ -188,6 +197,8 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
         roadsParent = new GameObject("OSM_Roads");
         roadsParent.transform.position = Vector3.zero;
+        // Section 3.3: road colliders shift with the floating origin.
+        FloatingOriginManager.Register(roadsParent.transform);
 
         Vector3 spawnFocus = ResolveSpawnFocus(data);
         float immediateRadiusSq = 350f * 350f;
@@ -265,7 +276,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         {
             if (!data.nodeMap.TryGetValue(nodeRef, out var node)) continue;
             Vector3 worldPos = GPSManager.Instance.GpsToWorld(node.lat, node.lon);
-            worldPos.y = roadYOffset;
+            // Section 3.3: ribbon follows the baked grade profile where available.
+            float? bakedElevation = RoadElevationLookup.GetElevation(node.lat, node.lon);
+            worldPos.y = bakedElevation ?? roadYOffset;
             points.Add(worldPos);
             sourceNodeIds.Add(nodeRef);
         }
@@ -337,6 +350,9 @@ public class OSMRoadMeshBuilder : MonoBehaviour
 
         if (autoGenerateMedianBarriers && way.ShouldGenerateMedianBarrier())
             BuildMedianBarrier(roadObj.transform, points, way.GetRoadWidth(), way.GetOneWayDirectionSign(), way.id);
+
+        // Section 3.4: street lights along the road, on at night.
+        StreetLightManager.Instance?.PlaceLightsAlongRoad(points, way, width);
 
         return true;
     }
@@ -980,7 +996,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             if (forward.sqrMagnitude < .001f) forward = Vector3.forward;
             Vector3 side = RoadJoinOffset(points, i, offset);
             Vector3 basePoint = points[i];
-            basePoint.y = roadYOffset + boundaryHeight;
+            basePoint.y = points[i].y + boundaryHeight;
             left[i] = basePoint - side;
             right[i] = basePoint + side;
         }
@@ -1022,7 +1038,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
     /// A gravel/dirt verge strip either side of the asphalt, between the road edge
     /// and the kerb. It is drawn just below the ribbon so the seam where a road meets
     /// the map tile is broken up by a rough, dirtier surface rather than a hard line.
-    /// No collider: the driving surface stays the road width.
+    /// Shoulders conform to the ribbon: where terrain and road disagree, the road wins.
     /// </summary>
     void BuildRoadShoulders(List<Vector3> points, float roadWidth, long wayId)
     {
@@ -1039,7 +1055,7 @@ public class OSMRoadMeshBuilder : MonoBehaviour
             // the map tile. The old 5 mm left the verge fighting the tile at
             // distance, which showed as flickering dirt beside the road, while
             // dropping it further would open a visible step at the kerb.
-            basePoint.y = roadYOffset - 0.01f;
+            basePoint.y = points[i].y - 0.01f;
             left[i] = basePoint - side;
             right[i] = basePoint + side;
         }
@@ -1068,6 +1084,13 @@ public class OSMRoadMeshBuilder : MonoBehaviour
         renderer.sharedMaterial = ResolveShoulderMaterial();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         renderer.receiveShadows = true;
+
+        // Section 3.3: colliders cover the road ribbon and shoulders only —
+        // far terrain stays visual-only (Tier 2 / Tier 3 tile LOD).
+        var shoulderCollider = shoulder.AddComponent<MeshCollider>();
+        shoulderCollider.sharedMesh = combined;
+        var shoulderMaterial = ResolveRoadPhysicsMaterial();
+        if (shoulderMaterial != null) shoulderCollider.sharedMaterial = shoulderMaterial;
     }
 
     Material ResolveShoulderMaterial()
@@ -1117,8 +1140,11 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 {
                     float usableLength = Vector3.Distance(a, b) * (run.y - run.x);
                     if (usableLength < .5f) continue;
-                    Vector3 center = Vector3.Lerp(a, b, (run.x + run.y) * .5f);
-                    center.y = roadYOffset + colliderHeight * .5f;
+                    float t = (run.x + run.y) * .5f;
+                    Vector3 center = Vector3.Lerp(a, b, t);
+                    // Section 3.3: boundary colliders follow the graded profile,
+                    // not the flat road offset.
+                    center.y = Mathf.Lerp(points[i - 1].y, points[i].y, t) + colliderHeight * .5f;
                     CreateBoundaryCollider(root.transform, $"Edge_{side}_{i}", center, edgeRotation, colliderWidth, colliderHeight, usableLength);
                 }
             }
@@ -1310,8 +1336,13 @@ public class OSMRoadMeshBuilder : MonoBehaviour
                 // carriageway, which is the negation of the shared kerb-side sign.
                 float medianSide = -TrafficLane.SideSign(leftTraffic) *
                     (directionSign < 0 ? -1f : 1f);
-                Vector3 position = from + direction * distance + Vector3.Cross(Vector3.up, direction) * medianSide * (roadWidth * .5f + .4f);
-                position.y = roadYOffset + medianBarrierLift;
+                // Follow the baked road elevation: points already carry the grade
+                // profile (section 3.3), so the barrier sits on the road surface
+                // even on hills and vertical curves.
+                float t = distance / Mathf.Max(1f, segmentLength);
+                Vector3 position = from + direction * distance +
+                    Vector3.Cross(Vector3.up, direction) * medianSide * (roadWidth * .5f + .4f);
+                position.y = Mathf.Lerp(from.y, to.y, t) + medianBarrierLift;
                 if (SurfaceIndex.Contains(position, Mathf.Max(3f, medianBarrierSpacingMeters), wayId)) continue;
 
                 var barrier = Instantiate(medianBarrierPrefab, position, rotation, parent);

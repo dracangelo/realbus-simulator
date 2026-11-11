@@ -944,7 +944,15 @@ public class AIVehicleController : MonoBehaviour
             case VehicleType.Emergency: typeFactor = 1.25f; break;
             default: typeFactor = 1f; break;
         }
-        return speedLimit * typeFactor * Mathf.Clamp(desiredSpeedFactor, 0.8f, 1.1f);
+
+        // Section 3.4: grade-adjusted AI speed. Vehicles slow on uphill grades and
+        // may pick up a little on downhills, bounded so they never exceed the limit.
+        float grade = RoadGradeLookup.GetGrade(transform.position);
+        float gradeFactor = 1f + Mathf.Clamp(grade, -0.15f, 0.05f);
+        if (vehicleType == VehicleType.Truck || vehicleType == VehicleType.Bus)
+            gradeFactor = 1f + Mathf.Clamp(grade, -0.25f, 0.02f); // heavy vehicles lose more uphill
+
+        return speedLimit * typeFactor * Mathf.Clamp(desiredSpeedFactor, 0.8f, 1.1f) * gradeFactor;
     }
 
     float ApplyTrafficAndFollowingRules(float desiredSpeedKmh)

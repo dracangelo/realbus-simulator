@@ -44,6 +44,14 @@ public class MissionManager : MonoBehaviour
     public int countdownSeconds = 5;
     [SerializeField] int currentCountdownValue;
 
+    [Header("Autopilot (4.3)")]
+    [Tooltip("When enabled, the bus drives itself between stops and the SimClock runs accelerated during layover and dwell so the player doesn't sit through empty road or stopped time.")]
+    public bool autopilotEnabled = false;
+    [Tooltip("SimClock multiplier during autopilot driving, layover and dwell (4-30). Manual driving always runs at x1.")]
+    [Range(1f, 30f)] public float autopilotSimSpeed = 8f;
+    /// <summary>True when autopilot is actively driving (between stops or during accelerated dwell).</summary>
+    public bool AutopilotActive { get; private set; }
+
     private Vector3 nextStopWorldPos;
     bool missionStarting;
     public bool isProcessingStop { get; private set; } = false;
@@ -410,6 +418,13 @@ public class MissionManager : MonoBehaviour
         distanceToNextStop = Vector3.Distance(
             busController.transform.position, nextStopWorldPos);
 
+        // Section 4.3: autopilot accelerates SimClock during driving, layover
+        // and dwell so the player doesn't sit through empty road or stopped time.
+        bool driving = !isProcessingStop && busController.currentSpeedKmh > 2f;
+        bool shouldAccelerate = autopilotEnabled && driving;
+        AutopilotActive = shouldAccelerate;
+        GameClock.SetSimSpeed(shouldAccelerate ? autopilotSimSpeed : 1f);
+
         UpdateStopApproachUI();
         HandleDoorOpenRequest();
     }
@@ -591,6 +606,8 @@ public class MissionManager : MonoBehaviour
         ScoreTracker.Instance?.EndMission();
         busController.ServiceBrakeInterlock = true;
         routeActive = false;
+        AutopilotActive = false;
+        GameClock.SetRealTime();
         SetMissionState(MissionState.Completed);
         if (StopApproachUI.Instance != null)
             StopApproachUI.Instance.HideApproach();
@@ -633,6 +650,8 @@ public class MissionManager : MonoBehaviour
         if (PassengerManager.Instance != null) PassengerManager.Instance.doorsOpen = false;
         routeActive = false;
         isProcessingStop = false;
+        AutopilotActive = false;
+        GameClock.SetRealTime();
         earlyDepartureRequested = false;
         pendingDoorOpenRequest = false;
         ResetGuidancePath();

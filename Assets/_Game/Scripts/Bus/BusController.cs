@@ -49,11 +49,24 @@ public class BusController : MonoBehaviour
     private bool parkingBrakeActive = false;
     [Tooltip("Releases the parking brake when the driver applies throttle from a standstill. Route starts drop the bus in a depot bay with the brake on, so without this the bus cannot be driven out until the park-brake key is found.")]
     public bool releaseParkingBrakeOnThrottle = true;
+    [Tooltip("Automatically engage the retarder when descending steeper than this grade (-0.06 = -6%) and above this speed.")]
+    [Range(-0.2f, 0f)] public float autoRetarderEngageGrade = -0.06f;
+    [Tooltip("Speed (km/h) above which the auto-retarder will engage on descents.")]
+    [Min(0f)] public float autoRetarderMinSpeedKmh = 15f;
 
     [Header("Brake Fade")]
     public float brakeHeat = 0f;
     public float maxBrakeHeat = 100f;
+    [Tooltip("Extra brake heat per second when braking on a descent (grade below this value).")]
+    [Range(-0.2f, 0f)] public float descentBrakeFadeGrade = -0.04f;
+    [Range(0f, 5f)] public float descentBrakeFadeMultiplier = 2f;
     private float brakeEffectiveness = 1f;
+
+    [Header("Hill Start")]
+    [Tooltip("When stopped on an uphill steeper than this grade, hold the bus stationary for this many seconds after throttle is applied so it does not roll back.")]
+    [Range(0f, 0.2f)] public float hillStartHoldGrade = 0.04f;
+    [Range(0f, 3f)] public float hillStartHoldSeconds = 1.5f;
+    private float hillStartHoldTimer;
 
     [Header("Aerodynamics")]
     public float dragCoefficient = 0.65f;
@@ -93,6 +106,8 @@ public class BusController : MonoBehaviour
     public bool RetarderActive => retarderActive;
     public bool ParkingBrakeActive => parkingBrakeActive;
     public Rigidbody Rigidbody => rb;
+    /// <summary>Current road grade at the bus position (rise / run, -1..1), baked from the city grade profile.</summary>
+    public float CurrentRoadGrade { get; private set; }
 
     public void Teleport(Vector3 position, Quaternion rotation)
     {
@@ -212,6 +227,10 @@ public class BusController : MonoBehaviour
         if (rb == null || engineData == null || transmissionData == null)
             return;
 
+        // Section 3.4: read the baked road grade once per physics step so every
+        // downstream system (retarder, brake fade, hill start, HUD, fuel) agrees.
+        CurrentRoadGrade = RoadGradeLookup.GetGradeAtBus();
+
         // Enforced here as well as in Update: a mobile control that writes the input
         // fields directly must not be able to drive the bus while the loading card
         // still covers the world. FixedUpdate runs after every Update, so this is the
@@ -242,8 +261,44 @@ public class BusController : MonoBehaviour
         ApplyThrottle();
         ApplySteering();
         ApplyBrakes();
+
+        // Section 3.4: automatic retarder engagement on descents. When the bus is
+        // rolling downhill steeper than the threshold and above the minimum speed,
+        // the retarder engages without driver input so the bus does not overspeed.
+        if (!retarderActive &&
+            currentSpeedKmh > autoRetarderMinSpeedKmh &&
+            CurrentRoadGrade < autoRetarderEngageGrade)
+        {
+            retarderActive = true;
+        }
+        else if (retarderActive &&
+                 (currentSpeedKmh <= autoRetarderMinSpeedKmh * 0.5f ||
+                  CurrentRoadGrade > autoRetarderEngageGrade + 0.02f))
+        {
+            retarderActive = false;
+        }
+
+        ApplyRetarder();
         ApplyRetarder();
         ApplyParkingBrake();
+
+        // Section 3.4: hill-start hold. When stopped on an uphill steeper than the
+        // threshold and the driver applies throttle, hold the bus stationary for
+        // hillStartHoldSeconds so it does not roll backward before torque builds.
+        if (CurrentRoadGrade > hillStartHoldGrade &&
+            currentSpeedKmh < 1f &&
+            throttleInput > 0.1f &&
+            !parkingBrakeActive)
+        {
+            hillStartHoldTimer = hillStartHoldSeconds;
+        }
+        if (hillStartHoldTimer > 0f)
+        {
+            hillStartHoldTimer -= Time.fixedDeltaTime;
+            foreach (var wheel in allWheels)
+                if (wheel != null) wheel.brakeTorque = Mathf.Max(wheel.brakeTorque, maxBrakeTorque);
+        }
+
         ApplyAntiRoll();
         UpdateKneelingSuspension();
         ApplyAerodynamics();
@@ -382,6 +437,13 @@ public class BusController : MonoBehaviour
     {
         float rate = brakeInput > 0.5f && currentSpeedKmh > 1f
             ? maxBrakeHeat / 60f * Mathf.Clamp01(brakeInput) : -maxBrakeHeat / 60f;
+
+        // Section 3.4: brake fade on descents. Holding the service brake on a
+        // downhill builds heat faster, so a long descent can fade the brakes
+        // unless the driver uses the retarder instead.
+        if (brakeInput > 0.5f && CurrentRoadGrade < descentBrakeFadeGrade)
+            rate *= descentBrakeFadeMultiplier;
+
         brakeHeat = Mathf.Clamp(brakeHeat + rate * Time.fixedDeltaTime, 0f, Mathf.Max(1f, maxBrakeHeat));
         brakeEffectiveness = Mathf.Lerp(1f, 0.7f, brakeHeat / Mathf.Max(1f, maxBrakeHeat));
     }

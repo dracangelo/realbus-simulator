@@ -30,7 +30,7 @@ public class HUDManager : MonoBehaviour
     Canvas canvas;
     GameObject safeRoot;
     TextMeshProUGUI speedText, gearText, nextStopText, etaText, guidanceText, scheduleText;
-    TextMeshProUGUI passengerText, fuelText, temperatureText;
+    TextMeshProUGUI passengerText, fuelText, temperatureText, gradeText;
     TextMeshProUGUI destinationText, routeBadgeText, routeNameText, clockText, weatherText;
     Image speedNeedle, fuelNeedle, temperatureNeedle, progressFill, schedulePill, fuelBarFill;
     Image parkLamp, retarderLamp, doorLamp, alertLamp;
@@ -170,6 +170,17 @@ public class HUDManager : MonoBehaviour
             shownPax = pax;
             shownCapacity = capacity;
             passengerText.text = $"{PassengerFeedbackSystem.MoodIcon(passengers != null ? passengers.averageSatisfaction : 1f)}  PASSENGERS  {pax}/{capacity}";
+        }
+
+        // Section 3.4: gradient indicator on the HUD.
+        if (gradeText != null)
+        {
+            float gradePercent = bus.CurrentRoadGrade * 100f;
+            int gradeValue = Mathf.RoundToInt(gradePercent);
+            string sign = gradeValue >= 0 ? "+" : "";
+            string gradeLabel = $"GRADE {sign}{gradeValue}%";
+            gradeText.text = gradeLabel;
+            gradeText.color = Mathf.Abs(gradeValue) >= 6 ? UITheme.Error : UITheme.TextSecondary;
         }
 
         UpdateIndicatorLamps();
@@ -437,6 +448,10 @@ public class HUDManager : MonoBehaviour
         speedNeedle = Needle("SpeedNeedle", speedPanel, 74f, UITheme.Accent);
         gearText = Text("Gear", speedPanel, "D", 26, TextAlignmentOptions.Center, new Vector2(0f, -64f), new Vector2(64f, 34f));
         gearText.color = UITheme.Accent;
+
+        // Section 3.4: road grade indicator showing the baked grade at the bus.
+        gradeText = Text("Grade", speedPanel, "GRADE 0.0%", 18, TextAlignmentOptions.Center, new Vector2(0f, -100f), new Vector2(80f, 24f));
+        gradeText.color = UITheme.TextSecondary;
 
         BuildIndicatorStrip();
     }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 /// <summary>
@@ -55,12 +57,28 @@ public class RoadGraph
         /// <summary>True when the way has a single lane in total, so both directions
         /// use the same centred lane instead of inventing a half each.</summary>
         public bool     sharedLane;
+        /// <summary>True when the OSM way is tagged <c>bridge=yes</c>. The deck
+        /// elevation must be interpolated between structure ends, not sampled
+        /// from the DEM (which sees the ground underneath).</summary>
+        public bool     isBridge;
+        /// <summary>True when the OSM way is tagged <c>tunnel=yes</c>. Same
+        /// handling as bridges: interpolate between the portal elevations.</summary>
+        public bool     isTunnel;
+        /// <summary>Horizontal length of the edge in metres.</summary>
+        public float    lengthMeters;
+        /// <summary>Baked grade profile (section 3.3): world-space Y elevations
+        /// sampled from <c>from</c> to <c>to</c> at
+        /// <see cref="GradeProfile.intervalMeters"/>, smoothed and clamped.
+        /// Null until <see cref="RoadGradeBaker.Bake"/> has run.</summary>
+        public GradeProfile gradeProfile;
     }
 
     // ── Storage ────────────────────────────────────────────────────────
 
     public readonly List<Node> nodes = new();
     float fastestSpeedMs = 25f;
+    /// <summary>Baked elevation per node (world-space Y), aligned with <see cref="nodes"/>.</summary>
+    public float[] nodeElevation;
     readonly Dictionary<long, int> osmNodeIndex = new();
 
     // Deduplication key: quantised lat/lon → node index.
@@ -247,11 +265,13 @@ public class RoadGraph
                 int n = graph.GetOrCreateNode(p.lat, p.lon, converter, nodeId);
                 if (prev >= 0 && n != prev)
                 {
+                    bool isBridge = elem.tags.TryGetValue("bridge", out var bridge) && bridge == "yes";
+                    bool isTunnel = elem.tags.TryGetValue("tunnel", out var tunnel) && tunnel == "yes";
                     bool reverse = elem.tags.TryGetValue("oneway", out var direction) && direction == "-1";
                     graph.AddEdge(reverse ? n : prev, reverse ? prev : n, speed, roadType,
-                        oneWay ? totalLanes : forwardLanes, laneWidth, oneWay, sharedLane);
+                        oneWay ? totalLanes : forwardLanes, laneWidth, oneWay, sharedLane, isBridge, isTunnel);
                     if (!oneWay)
-                        graph.AddEdge(n, prev, speed, roadType, backwardLanes, laneWidth, false, sharedLane);
+                        graph.AddEdge(n, prev, speed, roadType, backwardLanes, laneWidth, false, sharedLane, isBridge, isTunnel);
                 }
                 prev = n;
             }
@@ -323,7 +343,8 @@ public class RoadGraph
 
     // ── Private: edge management ───────────────────────────────────────
 
-    void AddEdge(int from, int to, float speedKmh, RoadType type, int laneCount, float laneWidth, bool oneWay, bool sharedLane = false)
+    void AddEdge(int from, int to, float speedKmh, RoadType type, int laneCount, float laneWidth,
+        bool oneWay, bool sharedLane = false, bool isBridge = false, bool isTunnel = false)
     {
         if (!ValidNode(from) || !ValidNode(to)) return;
 
@@ -342,7 +363,10 @@ public class RoadGraph
             laneCount     = Mathf.Clamp(laneCount, 1, 4),
             laneWidth     = Mathf.Clamp(laneWidth, 2.6f, 4.2f),
             oneWay        = oneWay,
-            sharedLane    = sharedLane
+            sharedLane    = sharedLane,
+            isBridge      = isBridge,
+            isTunnel      = isTunnel,
+            lengthMeters  = distM
         });
     }
 
@@ -552,5 +576,210 @@ public class RoadGraph
             _pos[_heap[a].node] = a;
             _pos[_heap[b].node] = b;
         }
+    }
+    // ── Section 3.3: baked grade profiles and city-bundle persistence ──────
+
+    const string BundleFileName = "roads.graph.json";
+
+    /// <summary>
+    /// Writes nodes, edges and baked grade profiles to the city bundle so the
+    /// runtime can rebuild the graph (and its elevations) without ever calling
+    /// a DEM service.
+    /// </summary>
+    public bool SaveToCityBundle(CityDefinition city)
+    {
+        if (city == null)
+        {
+            Debug.LogWarning("[RoadGraph] SaveToCityBundle: no city.");
+            return false;
+        }
+
+        var bundle = new RoadGraphBundle { cityCode = city.cityCode ?? "UNKNOWN" };
+
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            var node = nodes[i];
+            bundle.nodes.Add(new BundleNode
+            {
+                index = i,
+                lat = (float)node.lat,
+                lon = (float)node.lon,
+                worldX = node.world.x,
+                worldY = node.world.y,
+                worldZ = node.world.z,
+                elevation = nodeElevation != null && i < nodeElevation.Length ? nodeElevation[i] : 0f,
+            });
+        }
+
+        foreach (var node in nodes)
+        foreach (var edge in node.edges)
+        {
+            bundle.edges.Add(new BundleEdge
+            {
+                from = edge.from,
+                to = edge.to,
+                isBridge = edge.isBridge,
+                isTunnel = edge.isTunnel,
+                lengthMeters = edge.lengthMeters,
+                gradeProfile = edge.gradeProfile,
+            });
+        }
+
+        try
+        {
+            RuntimeCityContentStore.Write(city, BundleFileName, JsonUtility.ToJson(bundle, true));
+            Debug.Log($"[RoadGraph] Saved city bundle: {bundle.nodes.Count} nodes, {bundle.edges.Count} edges.");
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"[RoadGraph] Failed to save city bundle: {exception.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>Reads the previously saved road graph bundle, or null when none exists.</summary>
+    public static RoadGraphBundle LoadCityBundle(CityDefinition city)
+    {
+        if (city == null) return null;
+
+        string path = RuntimeCityContentStore.ResolveReadPath(city, BundleFileName);
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
+
+        string json;
+        try { json = File.ReadAllText(path); }
+        catch (IOException exception)
+        {
+            Debug.LogWarning($"[RoadGraph] Could not read city bundle {path}: {exception.Message}");
+            return null;
+        }
+        if (string.IsNullOrWhiteSpace(json)) return null;
+
+        try { return JsonUtility.FromJson<RoadGraphBundle>(json); }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[RoadGraph] Malformed city bundle {path}: {exception.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Rehydrates a <see cref="RoadGraph"/> (nodes, edges, grade profiles and
+    /// node elevations) from a previously saved city bundle. The result is
+    /// suitable for elevation lookups; travel costs are re-estimated.
+    /// </summary>
+    public static RoadGraph LoadFromCityBundle(CityDefinition city, CoordinateConverter converter)
+    {
+        var bundle = LoadCityBundle(city);
+        if (bundle == null || bundle.nodes == null || bundle.nodes.Count == 0) return null;
+
+        var graph = new RoadGraph();
+        var nodes = new Node[bundle.nodes.Count];
+
+        for (int i = 0; i < bundle.nodes.Count; i++)
+        {
+            var source = bundle.nodes[i];
+            Vector3 world = converter != null
+                ? converter.GeoToWorldPosition(source.lat, source.lon)
+                : new Vector3(source.worldX, source.worldY, source.worldZ);
+
+            var node = new Node { index = i, lat = source.lat, lon = source.lon, world = world };
+            nodes[i] = node;
+            graph.nodes.Add(node);
+            graph._coordIndex[((long)System.Math.Round(source.lat * 1e7),
+                              (long)System.Math.Round(source.lon * 1e7))] = i;
+        }
+
+        foreach (var source in bundle.edges)
+        {
+            if (source.from < 0 || source.from >= nodes.Length ||
+                source.to < 0 || source.to >= nodes.Length) continue;
+
+            float distance = Vector3.Distance(nodes[source.from].world, nodes[source.to].world);
+            var edge = new Edge
+            {
+                from = source.from,
+                to = source.to,
+                speedLimitKmh = 35f,
+                roadType = RoadType.Other,
+                travelTimeSec = distance / 10f,
+                laneCount = 1,
+                laneWidth = 3.5f,
+                oneWay = true,
+                sharedLane = false,
+                isBridge = source.isBridge,
+                isTunnel = source.isTunnel,
+                lengthMeters = source.lengthMeters,
+                gradeProfile = source.gradeProfile,
+            };
+            nodes[source.from].edges.Add(edge);
+        }
+
+        graph.nodeElevation = new float[bundle.nodes.Count];
+        for (int i = 0; i < bundle.nodes.Count; i++)
+            graph.nodeElevation[i] = bundle.nodes[i].elevation;
+
+        graph.RebuildSpatialIndex();
+        Debug.Log($"[RoadGraph] Loaded city bundle: {graph.nodes.Count} nodes, {CountDirectedEdges(graph)} edges.");
+        return graph;
+    }
+
+    /// <summary>Rebuilds the spatial grid after nodes were rehydrated from a bundle.</summary>
+    public void RebuildSpatialIndex()
+    {
+        _spatialGrid.Clear();
+        for (int i = 0; i < nodes.Count; i++)
+            AddToSpatialGrid(nodes[i]);
+    }
+
+    static int CountDirectedEdges(RoadGraph graph)
+    {
+        int count = 0;
+        for (int i = 0; i < graph.nodes.Count; i++)
+            count += graph.nodes[i].edges.Count;
+        return count;
+    }
+
+    /// <summary>Baked grade profile for a single edge (section 3.3).</summary>
+    [Serializable]
+    public class GradeProfile
+    {
+        /// <summary>Metres between consecutive elevation samples.</summary>
+        public float intervalMeters;
+        /// <summary>World-space Y elevation at each sample, ordered from-node → to-node.</summary>
+        public float[] elevations;
+    }
+
+    /// <summary>Serialisable snapshot of a road graph saved to the city bundle.</summary>
+    [Serializable]
+    public class RoadGraphBundle
+    {
+        public string cityCode;
+        public List<BundleNode> nodes = new();
+        public List<BundleEdge> edges = new();
+    }
+
+    [Serializable]
+    public class BundleNode
+    {
+        public int index;
+        // Stored as float (JsonUtility does not reliably round-trip double).
+        public float lat;
+        public float lon;
+        public float worldX;
+        public float worldY;
+        public float worldZ;
+        public float elevation;
+    }
+
+    [Serializable]
+    public class BundleEdge
+    {
+        public int from;
+        public int to;
+        public bool isBridge;
+        public bool isTunnel;
+        public float lengthMeters;
+        public GradeProfile gradeProfile;
     }
 }

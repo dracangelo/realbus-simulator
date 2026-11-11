@@ -54,7 +54,15 @@ public class BusRoute : ScriptableObject
             distanceKm = CalculateDistanceKm();
 
         if (estimatedTimeMinutes <= 0.001f && distanceKm > 0f)
-            estimatedTimeMinutes = distanceKm / 24f * 60f + GetStopCount() * 0.35f;
+        {
+            // Section 4.4: apply per-city speedFactor so urban routes (~15 km/h
+            // effective incl. stops) produce realistic ETAs instead of the naive
+            // 24 km/h figure.
+            float citySpeedFactor = CityManager.Instance != null && CityManager.Instance.activeCity != null
+                ? Mathf.Max(0.5f, CityManager.Instance.activeCity.speedFactor) : 1f;
+            estimatedTimeMinutes = distanceKm / 24f * 60f * citySpeedFactor
+                + GetStopCount() * 0.35f * citySpeedFactor;
+        }
 
         // Some imported route assets carry pathPoints generated in a different
         // world origin (Web-Mercator metres, another city's map, an old scene).

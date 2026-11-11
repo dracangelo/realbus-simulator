@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Networking;
@@ -52,6 +53,20 @@ public class OSMRouteImporter : MonoBehaviour
     [Header("Stop Snapping (3.7A)")]
     [Tooltip("Maximum distance a stop may be from its snapped road position.")]
     [Range(10f, 200f)] public float maxSnapDistanceMeters = 60f;
+
+    [Header("Road Grade (3.3 — baked, not streamed)")]
+    [Tooltip("Optional DEM heightmap covering the city bounding box. Pixel grayscale 0..1 maps to " +
+             "demElevationMinMeters .. demElevationMinMeters + demElevationRangeMeters. " +
+             "The texture must be readable (TextureImporter.isReadable = true).")]
+    public Texture2D demHeightmap;
+    [Tooltip("Elevation at heightmap pixel value 0 (metres above sea level).")]
+    public float demElevationMinMeters = 0f;
+    [Tooltip("Elevation span across the heightmap (metres).")]
+    public float demElevationRangeMeters = 2000f;
+    [Tooltip("DEM sample spacing along every road edge (metres), within the 5–10 m spec.")]
+    [Range(5f, 10f)] public float gradeSampleIntervalMeters = 7.5f;
+    [Tooltip("Moving-average smoothing window (metres), within the 30–50 m spec.")]
+    [Range(10f, 100f)] public float gradeSmoothWindowMeters = 40f;
 
     [Header("State (read-only)")]
     public bool  importInProgress;
@@ -219,6 +234,23 @@ public class OSMRouteImporter : MonoBehaviour
 
         var roadGraph = RoadGraph.BuildFromOverpassWays(roadsResponse, _converter);
         Debug.Log($"[OSMRouteImporter] Road graph: {roadGraph.nodes.Count} nodes.");
+
+        // ── Step 2B: Bake road grade profile (3.3) ────────────────────
+        SetStatus("Baking road grade profile…");
+        yield return null;
+        try
+        {
+            IDemSource dem = ResolveDemSource(city, demHeightmap,
+                demElevationMinMeters, demElevationRangeMeters);
+            RoadGradeBaker.Bake(roadGraph, dem, gradeSampleIntervalMeters, gradeSmoothWindowMeters);
+            roadGraph.SaveToCityBundle(city);
+        }
+        catch (Exception exception)
+        {
+            // A failed grade bake must not abort the route import: roads work
+            // fine at the default flat offset, and the bundle is simply absent.
+            Debug.LogWarning($"[OSMRouteImporter] Grade bake failed: {exception.Message}");
+        }
 
         // ── Step 3: Fetch bus routes ──────────────────────────────────
         SetStatus("Fetching bus routes…");
@@ -532,5 +564,22 @@ public class OSMRouteImporter : MonoBehaviour
         foreach (char c in raw)
             sb.Append(char.IsLetterOrDigit(c) || c == '_' ? c : '_');
         return sb.ToString();
+    }
+
+    /// <summary>Resolves the DEM source used for the grade bake.</summary>
+    static IDemSource ResolveDemSource(CityDefinition city, Texture2D heightmap,
+        float elevMinMeters, float elevRangeMeters)
+    {
+        if (heightmap != null)
+        {
+            return new TextureDemSource(heightmap,
+                city.minLat, city.maxLat, city.minLon, city.maxLon,
+                elevMinMeters, elevRangeMeters);
+        }
+
+        // No real DEM available: fall back to deterministic procedural terrain
+        // so the bake is self-contained and reproducible.
+        int seed = city != null ? city.cityCode.GetHashCode() : 0;
+        return new ProceduralDemSource(elevMinMeters, elevRangeMeters, seed);
     }
 }
