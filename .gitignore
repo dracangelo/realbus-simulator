@@ -122,3 +122,8 @@ Thumbs.db
 /.utmp/
 .codex
 mono_crash.*
+/realbussim_BackUpThisFolder_ButDontShipItWithYourGame/
+/TestResults/
+/.utmp/
+.codex
+mono_crash.*
